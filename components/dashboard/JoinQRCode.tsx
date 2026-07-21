@@ -50,7 +50,7 @@ export default function JoinQRCode() {
     const image = await toPng(poster, {
       cacheBust: true,
       pixelRatio: 3,
-      backgroundColor: cafe.backgroundColor,
+backgroundColor: theme.pageBackground,
       width: poster.scrollWidth,
       height: poster.scrollHeight,
       style: {
