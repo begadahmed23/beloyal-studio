@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 type Customer = {
   id: string;
   memberNumber: string;
+  publicToken: string;
   name: string;
   phone: string;
   birthday: string;
