@@ -6,9 +6,16 @@ import {
   useMemo,
   useState,
 } from "react";
-import { Search } from "lucide-react";
+import {
+  LoaderCircle,
+  Search,
+  TriangleAlert,
+  Users,
+  X,
+} from "lucide-react";
 
-import MemberCard from "./MemberCard";
+import MemberCard from "@/components/customers/MemberCard";
+import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type Customer = {
   id: string;
@@ -23,6 +30,8 @@ type Customer = {
 };
 
 export default function MemberList() {
+  const { theme } = useCafeTheme();
+
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -42,17 +51,35 @@ export default function MemberList() {
           cache: "no-store",
         });
 
-        const data = await response.json();
+        const responseText = await response.text();
+
+        let data: Customer[] | { message?: string } = [];
+
+        if (responseText) {
+          try {
+            data = JSON.parse(responseText);
+          } catch {
+            throw new Error(
+              "The members API returned an invalid response."
+            );
+          }
+        }
 
         if (!response.ok) {
           throw new Error(
-            data.message || "Failed to load members."
+            !Array.isArray(data) && data.message
+              ? data.message
+              : "Failed to load members."
           );
+        }
+
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid member list response.");
         }
 
         setCustomers(data);
       } catch (error) {
-        console.error(error);
+        console.error("Member list error:", error);
 
         setError(
           error instanceof Error
@@ -105,10 +132,21 @@ export default function MemberList() {
 
   return (
     <div className="mt-8">
-      <div className="flex h-14 items-center rounded-2xl border border-white/[0.08] bg-white/[0.035] px-5 transition focus-within:border-[#8d634a] focus-within:bg-white/[0.05]">
+      <div
+        className="flex h-14 items-center border px-5 transition"
+        style={{
+          borderColor: theme.inputBorder,
+          backgroundColor: theme.inputBackground,
+          borderRadius: theme.radiusMedium,
+          boxShadow: theme.cardShadow,
+        }}
+      >
         <Search
           size={19}
-          className="mr-3 shrink-0 text-[#8d827a]"
+          className="mr-3 shrink-0"
+          style={{
+            color: theme.textMuted,
+          }}
         />
 
         <input
@@ -116,65 +154,212 @@ export default function MemberList() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Search by name, phone, or member number"
-          className="h-full w-full bg-transparent text-sm text-white outline-none placeholder:text-[#655f5b]"
+          className="h-full w-full bg-transparent text-sm outline-none"
+          style={{
+            color: theme.textPrimary,
+          }}
         />
 
         {search && (
           <button
             type="button"
             onClick={() => setSearch("")}
-            className="ml-3 text-xs font-medium text-[#9d8d82] transition hover:text-white"
+            aria-label="Clear search"
+            className="ml-3 flex h-8 w-8 shrink-0 items-center justify-center transition hover:opacity-70"
+            style={{
+              color: theme.textMuted,
+              borderRadius: theme.radiusMedium,
+            }}
           >
-            Clear
+            <X size={16} />
           </button>
         )}
       </div>
 
-      <div className="mt-5 flex items-center justify-between">
-        <h3 className="text-sm font-medium text-[#b9aaa0]">
-          {search ? "Search results" : "Recent members"}
-        </h3>
+      <div className="mt-5 flex items-center justify-between gap-4">
+        <div>
+          <h3
+            className="text-sm font-medium"
+            style={{
+              color: theme.textSecondary,
+            }}
+          >
+            {search ? "Search results" : "Recent members"}
+          </h3>
+
+          <p
+            className="mt-1 text-xs"
+            style={{
+              color: theme.textMuted,
+            }}
+          >
+            {search
+              ? "Showing members that match your search."
+              : "The newest loyalty members appear first."}
+          </p>
+        </div>
 
         <div className="flex items-center gap-3">
           {refreshing && (
-            <p className="text-xs text-[#716964]">
-              Updating...
-            </p>
+            <div
+              className="flex items-center gap-2 text-xs"
+              style={{
+                color: theme.textMuted,
+              }}
+            >
+              <LoaderCircle
+                size={13}
+                className="animate-spin"
+              />
+              Updating
+            </div>
           )}
 
           {!loading && !error && (
-            <p className="text-xs text-[#716964]">
+            <div
+              className="flex items-center gap-2 border px-3 py-1.5 text-xs font-medium"
+              style={{
+                borderColor: theme.border,
+                backgroundColor: theme.surface,
+                color: theme.textMuted,
+                borderRadius: theme.radiusMedium,
+              }}
+            >
+              <Users size={14} />
+
               {filteredCustomers.length}{" "}
               {filteredCustomers.length === 1
                 ? "member"
                 : "members"}
-            </p>
+            </div>
           )}
         </div>
       </div>
 
       {loading && (
-        <div className="mt-5 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-10 text-center text-sm text-[#817771]">
-          Loading members...
+        <div
+          className="mt-5 flex min-h-44 items-center justify-center border p-10 text-center"
+          style={{
+            borderColor: theme.border,
+            backgroundColor: theme.surface,
+            borderRadius: theme.radiusLarge,
+            boxShadow: theme.cardShadow,
+          }}
+        >
+          <div>
+            <LoaderCircle
+              size={27}
+              className="mx-auto animate-spin"
+              style={{
+                color: theme.accent,
+              }}
+            />
+
+            <p
+              className="mt-4 text-sm"
+              style={{
+                color: theme.textMuted,
+              }}
+            >
+              Loading members...
+            </p>
+          </div>
         </div>
       )}
 
       {!loading && error && (
-        <div className="mt-5 rounded-2xl border border-red-500/20 bg-red-500/[0.06] p-6 text-sm text-red-300">
-          {error}
+        <div
+          className="mt-5 border p-7 text-center"
+          style={{
+            borderColor: `${theme.danger}40`,
+            backgroundColor: `${theme.danger}12`,
+            borderRadius: theme.radiusLarge,
+          }}
+        >
+          <TriangleAlert
+            size={26}
+            className="mx-auto"
+            style={{
+              color: theme.danger,
+            }}
+          />
+
+          <p
+            className="mt-4 font-medium"
+            style={{
+              color: theme.textPrimary,
+            }}
+          >
+            Members could not load
+          </p>
+
+          <p
+            className="mt-2 text-sm"
+            style={{
+              color: theme.textMuted,
+            }}
+          >
+            {error}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => loadCustomers(true)}
+            className="mt-5 h-10 border px-4 text-sm font-medium transition hover:opacity-90"
+            style={{
+              borderColor: theme.border,
+              backgroundColor: theme.surfaceRaised,
+              color: theme.textPrimary,
+              borderRadius: theme.radiusMedium,
+            }}
+          >
+            Try again
+          </button>
         </div>
       )}
 
       {!loading &&
         !error &&
         filteredCustomers.length === 0 && (
-          <div className="mt-5 rounded-2xl border border-dashed border-white/10 bg-white/[0.02] p-12 text-center">
-            <p className="font-medium text-[#c7b7ac]">
-              No members found
+          <div
+            className="mt-5 border border-dashed p-12 text-center"
+            style={{
+              borderColor: theme.border,
+              backgroundColor: theme.surface,
+              borderRadius: theme.radiusLarge,
+            }}
+          >
+            <div
+              className="mx-auto flex h-12 w-12 items-center justify-center"
+              style={{
+                backgroundColor: theme.accentSoft,
+                color: theme.accent,
+                borderRadius: theme.radiusMedium,
+              }}
+            >
+              <Users size={21} />
+            </div>
+
+            <p
+              className="mt-4 font-medium"
+              style={{
+                color: theme.textPrimary,
+              }}
+            >
+              {search
+                ? "No matching members"
+                : "No members yet"}
             </p>
 
-            <p className="mt-2 text-sm text-[#746b66]">
-              Try another search or create a new member.
+            <p
+              className="mt-2 text-sm"
+              style={{
+                color: theme.textMuted,
+              }}
+            >
+              {search
+                ? "Try another name, phone number, or member number."
+                : "Create the first member to start the loyalty program."}
             </p>
           </div>
         )}

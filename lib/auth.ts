@@ -4,11 +4,27 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@/lib/prisma";
 
 export const auth = betterAuth({
-  appName: "Loretto Loyalty",
+  appName: "Loyalty Platform",
 
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
+
+  user: {
+  additionalFields: {
+    cafeId: {
+      type: "string",
+      required: false,
+      input: false,
+    },
+    role: {
+      type: "string",
+      required: false,
+      input: false,
+      defaultValue: "CAFE_ADMIN",
+    },
+  },
+},
 
   emailAndPassword: {
     enabled: true,
@@ -27,17 +43,11 @@ export const auth = betterAuth({
 
   rateLimit: {
     enabled: true,
-
-    // General authentication limit:
-    // maximum 100 auth requests per minute per IP.
     window: 60,
     max: 100,
-
-    // Store counters in Neon instead of server memory.
     storage: "database",
 
     customRules: {
-      // Maximum five login attempts every ten minutes.
       "/sign-in/email": {
         window: 60 * 10,
         max: 5,

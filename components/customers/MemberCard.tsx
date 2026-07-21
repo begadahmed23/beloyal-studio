@@ -16,11 +16,9 @@ import {
   Trash2,
 } from "lucide-react";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
+
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 import {
   AlertDialog,
@@ -49,11 +47,9 @@ type Props = {
   customer: Customer;
 };
 
-const REWARD_TARGET = 7;
+export default function MemberCard({ customer: originalCustomer }: Props) {
+  const { theme, cafe } = useCafeTheme();
 
-export default function MemberCard({
-  customer: originalCustomer,
-}: Props) {
   const [customer, setCustomer] = useState<Customer>(originalCustomer);
 
   const [profileOpen, setProfileOpen] = useState(false);
@@ -66,8 +62,11 @@ export default function MemberCard({
   const [messageText, setMessageText] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const visibleStamps = Math.min(customer.stamps, REWARD_TARGET);
-  const rewardReady = customer.stamps >= REWARD_TARGET;
+  const rewardTarget = Math.max(cafe.rewardTarget, 1);
+
+  const visibleStamps = Math.min(customer.stamps, rewardTarget);
+
+  const rewardReady = customer.stamps >= rewardTarget;
 
   const formattedBirthday = useMemo(() => {
     const date = new Date(customer.birthday);
@@ -107,8 +106,9 @@ export default function MemberCard({
     if (!cardUrl) {
       showMessage(
         "Card unavailable",
-        "This member does not have a secure card token yet."
+        "This member does not have a secure card token yet.",
       );
+
       return;
     }
 
@@ -121,25 +121,20 @@ export default function MemberCard({
     if (!cardUrl) {
       showMessage(
         "Card unavailable",
-        "This member does not have a secure card token yet."
+        "This member does not have a secure card token yet.",
       );
+
       return;
     }
 
     try {
       await navigator.clipboard.writeText(cardUrl);
 
-      showMessage(
-        "Link copied",
-        "The customer card link is ready to paste."
-      );
+      showMessage("Link copied", "The customer card link is ready to paste.");
     } catch (error) {
       console.error(error);
 
-      showMessage(
-        "Copy failed",
-        "The browser could not copy the card link."
-      );
+      showMessage("Copy failed", "The browser could not copy the card link.");
     }
   }
 
@@ -149,17 +144,17 @@ export default function MemberCard({
     if (!cardUrl) {
       showMessage(
         "Card unavailable",
-        "This member does not have a secure card token yet."
+        "This member does not have a secure card token yet.",
       );
+
       return;
     }
 
-    const text = `Welcome to Loretto, ${customer.name}. Here is your digital loyalty card.`;
-
+    const text = `Welcome to ${cafe.name}, ${customer.name}. Here is your digital loyalty card.`;
     try {
       if (navigator.share) {
         await navigator.share({
-          title: "Loretto Loyalty Card",
+          title: `${cafe.name} Loyalty Card`,
           text,
           url: cardUrl,
         });
@@ -171,13 +166,10 @@ export default function MemberCard({
 
       showMessage(
         "Message copied",
-        "Native sharing is unavailable, so the message and link were copied."
+        "Native sharing is unavailable, so the message and link were copied.",
       );
     } catch (error) {
-      if (
-        error instanceof DOMException &&
-        error.name === "AbortError"
-      ) {
+      if (error instanceof DOMException && error.name === "AbortError") {
         return;
       }
 
@@ -185,7 +177,7 @@ export default function MemberCard({
 
       showMessage(
         "Share failed",
-        "The browser could not share the customer card."
+        "The browser could not share the customer card.",
       );
     }
   }
@@ -208,27 +200,34 @@ export default function MemberCard({
         }),
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
 
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to add stamp.");
+      let data: Customer | { message?: string };
+
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        throw new Error("The server returned an invalid response.");
       }
 
-      setCustomer(data);
+      if (!response.ok) {
+        throw new Error(
+          "message" in data && data.message
+            ? data.message
+            : "Failed to add stamp.",
+        );
+      }
+
+      setCustomer(data as Customer);
       notifyDashboard();
 
-      showMessage(
-        "Stamp added",
-        "The customer card was updated successfully."
-      );
+      showMessage("Stamp added", "The customer card was updated successfully.");
     } catch (error) {
       console.error(error);
 
       showMessage(
         "Could not add stamp",
-        error instanceof Error
-          ? error.message
-          : "Something went wrong."
+        error instanceof Error ? error.message : "Something went wrong.",
       );
     } finally {
       setLoading(false);
@@ -253,30 +252,38 @@ export default function MemberCard({
         }),
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
+
+      let data: Customer | { message?: string };
+
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        throw new Error("The server returned an invalid response.");
+      }
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Failed to redeem reward."
+          "message" in data && data.message
+            ? data.message
+            : "Failed to redeem reward.",
         );
       }
 
-      setCustomer(data);
+      setCustomer(data as Customer);
       setRedeemOpen(false);
       notifyDashboard();
 
       showMessage(
         "Reward redeemed",
-        "The free drink was redeemed successfully."
+        `${cafe.rewardName} was redeemed successfully.`,
       );
     } catch (error) {
       console.error(error);
 
       showMessage(
         "Could not redeem reward",
-        error instanceof Error
-          ? error.message
-          : "Something went wrong."
+        error instanceof Error ? error.message : "Something went wrong.",
       );
     } finally {
       setLoading(false);
@@ -291,19 +298,24 @@ export default function MemberCard({
     try {
       setLoading(true);
 
-      const response = await fetch(
-        `/api/customers/${customer.id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`/api/customers/${customer.id}`, {
+        method: "DELETE",
+      });
 
-      const data = await response.json();
+      const responseText = await response.text();
+
+      let data: { message?: string } = {};
+
+      if (responseText) {
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          data = {};
+        }
+      }
 
       if (!response.ok) {
-        throw new Error(
-          data.message || "Failed to delete member."
-        );
+        throw new Error(data.message || "Failed to delete member.");
       }
 
       setDeleteOpen(false);
@@ -314,9 +326,7 @@ export default function MemberCard({
 
       showMessage(
         "Delete failed",
-        error instanceof Error
-          ? error.message
-          : "Something went wrong."
+        error instanceof Error ? error.message : "Something went wrong.",
       );
     } finally {
       setLoading(false);
@@ -329,7 +339,7 @@ export default function MemberCard({
 
     showMessage(
       "Member updated",
-      "The member details were saved successfully."
+      "The member details were saved successfully.",
     );
   }
 
@@ -341,65 +351,99 @@ export default function MemberCard({
     }, 150);
   }
 
+  const standardButtonStyle = {
+    borderColor: theme.border,
+    backgroundColor: theme.surfaceRaised,
+    color: theme.textPrimary,
+    borderRadius: theme.radiusMedium,
+  };
+
   return (
     <>
       <button
         type="button"
         onClick={() => setProfileOpen(true)}
-        className="group w-full rounded-2xl border border-white/[0.07] bg-[#141414] p-5 text-left shadow-[0_12px_35px_rgba(0,0,0,0.18)] transition duration-200 hover:-translate-y-0.5 hover:border-[#8d634a]/60 hover:bg-[#171513]"
+        className="group w-full border p-5 text-left transition duration-200 hover:-translate-y-0.5 hover:brightness-105"
+        style={{
+          borderColor: theme.border,
+          backgroundColor: theme.surface,
+          color: theme.textPrimary,
+          borderRadius: theme.radiusMedium,
+          boxShadow: theme.cardShadow,
+        }}
       >
         <div className="flex items-start justify-between gap-5">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 text-xs font-medium text-[#a67a5d]">
+            <div
+              className="flex items-center gap-2 text-xs font-medium"
+              style={{
+                color: theme.textSecondary,
+              }}
+            >
               <Hash size={13} />
+
               <span>{customer.memberNumber}</span>
             </div>
 
-            <h4 className="mt-3 truncate text-lg font-semibold tracking-tight text-[#f3eee9]">
+            <h4
+              className="mt-3 truncate text-lg font-semibold tracking-tight"
+              style={{
+                color: theme.textPrimary,
+              }}
+            >
               {customer.name}
             </h4>
 
-            <div className="mt-2 flex items-center gap-2 text-sm text-[#8c827c]">
+            <div
+              className="mt-2 flex items-center gap-2 text-sm"
+              style={{
+                color: theme.textMuted,
+              }}
+            >
               <Phone size={14} />
               <span>{customer.phone}</span>
             </div>
           </div>
 
           <div
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold ${
-              rewardReady
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                : "border-[#80563d]/40 bg-[#80563d]/15 text-[#d9af8d]"
-            }`}
+            className="shrink-0 border px-3 py-1.5 text-xs font-semibold"
+            style={{
+              borderColor: rewardReady ? `${theme.success}55` : theme.border,
+              backgroundColor: rewardReady
+                ? `${theme.success}18`
+                : theme.accentSoft,
+              color: rewardReady ? theme.success : theme.textSecondary,
+              borderRadius: "999px",
+            }}
           >
-            {rewardReady
-              ? "Reward ready"
-              : `${visibleStamps}/${REWARD_TARGET}`}
+            {rewardReady ? "Reward ready" : `${visibleStamps}/${rewardTarget}`}
           </div>
         </div>
 
         <div className="mt-5 grid grid-cols-7 gap-1.5">
           {Array.from({
-            length: REWARD_TARGET,
+            length: rewardTarget,
           }).map((_, index) => {
             const filled = index < visibleStamps;
 
             return (
               <div
                 key={index}
-                className={`flex aspect-square items-center justify-center rounded-lg border ${
-                  filled
-                    ? "border-[#9a6d50]/50 bg-[#9a6d50]/20"
-                    : "border-white/[0.07] bg-white/[0.025]"
-                }`}
+                className="flex aspect-square items-center justify-center border"
+                style={{
+                  borderColor: filled ? `${theme.accent}70` : theme.border,
+                  backgroundColor: filled
+                    ? theme.accentSoft
+                    : theme.surfaceRaised,
+                  borderRadius: "10px",
+                }}
               >
                 <Coffee
                   size={15}
-                  className={
-                    filled
-                      ? "fill-[#d6a77f] text-[#d6a77f]"
-                      : "text-[#514b47]"
-                  }
+                  style={{
+                    color: filled ? theme.accent : theme.textMuted,
+                    fill: filled ? theme.accent : "transparent",
+                  }}
                 />
               </div>
             );
@@ -407,16 +451,27 @@ export default function MemberCard({
         </div>
       </button>
 
-      <Dialog
-        open={profileOpen}
-        onOpenChange={setProfileOpen}
-      >
-        <DialogContent className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto border-white/[0.08] bg-[#111111] p-0 text-white shadow-2xl">
+      <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+        <DialogContent
+          className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto border p-0 shadow-2xl"
+          style={{
+            borderColor: theme.border,
+            backgroundColor: theme.surface,
+            color: theme.textPrimary,
+            borderRadius: theme.radiusLarge,
+          }}
+        >
           <div className="absolute right-14 top-4 z-50 flex gap-2">
             <button
               type="button"
               onClick={() => setDeleteOpen(true)}
-              className="flex h-9 items-center gap-2 rounded-lg border border-red-500/25 bg-red-500/10 px-3 text-sm font-semibold text-red-300 transition hover:bg-red-500/20"
+              className="flex h-9 items-center gap-2 border px-3 text-sm font-semibold transition hover:opacity-80"
+              style={{
+                borderColor: `${theme.danger}55`,
+                backgroundColor: `${theme.danger}18`,
+                color: theme.danger,
+                borderRadius: "10px",
+              }}
             >
               <Trash2 size={15} />
               Delete
@@ -425,96 +480,171 @@ export default function MemberCard({
             <button
               type="button"
               onClick={openEditDialog}
-              className="flex h-9 items-center gap-2 rounded-lg bg-[#8e6045] px-4 text-sm font-semibold text-white transition hover:bg-[#a06d4e]"
+              className="flex h-9 items-center gap-2 px-4 text-sm font-semibold transition hover:opacity-90"
+              style={{
+                backgroundColor: theme.accent,
+                color: theme.buttonText,
+                borderRadius: "10px",
+              }}
             >
               <Pencil size={15} />
               Edit
             </button>
           </div>
 
-          <div className="border-b border-white/[0.06] px-6 py-5 pr-64">
-            <div className="flex items-center gap-2 text-xs font-medium text-[#a67a5d]">
+          <div
+            className="border-b px-6 py-5 pr-64"
+            style={{
+              borderColor: theme.border,
+            }}
+          >
+            <div
+              className="flex items-center gap-2 text-xs font-medium"
+              style={{
+                color: theme.textSecondary,
+              }}
+            >
               <Hash size={13} />
               {customer.memberNumber}
             </div>
 
-            <DialogTitle className="mt-2 text-2xl font-semibold text-[#f3eee9]">
+            <DialogTitle
+              className="mt-2 text-2xl font-semibold"
+              style={{
+                color: theme.textPrimary,
+              }}
+            >
               {customer.name}
             </DialogTitle>
           </div>
 
-          <div className="space-y-5 px-6 pb-6">
+          <div className="space-y-5 px-6 pb-6 pt-5">
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-4">
-                <div className="flex items-center gap-2 text-xs text-[#756c67]">
+              <div
+                className="border p-4"
+                style={{
+                  borderColor: theme.border,
+                  backgroundColor: theme.surfaceRaised,
+                  borderRadius: theme.radiusMedium,
+                }}
+              >
+                <div
+                  className="flex items-center gap-2 text-xs"
+                  style={{
+                    color: theme.textMuted,
+                  }}
+                >
                   <Phone size={14} />
                   Phone number
                 </div>
 
-                <p className="mt-2 text-sm font-medium text-[#e7ded8]">
+                <p
+                  className="mt-2 text-sm font-medium"
+                  style={{
+                    color: theme.textPrimary,
+                  }}
+                >
                   {customer.phone}
                 </p>
               </div>
 
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.025] p-4">
-                <div className="flex items-center gap-2 text-xs text-[#756c67]">
+              <div
+                className="border p-4"
+                style={{
+                  borderColor: theme.border,
+                  backgroundColor: theme.surfaceRaised,
+                  borderRadius: theme.radiusMedium,
+                }}
+              >
+                <div
+                  className="flex items-center gap-2 text-xs"
+                  style={{
+                    color: theme.textMuted,
+                  }}
+                >
                   <CalendarDays size={14} />
                   Birthday
                 </div>
 
-                <p className="mt-2 text-sm font-medium text-[#e7ded8]">
+                <p
+                  className="mt-2 text-sm font-medium"
+                  style={{
+                    color: theme.textPrimary,
+                  }}
+                >
                   {formattedBirthday}
                 </p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/[0.07] bg-[#161616] p-5">
-              <div className="flex items-center justify-between">
+            <div
+              className="border p-5"
+              style={{
+                borderColor: theme.border,
+                backgroundColor: theme.surfaceRaised,
+                borderRadius: theme.radiusMedium,
+              }}
+            >
+              <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-[#ded3ca]">
+                  <p
+                    className="text-sm font-medium"
+                    style={{
+                      color: theme.textPrimary,
+                    }}
+                  >
                     Digital stamp card
                   </p>
 
-                  <p className="mt-1 text-xs text-[#716964]">
-                    One stamp for every eligible drink
+                  <p
+                    className="mt-1 text-xs"
+                    style={{
+                      color: theme.textMuted,
+                    }}
+                  >
+                    {cafe.eligiblePurchaseDescription ||
+                      "One stamp for every eligible purchase"}
                   </p>
                 </div>
 
                 <p
-                  className={`text-sm font-semibold ${
-                    rewardReady
-                      ? "text-emerald-300"
-                      : "text-[#d9af8d]"
-                  }`}
+                  className="text-sm font-semibold"
+                  style={{
+                    color: rewardReady ? theme.success : theme.textSecondary,
+                  }}
                 >
                   {rewardReady
                     ? "Reward ready"
-                    : `${visibleStamps}/${REWARD_TARGET}`}
+                    : `${visibleStamps}/${rewardTarget}`}
                 </p>
               </div>
 
               <div className="mt-5 grid grid-cols-7 gap-2">
                 {Array.from({
-                  length: REWARD_TARGET,
+                  length: rewardTarget,
                 }).map((_, index) => {
                   const filled = index < visibleStamps;
 
                   return (
                     <div
                       key={index}
-                      className={`flex aspect-square items-center justify-center rounded-xl border ${
-                        filled
-                          ? "border-[#9a6d50]/60 bg-[#9a6d50]/20"
-                          : "border-white/[0.07] bg-[#101010]"
-                      }`}
+                      className="flex aspect-square items-center justify-center border"
+                      style={{
+                        borderColor: filled
+                          ? `${theme.accent}70`
+                          : theme.border,
+                        backgroundColor: filled
+                          ? theme.accentSoft
+                          : theme.surface,
+                        borderRadius: "12px",
+                      }}
                     >
                       <Coffee
                         size={20}
-                        className={
-                          filled
-                            ? "fill-[#d6a77f] text-[#d6a77f]"
-                            : "text-[#4e4844]"
-                        }
+                        style={{
+                          color: filled ? theme.accent : theme.textMuted,
+                          fill: filled ? theme.accent : "transparent",
+                        }}
                       />
                     </div>
                   );
@@ -523,7 +653,12 @@ export default function MemberCard({
             </div>
 
             <div>
-              <p className="mb-3 text-xs font-medium uppercase tracking-[0.14em] text-[#716964]">
+              <p
+                className="mb-3 text-xs font-medium uppercase tracking-[0.14em]"
+                style={{
+                  color: theme.textMuted,
+                }}
+              >
                 Customer card
               </p>
 
@@ -532,7 +667,8 @@ export default function MemberCard({
                   type="button"
                   onClick={openCard}
                   disabled={!customer.publicToken}
-                  className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.035] text-xs font-semibold text-[#d8ccc3] transition hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex h-11 items-center justify-center gap-2 border text-xs font-semibold transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                  style={standardButtonStyle}
                 >
                   <ExternalLink size={15} />
                   Open
@@ -542,7 +678,8 @@ export default function MemberCard({
                   type="button"
                   onClick={copyCardLink}
                   disabled={!customer.publicToken}
-                  className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.035] text-xs font-semibold text-[#d8ccc3] transition hover:bg-white/[0.07] disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex h-11 items-center justify-center gap-2 border text-xs font-semibold transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                  style={standardButtonStyle}
                 >
                   <Copy size={15} />
                   Copy
@@ -552,7 +689,13 @@ export default function MemberCard({
                   type="button"
                   onClick={shareCard}
                   disabled={!customer.publicToken}
-                  className="flex h-11 items-center justify-center gap-2 rounded-xl border border-[#8e6045]/35 bg-[#8e6045]/15 text-xs font-semibold text-[#e0b895] transition hover:bg-[#8e6045]/25 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex h-11 items-center justify-center gap-2 border text-xs font-semibold transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+                  style={{
+                    borderColor: `${theme.accent}60`,
+                    backgroundColor: theme.accentSoft,
+                    color: theme.textSecondary,
+                    borderRadius: theme.radiusMedium,
+                  }}
                 >
                   <Share2 size={15} />
                   Share
@@ -560,7 +703,15 @@ export default function MemberCard({
               </div>
 
               {!customer.publicToken && (
-                <div className="mt-3 flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.07] px-3 py-2 text-xs text-amber-200/80">
+                <div
+                  className="mt-3 flex items-center gap-2 border px-3 py-2 text-xs"
+                  style={{
+                    borderColor: `${theme.warning}45`,
+                    backgroundColor: `${theme.warning}12`,
+                    color: theme.warning,
+                    borderRadius: theme.radiusMedium,
+                  }}
+                >
                   <Link2 size={14} />
                   This member needs a secure card token.
                 </div>
@@ -572,23 +723,31 @@ export default function MemberCard({
                 type="button"
                 onClick={() => setRedeemOpen(true)}
                 disabled={loading}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
+                className="flex h-12 w-full items-center justify-center gap-2 text-sm font-semibold transition hover:opacity-90 disabled:opacity-50"
+                style={{
+                  backgroundColor: theme.success,
+                  color: "#ffffff",
+                  borderRadius: theme.radiusMedium,
+                }}
               >
                 <Gift size={18} />
-                Redeem Free Drink
+                Redeem {cafe.rewardName}
               </button>
             ) : (
               <button
                 type="button"
                 onClick={addStamp}
                 disabled={loading}
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#8e6045] text-sm font-semibold text-white transition hover:bg-[#a06d4e] disabled:opacity-50"
+                className="flex h-12 w-full items-center justify-center gap-2 text-sm font-semibold transition hover:opacity-90 disabled:opacity-50"
+                style={{
+                  backgroundColor: theme.accent,
+                  color: theme.buttonText,
+                  borderRadius: theme.radiusMedium,
+                }}
               >
                 <Coffee size={18} />
 
-                {loading
-                  ? "Adding Stamp..."
-                  : "Add Drink Stamp"}
+                {loading ? "Adding Stamp..." : "Add Stamp"}
               </button>
             )}
           </div>
@@ -602,71 +761,106 @@ export default function MemberCard({
         onUpdated={handleMemberUpdated}
       />
 
-      <AlertDialog
-        open={redeemOpen}
-        onOpenChange={setRedeemOpen}
-      >
-        <AlertDialogContent className="border-white/[0.08] bg-[#111111] text-white">
+      <AlertDialog open={redeemOpen} onOpenChange={setRedeemOpen}>
+        <AlertDialogContent
+          className="border"
+          style={{
+            borderColor: theme.border,
+            backgroundColor: theme.surface,
+            color: theme.textPrimary,
+            borderRadius: theme.radiusLarge,
+          }}
+        >
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Redeem free drink?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Redeem {cafe.rewardName}?</AlertDialogTitle>
 
-            <AlertDialogDescription className="text-[#8f847d]">
-              This will reset the completed card for{" "}
-              {customer.name} to 0/{REWARD_TARGET}.
+            <AlertDialogDescription
+              style={{
+                color: theme.textMuted,
+              }}
+            >
+              This will reset the completed card for {customer.name} to 0/
+              {rewardTarget}.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/[0.08] bg-white/[0.03] text-white hover:bg-white/[0.07] hover:text-white">
+            <AlertDialogCancel
+              className="border hover:opacity-80"
+              style={standardButtonStyle}
+            >
               Cancel
             </AlertDialogCancel>
 
             <AlertDialogAction
               onClick={redeemReward}
-              className="bg-emerald-700 text-white hover:bg-emerald-600"
+              className="hover:opacity-90"
+              style={{
+                backgroundColor: theme.success,
+                color: "#ffffff",
+              }}
             >
-              {loading
-                ? "Redeeming..."
-                : "Confirm Redemption"}
+              {loading ? "Redeeming..." : "Confirm Redemption"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-      >
-        <AlertDialogContent className="border-white/[0.08] bg-[#111111] text-white">
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent
+          className="border"
+          style={{
+            borderColor: theme.border,
+            backgroundColor: theme.surface,
+            color: theme.textPrimary,
+            borderRadius: theme.radiusLarge,
+          }}
+        >
           <AlertDialogHeader>
-            <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-red-500/10 text-red-300">
+            <div
+              className="mb-2 flex h-11 w-11 items-center justify-center rounded-full"
+              style={{
+                backgroundColor: `${theme.danger}18`,
+                color: theme.danger,
+              }}
+            >
               <Trash2 size={22} />
             </div>
 
-            <AlertDialogTitle>
-              Delete member?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Delete member?</AlertDialogTitle>
 
-            <AlertDialogDescription className="text-[#8f847d]">
+            <AlertDialogDescription
+              style={{
+                color: theme.textMuted,
+              }}
+            >
               This permanently deletes{" "}
-              <strong className="text-white">
+              <strong
+                style={{
+                  color: theme.textPrimary,
+                }}
+              >
                 {customer.name}
               </strong>
-              , their digital loyalty card, and their complete stamp
-              history. This cannot be undone.
+              , their digital loyalty card, and their complete stamp history.
+              This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/[0.08] bg-white/[0.03] text-white hover:bg-white/[0.07] hover:text-white">
+            <AlertDialogCancel
+              className="border hover:opacity-80"
+              style={standardButtonStyle}
+            >
               Cancel
             </AlertDialogCancel>
 
             <AlertDialogAction
               onClick={deleteMember}
-              className="bg-red-600 text-white hover:bg-red-500"
+              className="text-white hover:opacity-90"
+              style={{
+                backgroundColor: theme.danger,
+              }}
             >
               {loading ? "Deleting..." : "Delete Member"}
             </AlertDialogAction>
@@ -674,21 +868,34 @@ export default function MemberCard({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog
-        open={messageOpen}
-        onOpenChange={setMessageOpen}
-      >
-        <AlertDialogContent className="border-white/[0.08] bg-[#111111] text-white">
+      <AlertDialog open={messageOpen} onOpenChange={setMessageOpen}>
+        <AlertDialogContent
+          className="border"
+          style={{
+            borderColor: theme.border,
+            backgroundColor: theme.surface,
+            color: theme.textPrimary,
+            borderRadius: theme.radiusLarge,
+          }}
+        >
           <AlertDialogHeader>
-            <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-300">
+            <div
+              className="mb-2 flex h-11 w-11 items-center justify-center rounded-full"
+              style={{
+                backgroundColor: `${theme.success}18`,
+                color: theme.success,
+              }}
+            >
               <CheckCircle2 size={22} />
             </div>
 
-            <AlertDialogTitle>
-              {messageTitle}
-            </AlertDialogTitle>
+            <AlertDialogTitle>{messageTitle}</AlertDialogTitle>
 
-            <AlertDialogDescription className="text-[#8f847d]">
+            <AlertDialogDescription
+              style={{
+                color: theme.textMuted,
+              }}
+            >
               {messageText}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -696,7 +903,11 @@ export default function MemberCard({
           <AlertDialogFooter>
             <AlertDialogAction
               onClick={() => setMessageOpen(false)}
-              className="bg-[#8e6045] text-white hover:bg-[#a06d4e]"
+              className="hover:opacity-90"
+              style={{
+                backgroundColor: theme.accent,
+                color: theme.buttonText,
+              }}
             >
               Close
             </AlertDialogAction>

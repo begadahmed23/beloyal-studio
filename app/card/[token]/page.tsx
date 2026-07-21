@@ -8,10 +8,27 @@ import {
   Gift,
   Heart,
   LoaderCircle,
+  QrCode,
   RefreshCw,
   Sparkles,
+  X,
 } from "lucide-react";
 import { useParams } from "next/navigation";
+import QRCode from "react-qr-code";
+type Cafe = {
+  id: string;
+  name: string;
+  slug: string;
+  logoUrl: string | null;
+  theme: string;
+  primaryColor: string | null;
+  secondaryColor: string | null;
+  backgroundColor: string | null;
+  rewardTarget: number;
+  rewardName: string;
+  rewardDescription: string | null;
+  eligiblePurchaseDescription: string | null;
+};
 
 type Customer = {
   id: string;
@@ -22,9 +39,14 @@ type Customer = {
   stamps: number;
   createdAt: string;
   updatedAt: string;
+  cafe: Cafe;
 };
 
-const REWARD_TARGET = 7;
+type RGB = {
+  r: number;
+  g: number;
+  b: number;
+};
 
 function calculateBirthdayCountdown(birthday: string) {
   const birthdayDate = new Date(birthday);
@@ -33,13 +55,13 @@ function calculateBirthdayCountdown(birthday: string) {
   const todayStart = new Date(
     today.getFullYear(),
     today.getMonth(),
-    today.getDate()
+    today.getDate(),
   );
 
   const nextBirthday = new Date(
     today.getFullYear(),
     birthdayDate.getUTCMonth(),
-    birthdayDate.getUTCDate()
+    birthdayDate.getUTCDate(),
   );
 
   if (nextBirthday < todayStart) {
@@ -47,43 +69,143 @@ function calculateBirthdayCountdown(birthday: string) {
   }
 
   return Math.ceil(
-    (nextBirthday.getTime() - todayStart.getTime()) / 86_400_000
+    (nextBirthday.getTime() - todayStart.getTime()) / 86_400_000,
   );
 }
 
-function getProgressMessage(stamps: number) {
-  if (stamps >= REWARD_TARGET) {
+function getProgressMessage(
+  stamps: number,
+  rewardTarget: number,
+  rewardName: string,
+) {
+  const safeRewardName = rewardName?.trim() || "reward";
+
+  const lowerRewardName = safeRewardName.toLowerCase();
+
+  if (stamps >= rewardTarget) {
     return {
-      title: "Your free drink is ready",
-      description: "Show this card to the cashier to redeem your reward.",
+      title: `${safeRewardName} is ready`,
+      description: `Show this card to the cashier to redeem your ${lowerRewardName}.`,
     };
   }
 
-  if (stamps >= 6) {
+  const remaining = rewardTarget - stamps;
+
+  if (remaining === 1) {
     return {
-      title: "One more drink",
-      description: "Your free drink is almost ready.",
+      title: "One more stamp",
+      description: `Your ${lowerRewardName} is almost ready.`,
     };
   }
 
-  if (stamps >= 4) {
+  if (stamps >= Math.ceil(rewardTarget / 2)) {
     return {
       title: "More than halfway there",
-      description: "Keep going. Your free drink is getting closer.",
+      description: `Keep going. Your ${lowerRewardName} is getting closer.`,
     };
   }
 
   if (stamps > 0) {
     return {
       title: "Great start",
-      description: "Every eligible drink brings you closer to a free one.",
+      description: `Every eligible purchase brings you closer to your ${lowerRewardName}.`,
     };
   }
 
   return {
     title: "Your journey starts here",
-    description: "Buy an eligible drink to receive your first stamp.",
+    description: "Make an eligible purchase to receive your first stamp.",
   };
+}
+
+function normalizeHex(value: string | null | undefined, fallback: string) {
+  if (!value) {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+
+  const shortHexMatch = trimmed.match(/^#([0-9a-fA-F]{3})$/);
+
+  if (shortHexMatch) {
+    const characters = shortHexMatch[1].split("");
+
+    return `#${characters.map((character) => character + character).join("")}`;
+  }
+
+  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) {
+    return trimmed;
+  }
+
+  return fallback;
+}
+
+function hexToRgb(hex: string): RGB {
+  const cleanHex = normalizeHex(hex, "#000000").replace("#", "");
+
+  return {
+    r: parseInt(cleanHex.slice(0, 2), 16),
+    g: parseInt(cleanHex.slice(2, 4), 16),
+    b: parseInt(cleanHex.slice(4, 6), 16),
+  };
+}
+
+function rgbToHex({ r, g, b }: RGB) {
+  const convert = (value: number) =>
+    Math.round(Math.max(0, Math.min(255, value)))
+      .toString(16)
+      .padStart(2, "0");
+
+  return `#${convert(r)}${convert(g)}${convert(b)}`;
+}
+
+function mixColors(
+  firstColor: string,
+  secondColor: string,
+  firstWeight: number,
+) {
+  const first = hexToRgb(firstColor);
+  const second = hexToRgb(secondColor);
+
+  const safeWeight = Math.max(0, Math.min(1, firstWeight));
+
+  return rgbToHex({
+    r: first.r * safeWeight + second.r * (1 - safeWeight),
+    g: first.g * safeWeight + second.g * (1 - safeWeight),
+    b: first.b * safeWeight + second.b * (1 - safeWeight),
+  });
+}
+
+function withAlpha(hex: string, alpha: number) {
+  const rgb = hexToRgb(hex);
+
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+}
+
+function getLuminance(hex: string) {
+  const { r, g, b } = hexToRgb(hex);
+
+  const convertChannel = (channel: number) => {
+    const normalized = channel / 255;
+
+    return normalized <= 0.03928
+      ? normalized / 12.92
+      : Math.pow((normalized + 0.055) / 1.055, 2.4);
+  };
+
+  return (
+    0.2126 * convertChannel(r) +
+    0.7152 * convertChannel(g) +
+    0.0722 * convertChannel(b)
+  );
+}
+
+function isLightColor(hex: string) {
+  return getLuminance(hex) > 0.42;
+}
+
+function getReadableText(hex: string) {
+  return isLightColor(hex) ? "#171717" : "#FFFFFF";
 }
 
 export default function DigitalCardPage() {
@@ -93,14 +215,22 @@ export default function DigitalCardPage() {
   const previousStampCount = useRef<number | null>(null);
 
   const [customer, setCustomer] = useState<Customer | null>(null);
+
   const [loading, setLoading] = useState(true);
+
   const [refreshing, setRefreshing] = useState(false);
+
   const [newStampIndex, setNewStampIndex] = useState<number | null>(null);
+
   const [error, setError] = useState("");
+
+  const [showQrCode, setShowQrCode] = useState(false);
 
   const loadCard = useCallback(
     async (showRefreshing = false) => {
-      if (!token) return;
+      if (!token) {
+        return;
+      }
 
       try {
         if (showRefreshing) {
@@ -111,7 +241,7 @@ export default function DigitalCardPage() {
           `/api/customers/card/${encodeURIComponent(token)}`,
           {
             cache: "no-store",
-          }
+          },
         );
 
         const data = await response.json();
@@ -143,14 +273,14 @@ export default function DigitalCardPage() {
         setError(
           error instanceof Error
             ? error.message
-            : "Failed to load loyalty card."
+            : "Failed to load loyalty card.",
         );
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [token]
+    [token],
   );
 
   useEffect(() => {
@@ -165,8 +295,32 @@ export default function DigitalCardPage() {
     };
   }, [loadCard]);
 
+  useEffect(() => {
+    if (!showQrCode) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowQrCode(false);
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showQrCode]);
+
   const birthdayText = useMemo(() => {
-    if (!customer) return "";
+    if (!customer) {
+      return "";
+    }
 
     return new Intl.DateTimeFormat("en-GB", {
       day: "2-digit",
@@ -175,7 +329,9 @@ export default function DigitalCardPage() {
   }, [customer]);
 
   const memberSince = useMemo(() => {
-    if (!customer) return "";
+    if (!customer) {
+      return "";
+    }
 
     return new Intl.DateTimeFormat("en-GB", {
       month: "long",
@@ -184,7 +340,9 @@ export default function DigitalCardPage() {
   }, [customer]);
 
   const lastUpdated = useMemo(() => {
-    if (!customer) return "";
+    if (!customer) {
+      return "";
+    }
 
     return new Intl.DateTimeFormat("en-GB", {
       day: "2-digit",
@@ -195,22 +353,27 @@ export default function DigitalCardPage() {
   }, [customer]);
 
   const daysUntilBirthday = useMemo(() => {
-    if (!customer) return 0;
+    if (!customer) {
+      return 0;
+    }
 
     return calculateBirthdayCountdown(customer.birthday);
   }, [customer]);
+
+  const handleAddToAppleWallet = () => {
+    window.location.href = `/api/wallet/${encodeURIComponent(
+      customer?.publicToken || token,
+    )}`;
+  };
 
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#080808] text-white">
         <div className="text-center">
-          <LoaderCircle
-            size={30}
-            className="mx-auto animate-spin text-[#c7936e]"
-          />
+          <LoaderCircle size={30} className="mx-auto animate-spin" />
 
-          <p className="mt-4 text-sm text-[#82766f]">
-            Loading your Loretto card...
+          <p className="mt-4 text-sm text-white/60">
+            Loading your loyalty card...
           </p>
         </div>
       </main>
@@ -220,80 +383,192 @@ export default function DigitalCardPage() {
   if (error || !customer) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#080808] px-5 text-white">
-        <div className="w-full max-w-sm rounded-3xl border border-white/[0.08] bg-[#141414] p-7 text-center">
+        <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#141414] p-7 text-center">
           <p className="text-xl font-semibold">Card not found</p>
 
-          <p className="mt-3 text-sm leading-6 text-[#82766f]">
+          <p className="mt-3 text-sm leading-6 text-white/60">
             {error || "This loyalty-card link may be incorrect."}
           </p>
 
           <button
             type="button"
             onClick={() => loadCard(true)}
-            className="mt-6 h-11 w-full rounded-xl bg-[#8e6045] text-sm font-semibold transition hover:bg-[#a06d4e]"
+            className="mt-6 h-11 w-full rounded-xl bg-white text-sm font-semibold text-black transition hover:opacity-90"
           >
-            Try Again
+            Try again
           </button>
         </div>
       </main>
     );
   }
 
-  const visibleStamps = Math.min(customer.stamps, REWARD_TARGET);
-  const rewardReady = customer.stamps >= REWARD_TARGET;
-  const remainingStamps = Math.max(REWARD_TARGET - customer.stamps, 0);
-  const progressMessage = getProgressMessage(customer.stamps);
-  const progressPercentage =
-    (visibleStamps / REWARD_TARGET) * 100;
+  const rewardTarget = Math.max(customer.cafe.rewardTarget, 1);
+
+  const visibleStamps = Math.min(customer.stamps, rewardTarget);
+
+  const rewardReady = customer.stamps >= rewardTarget;
+
+  const remainingStamps = Math.max(rewardTarget - customer.stamps, 0);
+
+  const progressMessage = getProgressMessage(
+    customer.stamps,
+    rewardTarget,
+    customer.cafe.rewardName,
+  );
+
+  const progressPercentage = (visibleStamps / rewardTarget) * 100;
+
+  const primaryColor = normalizeHex(customer.cafe.primaryColor, "#2563EB");
+
+  const secondaryColor = normalizeHex(customer.cafe.secondaryColor, "#60A5FA");
+
+  const backgroundColor = normalizeHex(
+    customer.cafe.backgroundColor,
+    "#0B1220",
+  );
+
+  const pageIsLight = isLightColor(backgroundColor);
+
+  const cardBackground = mixColors(
+    backgroundColor,
+    pageIsLight ? "#FFFFFF" : primaryColor,
+    pageIsLight ? 0.9 : 0.86,
+  );
+
+  const cardIsLight = isLightColor(cardBackground);
+
+  const textPrimary = getReadableText(cardBackground);
+
+  const textSecondary = cardIsLight
+    ? withAlpha("#171717", 0.68)
+    : withAlpha("#FFFFFF", 0.7);
+
+  const textMuted = cardIsLight
+    ? withAlpha("#171717", 0.5)
+    : withAlpha("#FFFFFF", 0.48);
+
+  const cardBorder = cardIsLight
+    ? withAlpha("#000000", 0.1)
+    : withAlpha("#FFFFFF", 0.1);
+
+  const surfaceColor = cardIsLight
+    ? withAlpha("#000000", 0.035)
+    : withAlpha("#FFFFFF", 0.045);
+
+  const surfaceRaised = cardIsLight
+    ? withAlpha("#FFFFFF", 0.64)
+    : withAlpha("#FFFFFF", 0.07);
+
+  const emptyStampBackground = cardIsLight
+    ? mixColors(cardBackground, "#000000", 0.92)
+    : mixColors(cardBackground, "#000000", 0.68);
+
+  const emptyStampText = getReadableText(emptyStampBackground);
+
+  const accentText = getReadableText(primaryColor);
+
+  const primarySoft = withAlpha(primaryColor, cardIsLight ? 0.13 : 0.2);
+
+  const primaryBorder = withAlpha(primaryColor, cardIsLight ? 0.32 : 0.42);
+
+  const primaryGlow = withAlpha(primaryColor, 0.32);
+
+  const secondaryGlow = withAlpha(secondaryColor, 0.25);
 
   return (
     <main
-      className={`min-h-screen px-4 py-6 text-white transition-colors duration-700 sm:px-6 sm:py-10 ${
-        rewardReady
-          ? "bg-[radial-gradient(circle_at_top,#17352a_0%,#090909_45%)]"
-          : "bg-[radial-gradient(circle_at_top,#24160f_0%,#090909_45%)]"
-      }`}
+      className="min-h-screen px-4 py-6 transition-colors duration-700 sm:px-6 sm:py-10"
+      style={{
+        color: textPrimary,
+        background: `
+          radial-gradient(
+            circle at 50% -10%,
+            ${withAlpha(primaryColor, 0.42)} 0%,
+            transparent 38%
+          ),
+          radial-gradient(
+            circle at 100% 55%,
+            ${withAlpha(secondaryColor, 0.22)} 0%,
+            transparent 42%
+          ),
+          ${backgroundColor}
+        `,
+      }}
     >
       <div className="mx-auto max-w-md">
         <div
-          className={`relative overflow-hidden rounded-[34px] border shadow-[0_35px_120px_rgba(0,0,0,0.6)] transition-all duration-700 ${
-            rewardReady
-              ? "border-emerald-400/20 bg-[#101814]"
-              : "border-white/[0.08] bg-[#131313]"
-          }`}
+          className="relative overflow-hidden rounded-[34px] border shadow-[0_35px_120px_rgba(0,0,0,0.35)] transition-all duration-700"
+          style={{
+            borderColor: cardBorder,
+            backgroundColor: cardBackground,
+          }}
         >
           {rewardReady && (
             <>
-              <div className="pointer-events-none absolute left-[12%] top-10 h-2 w-2 animate-ping rounded-full bg-emerald-300/60" />
-              <div className="pointer-events-none absolute right-[18%] top-24 h-2 w-2 animate-ping rounded-full bg-amber-200/60 [animation-delay:300ms]" />
-              <div className="pointer-events-none absolute bottom-40 left-[20%] h-2 w-2 animate-ping rounded-full bg-emerald-200/60 [animation-delay:600ms]" />
-              <div className="pointer-events-none absolute bottom-24 right-[12%] h-2 w-2 animate-ping rounded-full bg-amber-200/60 [animation-delay:900ms]" />
+              <div className="pointer-events-none absolute left-[12%] top-10 h-2 w-2 animate-ping rounded-full bg-emerald-400/60" />
+
+              <div className="pointer-events-none absolute right-[18%] top-24 h-2 w-2 animate-ping rounded-full bg-amber-300/60 [animation-delay:300ms]" />
+
+              <div className="pointer-events-none absolute bottom-40 left-[20%] h-2 w-2 animate-ping rounded-full bg-emerald-300/60 [animation-delay:600ms]" />
+
+              <div className="pointer-events-none absolute bottom-24 right-[12%] h-2 w-2 animate-ping rounded-full bg-amber-300/60 [animation-delay:900ms]" />
             </>
           )}
 
-          <header className="relative overflow-hidden border-b border-white/[0.06] px-6 pb-7 pt-8">
+          <header
+            className="relative overflow-hidden border-b px-6 pb-7 pt-8"
+            style={{
+              borderColor: cardBorder,
+            }}
+          >
             <div
-              className={`absolute -right-16 -top-20 h-56 w-56 rounded-full blur-3xl transition-colors duration-700 ${
-                rewardReady ? "bg-emerald-500/15" : "bg-[#9d6747]/20"
-              }`}
+              className="absolute -right-16 -top-20 h-56 w-56 rounded-full blur-3xl"
+              style={{
+                backgroundColor: rewardReady
+                  ? "rgba(16,185,129,0.18)"
+                  : primaryGlow,
+              }}
             />
 
-            <div className="absolute -bottom-24 -left-16 h-48 w-48 rounded-full bg-[#8e6045]/10 blur-3xl" />
+            <div
+              className="absolute -bottom-24 -left-16 h-48 w-48 rounded-full blur-3xl"
+              style={{
+                backgroundColor: secondaryGlow,
+              }}
+            />
 
             <div className="relative">
               <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2
-                    className={`text-3xl font-semibold tracking-[0.22em] sm:text-4xl ${
-                      rewardReady ? "text-emerald-300" : "text-[#d6a27c]"
-                    }`}
-                  >
-                    LORETTO
-                  </h2>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-4">
+                    {customer.cafe.logoUrl ? (
+                      <img
+                        src={customer.cafe.logoUrl}
+                        alt={`${customer.cafe.name} logo`}
+                        className="h-12 w-12 shrink-0 object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,0.14)] sm:h-14 sm:w-14"
+                      />
+                    ) : null}
 
-                  <p className="mt-3 text-xs tracking-[0.12em] text-[#766c66]">
-                    DIGITAL LOYALTY CARD
-                  </p>
+                    <div className="min-w-0">
+                      <h2
+                        className="break-words text-2xl font-semibold tracking-[0.07em] sm:text-3xl"
+                        style={{
+                          color: rewardReady ? "#10B981" : textPrimary,
+                        }}
+                      >
+                        {customer.cafe.name}
+                      </h2>
+
+                      <p
+                        className="mt-2 text-[10px] font-semibold tracking-[0.16em]"
+                        style={{
+                          color: primaryColor,
+                        }}
+                      >
+                        DIGITAL LOYALTY CARD
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <button
@@ -301,7 +576,12 @@ export default function DigitalCardPage() {
                   onClick={() => loadCard(true)}
                   disabled={refreshing}
                   aria-label="Refresh loyalty card"
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.035] text-[#a99a90] transition hover:bg-white/[0.07] disabled:opacity-50"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition hover:opacity-75 disabled:opacity-50"
+                  style={{
+                    borderColor: cardBorder,
+                    backgroundColor: surfaceColor,
+                    color: textSecondary,
+                  }}
                 >
                   <RefreshCw
                     size={16}
@@ -310,47 +590,68 @@ export default function DigitalCardPage() {
                 </button>
               </div>
 
-             <h1 className="mt-10 text-3xl font-semibold tracking-tight text-[#f4ede8]">
-  {customer.name}
-</h1>
+              <h1
+                className="mt-10 text-3xl font-semibold tracking-tight"
+                style={{
+                  color: textPrimary,
+                }}
+              >
+                {customer.name}
+              </h1>
             </div>
           </header>
 
           <div className="space-y-6 p-6">
             <section
-              className={`relative overflow-hidden rounded-3xl border p-5 transition-all duration-700 ${
-                rewardReady
-                  ? "border-emerald-400/25 bg-emerald-500/[0.08]"
-                  : "border-[#9b694b]/20 bg-[#9b694b]/[0.06]"
-              }`}
+              className="relative overflow-hidden rounded-3xl border p-5 transition-all duration-700"
+              style={{
+                borderColor: rewardReady
+                  ? "rgba(16,185,129,0.35)"
+                  : primaryBorder,
+
+                backgroundColor: rewardReady
+                  ? cardIsLight
+                    ? "rgba(16,185,129,0.10)"
+                    : "rgba(16,185,129,0.12)"
+                  : primarySoft,
+              }}
             >
               <div
-                className={`absolute -right-12 -top-12 h-36 w-36 rounded-full blur-3xl ${
-                  rewardReady ? "bg-emerald-400/10" : "bg-[#a77758]/10"
-                }`}
+                className="absolute -right-12 -top-12 h-36 w-36 rounded-full blur-3xl"
+                style={{
+                  backgroundColor: rewardReady
+                    ? "rgba(52,211,153,0.16)"
+                    : primaryGlow,
+                }}
               />
 
               <div className="relative flex items-center gap-4">
                 <div
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
-                    rewardReady
-                      ? "bg-emerald-500/10 text-emerald-300"
-                      : "bg-[#9b694b]/15 text-[#d3a27d]"
-                  }`}
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
+                  style={{
+                    backgroundColor: surfaceRaised,
+                    color: rewardReady ? "#10B981" : primaryColor,
+                  }}
                 >
                   {rewardReady ? <Gift size={23} /> : <Sparkles size={22} />}
                 </div>
 
-                <div>
+                <div className="min-w-0">
                   <p
-                    className={`font-semibold ${
-                      rewardReady ? "text-emerald-200" : "text-[#e1c7b4]"
-                    }`}
+                    className="font-semibold"
+                    style={{
+                      color: rewardReady ? "#10B981" : textPrimary,
+                    }}
                   >
                     {progressMessage.title}
                   </p>
 
-                  <p className="mt-1 text-xs leading-5 text-[#8a7d75]">
+                  <p
+                    className="mt-1 text-xs leading-5"
+                    style={{
+                      color: textSecondary,
+                    }}
+                  >
                     {progressMessage.description}
                   </p>
                 </div>
@@ -360,109 +661,239 @@ export default function DigitalCardPage() {
             <section>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-[#ded3cb]">
+                  <p
+                    className="text-sm font-medium"
+                    style={{
+                      color: textPrimary,
+                    }}
+                  >
                     Your stamp card
                   </p>
 
-                  <p className="mt-1 text-xs text-[#716762]">
-                    One stamp per eligible drink
+                  <p
+                    className="mt-1 text-xs"
+                    style={{
+                      color: textMuted,
+                    }}
+                  >
+                    {customer.cafe.eligiblePurchaseDescription ||
+                      "One stamp per eligible purchase"}
                   </p>
                 </div>
 
                 <span
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
-                    rewardReady
-                      ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-300"
-                      : "border-[#9b694b]/35 bg-[#9b694b]/15 text-[#ddb08e]"
-                  }`}
+                  className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold"
+                  style={{
+                    borderColor: rewardReady
+                      ? "rgba(16,185,129,0.35)"
+                      : primaryBorder,
+
+                    backgroundColor: rewardReady
+                      ? "rgba(16,185,129,0.12)"
+                      : primarySoft,
+
+                    color: rewardReady ? "#10B981" : primaryColor,
+                  }}
                 >
                   {rewardReady
                     ? "Reward ready"
-                    : `${visibleStamps}/${REWARD_TARGET}`}
+                    : `${visibleStamps}/${rewardTarget}`}
                 </span>
               </div>
 
               <div className="mt-5 grid grid-cols-4 gap-3">
-                {Array.from({ length: REWARD_TARGET }).map((_, index) => {
+                {Array.from({
+                  length: rewardTarget,
+                }).map((_, index) => {
                   const filled = index < visibleStamps;
+
                   const isNewStamp = newStampIndex === index;
+
+                  const filledBackground = rewardReady
+                    ? "#10B981"
+                    : primaryColor;
 
                   return (
                     <div
                       key={index}
                       className={`flex aspect-square items-center justify-center rounded-2xl border transition-all duration-500 ${
-                        filled
-                          ? rewardReady
-                            ? "border-emerald-400/35 bg-emerald-500/10"
-                            : "border-[#a16e50]/55 bg-[#a16e50]/20"
-                          : "border-white/[0.07] bg-[#0d0d0d]"
-                      } ${
-                        isNewStamp
-                          ? "scale-125 shadow-[0_0_30px_rgba(221,167,126,0.45)]"
-                          : "scale-100"
+                        isNewStamp ? "scale-125" : "scale-100"
                       }`}
+                      style={{
+                        borderColor: filled
+                          ? rewardReady
+                            ? "rgba(16,185,129,0.55)"
+                            : primaryColor
+                          : cardBorder,
+
+                        backgroundColor: filled
+                          ? filledBackground
+                          : emptyStampBackground,
+
+                        boxShadow: isNewStamp
+                          ? `0 0 30px ${primaryGlow}`
+                          : "none",
+                      }}
                     >
                       <Coffee
                         size={23}
                         className={`transition-all duration-500 ${
-                          filled
+                          isNewStamp ? "rotate-12 scale-125" : ""
+                        }`}
+                        style={{
+                          color: filled
                             ? rewardReady
-                              ? "fill-emerald-300 text-emerald-300"
-                              : "fill-[#dda77e] text-[#dda77e]"
-                            : "text-[#49433f]"
-                        } ${isNewStamp ? "rotate-12 scale-125" : ""}`}
+                              ? "#FFFFFF"
+                              : accentText
+                            : emptyStampText,
+
+                          fill: filled
+                            ? rewardReady
+                              ? "#FFFFFF"
+                              : accentText
+                            : "transparent",
+
+                          opacity: filled ? 1 : 0.65,
+                        }}
                       />
                     </div>
                   );
                 })}
               </div>
 
-              <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/[0.06]">
+              <div
+                className="mt-5 h-2 overflow-hidden rounded-full"
+                style={{
+                  backgroundColor: surfaceColor,
+                }}
+              >
                 <div
-                  className={`h-full rounded-full transition-all duration-700 ${
-                    rewardReady ? "bg-emerald-500" : "bg-[#a77758]"
-                  }`}
+                  className="h-full rounded-full transition-all duration-700"
                   style={{
                     width: `${progressPercentage}%`,
+                    backgroundColor: rewardReady ? "#10B981" : primaryColor,
                   }}
                 />
               </div>
 
-              <p className="mt-3 text-sm text-[#82766f]">
+              <p
+                className="mt-3 text-sm"
+                style={{
+                  color: textSecondary,
+                }}
+              >
                 {rewardReady
-                  ? "You completed your loyalty card."
+                  ? `You completed your card. Your ${
+                      customer.cafe.rewardName || "reward"
+                    } is ready.`
                   : `${remainingStamps} more ${
                       remainingStamps === 1 ? "stamp" : "stamps"
-                    } until your free drink.`}
+                    } until your ${
+                      customer.cafe.rewardName?.toLowerCase() || "reward"
+                    }.`}
               </p>
             </section>
 
+            {customer.cafe.rewardDescription ? (
+              <section
+                className="rounded-2xl border p-4"
+                style={{
+                  borderColor: cardBorder,
+                  backgroundColor: surfaceColor,
+                }}
+              >
+                <p
+                  className="text-xs"
+                  style={{
+                    color: textMuted,
+                  }}
+                >
+                  Your reward
+                </p>
+
+                <p
+                  className="mt-1 text-sm leading-6"
+                  style={{
+                    color: textSecondary,
+                  }}
+                >
+                  {customer.cafe.rewardDescription}
+                </p>
+              </section>
+            ) : null}
+
             <section className="grid gap-3">
-              <div className="flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#9b694b]/10 text-[#c58e69]">
+              <div
+                className="flex items-center gap-4 rounded-2xl border p-4"
+                style={{
+                  borderColor: cardBorder,
+                  backgroundColor: surfaceColor,
+                }}
+              >
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{
+                    backgroundColor: primarySoft,
+                    color: primaryColor,
+                  }}
+                >
                   <CalendarDays size={19} />
                 </div>
 
                 <div>
-                  <p className="text-xs text-[#706762]">Birthday</p>
+                  <p
+                    className="text-xs"
+                    style={{
+                      color: textMuted,
+                    }}
+                  >
+                    Birthday
+                  </p>
 
-                  <p className="mt-1 text-sm font-medium text-[#e4dad3]">
+                  <p
+                    className="mt-1 text-sm font-medium"
+                    style={{
+                      color: textPrimary,
+                    }}
+                  >
                     {birthdayText}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#9b694b]/10 text-[#c58e69]">
+              <div
+                className="flex items-center gap-4 rounded-2xl border p-4"
+                style={{
+                  borderColor: cardBorder,
+                  backgroundColor: surfaceColor,
+                }}
+              >
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-xl"
+                  style={{
+                    backgroundColor: primarySoft,
+                    color: primaryColor,
+                  }}
+                >
                   <CheckCircle2 size={19} />
                 </div>
 
                 <div>
-                  <p className="text-xs text-[#706762]">
+                  <p
+                    className="text-xs"
+                    style={{
+                      color: textMuted,
+                    }}
+                  >
                     Birthday countdown
                   </p>
 
-                  <p className="mt-1 text-sm font-medium text-[#e4dad3]">
+                  <p
+                    className="mt-1 text-sm font-medium"
+                    style={{
+                      color: textPrimary,
+                    }}
+                  >
                     {daysUntilBirthday === 0
                       ? "Happy birthday!"
                       : `${daysUntilBirthday} ${
@@ -473,31 +904,247 @@ export default function DigitalCardPage() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-              <p className="text-xs text-[#706762]">Last updated</p>
+            <section
+              className="rounded-2xl border p-4"
+              style={{
+                borderColor: cardBorder,
+                backgroundColor: surfaceColor,
+              }}
+            >
+              <p
+                className="text-xs"
+                style={{
+                  color: textMuted,
+                }}
+              >
+                Last updated
+              </p>
 
-              <p className="mt-1 text-sm font-medium text-[#d8cec7]">
+              <p
+                className="mt-1 text-sm font-medium"
+                style={{
+                  color: textPrimary,
+                }}
+              >
                 {lastUpdated}
               </p>
             </section>
 
-            <footer className="border-t border-white/[0.06] pt-5 text-center">
-              <div className="flex items-center justify-center gap-1.5 text-xs text-[#665d58]">
+            <section
+              className="space-y-3 border-t pt-6"
+              style={{
+                borderColor: cardBorder,
+              }}
+            >
+             <button
+  type="button"
+  onClick={handleAddToAppleWallet}
+  className="flex h-14 w-full items-center justify-center rounded-2xl px-5 text-sm font-semibold transition duration-200 hover:-translate-y-0.5 hover:opacity-95 active:translate-y-0 active:scale-[0.99]"
+  style={{
+    backgroundColor: primaryColor,
+    color: accentText,
+    boxShadow: `0 14px 35px ${withAlpha(primaryColor, 0.24)}`,
+  }}
+>
+  Add to Apple Wallet
+</button>
+
+              <button
+                type="button"
+                onClick={() => setShowQrCode(true)}
+                className="flex h-12 w-full items-center justify-center gap-2.5 rounded-2xl border px-5 text-sm font-semibold transition duration-200 hover:-translate-y-0.5 hover:opacity-85 active:translate-y-0 active:scale-[0.99]"
+                style={{
+                  borderColor: cardBorder,
+                  backgroundColor: surfaceColor,
+                  color: textPrimary,
+                }}
+              >
+                <QrCode size={18} />
+
+                <span>Show QR Code</span>
+              </button>
+
+              <p
+                className="px-3 text-center text-[11px] leading-5"
+                style={{
+                  color: textMuted,
+                }}
+              >
+                Save your card to Apple Wallet, or show the QR code directly to
+                the cashier.
+              </p>
+            </section>
+
+            <footer
+              className="border-t pt-5 text-center"
+              style={{
+                borderColor: cardBorder,
+              }}
+            >
+              <div
+                className="flex items-center justify-center gap-1.5 text-xs"
+                style={{
+                  color: textMuted,
+                }}
+              >
                 <Heart size={13} />
-                <span>Thank you for being part of Loretto</span>
+
+                <span>Thank you for being part of {customer.cafe.name}</span>
               </div>
 
-              <p className="mt-3 text-xs text-[#514a46]">
+              <p
+                className="mt-3 text-xs"
+                style={{
+                  color: textMuted,
+                }}
+              >
                 Member since {memberSince}
               </p>
 
-              <p className="mt-2 text-xs text-[#45403d]">
+              <p
+                className="mt-2 text-xs"
+                style={{
+                  color: textMuted,
+                  opacity: 0.75,
+                }}
+              >
                 This card updates automatically.
               </p>
             </footer>
           </div>
         </div>
       </div>
+
+      {showQrCode ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-5 py-8 backdrop-blur-md"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Loyalty card QR code"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowQrCode(false);
+            }
+          }}
+        >
+          <div
+            className="relative w-full max-w-sm overflow-hidden rounded-[30px] border p-6 shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
+            style={{
+              borderColor: cardBorder,
+              backgroundColor: cardBackground,
+              color: textPrimary,
+            }}
+          >
+            <div
+              className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full blur-3xl"
+              style={{
+                backgroundColor: primaryGlow,
+              }}
+            />
+
+            <button
+              type="button"
+              onClick={() => setShowQrCode(false)}
+              aria-label="Close QR code"
+              className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border transition hover:opacity-75"
+              style={{
+                borderColor: cardBorder,
+                backgroundColor: surfaceColor,
+                color: textSecondary,
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            <div className="relative text-center">
+              {customer.cafe.logoUrl ? (
+                <img
+                  src={customer.cafe.logoUrl}
+                  alt={`${customer.cafe.name} logo`}
+                  className="mx-auto h-12 w-12 object-contain"
+                />
+              ) : (
+                <div
+                  className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl text-lg font-semibold"
+                  style={{
+                    backgroundColor: primarySoft,
+                    color: primaryColor,
+                  }}
+                >
+                  {customer.cafe.name.trim().charAt(0).toUpperCase()}
+                </div>
+              )}
+
+              <p
+                className="mt-4 text-lg font-semibold"
+                style={{
+                  color: textPrimary,
+                }}
+              >
+                Your loyalty code
+              </p>
+
+              <p
+                className="mt-2 text-sm leading-6"
+                style={{
+                  color: textSecondary,
+                }}
+              >
+                Show this code to the cashier when you make an eligible
+                purchase.
+              </p>
+
+              <div className="mx-auto mt-6 w-fit rounded-[24px] bg-white p-4 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
+                <QRCode
+                  value={`BL:${customer.publicToken}`}
+                  size={220}
+                  bgColor="#FFFFFF"
+                  fgColor="#111111"
+                  level="M"
+                />
+              </div>
+
+              <div
+                className="mt-5 rounded-2xl border px-4 py-3"
+                style={{
+                  borderColor: cardBorder,
+                  backgroundColor: surfaceColor,
+                }}
+              >
+                <p
+                  className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+                  style={{
+                    color: textMuted,
+                  }}
+                >
+                  Member number
+                </p>
+
+                <p
+                  className="mt-1 text-sm font-semibold tracking-[0.08em]"
+                  style={{
+                    color: textPrimary,
+                  }}
+                >
+                  {customer.memberNumber}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowQrCode(false)}
+                className="mt-5 h-12 w-full rounded-2xl text-sm font-semibold transition hover:opacity-90 active:scale-[0.99]"
+                style={{
+                  backgroundColor: primaryColor,
+                  color: accentText,
+                }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

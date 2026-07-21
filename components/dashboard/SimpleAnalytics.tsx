@@ -1,89 +1,192 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
+  CircleGauge,
   Coffee,
   Gift,
+  LoaderCircle,
+  RefreshCw,
+  TriangleAlert,
   UserPlus,
   Users,
 } from "lucide-react";
 
-type Analytics = {
+import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
+
+type AnalyticsData = {
   totalMembers: number;
   newMembersToday: number;
   totalStamps: number;
   rewardsReady: number;
+  rewardTarget: number;
+  rewardName: string;
 };
 
 export default function SimpleAnalytics() {
-  const [analytics, setAnalytics] =
-    useState<Analytics | null>(null);
+  const { theme } = useCafeTheme();
 
+  const [data, setData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
-  async function loadAnalytics() {
-    try {
-      setError("");
+  const loadAnalytics = useCallback(
+    async (showRefreshing = false) => {
+      try {
+        if (showRefreshing) {
+          setRefreshing(true);
+        }
 
-      const response = await fetch("/api/analytics", {
-        cache: "no-store",
-      });
+        setError("");
 
-      const data = await response.json();
+        const response = await fetch("/api/analytics", {
+          cache: "no-store",
+        });
 
-      if (!response.ok) {
-        throw new Error(
-          data.message || "Failed to load analytics."
+        const responseText = await response.text();
+
+        let responseData: Partial<AnalyticsData> & {
+          message?: string;
+        } = {};
+
+        if (responseText) {
+          try {
+            responseData = JSON.parse(responseText);
+          } catch {
+            throw new Error(
+              "Analytics returned an invalid response."
+            );
+          }
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            responseData.message ||
+              "Failed to load analytics."
+          );
+        }
+
+        setData(responseData as AnalyticsData);
+      } catch (error) {
+        console.error("Analytics load error:", error);
+
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Failed to load analytics."
         );
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
       }
-
-      setAnalytics(data);
-    } catch (error) {
-      console.error(error);
-
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to load analytics."
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
+    },
+    []
+  );
 
   useEffect(() => {
     loadAnalytics();
 
-    function handleUpdate() {
-      loadAnalytics();
+    function handleMembersUpdated() {
+      loadAnalytics(true);
     }
 
     window.addEventListener(
       "members-updated",
-      handleUpdate
+      handleMembersUpdated
     );
 
     return () => {
       window.removeEventListener(
         "members-updated",
-        handleUpdate
+        handleMembersUpdated
       );
     };
-  }, []);
+  }, [loadAnalytics]);
 
   if (loading) {
     return (
-      <div className="mt-8 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-6 text-sm text-[#817771]">
-        Loading analytics...
+      <div
+        className="flex min-h-40 items-center justify-center border p-8"
+        style={{
+          borderColor: theme.border,
+          backgroundColor: theme.surface,
+          borderRadius: theme.radiusLarge,
+          boxShadow: theme.cardShadow,
+        }}
+      >
+        <div className="text-center">
+          <LoaderCircle
+            size={27}
+            className="mx-auto animate-spin"
+            style={{
+              color: theme.accent,
+            }}
+          />
+
+          <p
+            className="mt-4 text-sm"
+            style={{
+              color: theme.textMuted,
+            }}
+          >
+            Loading analytics...
+          </p>
+        </div>
       </div>
     );
   }
 
-  if (error || !analytics) {
+  if (error || !data) {
     return (
-      <div className="mt-8 rounded-2xl border border-red-500/20 bg-red-500/[0.06] p-5 text-sm text-red-300">
-        {error}
+      <div
+        className="border p-7 text-center"
+        style={{
+          borderColor: `${theme.danger}45`,
+          backgroundColor: `${theme.danger}12`,
+          borderRadius: theme.radiusLarge,
+        }}
+      >
+        <TriangleAlert
+          size={26}
+          className="mx-auto"
+          style={{
+            color: theme.danger,
+          }}
+        />
+
+        <p
+          className="mt-4 font-medium"
+          style={{
+            color: theme.textPrimary,
+          }}
+        >
+          Analytics could not load
+        </p>
+
+        <p
+          className="mt-2 text-sm"
+          style={{
+            color: theme.textMuted,
+          }}
+        >
+          {error || "Something went wrong."}
+        </p>
+
+        <button
+          type="button"
+          onClick={() => loadAnalytics(true)}
+          className="mt-5 inline-flex h-10 items-center justify-center gap-2 border px-4 text-sm font-medium transition hover:opacity-90"
+          style={{
+            borderColor: theme.border,
+            backgroundColor: theme.surfaceRaised,
+            color: theme.textPrimary,
+            borderRadius: theme.radiusMedium,
+          }}
+        >
+          <RefreshCw size={15} />
+          Try again
+        </button>
       </div>
     );
   }
@@ -91,55 +194,174 @@ export default function SimpleAnalytics() {
   const cards = [
     {
       label: "Total members",
-      value: analytics.totalMembers,
+      value: data.totalMembers,
+      helper: "All loyalty members",
       icon: Users,
     },
     {
       label: "New today",
-      value: analytics.newMembersToday,
+      value: data.newMembersToday,
+      helper: "Members added today",
       icon: UserPlus,
     },
     {
-      label: "Active stamps",
-      value: analytics.totalStamps,
+      label: "Total stamps",
+      value: data.totalStamps,
+      helper: "Current active stamps",
       icon: Coffee,
     },
     {
       label: "Rewards ready",
-      value: analytics.rewardsReady,
+      value: data.rewardsReady,
+      helper:
+        data.rewardsReady === 1
+          ? `1 ${data.rewardName.toLowerCase()} ready`
+          : `${data.rewardsReady} rewards ready`,
       icon: Gift,
     },
   ];
 
   return (
-    <section className="mt-8">
-      <p className="mb-4 text-sm font-medium text-[#b9aaa0]">
-        Overview
-      </p>
+    <section
+      className="border p-5 sm:p-6"
+      style={{
+        borderColor: theme.border,
+        backgroundColor: theme.surface,
+        borderRadius: theme.radiusLarge,
+        boxShadow: theme.cardShadow,
+      }}
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div
+            className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.15em]"
+            style={{
+              color: theme.textSecondary,
+            }}
+          >
+            <CircleGauge size={15} />
+            Overview
+          </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <h2
+            className="mt-2 text-xl font-semibold tracking-tight"
+            style={{
+              color: theme.textPrimary,
+            }}
+          >
+            Loyalty activity
+          </h2>
+
+          <p
+            className="mt-2 text-sm"
+            style={{
+              color: theme.textMuted,
+            }}
+          >
+            A simple view of members, stamps, and rewards.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => loadAnalytics(true)}
+          disabled={refreshing}
+          className="flex h-10 items-center justify-center gap-2 border px-4 text-sm font-medium transition hover:opacity-90 disabled:opacity-50"
+          style={{
+            borderColor: theme.border,
+            backgroundColor: theme.surfaceRaised,
+            color: theme.textPrimary,
+            borderRadius: theme.radiusMedium,
+          }}
+        >
+          <RefreshCw
+            size={15}
+            className={refreshing ? "animate-spin" : ""}
+          />
+          Refresh
+        </button>
+      </div>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {cards.map((card) => {
           const Icon = card.icon;
 
           return (
-            <div
+            <article
               key={card.label}
-              className="rounded-2xl border border-white/[0.07] bg-[#141414] p-5"
+              className="border p-5 transition duration-200 hover:-translate-y-0.5"
+              style={{
+                borderColor: theme.border,
+                backgroundColor: theme.surfaceRaised,
+                borderRadius: theme.radiusMedium,
+              }}
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#8e6045]/15 text-[#d5a985]">
-                <Icon size={17} />
+              <div
+                className="flex h-11 w-11 items-center justify-center"
+                style={{
+                  backgroundColor: theme.accentSoft,
+                  color: theme.accent,
+                  borderRadius: theme.radiusMedium,
+                }}
+              >
+                <Icon size={20} />
               </div>
 
-              <p className="mt-5 text-3xl font-semibold tracking-tight text-white">
+              <p
+                className="mt-5 text-3xl font-semibold tracking-tight"
+                style={{
+                  color: theme.textPrimary,
+                }}
+              >
                 {card.value}
               </p>
 
-              <p className="mt-1 text-xs text-[#817771]">
+              <p
+                className="mt-2 text-sm font-medium"
+                style={{
+                  color: theme.textSecondary,
+                }}
+              >
                 {card.label}
               </p>
-            </div>
+
+              <p
+                className="mt-1 text-xs"
+                style={{
+                  color: theme.textMuted,
+                }}
+              >
+                {card.helper}
+              </p>
+            </article>
           );
         })}
+      </div>
+
+      <div
+        className="mt-5 flex flex-col gap-3 border px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between"
+        style={{
+          borderColor: theme.border,
+          backgroundColor: theme.accentSoft,
+          borderRadius: theme.radiusMedium,
+        }}
+      >
+        <span
+          style={{
+            color: theme.textMuted,
+          }}
+        >
+          Reward program
+        </span>
+
+        <span
+          className="font-medium"
+          style={{
+            color: theme.textPrimary,
+          }}
+        >
+          {data.rewardTarget} stamps → {data.rewardName}
+        </span>
       </div>
     </section>
   );

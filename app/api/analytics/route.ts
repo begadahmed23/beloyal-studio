@@ -3,12 +3,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
 
-const REWARD_TARGET = 7;
-
 export async function GET(request: NextRequest) {
-  const session = await requireAuth(request.headers);
+  const authData = await requireAuth(request.headers);
 
-  if (!session) {
+  if (!authData) {
     return NextResponse.json(
       { message: "Unauthorized." },
       { status: 401 }
@@ -17,8 +15,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const today = new Date();
-
     today.setHours(0, 0, 0, 0);
+
+    const cafeId = authData.cafeId;
+    const rewardTarget = authData.cafe.rewardTarget;
 
     const [
       totalMembers,
@@ -26,10 +26,15 @@ export async function GET(request: NextRequest) {
       rewardsReady,
       stampResult,
     ] = await Promise.all([
-      prisma.customer.count(),
+      prisma.customer.count({
+        where: {
+          cafeId,
+        },
+      }),
 
       prisma.customer.count({
         where: {
+          cafeId,
           createdAt: {
             gte: today,
           },
@@ -38,13 +43,17 @@ export async function GET(request: NextRequest) {
 
       prisma.customer.count({
         where: {
+          cafeId,
           stamps: {
-            gte: REWARD_TARGET,
+            gte: rewardTarget,
           },
         },
       }),
 
       prisma.customer.aggregate({
+        where: {
+          cafeId,
+        },
         _sum: {
           stamps: true,
         },
@@ -56,6 +65,8 @@ export async function GET(request: NextRequest) {
       newMembersToday,
       totalStamps: stampResult._sum.stamps ?? 0,
       rewardsReady,
+      rewardTarget,
+      rewardName: authData.cafe.rewardName,
     });
   } catch (error) {
     console.error("Analytics error:", error);

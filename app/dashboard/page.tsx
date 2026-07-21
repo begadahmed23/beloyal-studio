@@ -1,59 +1,119 @@
-import { UserRound } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowRight,
+  Monitor,
+  Smartphone,
+  Users,
+} from "lucide-react";
 
-import LogoutButton from "@/components/auth/LogoutButton";
+import JoinQRCode from "@/components/dashboard/JoinQRCode";
 import SimpleAnalytics from "@/components/dashboard/SimpleAnalytics";
-import MemberList from "@/components/customers/MemberList";
-import NewCustomerDialog from "@/components/customers/NewCustomerDialog";
 
-export default function Dashboard() {
+export default function DashboardPage() {
   return (
-    <main className="min-h-screen bg-[#0c0c0c] text-white">
-      <div className="mx-auto max-w-7xl px-6 py-8 lg:px-10">
-        <header className="flex items-center justify-between border-b border-white/5 pb-7">
-          <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-[#e2bea0]">
-              Loretto
-            </h1>
+    <div>
+      <div>
+        <p className="text-sm opacity-60">
+          Business overview
+        </p>
 
-            <p className="mt-1 text-sm text-[#8d827a]">
-              Loyalty management
-            </p>
-          </div>
+        <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+          Dashboard
+        </h2>
 
-          <div className="flex items-center gap-3">
-            <LogoutButton />
-
-            <div className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[#d7c4b4]">
-              <UserRound size={19} />
-            </div>
-          </div>
-        </header>
-
-        <SimpleAnalytics />
-
-        <section className="py-9">
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm font-medium text-[#a67a5d]">
-                Member management
-              </p>
-
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                Members
-              </h2>
-
-              <p className="mt-2 max-w-xl text-sm leading-6 text-[#8d827a]">
-                Find members, manage loyalty cards, and add
-                stamps after every eligible drink purchase.
-              </p>
-            </div>
-
-            <NewCustomerDialog />
-          </div>
-
-          <MemberList />
-        </section>
+        <p className="mt-2 max-w-2xl text-sm leading-6 opacity-60">
+          Scan customers, manage members, and review your
+          café activity.
+        </p>
       </div>
-    </main>
+
+      <div className="mt-8 grid gap-3 md:grid-cols-3">
+        <Link
+          href="/dashboard/scanner"
+          className="group flex min-h-32 items-center justify-between rounded-2xl border p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border bg-current/[0.04]">
+              <Monitor size={22} />
+            </div>
+
+            <div>
+              <p className="font-semibold">
+                USB scanner
+              </p>
+
+              <p className="mt-1 text-xs leading-5 opacity-55">
+                Scan from the cashier computer
+              </p>
+            </div>
+          </div>
+
+          <ArrowRight
+            size={18}
+            className="transition group-hover:translate-x-1"
+          />
+        </Link>
+
+        <Link
+          href="/dashboard/scanner/phone"
+          className="group flex min-h-32 items-center justify-between rounded-2xl border p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border bg-current/[0.04]">
+              <Smartphone size={22} />
+            </div>
+
+            <div>
+              <p className="font-semibold">
+                Phone scanner
+              </p>
+
+              <p className="mt-1 text-xs leading-5 opacity-55">
+                Scan using a phone camera
+              </p>
+            </div>
+          </div>
+
+          <ArrowRight
+            size={18}
+            className="transition group-hover:translate-x-1"
+          />
+        </Link>
+
+        <Link
+          href="/dashboard/members"
+          className="group flex min-h-32 items-center justify-between rounded-2xl border p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
+        >
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border bg-current/[0.04]">
+              <Users size={22} />
+            </div>
+
+            <div>
+              <p className="font-semibold">
+                Manage members
+              </p>
+
+              <p className="mt-1 text-xs leading-5 opacity-55">
+                Search and review customer cards
+              </p>
+            </div>
+          </div>
+
+          <ArrowRight
+            size={18}
+            className="transition group-hover:translate-x-1"
+          />
+        </Link>
+      </div>
+
+      <div className="mt-8">
+        <JoinQRCode />
+      </div>
+
+      <div className="mt-8">
+        <SimpleAnalytics />
+      </div>
+    </div>
   );
 }

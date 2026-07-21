@@ -14,9 +14,9 @@ export async function PATCH(
   request: NextRequest,
   context: RouteContext
 ) {
-  const session = await requireAuth(request.headers);
+  const authData = await requireAuth(request.headers);
 
-  if (!session) {
+  if (!authData) {
     return NextResponse.json(
       { message: "Unauthorized." },
       { status: 401 }
@@ -28,24 +28,33 @@ export async function PATCH(
     const body = await request.json();
 
     const name =
-      typeof body.name === "string" ? body.name.trim() : "";
+      typeof body.name === "string"
+        ? body.name.trim()
+        : "";
 
     const phone =
-      typeof body.phone === "string" ? body.phone.trim() : "";
+      typeof body.phone === "string"
+        ? body.phone.trim()
+        : "";
 
     const birthday =
-      typeof body.birthday === "string" ? body.birthday : "";
+      typeof body.birthday === "string"
+        ? body.birthday
+        : "";
 
-    if (!id) {
+    if (!id || !name || !phone || !birthday) {
       return NextResponse.json(
-        { message: "Customer ID is required." },
+        { message: "All fields are required." },
         { status: 400 }
       );
     }
 
-    if (!name || !phone || !birthday) {
+    if (name.length > 100) {
       return NextResponse.json(
-        { message: "All fields are required." },
+        {
+          message:
+            "Name must be 100 characters or fewer.",
+        },
         { status: 400 }
       );
     }
@@ -53,7 +62,8 @@ export async function PATCH(
     if (!/^\d{11}$/.test(phone)) {
       return NextResponse.json(
         {
-          message: "Phone number must contain exactly 11 digits.",
+          message:
+            "Phone number must contain exactly 11 digits.",
         },
         { status: 400 }
       );
@@ -68,11 +78,13 @@ export async function PATCH(
       );
     }
 
-    const existingCustomer = await prisma.customer.findUnique({
-      where: {
-        id,
-      },
-    });
+    const existingCustomer =
+      await prisma.customer.findFirst({
+        where: {
+          id,
+          cafeId: authData.cafeId,
+        },
+      });
 
     if (!existingCustomer) {
       return NextResponse.json(
@@ -81,53 +93,57 @@ export async function PATCH(
       );
     }
 
-    const existingPhone = await prisma.customer.findFirst({
-      where: {
-        phone,
-        NOT: {
-          id,
+    const existingPhone =
+      await prisma.customer.findFirst({
+        where: {
+          cafeId: authData.cafeId,
+          phone,
+          NOT: {
+            id,
+          },
         },
-      },
-    });
+      });
 
     if (existingPhone) {
       return NextResponse.json(
         {
           message:
-            "This phone number already belongs to another member.",
+            "This phone number already belongs to another member in this café.",
         },
         { status: 409 }
       );
     }
 
-    const updatedCustomer = await prisma.customer.update({
-      where: {
-        id,
-      },
-      data: {
-        name,
-        phone,
-        birthday: birthdayDate,
-      },
-      select: {
-        id: true,
-        memberNumber: true,
-        publicToken: true,
-        name: true,
-        phone: true,
-        birthday: true,
-        stamps: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const updatedCustomer =
+      await prisma.customer.update({
+        where: {
+          id,
+        },
+        data: {
+          name,
+          phone,
+          birthday: birthdayDate,
+        },
+        select: {
+          id: true,
+          memberNumber: true,
+          publicToken: true,
+          name: true,
+          phone: true,
+          birthday: true,
+          stamps: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
 
     return NextResponse.json(updatedCustomer);
   } catch (error) {
     console.error("PATCH customer error:", error);
 
     if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error instanceof
+        Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
       return NextResponse.json(
@@ -145,13 +161,14 @@ export async function PATCH(
     );
   }
 }
+
 export async function DELETE(
   request: NextRequest,
   context: RouteContext
 ) {
-  const session = await requireAuth(request.headers);
+  const authData = await requireAuth(request.headers);
 
-  if (!session) {
+  if (!authData) {
     return NextResponse.json(
       { message: "Unauthorized." },
       { status: 401 }
@@ -161,9 +178,27 @@ export async function DELETE(
   try {
     const { id } = await context.params;
 
+    const customer =
+      await prisma.customer.findFirst({
+        where: {
+          id,
+          cafeId: authData.cafeId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+    if (!customer) {
+      return NextResponse.json(
+        { message: "Member not found." },
+        { status: 404 }
+      );
+    }
+
     await prisma.customer.delete({
       where: {
-        id,
+        id: customer.id,
       },
     });
 
@@ -171,15 +206,11 @@ export async function DELETE(
       success: true,
     });
   } catch (error) {
-    console.error(error);
+    console.error("DELETE customer error:", error);
 
     return NextResponse.json(
-      {
-        message: "Failed to delete member.",
-      },
-      {
-        status: 500,
-      }
+      { message: "Failed to delete member." },
+      { status: 500 }
     );
   }
 }

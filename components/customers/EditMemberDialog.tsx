@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Pencil, Save } from "lucide-react";
+import { Pencil, Save, X } from "lucide-react";
 
 import {
   Dialog,
@@ -49,16 +49,17 @@ export default function EditMemberDialog({
   const [birthday, setBirthday] = useState(
     birthdayToInputValue(customer.birthday)
   );
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (open) {
-      setName(customer.name);
-      setPhone(customer.phone);
-      setBirthday(birthdayToInputValue(customer.birthday));
-      setError("");
-    }
+    if (!open) return;
+
+    setName(customer.name);
+    setPhone(customer.phone);
+    setBirthday(birthdayToInputValue(customer.birthday));
+    setError("");
   }, [open, customer]);
 
   async function updateMember() {
@@ -79,20 +80,17 @@ export default function EditMemberDialog({
       setLoading(true);
       setError("");
 
-      const response = await fetch(
-        `/api/customers/${customer.id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: cleanName,
-            phone: cleanPhone,
-            birthday,
-          }),
-        }
-      );
+      const response = await fetch(`/api/customers/${customer.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: cleanName,
+          phone: cleanPhone,
+          birthday,
+        }),
+      });
 
       const data = await response.json();
 
@@ -117,45 +115,124 @@ export default function EditMemberDialog({
     }
   }
 
+  function closeDialog() {
+    if (loading) return;
+
+    setError("");
+    onOpenChange(false);
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-white/[0.08] bg-[#111111] p-0 text-white shadow-2xl sm:max-w-md">
-        <div className="border-b border-white/[0.06] px-6 py-5">
+      <DialogContent
+        className="
+          overflow-hidden
+          border
+          border-white/[0.08]
+          bg-[#0d0d0d]
+          p-0
+          text-white
+          shadow-[0_30px_100px_rgba(0,0,0,0.65)]
+          sm:max-w-md
+          [&>button]:hidden
+        "
+      >
+        {/* Header */}
+        <div className="border-b border-white/[0.07] px-6 py-5">
           <DialogHeader>
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#8e6045]/20 text-[#d9af8d]">
-              <Pencil size={18} />
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.06] text-white">
+                  <Pencil size={17} strokeWidth={1.8} />
+                </div>
+
+                <DialogTitle className="text-2xl font-semibold tracking-[-0.03em] text-white">
+                  Edit member
+                </DialogTitle>
+
+                <p className="mt-1.5 text-sm leading-6 text-[#9b9b9b]">
+                  Update the member&apos;s personal information.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeDialog}
+                disabled={loading}
+                aria-label="Close edit member dialog"
+                className="
+                  flex
+                  h-9
+                  w-9
+                  shrink-0
+                  items-center
+                  justify-center
+                  rounded-full
+                  border
+                  border-white/[0.08]
+                  bg-white/[0.04]
+                  text-[#a3a3a3]
+                  transition
+                  hover:bg-white/[0.08]
+                  hover:text-white
+                  disabled:cursor-not-allowed
+                  disabled:opacity-50
+                "
+              >
+                <X size={17} />
+              </button>
             </div>
-
-            <DialogTitle className="text-2xl font-semibold tracking-tight">
-              Edit member
-            </DialogTitle>
-
-            <p className="mt-1 text-sm text-[#817771]">
-              Update the member’s personal information.
-            </p>
           </DialogHeader>
         </div>
 
-        <div className="space-y-5 px-6 pb-6">
+        {/* Form */}
+        <div className="space-y-5 px-6 py-6">
           <div>
-            <label className="mb-2 block text-sm font-medium text-[#b9aaa0]">
+            <label
+              htmlFor="edit-member-name"
+              className="mb-2 block text-sm font-medium text-[#d6d6d6]"
+            >
               Full name
             </label>
 
             <Input
+              id="edit-member-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="Ahmed Mohamed"
-              className="h-12 rounded-xl border-white/[0.08] bg-white/[0.035] text-white placeholder:text-[#5d5753]"
+              autoComplete="name"
+              disabled={loading}
+              className="
+                h-12
+                rounded-xl
+                border-white/[0.09]
+                bg-white/[0.045]
+                px-4
+                text-white
+                shadow-none
+                outline-none
+                transition
+                placeholder:text-[#5f5f5f]
+                hover:border-white/[0.15]
+                focus-visible:border-white/30
+                focus-visible:ring-2
+                focus-visible:ring-white/[0.08]
+                disabled:cursor-not-allowed
+                disabled:opacity-60
+              "
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-[#b9aaa0]">
+            <label
+              htmlFor="edit-member-phone"
+              className="mb-2 block text-sm font-medium text-[#d6d6d6]"
+            >
               Phone number
             </label>
 
             <Input
+              id="edit-member-phone"
               value={phone}
               onChange={(event) => {
                 const digits = event.target.value
@@ -167,35 +244,110 @@ export default function EditMemberDialog({
               inputMode="numeric"
               maxLength={11}
               placeholder="01012345678"
-              className="h-12 rounded-xl border-white/[0.08] bg-white/[0.035] text-white placeholder:text-[#5d5753]"
+              autoComplete="tel"
+              disabled={loading}
+              className="
+                h-12
+                rounded-xl
+                border-white/[0.09]
+                bg-white/[0.045]
+                px-4
+                text-white
+                shadow-none
+                outline-none
+                transition
+                placeholder:text-[#5f5f5f]
+                hover:border-white/[0.15]
+                focus-visible:border-white/30
+                focus-visible:ring-2
+                focus-visible:ring-white/[0.08]
+                disabled:cursor-not-allowed
+                disabled:opacity-60
+              "
             />
+
+            <p className="mt-2 text-xs text-[#6f6f6f]">
+              Enter exactly 11 digits.
+            </p>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-[#b9aaa0]">
+            <label
+              htmlFor="edit-member-birthday"
+              className="mb-2 block text-sm font-medium text-[#d6d6d6]"
+            >
               Birthday
             </label>
 
             <Input
+              id="edit-member-birthday"
               type="date"
               value={birthday}
               onChange={(event) => setBirthday(event.target.value)}
-              className="h-12 rounded-xl border-white/[0.08] bg-white/[0.035] text-white"
+              disabled={loading}
+              className="
+                h-12
+                rounded-xl
+                border-white/[0.09]
+                bg-white/[0.045]
+                px-4
+                text-white
+                shadow-none
+                outline-none
+                transition
+                [color-scheme:dark]
+                hover:border-white/[0.15]
+                focus-visible:border-white/30
+                focus-visible:ring-2
+                focus-visible:ring-white/[0.08]
+                disabled:cursor-not-allowed
+                disabled:opacity-60
+              "
             />
           </div>
 
           {error && (
-            <div className="rounded-xl border border-red-500/20 bg-red-500/[0.08] px-4 py-3 text-sm text-red-300">
+            <div
+              role="alert"
+              className="
+                rounded-xl
+                border
+                border-red-400/20
+                bg-red-400/[0.08]
+                px-4
+                py-3
+                text-sm
+                leading-5
+                text-red-200
+              "
+            >
               {error}
             </div>
           )}
 
-          <div className="flex gap-3">
+          {/* Actions */}
+          <div className="flex gap-3 pt-1">
             <button
               type="button"
-              onClick={() => onOpenChange(false)}
+              onClick={closeDialog}
               disabled={loading}
-              className="h-12 flex-1 rounded-xl border border-white/[0.08] bg-white/[0.03] text-sm font-medium text-[#b9aaa0] transition hover:bg-white/[0.06]"
+              className="
+                h-12
+                flex-1
+                rounded-xl
+                border
+                border-white/[0.09]
+                bg-white/[0.04]
+                text-sm
+                font-medium
+                text-[#c7c7c7]
+                transition
+                hover:border-white/[0.14]
+                hover:bg-white/[0.075]
+                hover:text-white
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
             >
               Cancel
             </button>
@@ -204,10 +356,28 @@ export default function EditMemberDialog({
               type="button"
               onClick={updateMember}
               disabled={loading}
-              className="flex h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-[#8e6045] text-sm font-semibold text-white transition hover:bg-[#a06d4e] disabled:opacity-50"
+              className="
+                flex
+                h-12
+                flex-1
+                items-center
+                justify-center
+                gap-2
+                rounded-xl
+                bg-white
+                text-sm
+                font-semibold
+                text-black
+                transition
+                hover:bg-[#e9e9e9]
+                active:scale-[0.99]
+                disabled:cursor-not-allowed
+                disabled:opacity-50
+              "
             >
-              <Save size={17} />
-              {loading ? "Saving..." : "Save Changes"}
+              <Save size={17} strokeWidth={2} />
+
+              {loading ? "Saving..." : "Save changes"}
             </button>
           </div>
         </div>
