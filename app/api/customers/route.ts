@@ -46,7 +46,12 @@ function getUniqueTargets(error: unknown): string[] {
     return [];
   }
 
-  const target = error.meta?.target;
+  const target =
+  error &&
+  typeof error === "object" &&
+  "meta" in error
+    ? (error as { meta?: { target?: unknown } }).meta?.target
+    : undefined;
 
   if (Array.isArray(target)) {
     return target.map(String);
