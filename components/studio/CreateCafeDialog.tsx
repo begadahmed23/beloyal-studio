@@ -180,7 +180,7 @@ export default function CreateCafeDialog({
         }
       }}
     >
-      <DialogTrigger asChild>
+      <DialogTrigger >
         <button
           type="button"
           className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#F5F5F7] px-5 text-sm font-semibold text-[#09090A] transition hover:bg-white"
