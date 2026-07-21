@@ -27,6 +27,15 @@ export async function requireActiveCafe(
   }
 
   const cafe = authData.cafe;
+
+  if (!cafe) {
+    return {
+      allowed: false,
+      status: 404,
+      message: "Café account not found.",
+    };
+  }
+
   const now = new Date();
 
   if (!cafe.isActive) {
