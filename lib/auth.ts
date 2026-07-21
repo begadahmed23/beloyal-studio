@@ -3,6 +3,10 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { prisma } from "@/lib/prisma";
 
+const productionUrl =
+  process.env.BETTER_AUTH_URL ||
+  process.env.NEXT_PUBLIC_APP_URL;
+
 export const auth = betterAuth({
   appName: "Loyalty Platform",
 
@@ -11,20 +15,21 @@ export const auth = betterAuth({
   }),
 
   user: {
-  additionalFields: {
-    cafeId: {
-      type: "string",
-      required: false,
-      input: false,
-    },
-    role: {
-      type: "string",
-      required: false,
-      input: false,
-      defaultValue: "CAFE_ADMIN",
+    additionalFields: {
+      cafeId: {
+        type: "string",
+        required: false,
+        input: false,
+      },
+
+      role: {
+        type: "string",
+        required: false,
+        input: false,
+        defaultValue: "CAFE_ADMIN",
+      },
     },
   },
-},
 
   emailAndPassword: {
     enabled: true,
@@ -64,7 +69,8 @@ export const auth = betterAuth({
   },
 
   trustedOrigins: [
-    process.env.BETTER_AUTH_URL ??
-      "http://localhost:3000",
+    "http://localhost:3000",
+    "https://beloyal-studio.vercel.app",
+    ...(productionUrl ? [productionUrl] : []),
   ],
 });
