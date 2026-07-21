@@ -17,8 +17,16 @@ export async function GET(request: NextRequest) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const cafeId = authData.cafeId;
-    const rewardTarget = authData.cafe.rewardTarget;
+  const cafeId = authData.cafeId;
+
+if (!authData.cafe) {
+  return Response.json(
+    { error: "Cafe not found" },
+    { status: 404 }
+  );
+}
+
+const rewardTarget = authData.cafe.rewardTarget;
 
     const [
       totalMembers,
