@@ -256,14 +256,15 @@ export default function PhoneScannerPage() {
         }
 
         const scanner = new Html5Qrcode(
-          SCANNER_ELEMENT_ID,
-          {
-            formatsToSupport: [
-              Html5QrcodeSupportedFormats.QR_CODE,
-            ],
-            useBarCodeDetectorIfSupported: true,
-          }
-        );
+  SCANNER_ELEMENT_ID,
+  {
+    verbose: false,
+    formatsToSupport: [
+      Html5QrcodeSupportedFormats.QR_CODE,
+    ],
+    useBarCodeDetectorIfSupported: true,
+  }
+);
 
         scannerRef.current = scanner;
 
