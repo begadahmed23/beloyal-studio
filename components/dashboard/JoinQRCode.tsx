@@ -2,7 +2,12 @@
 
 import { useMemo, useRef, useState } from "react";
 import QRCode from "react-qr-code";
-import { Check, Copy, Download, ExternalLink } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Download,
+  ExternalLink,
+} from "lucide-react";
 import { toPng } from "html-to-image";
 
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
@@ -38,38 +43,38 @@ export default function JoinQRCode() {
   }
 
   async function downloadPoster() {
-  if (!posterRef.current) {
-    return;
+    if (!posterRef.current) {
+      return;
+    }
+
+    setDownloading(true);
+
+    try {
+      const poster = posterRef.current;
+
+      const image = await toPng(poster, {
+        cacheBust: true,
+        pixelRatio: 3,
+        backgroundColor: theme.pageBackground,
+        width: poster.scrollWidth,
+        height: poster.scrollHeight,
+        style: {
+          width: `${poster.scrollWidth}px`,
+          height: `${poster.scrollHeight}px`,
+        },
+      });
+
+      const link = document.createElement("a");
+
+      link.download = `${cafe.slug}-loyalty-qr.png`;
+      link.href = image;
+      link.click();
+    } catch (error) {
+      console.error("Could not download QR poster:", error);
+    } finally {
+      setDownloading(false);
+    }
   }
-
-  setDownloading(true);
-
-  try {
-    const poster = posterRef.current;
-
-    const image = await toPng(poster, {
-      cacheBust: true,
-      pixelRatio: 3,
-backgroundColor: theme.pageBackground,
-      width: poster.scrollWidth,
-      height: poster.scrollHeight,
-      style: {
-        width: `${poster.scrollWidth}px`,
-        height: `${poster.scrollHeight}px`,
-      },
-    });
-
-    const link = document.createElement("a");
-
-    link.download = `${cafe.slug}-loyalty-qr.png`;
-    link.href = image;
-    link.click();
-  } catch (error) {
-    console.error("Could not download QR poster:", error);
-  } finally {
-    setDownloading(false);
-  }
-}
 
   return (
     <section
@@ -204,22 +209,22 @@ backgroundColor: theme.pageBackground,
           }}
         >
           <div
-  ref={posterRef}
-  className="mx-auto flex min-h-[680px] w-full max-w-[340px] flex-col items-center justify-between px-7 py-8 text-center"
-  style={{
-    background: `
-      radial-gradient(
-        circle at top,
-        ${cafe.primaryColor}35 0%,
-        transparent 42%
-      ),
-      ${cafe.backgroundColor}
-    `,
-    color: "#FFFFFF",
-    borderRadius: "28px",
-    boxShadow: `0 22px 60px ${cafe.primaryColor}20`,
-  }}
->
+            ref={posterRef}
+            className="mx-auto flex min-h-[680px] w-full max-w-[340px] flex-col items-center justify-between px-7 py-8 text-center"
+            style={{
+              background: `
+                radial-gradient(
+                  circle at top,
+                  ${theme.accent}35 0%,
+                  transparent 42%
+                ),
+                ${theme.pageBackground}
+              `,
+              color: theme.textPrimary,
+              borderRadius: "28px",
+              boxShadow: `0 22px 60px ${theme.accent}20`,
+            }}
+          >
             <div className="flex flex-col items-center">
               {cafe.logoUrl ? (
                 <img
@@ -232,23 +237,32 @@ backgroundColor: theme.pageBackground,
                 <div
                   className="flex h-20 w-20 items-center justify-center rounded-[24px] text-3xl font-bold"
                   style={{
-                    background: `linear-gradient(135deg, ${cafe.primaryColor}, ${cafe.secondaryColor})`,
-                    color: "#FFFFFF",
-                    boxShadow: `0 14px 32px ${cafe.primaryColor}35`,
+                    background: `linear-gradient(
+                      135deg,
+                      ${theme.accent},
+                      ${theme.accentSoft}
+                    )`,
+                    color: theme.accentText,
+                    boxShadow: `0 14px 32px ${theme.accent}35`,
                   }}
                 >
                   {cafe.name.charAt(0).toUpperCase()}
                 </div>
               )}
 
-              <h4 className="mt-5 max-w-[260px] text-2xl font-semibold tracking-tight">
+              <h4
+                className="mt-5 max-w-[260px] text-2xl font-semibold tracking-tight"
+                style={{
+                  color: theme.textPrimary,
+                }}
+              >
                 {cafe.name}
               </h4>
 
               <p
                 className="mt-2 text-xs font-semibold uppercase tracking-[0.2em]"
                 style={{
-                  color: cafe.secondaryColor,
+                  color: theme.accent,
                 }}
               >
                 Join our loyalty club
@@ -271,30 +285,55 @@ backgroundColor: theme.pageBackground,
             </div>
 
             <div>
-              <p className="text-base font-semibold">
+              <p
+                className="text-base font-semibold"
+                style={{
+                  color: theme.textPrimary,
+                }}
+              >
                 Scan to join in seconds
               </p>
 
-              <p className="mt-2 text-sm text-white/60">
+              <p
+                className="mt-2 text-sm"
+                style={{
+                  color: theme.textMuted,
+                }}
+              >
                 Collect stamps automatically
               </p>
 
               <div
                 className="mx-auto my-5 h-px w-44"
                 style={{
-                  backgroundColor: `${cafe.secondaryColor}45`,
+                  backgroundColor: `${theme.accent}45`,
                 }}
               />
 
-              <p className="text-[10px] uppercase tracking-[0.18em] text-white/45">
+              <p
+                className="text-[10px] uppercase tracking-[0.18em]"
+                style={{
+                  color: theme.textMuted,
+                }}
+              >
                 Powered by
               </p>
 
-              <p className="mt-1 text-sm font-semibold tracking-wide text-white">
+              <p
+                className="mt-1 text-sm font-semibold tracking-wide"
+                style={{
+                  color: theme.textPrimary,
+                }}
+              >
                 BeLoyal Studio
               </p>
 
-              <p className="mt-1 text-[10px] text-white/40">
+              <p
+                className="mt-1 text-[10px]"
+                style={{
+                  color: theme.textMuted,
+                }}
+              >
                 beloyalstudio.com
               </p>
             </div>
