@@ -3,12 +3,24 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import { prisma } from "@/lib/prisma";
 
-const productionUrl =
-  process.env.BETTER_AUTH_URL ||
-  process.env.NEXT_PUBLIC_APP_URL;
-
 export const auth = betterAuth({
   appName: "Loyalty Platform",
+
+  baseURL: {
+    allowedHosts: [
+      "localhost:*",
+      "beloyal-studio.vercel.app",
+      "*.vercel.app",
+    ],
+    protocol: "auto",
+    fallback: "https://beloyal-studio.vercel.app",
+  },
+
+  trustedOrigins: [
+    "http://localhost:3000",
+    "https://beloyal-studio.vercel.app",
+    "https://*.vercel.app",
+  ],
 
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -67,10 +79,4 @@ export const auth = betterAuth({
       secure: process.env.NODE_ENV === "production",
     },
   },
-
-  trustedOrigins: [
-    "http://localhost:3000",
-    "https://beloyal-studio.vercel.app",
-    ...(productionUrl ? [productionUrl] : []),
-  ],
 });
