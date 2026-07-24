@@ -12,6 +12,9 @@ import { toPng } from "html-to-image";
 
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
+const POSTER_WIDTH = 420;
+const POSTER_HEIGHT = 720;
+
 export default function JoinQRCode() {
   const { theme, cafe } = useCafeTheme();
 
@@ -21,11 +24,11 @@ export default function JoinQRCode() {
   const [downloading, setDownloading] = useState(false);
 
   const joinUrl = useMemo(() => {
-    if (typeof window === "undefined") {
-      return `/join/${cafe.slug}`;
-    }
+    const baseUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "https://getbeloyal.app";
 
-    return `${window.location.origin}/join/${cafe.slug}`;
+    return `${baseUrl}/join/${cafe.slug}`;
   }, [cafe.slug]);
 
   async function copyJoinLink() {
@@ -42,6 +45,25 @@ export default function JoinQRCode() {
     }
   }
 
+  async function waitForImages(element: HTMLElement) {
+    const images = Array.from(
+      element.querySelectorAll("img")
+    );
+
+    await Promise.all(
+      images.map((image) => {
+        if (image.complete) {
+          return Promise.resolve();
+        }
+
+        return new Promise<void>((resolve) => {
+          image.onload = () => resolve();
+          image.onerror = () => resolve();
+        });
+      })
+    );
+  }
+
   async function downloadPoster() {
     if (!posterRef.current) {
       return;
@@ -52,15 +74,28 @@ export default function JoinQRCode() {
     try {
       const poster = posterRef.current;
 
+      await waitForImages(poster);
+
+      if ("fonts" in document) {
+        await document.fonts.ready;
+      }
+
       const image = await toPng(poster, {
         cacheBust: true,
         pixelRatio: 3,
-        backgroundColor: theme.pageBackground,
-        width: poster.scrollWidth,
-        height: poster.scrollHeight,
+        backgroundColor: "#ffffff",
+        width: POSTER_WIDTH,
+        height: POSTER_HEIGHT,
+        canvasWidth: POSTER_WIDTH * 3,
+        canvasHeight: POSTER_HEIGHT * 3,
         style: {
-          width: `${poster.scrollWidth}px`,
-          height: `${poster.scrollHeight}px`,
+          width: `${POSTER_WIDTH}px`,
+          height: `${POSTER_HEIGHT}px`,
+          maxWidth: "none",
+          minWidth: `${POSTER_WIDTH}px`,
+          minHeight: `${POSTER_HEIGHT}px`,
+          margin: "0",
+          transform: "none",
         },
       });
 
@@ -68,9 +103,15 @@ export default function JoinQRCode() {
 
       link.download = `${cafe.slug}-loyalty-qr.png`;
       link.href = image;
+
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
     } catch (error) {
-      console.error("Could not download QR poster:", error);
+      console.error(
+        "Could not download QR poster:",
+        error
+      );
     } finally {
       setDownloading(false);
     }
@@ -85,7 +126,7 @@ export default function JoinQRCode() {
         borderRadius: theme.radiusMedium,
       }}
     >
-      <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_500px]">
         <div className="flex flex-col justify-between p-6 sm:p-8">
           <div>
             <p
@@ -112,8 +153,9 @@ export default function JoinQRCode() {
                 color: theme.textMuted,
               }}
             >
-              Download this branded QR poster, print it, and place it near the
-              cashier. Customers can scan it to create their loyalty card.
+              Download this branded QR poster, print it,
+              and place it near the cashier. Customers can
+              scan it to create their loyalty card.
             </p>
           </div>
 
@@ -177,7 +219,11 @@ export default function JoinQRCode() {
                   borderRadius: theme.radiusMedium,
                 }}
               >
-                {copied ? <Check size={17} /> : <Copy size={17} />}
+                {copied ? (
+                  <Check size={17} />
+                ) : (
+                  <Copy size={17} />
+                )}
 
                 {copied ? "Link copied" : "Copy link"}
               </button>
@@ -195,147 +241,263 @@ export default function JoinQRCode() {
               >
                 <Download size={17} />
 
-                {downloading ? "Preparing poster..." : "Download PNG"}
+                {downloading
+                  ? "Preparing poster..."
+                  : "Download PNG"}
               </button>
             </div>
           </div>
         </div>
 
         <div
-          className="border-t p-5 sm:p-7 lg:border-l lg:border-t-0"
+          className="overflow-x-auto border-t p-5 sm:p-7 lg:border-l lg:border-t-0"
           style={{
             borderColor: theme.border,
             backgroundColor: theme.pageBackground,
           }}
         >
-          <div
-            ref={posterRef}
-            className="mx-auto flex min-h-[680px] w-full max-w-[340px] flex-col items-center justify-between px-7 py-8 text-center"
-            style={{
-              background: `
-                radial-gradient(
-                  circle at top,
-                  ${theme.accent}35 0%,
-                  transparent 42%
-                ),
-                ${theme.pageBackground}
-              `,
-              color: theme.textPrimary,
-              borderRadius: "28px",
-              boxShadow: `0 22px 60px ${theme.accent}20`,
-            }}
-          >
-            <div className="flex flex-col items-center">
-              {cafe.logoUrl ? (
-                <img
-                  src={cafe.logoUrl}
-                  alt={`${cafe.name} logo`}
-                  crossOrigin="anonymous"
-                  className="h-20 w-20 object-contain"
-                />
-              ) : (
-                <div
-                  className="flex h-20 w-20 items-center justify-center rounded-[24px] text-3xl font-bold"
-                  style={{
-                    background: `linear-gradient(
-                      135deg,
-                      ${theme.accent},
-                      ${theme.accentSoft}
-                    )`,
-                    color: theme.accentText,
-                    boxShadow: `0 14px 32px ${theme.accent}35`,
-                  }}
-                >
-                  {cafe.name.charAt(0).toUpperCase()}
-                </div>
-              )}
-
-              <h4
-                className="mt-5 max-w-[260px] text-2xl font-semibold tracking-tight"
-                style={{
-                  color: theme.textPrimary,
-                }}
-              >
-                {cafe.name}
-              </h4>
-
-              <p
-                className="mt-2 text-xs font-semibold uppercase tracking-[0.2em]"
-                style={{
-                  color: theme.accent,
-                }}
-              >
-                Join our loyalty club
-              </p>
-            </div>
-
+          <div className="mx-auto w-fit">
             <div
-              className="my-6 rounded-[24px] bg-white p-5"
+              ref={posterRef}
+              className="flex shrink-0 flex-col bg-white text-center"
               style={{
-                boxShadow: "0 18px 45px rgba(0, 0, 0, 0.24)",
+                width: `${POSTER_WIDTH}px`,
+                height: `${POSTER_HEIGHT}px`,
+                minWidth: `${POSTER_WIDTH}px`,
+                minHeight: `${POSTER_HEIGHT}px`,
+                padding: "48px 42px 34px",
+                color: "#111111",
+                borderRadius: "28px",
+                boxShadow:
+                  "0 24px 70px rgba(0, 0, 0, 0.14)",
+                fontFamily:
+                  "Inter, Arial, Helvetica, sans-serif",
+                boxSizing: "border-box",
+                overflow: "hidden",
               }}
             >
-              <QRCode
-                value={joinUrl}
-                size={178}
-                bgColor="#FFFFFF"
-                fgColor="#111111"
-                level="H"
-              />
-            </div>
-
-            <div>
-              <p
-                className="text-base font-semibold"
+              <div
                 style={{
-                  color: theme.textPrimary,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  flexShrink: 0,
                 }}
               >
-                Scan to join in seconds
-              </p>
+                {cafe.logoUrl ? (
+                  <div
+                    style={{
+                      width: "92px",
+                      height: "92px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <img
+                      src={cafe.logoUrl}
+                      alt={`${cafe.name} logo`}
+                      crossOrigin="anonymous"
+                      style={{
+                        display: "block",
+                        width: "92px",
+                        height: "92px",
+                        objectFit: "contain",
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      width: "82px",
+                      height: "82px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: "50%",
+                      backgroundColor: "#111111",
+                      color: "#ffffff",
+                      fontSize: "32px",
+                      fontWeight: 700,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {cafe.name
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
+                )}
 
-              <p
-                className="mt-2 text-sm"
-                style={{
-                  color: theme.textMuted,
-                }}
-              >
-                Collect stamps automatically
-              </p>
+                <h4
+                  style={{
+                    maxWidth: "310px",
+                    margin: "20px 0 0",
+                    color: "#111111",
+                    fontSize: "28px",
+                    fontWeight: 650,
+                    lineHeight: 1.15,
+                    letterSpacing: "-0.025em",
+                    overflowWrap: "break-word",
+                  }}
+                >
+                  {cafe.name}
+                </h4>
+
+                <p
+                  style={{
+                    margin: "10px 0 0",
+                    color: "#737373",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    lineHeight: 1.4,
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Loyalty made simple
+                </p>
+              </div>
 
               <div
-                className="mx-auto my-5 h-px w-44"
                 style={{
-                  backgroundColor: `${theme.accent}45`,
-                }}
-              />
-
-              <p
-                className="text-[10px] uppercase tracking-[0.18em]"
-                style={{
-                  color: theme.textMuted,
-                }}
-              >
-                Powered by
-              </p>
-
-              <p
-                className="mt-1 text-sm font-semibold tracking-wide"
-                style={{
-                  color: theme.textPrimary,
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minHeight: 0,
+                  paddingTop: "22px",
+                  paddingBottom: "18px",
                 }}
               >
-                BeLoyal Studio
-              </p>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                    padding: "18px",
+                    backgroundColor: "#ffffff",
+                    border: "1px solid #e5e5e5",
+                    borderRadius: "24px",
+                    boxShadow:
+                      "0 14px 36px rgba(0, 0, 0, 0.10)",
+                  }}
+                >
+                  <QRCode
+                    value={joinUrl}
+                    size={210}
+                    bgColor="#FFFFFF"
+                    fgColor="#111111"
+                    level="H"
+                  />
+                </div>
 
-              <p
-                className="mt-1 text-[10px]"
+                <div
+                  style={{
+                    marginTop: "24px",
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#111111",
+                      fontSize: "22px",
+                      fontWeight: 700,
+                      lineHeight: 1.18,
+                      letterSpacing: "-0.025em",
+                    }}
+                  >
+                    Collect stamps.
+                  </p>
+
+                  <p
+                    style={{
+                      margin: "3px 0 0",
+                      color: "#111111",
+                      fontSize: "22px",
+                      fontWeight: 700,
+                      lineHeight: 1.18,
+                      letterSpacing: "-0.025em",
+                    }}
+                  >
+                    Earn free drinks.
+                  </p>
+
+                  <p
+                    style={{
+                      margin: "12px 0 0",
+                      color: "#737373",
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Scan the QR code to join.
+                  </p>
+                </div>
+              </div>
+
+              <div
                 style={{
-                  color: theme.textMuted,
+                  flexShrink: 0,
+                  width: "100%",
                 }}
               >
-                beloyalstudio.com
-              </p>
+                <div
+                  style={{
+                    width: "100%",
+                    height: "1px",
+                    backgroundColor: "#e5e5e5",
+                  }}
+                />
+
+                <div
+                  style={{
+                    paddingTop: "18px",
+                  }}
+                >
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#8a8a8a",
+                      fontSize: "9px",
+                      fontWeight: 600,
+                      lineHeight: 1.4,
+                      letterSpacing: "0.18em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Powered by
+                  </p>
+
+                  <p
+                    style={{
+                      margin: "4px 0 0",
+                      color: "#111111",
+                      fontSize: "14px",
+                      fontWeight: 700,
+                      lineHeight: 1.4,
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    BeLoyal Studio
+                  </p>
+
+                  <p
+                    style={{
+                      margin: "3px 0 0",
+                      color: "#737373",
+                      fontSize: "10px",
+                      fontWeight: 500,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    getbeloyal.app
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
