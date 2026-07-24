@@ -99,7 +99,7 @@ export default function MemberCard({ customer: originalCustomer }: Props) {
 
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL ||
-    "https://beloyal-studio.vercel.app";
+    "https://getbeloyal.app";
 
   return `${baseUrl}/card/${customer.publicToken}`;
 }

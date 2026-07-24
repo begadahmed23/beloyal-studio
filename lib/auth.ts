@@ -7,20 +7,22 @@ export const auth = betterAuth({
   appName: "Loyalty Platform",
 
   baseURL: {
-    allowedHosts: [
-      "localhost:*",
-      "beloyal-studio.vercel.app",
-      "*.vercel.app",
-    ],
-    protocol: "auto",
-    fallback: "https://beloyal-studio.vercel.app",
-  },
-
-  trustedOrigins: [
-    "http://localhost:3000",
-    "https://beloyal-studio.vercel.app",
-    "https://*.vercel.app",
+  allowedHosts: [
+    "localhost:*",
+    "getbeloyal.app",
+    "www.getbeloyal.app",
+    "*.vercel.app",
   ],
+  protocol: "auto",
+  fallback: "https://getbeloyal.app",
+},
+
+trustedOrigins: [
+  "http://localhost:3000",
+  "https://getbeloyal.app",
+  "https://www.getbeloyal.app",
+  "https://*.vercel.app",
+],
 
   database: prismaAdapter(prisma, {
     provider: "postgresql",
