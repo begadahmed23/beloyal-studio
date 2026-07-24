@@ -93,12 +93,16 @@ export default function MemberCard({ customer: originalCustomer }: Props) {
   }
 
   function getCardUrl() {
-    if (!customer.publicToken) {
-      return null;
-    }
-
-    return `${window.location.origin}/card/${customer.publicToken}`;
+  if (!customer.publicToken) {
+    return null;
   }
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "https://beloyal-studio.vercel.app";
+
+  return `${baseUrl}/card/${customer.publicToken}`;
+}
 
   function openCard() {
     const cardUrl = getCardUrl();
