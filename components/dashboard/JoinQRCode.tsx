@@ -265,7 +265,7 @@ export default function JoinQRCode() {
                 height: `${POSTER_HEIGHT}px`,
                 minWidth: `${POSTER_WIDTH}px`,
                 minHeight: `${POSTER_HEIGHT}px`,
-                padding: "48px 42px 34px",
+                padding: "44px 42px 34px",
                 color: "#111111",
                 borderRadius: "28px",
                 boxShadow:
@@ -285,77 +285,87 @@ export default function JoinQRCode() {
                 }}
               >
                 {cafe.logoUrl ? (
-                  <div
-                    style={{
-                      width: "92px",
-                      height: "92px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <img
-                      src={cafe.logoUrl}
-                      alt={`${cafe.name} logo`}
-                      crossOrigin="anonymous"
+                  <>
+                    <div
                       style={{
-                        display: "block",
-                        width: "92px",
-                        height: "92px",
-                        objectFit: "contain",
+                        width: "96px",
+                        height: "96px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        overflow: "hidden",
                       }}
-                    />
-                  </div>
+                    >
+                      <img
+                        src={cafe.logoUrl}
+                        alt={`${cafe.name} logo`}
+                        crossOrigin="anonymous"
+                        style={{
+                          display: "block",
+                          width: "96px",
+                          height: "96px",
+                          objectFit: "contain",
+                        }}
+                      />
+                    </div>
+
+                    <h4
+                      style={{
+                        maxWidth: "310px",
+                        margin: "18px 0 0",
+                        color: "#111111",
+                        fontSize: "26px",
+                        fontWeight: 650,
+                        lineHeight: 1.15,
+                        letterSpacing: "-0.025em",
+                        overflowWrap: "break-word",
+                      }}
+                    >
+                      {cafe.name}
+                    </h4>
+                  </>
                 ) : (
                   <div
                     style={{
-                      width: "82px",
-                      height: "82px",
+                      maxWidth: "320px",
+                      minHeight: "96px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      borderRadius: "50%",
-                      backgroundColor: "#111111",
-                      color: "#ffffff",
-                      fontSize: "32px",
-                      fontWeight: 700,
-                      lineHeight: 1,
+                      padding: "10px 18px",
                     }}
                   >
-                    {cafe.name
-                      .charAt(0)
-                      .toUpperCase()}
+                    <p
+                      style={{
+                        margin: 0,
+                        color: "#111111",
+                        fontSize: "30px",
+                        fontWeight: 750,
+                        lineHeight: 1.15,
+                        letterSpacing: "0.14em",
+                        textTransform: "uppercase",
+                        overflowWrap: "break-word",
+                      }}
+                    >
+                      {cafe.name}
+                    </p>
                   </div>
                 )}
 
-                <h4
-                  style={{
-                    maxWidth: "310px",
-                    margin: "20px 0 0",
-                    color: "#111111",
-                    fontSize: "28px",
-                    fontWeight: 650,
-                    lineHeight: 1.15,
-                    letterSpacing: "-0.025em",
-                    overflowWrap: "break-word",
-                  }}
-                >
-                  {cafe.name}
-                </h4>
-
                 <p
                   style={{
-                    margin: "10px 0 0",
+                    margin: cafe.logoUrl
+                      ? "9px 0 0"
+                      : "4px 0 0",
                     color: "#737373",
                     fontSize: "11px",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     lineHeight: 1.4,
-                    letterSpacing: "0.18em",
+                    letterSpacing: "0.13em",
                     textTransform: "uppercase",
                   }}
                 >
-                  Loyalty made simple
+                  Let coffee connect us
                 </p>
               </div>
 
@@ -367,8 +377,8 @@ export default function JoinQRCode() {
                   alignItems: "center",
                   justifyContent: "center",
                   minHeight: 0,
-                  paddingTop: "22px",
-                  paddingBottom: "18px",
+                  paddingTop: "20px",
+                  paddingBottom: "16px",
                 }}
               >
                 <div
@@ -396,7 +406,7 @@ export default function JoinQRCode() {
 
                 <div
                   style={{
-                    marginTop: "24px",
+                    marginTop: "22px",
                   }}
                 >
                   <p
@@ -427,7 +437,7 @@ export default function JoinQRCode() {
 
                   <p
                     style={{
-                      margin: "12px 0 0",
+                      margin: "11px 0 0",
                       color: "#737373",
                       fontSize: "13px",
                       fontWeight: 500,
@@ -455,7 +465,7 @@ export default function JoinQRCode() {
 
                 <div
                   style={{
-                    paddingTop: "18px",
+                    paddingTop: "17px",
                   }}
                 >
                   <p
