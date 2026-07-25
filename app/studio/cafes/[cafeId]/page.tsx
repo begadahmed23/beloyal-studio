@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   TriangleAlert,
   Users,
+  Star
 } from "lucide-react";
 import {
   FormEvent,
@@ -56,8 +57,7 @@ type Cafe = {
   minimumPurchaseAmount: number | null;
   eligiblePurchaseDescription: string | null;
 
-  whatsappBusinessNumber: string | null;
-  whatsappEnabled: boolean;
+  googleReviewUrl: string | null;
 
   subscriptionStatus: SubscriptionStatus;
   trialStartedAt: string | null;
@@ -227,12 +227,9 @@ export default function ManageCafePage() {
   ] = useState("");
 
   const [
-    whatsappBusinessNumber,
-    setWhatsappBusinessNumber,
+    googleReviewUrl,
+    setGoogleReviewUrl,
   ] = useState("");
-
-  const [whatsappEnabled, setWhatsappEnabled] =
-    useState(false);
 
   const [
     subscriptionStatus,
@@ -295,11 +292,9 @@ export default function ManageCafePage() {
       nextCafe.eligiblePurchaseDescription || ""
     );
 
-    setWhatsappBusinessNumber(
-      nextCafe.whatsappBusinessNumber || ""
+    setGoogleReviewUrl(
+      nextCafe.googleReviewUrl || ""
     );
-
-    setWhatsappEnabled(nextCafe.whatsappEnabled);
 
     setSubscriptionStatus(
       nextCafe.subscriptionStatus
@@ -425,9 +420,7 @@ fillForm(data.cafe);
             minimumPurchaseAmount,
             eligiblePurchaseDescription,
 
-            whatsappBusinessNumber,
-            whatsappEnabled,
-
+            googleReviewUrl,
             subscriptionStatus,
             monthlyPrice: Number(monthlyPrice),
 
@@ -762,24 +755,17 @@ fillForm(data.cafe);
       </FormSection>
 
       <FormSection
-        icon={MessageCircle}
-        title="WhatsApp"
-        description="Manage the café WhatsApp configuration."
+        icon={Star}
+        title="Google Reviews"
+        description="Manage the café Google Reviews configuration."
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <Field
-            label="WhatsApp business number"
-            value={whatsappBusinessNumber}
-            onChange={setWhatsappBusinessNumber}
+            label="Google Review URL"
+            value={googleReviewUrl}
+            onChange={setGoogleReviewUrl}
             required={false}
-            placeholder="+201..."
-          />
-
-          <ToggleField
-            label="WhatsApp enabled"
-            description="Allow this café to use WhatsApp features."
-            checked={whatsappEnabled}
-            onChange={setWhatsappEnabled}
+            placeholder="https://..."
           />
         </div>
       </FormSection>

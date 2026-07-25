@@ -26,8 +26,7 @@ const selectCafe = {
   rewardDescription: true,
   minimumPurchaseAmount: true,
   eligiblePurchaseDescription: true,
-  whatsappBusinessNumber: true,
-  whatsappEnabled: true,
+  googleReviewUrl: true,
   subscriptionStatus: true,
   trialStartedAt: true,
   trialEndsAt: true,
@@ -319,7 +318,7 @@ export async function PATCH(
     for (const field of [
       "rewardDescription",
       "eligiblePurchaseDescription",
-      "whatsappBusinessNumber",
+      "googleReviewUrl",
     ] as const) {
       if (field in body) {
         const value = optionalText(body[field]);
@@ -357,7 +356,7 @@ export async function PATCH(
     }
 
     for (const field of [
-      "whatsappEnabled",
+      "googleReviewUrl",
       "isActive",
     ] as const) {
       if (field in body) {
