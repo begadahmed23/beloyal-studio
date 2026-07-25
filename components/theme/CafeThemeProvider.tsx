@@ -28,8 +28,7 @@ export type CafeSettings = {
   eligiblePurchaseDescription: string | null;
   minimumPurchaseAmount: string | null;
 
-  whatsappBusinessNumber: string | null;
-  whatsappEnabled: boolean;
+  googleReviewUrl: string | null;
 
   subscriptionStatus:
     | "TRIAL"

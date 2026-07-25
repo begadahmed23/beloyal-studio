@@ -41,9 +41,7 @@ export async function requireAuth(
           eligiblePurchaseDescription: true,
           minimumPurchaseAmount: true,
 
-          whatsappBusinessNumber: true,
-          whatsappEnabled: true,
-
+          googleReviewUrl: true,
           isActive: true,
 
           subscriptionStatus: true,

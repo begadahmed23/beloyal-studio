@@ -44,8 +44,7 @@ model Cafe {
   minimumPurchaseAmount       Decimal? @db.Decimal(10, 2)
   eligiblePurchaseDescription String?
 
-  whatsappBusinessNumber String?
-  whatsappEnabled        Boolean @default(false)
+  googleReviewUrl String?
 
   subscriptionStatus SubscriptionStatus @default(TRIAL)
 

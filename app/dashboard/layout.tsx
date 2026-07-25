@@ -56,9 +56,7 @@ export default async function DashboardLayout({
           cafe.minimumPurchaseAmount?.toString() ??
           null,
 
-        whatsappBusinessNumber:
-          cafe.whatsappBusinessNumber,
-        whatsappEnabled: cafe.whatsappEnabled,
+       googleReviewUrl: cafe.googleReviewUrl,
 
         subscriptionStatus:
           cafe.subscriptionStatus,

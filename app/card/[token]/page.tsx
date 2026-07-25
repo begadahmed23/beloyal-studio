@@ -11,9 +11,11 @@ import {
   QrCode,
   RefreshCw,
   Sparkles,
+  Smartphone,
+  Star,
   X,
 } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import QRCode from "react-qr-code";
 type Cafe = {
   id: string;
@@ -28,6 +30,7 @@ type Cafe = {
   rewardName: string;
   rewardDescription: string | null;
   eligiblePurchaseDescription: string | null;
+  googleReviewUrl: string | null;
 };
 
 type Customer = {
@@ -208,8 +211,18 @@ function getReadableText(hex: string) {
   return isLightColor(hex) ? "#171717" : "#FFFFFF";
 }
 
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+}
+
 export default function DigitalCardPage() {
   const params = useParams<{ token: string }>();
+  const searchParams = useSearchParams();
   const token = params.token;
 
   const previousStampCount = useRef<number | null>(null);
@@ -225,6 +238,13 @@ export default function DigitalCardPage() {
   const [error, setError] = useState("");
 
   const [showQrCode, setShowQrCode] = useState(false);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [showGooglePrompt, setShowGooglePrompt] = useState(false);
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [hoveredRating, setHoveredRating] = useState<number | null>(null);
+  const [showHomeScreenHelp, setShowHomeScreenHelp] = useState(false);
+  const [installPrompt, setInstallPrompt] =
+    useState<BeforeInstallPromptEvent | null>(null);
 
   const loadCard = useCallback(
     async (showRefreshing = false) => {
@@ -317,6 +337,66 @@ export default function DigitalCardPage() {
     };
   }, [showQrCode]);
 
+  useEffect(() => {
+    if (!customer || searchParams.get("welcome") !== "1") {
+      return;
+    }
+
+    const storageKey = `beloyal-review-seen:${customer.publicToken}`;
+    const alreadySeen = window.localStorage.getItem(storageKey);
+
+    if (alreadySeen) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setShowRatingModal(true);
+      window.localStorage.setItem(storageKey, "1");
+    }, 1000);
+
+    return () => window.clearTimeout(timeout);
+  }, [customer, searchParams]);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    const modalOpen =
+      showQrCode ||
+      showRatingModal ||
+      showGooglePrompt ||
+      showHomeScreenHelp;
+
+    if (!modalOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [
+    showQrCode,
+    showRatingModal,
+    showGooglePrompt,
+    showHomeScreenHelp,
+  ]);
+
   const birthdayText = useMemo(() => {
     if (!customer) {
       return "";
@@ -364,6 +444,38 @@ export default function DigitalCardPage() {
     window.location.href = `/api/wallet/${encodeURIComponent(
       customer?.publicToken || token,
     )}`;
+  };
+
+  const handleRatingSelect = (rating: number) => {
+    setSelectedRating(rating);
+    setShowRatingModal(false);
+
+    window.setTimeout(() => {
+      setShowGooglePrompt(true);
+    }, 250);
+  };
+
+  const handleOpenGoogleReview = () => {
+    const reviewUrl = customer?.cafe.googleReviewUrl?.trim();
+
+    setShowGooglePrompt(false);
+
+    if (!reviewUrl) {
+      return;
+    }
+
+    window.open(reviewUrl, "_blank", "noopener,noreferrer");
+  };
+
+  const handleAddToHomeScreen = async () => {
+    if (installPrompt) {
+      await installPrompt.prompt();
+      await installPrompt.userChoice;
+      setInstallPrompt(null);
+      return;
+    }
+
+    setShowHomeScreenHelp(true);
   };
 
   if (loading) {
@@ -964,14 +1076,28 @@ export default function DigitalCardPage() {
                 <span>Show QR Code</span>
               </button>
 
+              <button
+                type="button"
+                onClick={handleAddToHomeScreen}
+                className="flex h-12 w-full items-center justify-center gap-2.5 rounded-2xl border px-5 text-sm font-semibold transition duration-200 hover:-translate-y-0.5 hover:opacity-85 active:translate-y-0 active:scale-[0.99]"
+                style={{
+                  borderColor: cardBorder,
+                  backgroundColor: surfaceColor,
+                  color: textPrimary,
+                }}
+              >
+                <Smartphone size={18} />
+                <span>Add to Home Screen</span>
+              </button>
+
               <p
                 className="px-3 text-center text-[11px] leading-5"
                 style={{
                   color: textMuted,
                 }}
               >
-                Save your card to Apple Wallet, or show the QR code directly to
-                the cashier.
+                Save your card to Apple Wallet, add it to your Home Screen, or
+                show the QR code directly to the cashier.
               </p>
             </section>
 
@@ -1014,6 +1140,228 @@ export default function DigitalCardPage() {
           </div>
         </div>
       </div>
+
+      {showRatingModal ? (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-5 py-8 backdrop-blur-md"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Rate your visit"
+        >
+          <div
+            className="w-full max-w-sm rounded-[30px] border p-6 text-center shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
+            style={{
+              borderColor: cardBorder,
+              backgroundColor: cardBackground,
+              color: textPrimary,
+            }}
+          >
+            <p className="text-2xl font-semibold">How was your visit?</p>
+            <p
+              className="mt-2 text-sm leading-6"
+              style={{ color: textSecondary }}
+            >
+              Tap a star to share quick feedback with {customer.cafe.name}.
+            </p>
+
+            <div
+              className="mt-7 flex items-center justify-center gap-2"
+              onMouseLeave={() => setHoveredRating(null)}
+            >
+              {[1, 2, 3, 4, 5].map((rating) => {
+                const active =
+                  rating <= (hoveredRating ?? selectedRating ?? 0);
+
+                return (
+                  <button
+                    key={rating}
+                    type="button"
+                    onMouseEnter={() => setHoveredRating(rating)}
+                    onFocus={() => setHoveredRating(rating)}
+                    onBlur={() => setHoveredRating(null)}
+                    onClick={() => handleRatingSelect(rating)}
+                    aria-label={`${rating} star${rating === 1 ? "" : "s"}`}
+                    className="rounded-full p-1 transition hover:scale-110 active:scale-95"
+                  >
+                    <Star
+                      size={38}
+                      strokeWidth={1.8}
+                      style={{
+                        color: active ? "#FBBF24" : textMuted,
+                        fill: active ? "#FBBF24" : "transparent",
+                      }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setShowRatingModal(false)}
+              className="mt-7 h-11 w-full rounded-2xl border text-sm font-semibold transition hover:opacity-80"
+              style={{
+                borderColor: cardBorder,
+                backgroundColor: surfaceColor,
+                color: textSecondary,
+              }}
+            >
+              Not now
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {showGooglePrompt ? (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-5 py-8 backdrop-blur-md"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Google review"
+        >
+          <div
+            className="w-full max-w-sm rounded-[30px] border p-6 text-center shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
+            style={{
+              borderColor: cardBorder,
+              backgroundColor: cardBackground,
+              color: textPrimary,
+            }}
+          >
+            <div className="flex justify-center gap-1">
+              {[1, 2, 3, 4, 5].map((rating) => (
+                <Star
+                  key={rating}
+                  size={24}
+                  style={{
+                    color:
+                      rating <= (selectedRating ?? 0) ? "#FBBF24" : textMuted,
+                    fill:
+                      rating <= (selectedRating ?? 0)
+                        ? "#FBBF24"
+                        : "transparent",
+                  }}
+                />
+              ))}
+            </div>
+
+            <p className="mt-5 text-2xl font-semibold">
+              Thanks for your feedback
+            </p>
+
+            <p
+              className="mt-2 text-sm leading-6"
+              style={{ color: textSecondary }}
+            >
+              Would you like to share your experience on Google?
+            </p>
+
+            <div className="mt-7 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setShowGooglePrompt(false)}
+                className="h-12 rounded-2xl border text-sm font-semibold transition hover:opacity-80"
+                style={{
+                  borderColor: cardBorder,
+                  backgroundColor: surfaceColor,
+                  color: textSecondary,
+                }}
+              >
+                Not now
+              </button>
+
+              <button
+                type="button"
+                onClick={handleOpenGoogleReview}
+                disabled={!customer.cafe.googleReviewUrl}
+                className="h-12 rounded-2xl text-sm font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+                style={{
+                  backgroundColor: primaryColor,
+                  color: accentText,
+                }}
+              >
+                Review on Google
+              </button>
+            </div>
+
+            {!customer.cafe.googleReviewUrl ? (
+              <p className="mt-4 text-xs" style={{ color: textMuted }}>
+                This café has not added a Google review link yet.
+              </p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {showHomeScreenHelp ? (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 px-5 py-8 backdrop-blur-md"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Add to Home Screen instructions"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowHomeScreenHelp(false);
+            }
+          }}
+        >
+          <div
+            className="relative w-full max-w-sm rounded-[30px] border p-6 shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
+            style={{
+              borderColor: cardBorder,
+              backgroundColor: cardBackground,
+              color: textPrimary,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setShowHomeScreenHelp(false)}
+              aria-label="Close instructions"
+              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border"
+              style={{
+                borderColor: cardBorder,
+                backgroundColor: surfaceColor,
+                color: textSecondary,
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            <Smartphone
+              size={30}
+              style={{ color: primaryColor }}
+            />
+
+            <p className="mt-5 text-xl font-semibold">Add to Home Screen</p>
+            <p
+              className="mt-2 text-sm leading-6"
+              style={{ color: textSecondary }}
+            >
+              On iPhone: open this card in Safari, tap the Share button, choose
+              “Add to Home Screen”, then tap “Add”.
+            </p>
+
+            <p
+              className="mt-4 text-sm leading-6"
+              style={{ color: textSecondary }}
+            >
+              On Android: open the browser menu and choose “Add to Home
+              screen” or “Install app”.
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setShowHomeScreenHelp(false)}
+              className="mt-6 h-12 w-full rounded-2xl text-sm font-semibold"
+              style={{
+                backgroundColor: primaryColor,
+                color: accentText,
+              }}
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {showQrCode ? (
         <div

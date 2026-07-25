@@ -5,7 +5,7 @@ import {
   Coffee,
   Gift,
   Loader2,
-  MessageCircle,
+  Star,
   Palette,
   RotateCcw,
   Save,
@@ -35,8 +35,7 @@ type FormState = {
   eligiblePurchaseDescription: string;
   minimumPurchaseAmount: string;
 
-  whatsappBusinessNumber: string;
-  whatsappEnabled: boolean;
+  googleReviewUrl: string;
 };
 
 const themeOptions: Array<{
@@ -128,9 +127,7 @@ export default function CafeSettingsForm({
     minimumPurchaseAmount:
       cafe.minimumPurchaseAmount ?? "",
 
-    whatsappBusinessNumber:
-      cafe.whatsappBusinessNumber ?? "",
-    whatsappEnabled: cafe.whatsappEnabled,
+    googleReviewUrl: cafe.googleReviewUrl ?? "",
   });
 
   const [form, setForm] =
@@ -152,8 +149,7 @@ export default function CafeSettingsForm({
     cafe.rewardDescription,
     cafe.eligiblePurchaseDescription,
     cafe.minimumPurchaseAmount,
-    cafe.whatsappBusinessNumber,
-    cafe.whatsappEnabled,
+    cafe.googleReviewUrl,
     savedThemeName,
   ]);
 
@@ -232,10 +228,7 @@ backgroundColor: colors.backgroundColor,
             minimumPurchaseAmount:
               form.minimumPurchaseAmount,
 
-            whatsappBusinessNumber:
-              form.whatsappBusinessNumber,
-            whatsappEnabled:
-              form.whatsappEnabled,
+            googleReviewUrl: form.googleReviewUrl,
           }),
         }
       );
@@ -732,96 +725,54 @@ router.refresh();
           style={cardStyle}
         >
           <SectionHeader
-              theme={theme}
-            icon={MessageCircle}
-            title="WhatsApp"
-            description="Prepare the café account for future automated customer messages."
+            theme={theme}
+            icon={Star}
+            title="Google Reviews"
+            description="Add your café’s Google review link. Customers can choose to open it after joining."
           />
 
-          <div className="mt-7 grid gap-5 lg:grid-cols-2">
+          <div className="mt-7">
             <Field
               theme={theme}
-              label="WhatsApp business number"
-              description="Use the international format, including the country code."
+              label="Google review URL"
+              description="Paste the direct Google review link for this café. Leave it empty to disable the review prompt."
             >
               <input
-                type="tel"
-                value={
-                  form.whatsappBusinessNumber
-                }
+                type="url"
+                value={form.googleReviewUrl}
                 onChange={(event) =>
-                  updateField(
-                    "whatsappBusinessNumber",
-                    event.target.value
-                  )
+                  updateField("googleReviewUrl", event.target.value)
                 }
-                placeholder="+201001234567"
-                className="h-12 w-full border px-4 text-sm outline-none"
+                placeholder="https://g.page/r/your-review-link/review"
+                maxLength={1000}
+                className="h-12 w-full border px-4 text-sm outline-none transition focus:ring-2 focus:ring-current/20"
                 style={inputStyle}
               />
             </Field>
 
             <div
-              className="flex items-center justify-between gap-5 border p-5"
+              className="mt-5 border p-5"
               style={{
                 borderColor: theme.border,
-                backgroundColor:
-                  theme.surfaceRaised,
+                backgroundColor: theme.surfaceRaised,
                 borderRadius: theme.radiusMedium,
               }}
             >
-              <div>
-                <p
-                  className="text-sm font-semibold"
-                  style={{
-                    color: theme.textPrimary,
-                  }}
-                >
-                  Enable WhatsApp
-                </p>
-
-                <p
-                  className="mt-1 text-xs leading-5"
-                  style={{
-                    color: theme.textMuted,
-                  }}
-                >
-                  This saves the preference. Automated
-                  messaging will be connected later.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                role="switch"
-                aria-checked={
-                  form.whatsappEnabled
-                }
-                onClick={() =>
-                  updateField(
-                    "whatsappEnabled",
-                    !form.whatsappEnabled
-                  )
-                }
-                className="relative h-7 w-12 shrink-0 rounded-full transition"
-                style={{
-                  backgroundColor:
-                    form.whatsappEnabled
-                      ? theme.accent
-                      : theme.border,
-                }}
+              <p
+                className="text-sm font-semibold"
+                style={{ color: theme.textPrimary }}
               >
-                <span
-                  className="absolute top-1 h-5 w-5 rounded-full transition"
-                  style={{
-                    left: form.whatsappEnabled
-                      ? "24px"
-                      : "4px",
-                    backgroundColor:
-                      theme.buttonText,
-                  }}
-                />
-              </button>
+                Customer experience
+              </p>
+
+              <p
+                className="mt-2 text-sm leading-6"
+                style={{ color: theme.textMuted }}
+              >
+                After a new customer creates their loyalty card, BeLoyal shows
+                a quick star popup. They can then choose “Not now” or open your
+                Google review page.
+              </p>
             </div>
           </div>
         </section>

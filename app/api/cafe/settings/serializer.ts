@@ -1,4 +1,8 @@
-import { CafeTheme, Prisma, SubscriptionStatus } from "@prisma/client";
+import {
+  CafeTheme,
+  Prisma,
+  SubscriptionStatus,
+} from "@prisma/client";
 
 export type CafeSettingsRecord = {
   id: string;
@@ -7,14 +11,17 @@ export type CafeSettingsRecord = {
   logoUrl: string | null;
   theme: CafeTheme;
 
+  primaryColor: string | null;
+  secondaryColor: string | null;
+  backgroundColor: string | null;
+
   rewardTarget: number;
   rewardName: string;
   rewardDescription: string | null;
   eligiblePurchaseDescription: string | null;
   minimumPurchaseAmount: Prisma.Decimal | null;
 
-  whatsappBusinessNumber: string | null;
-  whatsappEnabled: boolean;
+  googleReviewUrl: string | null;
 
   subscriptionStatus: SubscriptionStatus;
   trialStartedAt: Date | null;
@@ -28,18 +35,44 @@ export type CafeSettingsRecord = {
 
 export function serializeCafeSettings(cafe: CafeSettingsRecord) {
   return {
-    ...cafe,
+    id: cafe.id,
+    name: cafe.name,
+    slug: cafe.slug,
+    logoUrl: cafe.logoUrl,
+    theme: cafe.theme,
 
-    minimumPurchaseAmount: cafe.minimumPurchaseAmount?.toString() ?? null,
+    primaryColor: cafe.primaryColor,
+    secondaryColor: cafe.secondaryColor,
+    backgroundColor: cafe.backgroundColor,
 
-    monthlyPrice: cafe.monthlyPrice?.toString() ?? null,
+    rewardTarget: cafe.rewardTarget,
+    rewardName: cafe.rewardName,
+    rewardDescription: cafe.rewardDescription,
+    eligiblePurchaseDescription:
+      cafe.eligiblePurchaseDescription,
 
-    trialStartedAt: cafe.trialStartedAt?.toISOString() ?? null,
+    minimumPurchaseAmount:
+      cafe.minimumPurchaseAmount?.toString() ?? null,
 
-    trialEndsAt: cafe.trialEndsAt?.toISOString() ?? null,
+    googleReviewUrl: cafe.googleReviewUrl,
 
-    subscriptionStartedAt: cafe.subscriptionStartedAt?.toISOString() ?? null,
+    subscriptionStatus: cafe.subscriptionStatus,
 
-    subscriptionEndsAt: cafe.subscriptionEndsAt?.toISOString() ?? null,
+    trialStartedAt:
+      cafe.trialStartedAt?.toISOString() ?? null,
+
+    trialEndsAt:
+      cafe.trialEndsAt?.toISOString() ?? null,
+
+    subscriptionStartedAt:
+      cafe.subscriptionStartedAt?.toISOString() ?? null,
+
+    subscriptionEndsAt:
+      cafe.subscriptionEndsAt?.toISOString() ?? null,
+
+    monthlyPrice:
+      cafe.monthlyPrice?.toString() ?? null,
+
+    isActive: cafe.isActive,
   };
 }

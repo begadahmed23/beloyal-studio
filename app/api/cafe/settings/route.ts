@@ -32,14 +32,17 @@ export async function GET(request: NextRequest) {
         logoUrl: true,
         theme: true,
 
+        primaryColor: true,
+        secondaryColor: true,
+        backgroundColor: true,
+
         rewardTarget: true,
         rewardName: true,
         rewardDescription: true,
         eligiblePurchaseDescription: true,
         minimumPurchaseAmount: true,
 
-        whatsappBusinessNumber: true,
-        whatsappEnabled: true,
+        googleReviewUrl: true,
 
         subscriptionStatus: true,
         trialStartedAt: true,

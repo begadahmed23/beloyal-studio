@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+
 import { validateCafeSettings } from "./validation";
 
 export async function updateCafeSettings(
@@ -15,18 +16,49 @@ export async function updateCafeSettings(
       name: settings.name,
       logoUrl: settings.logoUrl,
       theme: settings.theme,
-        primaryColor: settings.primaryColor,
-    secondaryColor: settings.secondaryColor,
-    backgroundColor: settings.backgroundColor,
+
+      primaryColor: settings.primaryColor,
+      secondaryColor: settings.secondaryColor,
+      backgroundColor: settings.backgroundColor,
+
       rewardTarget: settings.rewardTarget,
       rewardName: settings.rewardName,
       rewardDescription: settings.rewardDescription,
-      eligiblePurchaseDescription: settings.eligiblePurchaseDescription,
+      eligiblePurchaseDescription:
+        settings.eligiblePurchaseDescription,
 
-      minimumPurchaseAmount: settings.minimumPurchaseAmount,
+      minimumPurchaseAmount:
+        settings.minimumPurchaseAmount,
 
-      whatsappBusinessNumber: settings.whatsappBusinessNumber,
-      whatsappEnabled: settings.whatsappEnabled,
+      googleReviewUrl: settings.googleReviewUrl,
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      logoUrl: true,
+      theme: true,
+
+      primaryColor: true,
+      secondaryColor: true,
+      backgroundColor: true,
+
+      rewardTarget: true,
+      rewardName: true,
+      rewardDescription: true,
+      eligiblePurchaseDescription: true,
+      minimumPurchaseAmount: true,
+
+      googleReviewUrl: true,
+
+      subscriptionStatus: true,
+      trialStartedAt: true,
+      trialEndsAt: true,
+      subscriptionStartedAt: true,
+      subscriptionEndsAt: true,
+      monthlyPrice: true,
+
+      isActive: true,
     },
   });
 

@@ -59,6 +59,7 @@ export async function GET(
             rewardName: true,
             rewardDescription: true,
             eligiblePurchaseDescription: true,
+            googleReviewUrl: true,
           },
         },
       },

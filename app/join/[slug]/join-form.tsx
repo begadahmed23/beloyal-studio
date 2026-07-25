@@ -32,18 +32,15 @@ export default function JoinForm({
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [birthday, setBirthday] = useState("");
-
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handlePhoneChange(value: string) {
-    const digitsOnly = value.replace(/\D/g, "").slice(0, 11);
-    setPhone(digitsOnly);
+    setPhone(value.replace(/\D/g, "").slice(0, 11));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-
     setError("");
 
     const cleanName = name.trim();
@@ -86,11 +83,12 @@ export default function JoinForm({
         return;
       }
 
-      router.push(`/card/${data.token}`);
+      const welcomeQuery = data.existingCustomer ? "" : "?welcome=1";
+      router.push(`/card/${data.token}${welcomeQuery}`);
     } catch (requestError) {
       console.error("Join request failed:", requestError);
       setError(
-        "We could not connect to the server. Please check your internet connection."
+        "We could not connect to the server. Please check your internet connection.",
       );
     } finally {
       setIsSubmitting(false);
@@ -122,9 +120,7 @@ export default function JoinForm({
           maxLength={80}
           required
           className={inputClassName}
-          style={{
-            borderColor: `${secondaryColor}35`,
-          }}
+          style={{ borderColor: `${secondaryColor}35` }}
         />
       </div>
 
@@ -150,9 +146,7 @@ export default function JoinForm({
           maxLength={11}
           required
           className={inputClassName}
-          style={{
-            borderColor: `${secondaryColor}35`,
-          }}
+          style={{ borderColor: `${secondaryColor}35` }}
         />
 
         <p className="mt-2 text-xs text-white/40">
@@ -177,9 +171,7 @@ export default function JoinForm({
           autoComplete="bday"
           required
           className={`${inputClassName} [color-scheme:dark]`}
-          style={{
-            borderColor: `${secondaryColor}35`,
-          }}
+          style={{ borderColor: `${secondaryColor}35` }}
         />
 
         <p className="mt-2 text-xs text-white/40">

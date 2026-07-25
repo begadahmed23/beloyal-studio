@@ -1,11 +1,12 @@
 "use client";
-
+import Link from "next/link";
 import {
   CheckCircle2,
   Gift,
   LoaderCircle,
   ScanLine,
   TriangleAlert,
+  Smartphone,
 } from "lucide-react";
 import {
   FormEvent,
