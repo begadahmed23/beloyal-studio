@@ -83,27 +83,24 @@ model Employee {
 }
 
 model Customer {
-  id String @id @default(cuid())
-
-  cafeId String?
-  cafe   Cafe?   @relation(fields: [cafeId], references: [id])
-
+  id           String   @id @default(cuid())
   memberNumber String
-  publicToken  String? @unique
-
-  name     String
-  phone    String
-  birthday DateTime
-  stamps   Int      @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  name         String
+  phone        String
+  birthday     DateTime
+  stamps       Int      @default(0)
+  publicToken  String   @unique
+  cafeId       String
+  cafe         Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   transactions StampTransaction[]
 
-  @@unique([cafeId, memberNumber])
   @@unique([cafeId, phone])
+  @@unique([cafeId, memberNumber])
   @@index([cafeId])
+  @@index([cafeId, name])
 }
 
 model StampTransaction {

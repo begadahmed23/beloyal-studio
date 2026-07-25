@@ -1,93 +1,167 @@
-import { Prisma } from "@prisma/client";
-import { nanoid } from "nanoid";
+import { randomBytes } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
-import { requireAuth } from "@/lib/require-auth";
 
-const CUSTOMER_SELECT = {
-  id: true,
-  memberNumber: true,
-  publicToken: true,
-  name: true,
-  phone: true,
-  birthday: true,
-  stamps: true,
-  createdAt: true,
-  updatedAt: true,
-} satisfies Prisma.CustomerSelect;
+function cleanPhone(value: unknown) {
+  if (typeof value !== "string") return "";
 
-function createCafePrefix(slug: string) {
-  const cleanSlug = slug.replace(/[^a-zA-Z]/g, "");
-
-  return cleanSlug.slice(0, 3).toUpperCase().padEnd(3, "X");
+  return value.replace(/\D/g, "");
 }
 
-function getMemberNumberSuffix(memberNumber: string) {
-  const match = memberNumber.match(/(\d+)$/);
+function parseBirthday(value: unknown) {
+  if (typeof value !== "string") return null;
 
-  if (!match) {
-    return 0;
+  const cleanValue = value.trim();
+
+  // Accept dd/mm/yyyy
+  const europeanMatch = cleanValue.match(
+    /^(\d{2})\/(\d{2})\/(\d{4})$/,
+  );
+
+  if (europeanMatch) {
+    const day = Number(europeanMatch[1]);
+    const month = Number(europeanMatch[2]);
+    const year = Number(europeanMatch[3]);
+
+    const date = new Date(
+      Date.UTC(year, month - 1, day),
+    );
+
+    if (
+      date.getUTCFullYear() === year &&
+      date.getUTCMonth() === month - 1 &&
+      date.getUTCDate() === day
+    ) {
+      return date;
+    }
+
+    return null;
   }
 
-  return Number(match[1]) || 0;
+  // Also accept yyyy-mm-dd
+  const isoMatch = cleanValue.match(
+    /^(\d{4})-(\d{2})-(\d{2})$/,
+  );
+
+  if (isoMatch) {
+    const year = Number(isoMatch[1]);
+    const month = Number(isoMatch[2]);
+    const day = Number(isoMatch[3]);
+
+    const date = new Date(
+      Date.UTC(year, month - 1, day),
+    );
+
+    if (
+      date.getUTCFullYear() === year &&
+      date.getUTCMonth() === month - 1 &&
+      date.getUTCDate() === day
+    ) {
+      return date;
+    }
+  }
+
+  return null;
 }
 
-function isUniqueError(error: unknown) {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === "P2002"
+async function generateMemberNumber(cafeId: string) {
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const memberNumber = String(
+      Math.floor(100000 + Math.random() * 900000),
+    );
+
+    const existingCustomer =
+      await prisma.customer.findUnique({
+        where: {
+          cafeId_memberNumber: {
+            cafeId,
+            memberNumber,
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+    if (!existingCustomer) {
+      return memberNumber;
+    }
+  }
+
+  throw new Error(
+    "Could not generate a unique member number.",
   );
 }
 
-function getUniqueTargets(error: unknown): string[] {
-  if (!isUniqueError(error)) {
-    return [];
-  }
-
-  const target =
-  error &&
-  typeof error === "object" &&
-  "meta" in error
-    ? (error as { meta?: { target?: unknown } }).meta?.target
-    : undefined;
-
-  if (Array.isArray(target)) {
-    return target.map(String);
-  }
-
-  if (typeof target === "string") {
-    return [target];
-  }
-
-  return [];
-}
-
 export async function GET(request: NextRequest) {
-  const authData = await requireAuth(request.headers);
-
-  if (
-    !authData ||
-    authData.isSuperAdmin ||
-    !authData.cafeId ||
-    !authData.cafe
-  ) {
-    return NextResponse.json(
-      { message: "Café account required." },
-      { status: 403 },
-    );
-  }
-
   try {
+    const access = await requireActiveCafe(
+      request.headers,
+    );
+
+    if (!access.allowed) {
+      return NextResponse.json(
+        { message: access.message },
+        { status: access.status },
+      );
+    }
+
+    const cafeId = access.authData.cafe.id;
+
+    const search =
+      request.nextUrl.searchParams
+        .get("search")
+        ?.trim() ?? "";
+
+    const cleanedSearchPhone = cleanPhone(search);
+
     const customers = await prisma.customer.findMany({
       where: {
-        cafeId: authData.cafeId,
+        cafeId,
+
+        ...(search
+          ? {
+              OR: [
+                {
+                  name: {
+                    contains: search,
+                    mode: "insensitive" as const,
+                  },
+                },
+                ...(cleanedSearchPhone
+                  ? [
+                      {
+                        phone: {
+                          contains: cleanedSearchPhone,
+                        },
+                      },
+                    ]
+                  : []),
+                {
+                  memberNumber: {
+                    contains: search,
+                  },
+                },
+              ],
+            }
+          : {}),
       },
       orderBy: {
         createdAt: "desc",
       },
-      select: CUSTOMER_SELECT,
+      select: {
+        id: true,
+        memberNumber: true,
+        name: true,
+        phone: true,
+        birthday: true,
+        stamps: true,
+        publicToken: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     return NextResponse.json(customers);
@@ -95,182 +169,124 @@ export async function GET(request: NextRequest) {
     console.error("GET customers error:", error);
 
     return NextResponse.json(
-      { message: "Failed to load members." },
+      { message: "Failed to load customers." },
       { status: 500 },
     );
   }
 }
 
 export async function POST(request: NextRequest) {
-  const access = await requireActiveCafe(request.headers);
-
-  if (!access.allowed) {
-    return NextResponse.json(
-      { message: access.message },
-      { status: access.status },
-    );
-  }
-
-  const { authData } = access;
-
-  if (authData.isSuperAdmin || !authData.cafeId || !authData.cafe) {
-    return NextResponse.json(
-      { message: "Café account required." },
-      { status: 403 },
-    );
-  }
-
   try {
+    const access = await requireActiveCafe(
+      request.headers,
+    );
+
+    if (!access.allowed) {
+      return NextResponse.json(
+        { message: access.message },
+        { status: access.status },
+      );
+    }
+
+    const cafeId = access.authData.cafe.id;
     const body = await request.json();
 
-    const name = typeof body.name === "string" ? body.name.trim() : "";
+    const name =
+      typeof body.name === "string"
+        ? body.name.trim()
+        : "";
 
-    const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+    const phone = cleanPhone(body.phone);
+    const birthday = parseBirthday(body.birthday);
 
-    const birthday =
-      typeof body.birthday === "string" ? body.birthday.trim() : "";
-
-    if (!name || !phone || !birthday) {
+    if (name.length < 2) {
       return NextResponse.json(
-        {
-          message: "Name, phone number, and birthday are required.",
-        },
+        { message: "Enter the customer’s name." },
         { status: 400 },
       );
     }
 
-    if (name.length > 100) {
-      return NextResponse.json(
-        {
-          message: "Name must be 100 characters or fewer.",
-        },
-        { status: 400 },
-      );
-    }
-
-    if (!/^\d{11}$/.test(phone)) {
-      return NextResponse.json(
-        {
-          message: "Phone number must contain exactly 11 digits.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const birthdayDate = new Date(birthday);
-
-    if (Number.isNaN(birthdayDate.getTime())) {
-      return NextResponse.json(
-        { message: "Birthday is invalid." },
-        { status: 400 },
-      );
-    }
-
-    const existingPhone = await prisma.customer.findFirst({
-      where: {
-        cafeId: authData.cafeId,
-        phone,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (existingPhone) {
+    if (phone.length !== 11) {
       return NextResponse.json(
         {
           message:
-            "A member already exists with this phone number in this café.",
+            "Phone number must contain exactly 11 digits.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (!birthday) {
+      return NextResponse.json(
+        {
+          message:
+            "Enter a valid birthday using dd/mm/yyyy.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const existingCustomer =
+      await prisma.customer.findUnique({
+        where: {
+          cafeId_phone: {
+            cafeId,
+            phone,
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+        },
+      });
+
+    if (existingCustomer) {
+      return NextResponse.json(
+        {
+          message:
+            "This phone number is already registered at this café.",
         },
         { status: 409 },
       );
     }
 
-    const existingNumbers = await prisma.customer.findMany({
-      where: {
-        cafeId: authData.cafeId,
+    const memberNumber =
+      await generateMemberNumber(cafeId);
+
+    const customer = await prisma.customer.create({
+      data: {
+        cafeId,
+        name,
+        phone,
+        birthday,
+        memberNumber,
+        publicToken: randomBytes(24).toString("hex"),
       },
       select: {
+        id: true,
         memberNumber: true,
+        name: true,
+        phone: true,
+        birthday: true,
+        stamps: true,
+        publicToken: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
-    const highestNumber = existingNumbers.reduce((highest, customer) => {
-      return Math.max(highest, getMemberNumberSuffix(customer.memberNumber));
-    }, 0);
-
-    const prefix = createCafePrefix(authData.cafe.slug);
-
-    // Retry protects against two creation requests happening together.
-    for (let attempt = 1; attempt <= 5; attempt += 1) {
-      const nextNumber = highestNumber + attempt;
-
-      const memberNumber = `${prefix}-${String(nextNumber).padStart(6, "0")}`;
-
-      try {
-        const customer = await prisma.customer.create({
-          data: {
-            cafeId: authData.cafeId,
-            memberNumber,
-            publicToken: nanoid(32),
-            name,
-            phone,
-            birthday: birthdayDate,
-            stamps: 0,
-          },
-          select: CUSTOMER_SELECT,
-        });
-
-        return NextResponse.json(customer, {
-          status: 201,
-        });
-      } catch (error) {
-        if (!isUniqueError(error)) {
-          throw error;
-        }
-
-        const targets = getUniqueTargets(error);
-
-        if (targets.some((target) => target.toLowerCase().includes("phone"))) {
-          return NextResponse.json(
-            {
-              message:
-                "A member already exists with this phone number in this café.",
-            },
-            { status: 409 },
-          );
-        }
-
-        if (
-          targets.some((target) => target.toLowerCase().includes("publictoken"))
-        ) {
-          continue;
-        }
-
-        if (
-          targets.some((target) =>
-            target.toLowerCase().includes("membernumber"),
-          )
-        ) {
-          continue;
-        }
-
-        // Unknown P2002 target: retry with a new member number/token.
-        continue;
-      }
-    }
-
     return NextResponse.json(
       {
-        message: "The member number could not be generated. Please try again.",
+        customer,
+        message: "Member created successfully.",
       },
-      { status: 409 },
+      { status: 201 },
     );
   } catch (error) {
     console.error("POST customer error:", error);
 
     return NextResponse.json(
-      { message: "Failed to create member." },
+      { message: "Failed to create customer." },
       { status: 500 },
     );
   }

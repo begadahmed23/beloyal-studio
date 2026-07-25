@@ -440,12 +440,6 @@ export default function DigitalCardPage() {
     return calculateBirthdayCountdown(customer.birthday);
   }, [customer]);
 
-  const handleAddToAppleWallet = () => {
-    window.location.href = `/api/wallet/${encodeURIComponent(
-      customer?.publicToken || token,
-    )}`;
-  };
-
   const handleRatingSelect = (rating: number) => {
     setSelectedRating(rating);
     setShowRatingModal(false);
@@ -1048,19 +1042,6 @@ export default function DigitalCardPage() {
                 borderColor: cardBorder,
               }}
             >
-             <button
-  type="button"
-  onClick={handleAddToAppleWallet}
-  className="flex h-14 w-full items-center justify-center rounded-2xl px-5 text-sm font-semibold transition duration-200 hover:-translate-y-0.5 hover:opacity-95 active:translate-y-0 active:scale-[0.99]"
-  style={{
-    backgroundColor: primaryColor,
-    color: accentText,
-    boxShadow: `0 14px 35px ${withAlpha(primaryColor, 0.24)}`,
-  }}
->
-  Add to Apple Wallet
-</button>
-
               <button
                 type="button"
                 onClick={() => setShowQrCode(true)}
@@ -1096,8 +1077,8 @@ export default function DigitalCardPage() {
                   color: textMuted,
                 }}
               >
-                Save your card to Apple Wallet, add it to your Home Screen, or
-                show the QR code directly to the cashier.
+                Add your card to your Home Screen or show the QR code directly
+                to the cashier.
               </p>
             </section>
 

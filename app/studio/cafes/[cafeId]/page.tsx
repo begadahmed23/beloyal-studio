@@ -8,15 +8,15 @@ import {
   CalendarDays,
   CheckCircle2,
   CreditCard,
+  Download,
   Gift,
   LoaderCircle,
-  MessageCircle,
   Palette,
   Save,
   ShieldCheck,
+  Star,
   TriangleAlert,
   Users,
-  Star
 } from "lucide-react";
 import {
   FormEvent,
@@ -362,10 +362,8 @@ if (!returnedCafe?.id || !returnedCafe?.name) {
 }
 
 fillForm(returnedCafe);
-
-fillForm(data.cafe);
-    } catch (error) {
-      console.error(error);
+} catch (error) {
+  console.error(error);
 
       setError(
         error instanceof Error
@@ -511,13 +509,15 @@ fillForm(data.cafe);
   return (
     <form
       onSubmit={saveCafe}
-      className="space-y-7 pb-12"
+      className="space-y-7 pb-12 text-[#EAF2FF]"
     >
-      <header className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+      <header className="relative overflow-hidden rounded-[30px] border border-[#2388FF]/20 bg-gradient-to-br from-[#101D33] via-[#0D1728] to-[#0A111E] p-6 shadow-[0_24px_80px_rgba(0,70,180,0.16)] sm:p-8 lg:flex lg:items-center lg:justify-between">
+        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-[#0A84FF]/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-[#64D2FF]/10 blur-3xl" />
         <div>
           <Link
             href="/studio"
-            className="inline-flex items-center gap-2 text-sm text-[#8E8E93] transition hover:text-white"
+            className="relative inline-flex items-center gap-2 text-sm text-[#91A7C7] transition hover:text-[#EAF2FF]"
           >
             <ArrowLeft size={16} />
             Back to Studio
@@ -545,7 +545,7 @@ fillForm(data.cafe);
 
             <div>
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-3xl font-semibold tracking-tight text-[#F5F5F7]">
+                <h1 className="text-3xl font-semibold tracking-tight text-[#F4F8FF]">
                   {cafe.name}
                 </h1>
 
@@ -562,29 +562,40 @@ fillForm(data.cafe);
                 </span>
               </div>
 
-              <p className="mt-1 text-sm text-[#8E8E93]">
+              <p className="mt-1 text-sm text-[#91A7C7]">
                 /{cafe.slug}
               </p>
             </div>
           </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={saving}
-          className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#F5F5F7] px-5 text-sm font-semibold text-[#09090A] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {saving ? (
-            <LoaderCircle
-              size={17}
-              className="animate-spin"
-            />
-          ) : (
-            <Save size={17} />
-          )}
+        <div className="relative mt-6 flex flex-col gap-3 sm:flex-row lg:mt-0">
+          <a
+            href={`/api/studio/cafes/${cafeId}/customers/export`}
+            download
+            className="flex h-11 items-center justify-center gap-2 rounded-xl border border-[#0A84FF]/25 bg-[#0A84FF]/10 px-5 text-sm font-semibold text-[#64D2FF] transition hover:bg-[#0A84FF]/20"
+          >
+            <Download size={17} />
+            Export customers CSV
+          </a>
 
-          {saving ? "Saving..." : "Save changes"}
-        </button>
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#0A84FF] px-5 text-sm font-semibold text-white transition hover:bg-[#409CFF] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {saving ? (
+              <LoaderCircle
+                size={17}
+                className="animate-spin"
+              />
+            ) : (
+              <Save size={17} />
+            )}
+
+            {saving ? "Saving..." : "Save changes"}
+          </button>
+        </div>
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -834,18 +845,18 @@ fillForm(data.cafe);
         </div>
       </FormSection>
 
-      <section className="rounded-[28px] border border-white/[0.07] bg-[#141416] p-6">
+      <section className="rounded-[28px] border border-[#2388FF]/15 bg-[#101A2B] p-6 shadow-[0_18px_55px_rgba(0,40,110,0.12)]">
         <div className="flex items-start gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/[0.07] bg-[#1C1C1E] text-[#F5F5F7]">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#2997FF]/25 bg-[#0A84FF]/12 text-[#64D2FF]">
             <ShieldCheck size={20} />
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-[#F5F5F7]">
+            <h2 className="text-lg font-semibold text-[#F4F8FF]">
               Current account state
             </h2>
 
-            <p className="mt-1 text-sm text-[#8E8E93]">
+            <p className="mt-1 text-sm text-[#91A7C7]">
               These values come directly from the
               existing café database record.
             </p>
@@ -895,16 +906,16 @@ function SummaryCard({
   value: string;
 }) {
   return (
-    <article className="rounded-[24px] border border-white/[0.07] bg-[#141416] p-5">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.07] bg-[#1C1C1E] text-[#F5F5F7]">
+    <article className="group rounded-[24px] border border-[#2388FF]/15 bg-[#101A2B] p-5 shadow-[0_16px_50px_rgba(0,40,110,0.10)] transition hover:-translate-y-0.5 hover:border-[#2997FF]/35 hover:bg-[#132039]">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#2997FF]/25 bg-[#0A84FF]/12 text-[#64D2FF] transition group-hover:bg-[#0A84FF]/20">
         <Icon size={18} />
       </div>
 
-      <p className="mt-5 text-2xl font-semibold text-[#F5F5F7]">
+      <p className="mt-5 text-2xl font-semibold text-[#F4F8FF]">
         {value}
       </p>
 
-      <p className="mt-1 text-sm text-[#8E8E93]">
+      <p className="mt-1 text-sm text-[#91A7C7]">
         {label}
       </p>
     </article>
@@ -923,18 +934,18 @@ function FormSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-[28px] border border-white/[0.07] bg-[#141416]">
-      <header className="flex items-start gap-4 border-b border-white/[0.07] p-6">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/[0.07] bg-[#1C1C1E] text-[#F5F5F7]">
+    <section className="overflow-hidden rounded-[28px] border border-[#2388FF]/15 bg-[#101A2B] shadow-[0_18px_55px_rgba(0,40,110,0.10)]">
+      <header className="flex items-start gap-4 border-b border-[#2388FF]/12 bg-[#132039]/60 p-6">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#2997FF]/25 bg-[#0A84FF]/12 text-[#64D2FF]">
           <Icon size={20} />
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold text-[#F5F5F7]">
+          <h2 className="text-lg font-semibold text-[#F4F8FF]">
             {title}
           </h2>
 
-          <p className="mt-1 text-sm text-[#8E8E93]">
+          <p className="mt-1 text-sm text-[#91A7C7]">
             {description}
           </p>
         </div>
@@ -966,7 +977,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-[#D1D1D6]">
+      <label className="mb-2 block text-sm font-medium text-[#C7D6EC]">
         {label}
       </label>
 
@@ -980,7 +991,7 @@ function Field({
         placeholder={placeholder}
         min={min}
         max={max}
-        className="h-12 w-full rounded-xl border border-white/[0.08] bg-[#1C1C1E] px-4 text-sm text-[#F5F5F7] outline-none transition placeholder:text-[#5C5C61] focus:border-[#2997FF]"
+        className="h-12 w-full rounded-xl border border-[#284261] bg-[#0B1422] px-4 text-sm text-[#F4F8FF] outline-none transition placeholder:text-[#607693] hover:border-[#35577D] focus:border-[#2997FF] focus:ring-2 focus:ring-[#0A84FF]/15"
       />
     </div>
   );
@@ -1019,7 +1030,7 @@ function TextAreaField({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-[#D1D1D6]">
+      <label className="mb-2 block text-sm font-medium text-[#C7D6EC]">
         {label}
       </label>
 
@@ -1030,7 +1041,7 @@ function TextAreaField({
         }
         placeholder={placeholder}
         rows={4}
-        className="w-full resize-none rounded-xl border border-white/[0.08] bg-[#1C1C1E] px-4 py-3 text-sm text-[#F5F5F7] outline-none transition placeholder:text-[#5C5C61] focus:border-[#2997FF]"
+        className="w-full resize-none rounded-xl border border-[#284261] bg-[#0B1422] px-4 py-3 text-sm text-[#F4F8FF] outline-none transition placeholder:text-[#607693] hover:border-[#35577D] focus:border-[#2997FF] focus:ring-2 focus:ring-[#0A84FF]/15"
       />
     </div>
   );
@@ -1052,7 +1063,7 @@ function SelectField({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-[#D1D1D6]">
+      <label className="mb-2 block text-sm font-medium text-[#C7D6EC]">
         {label}
       </label>
 
@@ -1061,7 +1072,7 @@ function SelectField({
         onChange={(event) =>
           onChange(event.target.value)
         }
-        className="h-12 w-full rounded-xl border border-white/[0.08] bg-[#1C1C1E] px-4 text-sm text-[#F5F5F7] outline-none transition focus:border-[#2997FF]"
+        className="h-12 w-full rounded-xl border border-[#284261] bg-[#0B1422] px-4 text-sm text-[#F4F8FF] outline-none transition hover:border-[#35577D] focus:border-[#2997FF] focus:ring-2 focus:ring-[#0A84FF]/15"
       >
         {options.map((option) => (
           <option
@@ -1087,11 +1098,11 @@ function ColorField({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-[#D1D1D6]">
+      <label className="mb-2 block text-sm font-medium text-[#C7D6EC]">
         {label}
       </label>
 
-      <div className="flex h-12 items-center gap-3 rounded-xl border border-white/[0.08] bg-[#1C1C1E] px-3">
+      <div className="flex h-12 items-center gap-3 rounded-xl border border-[#284261] bg-[#0B1422] px-3 transition hover:border-[#35577D] focus-within:border-[#2997FF] focus-within:ring-2 focus-within:ring-[#0A84FF]/15">
         <input
           type="color"
           value={value}
@@ -1106,7 +1117,7 @@ function ColorField({
           onChange={(event) =>
             onChange(event.target.value)
           }
-          className="min-w-0 flex-1 bg-transparent text-sm text-[#F5F5F7] outline-none"
+          className="min-w-0 flex-1 bg-transparent text-sm text-[#F4F8FF] outline-none"
         />
       </div>
     </div>
@@ -1125,13 +1136,13 @@ function ToggleField({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <div className="flex min-h-12 items-center justify-between gap-4 rounded-xl border border-white/[0.08] bg-[#1C1C1E] px-4 py-3">
+    <div className="flex min-h-12 items-center justify-between gap-4 rounded-xl border border-[#284261] bg-[#0B1422] px-4 py-3">
       <div>
-        <p className="text-sm font-medium text-[#F5F5F7]">
+        <p className="text-sm font-medium text-[#F4F8FF]">
           {label}
         </p>
 
-        <p className="mt-1 text-xs text-[#8E8E93]">
+        <p className="mt-1 text-xs text-[#91A7C7]">
           {description}
         </p>
       </div>
@@ -1164,11 +1175,11 @@ function InfoItem({
 }) {
   return (
     <div>
-      <p className="text-xs text-[#6E6E73]">
+      <p className="text-xs text-[#7890AE]">
         {label}
       </p>
 
-      <p className="mt-1 font-medium text-[#D1D1D6]">
+      <p className="mt-1 font-medium text-[#C7D6EC]">
         {value}
       </p>
     </div>

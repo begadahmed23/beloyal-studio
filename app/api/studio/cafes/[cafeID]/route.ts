@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSuperAdmin } from "@/lib/require-super-admin";
 
 type RouteContext = {
-  params: Promise<{ cafeID: string }>;
+  params: Promise<{ cafeId: string }>;
 };
 
 const selectCafe = {
@@ -125,10 +125,10 @@ export async function GET(
   }
 
   try {
-    const { cafeID } = await params;
+    const { cafeId } = await params;
 
     const cafe = await prisma.cafe.findUnique({
-      where: { id: cafeID },
+      where: { id: cafeId },
       select: selectCafe,
     });
 
@@ -166,11 +166,11 @@ export async function PATCH(
   }
 
   try {
-    const { cafeID } = await params;
+    const { cafeId } = await params;
     const body = await request.json();
 
     const existing = await prisma.cafe.findUnique({
-      where: { id: cafeID },
+      where: { id: cafeId },
       select: {
         id: true,
         slug: true,
@@ -219,7 +219,7 @@ export async function PATCH(
       const duplicate = await prisma.cafe.findFirst({
         where: {
           slug,
-          NOT: { id: cafeID },
+          NOT: { id: cafeId },
         },
         select: { id: true },
       });
@@ -355,20 +355,15 @@ export async function PATCH(
       }
     }
 
-    for (const field of [
-      "googleReviewUrl",
-      "isActive",
-    ] as const) {
-      if (field in body) {
-        if (typeof body[field] !== "boolean") {
-          return NextResponse.json(
-            { message: `${field} must be true or false.` },
-            { status: 400 }
-          );
-        }
-
-        data[field] = body[field];
+    if ("isActive" in body) {
+      if (typeof body.isActive !== "boolean") {
+        return NextResponse.json(
+          { message: "isActive must be true or false." },
+          { status: 400 }
+        );
       }
+
+      data.isActive = body.isActive;
     }
 
     if ("subscriptionStatus" in body) {
@@ -474,7 +469,7 @@ export async function PATCH(
 
     await prisma.$transaction(async (tx) => {
       await tx.cafe.update({
-        where: { id: cafeID },
+        where: { id: cafeId },
         data,
       });
 
@@ -498,7 +493,7 @@ export async function PATCH(
     });
 
     const cafe = await prisma.cafe.findUnique({
-      where: { id: cafeID },
+      where: { id: cafeId },
       select: selectCafe,
     });
 
