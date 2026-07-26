@@ -10,6 +10,7 @@ import {
   LoaderCircle,
   Search,
   TriangleAlert,
+  ArrowDownUp,
   Users,
   X,
 } from "lucide-react";
@@ -25,6 +26,8 @@ type Customer = {
   phone: string;
   birthday: string;
   stamps: number;
+  stampDates: string[];
+  lastStampedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -34,6 +37,9 @@ export default function MemberList() {
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<
+  "newest" | "recently-stamped"
+>("newest");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -115,20 +121,37 @@ export default function MemberList() {
   }, [loadCustomers]);
 
   const filteredCustomers = useMemo(() => {
-    const value = search.trim().toLowerCase();
+  const value = search.trim().toLowerCase();
 
-    if (!value) {
-      return customers;
+  const matchingCustomers = value
+    ? customers.filter((customer) => {
+        return (
+          customer.name.toLowerCase().includes(value) ||
+          customer.phone.includes(value) ||
+          customer.memberNumber.toLowerCase().includes(value)
+        );
+      })
+    : [...customers];
+
+  return matchingCustomers.sort((first, second) => {
+    if (sortBy === "recently-stamped") {
+      const firstStamp = first.lastStampedAt
+        ? new Date(first.lastStampedAt).getTime()
+        : 0;
+
+      const secondStamp = second.lastStampedAt
+        ? new Date(second.lastStampedAt).getTime()
+        : 0;
+
+      return secondStamp - firstStamp;
     }
 
-    return customers.filter((customer) => {
-      return (
-        customer.name.toLowerCase().includes(value) ||
-        customer.phone.includes(value) ||
-        customer.memberNumber.toLowerCase().includes(value)
-      );
-    });
-  }, [customers, search]);
+    return (
+      new Date(second.createdAt).getTime() -
+      new Date(first.createdAt).getTime()
+    );
+  });
+}, [customers, search, sortBy]);
 
   return (
     <div className="mt-8">

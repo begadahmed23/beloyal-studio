@@ -4,10 +4,10 @@ import { useCallback, useEffect, useState } from "react";
 import {
   CircleGauge,
   Coffee,
-  Gift,
   LoaderCircle,
   RefreshCw,
   TriangleAlert,
+  UserCheck,
   UserPlus,
   Users,
 } from "lucide-react";
@@ -17,8 +17,8 @@ import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 type AnalyticsData = {
   totalMembers: number;
   newMembersToday: number;
-  totalStamps: number;
-  rewardsReady: number;
+  activeMembersThisMonth: number;
+  freeDrinksThisMonth: number;
   rewardTarget: number;
   rewardName: string;
 };
@@ -26,7 +26,9 @@ type AnalyticsData = {
 export default function SimpleAnalytics() {
   const { theme } = useCafeTheme();
 
-  const [data, setData] = useState<AnalyticsData | null>(null);
+  const [data, setData] =
+    useState<AnalyticsData | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -201,23 +203,26 @@ export default function SimpleAnalytics() {
     {
       label: "New today",
       value: data.newMembersToday,
-      helper: "Members added today",
+      helper: "Members who joined today",
       icon: UserPlus,
     },
     {
-      label: "Total stamps",
-      value: data.totalStamps,
-      helper: "Current active stamps",
-      icon: Coffee,
+      label: "Active this month",
+      value: data.activeMembersThisMonth,
+      helper:
+        data.activeMembersThisMonth === 1
+          ? "1 member used the program"
+          : "Unique members who used the program",
+      icon: UserCheck,
     },
     {
-      label: "Rewards ready",
-      value: data.rewardsReady,
+      label: "Free drinks this month",
+      value: data.freeDrinksThisMonth,
       helper:
-        data.rewardsReady === 1
-          ? `1 ${data.rewardName.toLowerCase()} ready`
-          : `${data.rewardsReady} rewards ready`,
-      icon: Gift,
+        data.freeDrinksThisMonth === 1
+          ? `1 ${data.rewardName.toLowerCase()} redeemed`
+          : `${data.rewardName} rewards redeemed`,
+      icon: Coffee,
     },
   ];
 
@@ -258,7 +263,7 @@ export default function SimpleAnalytics() {
               color: theme.textMuted,
             }}
           >
-            A simple view of members, stamps, and rewards.
+            Member growth, monthly engagement, and rewards.
           </p>
         </div>
 
@@ -278,6 +283,7 @@ export default function SimpleAnalytics() {
             size={15}
             className={refreshing ? "animate-spin" : ""}
           />
+
           Refresh
         </button>
       </div>
@@ -360,7 +366,8 @@ export default function SimpleAnalytics() {
             color: theme.textPrimary,
           }}
         >
-          {data.rewardTarget} stamps → {data.rewardName}
+          {Math.max(data.rewardTarget - 1, 1)} paid stamps →{" "}
+          {data.rewardName}
         </span>
       </div>
     </section>

@@ -41,6 +41,13 @@ type Customer = {
   phone: string;
   birthday: string;
   stamps: number;
+  stampDates?: string[];
+};
+
+type StampResponse = {
+  customer: Customer;
+  stampCreatedAt: string;
+  message: string;
 };
 
 type Props = {
@@ -50,7 +57,10 @@ type Props = {
 export default function MemberCard({ customer: originalCustomer }: Props) {
   const { theme, cafe } = useCafeTheme();
 
-  const [customer, setCustomer] = useState<Customer>(originalCustomer);
+  const [customer, setCustomer] = useState<Customer>({
+    ...originalCustomer,
+    stampDates: originalCustomer.stampDates ?? [],
+  });
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -66,7 +76,12 @@ export default function MemberCard({ customer: originalCustomer }: Props) {
 
   const visibleStamps = Math.min(customer.stamps, rewardTarget);
 
-  const rewardReady = customer.stamps >= rewardTarget;
+  const paidStampTarget = Math.max(rewardTarget - 1, 0);
+
+  const rewardReady = customer.stamps >= paidStampTarget;
+
+  const cardGlowsGreen =
+    customer.stamps >= paidStampTarget;
 
   const formattedBirthday = useMemo(() => {
     const date = new Date(customer.birthday);
@@ -206,7 +221,7 @@ export default function MemberCard({ customer: originalCustomer }: Props) {
 
       const responseText = await response.text();
 
-      let data: Customer | { message?: string };
+      let data: StampResponse | { message?: string };
 
       try {
         data = responseText ? JSON.parse(responseText) : {};
@@ -222,7 +237,15 @@ export default function MemberCard({ customer: originalCustomer }: Props) {
         );
       }
 
-      setCustomer(data as Customer);
+      const stampData = data as StampResponse;
+
+      setCustomer({
+        ...stampData.customer,
+        stampDates: [
+          ...(customer.stampDates ?? []),
+          stampData.stampCreatedAt,
+        ],
+      });
       notifyDashboard();
 
       showMessage("Stamp added", "The customer card was updated successfully.");
@@ -274,7 +297,10 @@ export default function MemberCard({ customer: originalCustomer }: Props) {
         );
       }
 
-      setCustomer(data as Customer);
+      setCustomer({
+        ...(data as Customer),
+        stampDates: [],
+      });
       setRedeemOpen(false);
       notifyDashboard();
 
@@ -338,7 +364,10 @@ export default function MemberCard({ customer: originalCustomer }: Props) {
   }
 
   function handleMemberUpdated(updatedCustomer: Customer) {
-    setCustomer(updatedCustomer);
+    setCustomer({
+      ...updatedCustomer,
+      stampDates: customer.stampDates ?? [],
+    });
     notifyDashboard();
 
     showMessage(
@@ -369,11 +398,17 @@ export default function MemberCard({ customer: originalCustomer }: Props) {
         onClick={() => setProfileOpen(true)}
         className="group w-full border p-5 text-left transition duration-200 hover:-translate-y-0.5 hover:brightness-105"
         style={{
-          borderColor: theme.border,
-          backgroundColor: theme.surface,
+          borderColor: cardGlowsGreen
+            ? `${theme.success}90`
+            : theme.border,
+          backgroundColor: cardGlowsGreen
+            ? `${theme.success}12`
+            : theme.surface,
           color: theme.textPrimary,
           borderRadius: theme.radiusMedium,
-          boxShadow: theme.cardShadow,
+          boxShadow: cardGlowsGreen
+            ? `0 0 0 1px ${theme.success}35, 0 0 24px ${theme.success}30`
+            : theme.cardShadow,
         }}
       >
         <div className="flex items-start justify-between gap-5">
@@ -412,11 +447,15 @@ export default function MemberCard({ customer: originalCustomer }: Props) {
           <div
             className="shrink-0 border px-3 py-1.5 text-xs font-semibold"
             style={{
-              borderColor: rewardReady ? `${theme.success}55` : theme.border,
-              backgroundColor: rewardReady
+              borderColor: cardGlowsGreen
+                ? `${theme.success}65`
+                : theme.border,
+              backgroundColor: cardGlowsGreen
                 ? `${theme.success}18`
                 : theme.accentSoft,
-              color: rewardReady ? theme.success : theme.textSecondary,
+              color: cardGlowsGreen
+                ? theme.success
+                : theme.textSecondary,
               borderRadius: "999px",
             }}
           >
@@ -623,33 +662,54 @@ export default function MemberCard({ customer: originalCustomer }: Props) {
                 </p>
               </div>
 
-              <div className="mt-5 grid grid-cols-7 gap-2">
+              <div
+                className="mt-5 grid gap-2"
+                style={{
+                  gridTemplateColumns: `repeat(${rewardTarget}, minmax(0, 1fr))`,
+                }}
+              >
                 {Array.from({
                   length: rewardTarget,
                 }).map((_, index) => {
                   const filled = index < visibleStamps;
+                  const stampDate = customer.stampDates?.[index];
 
                   return (
-                    <div
-                      key={index}
-                      className="flex aspect-square items-center justify-center border"
-                      style={{
-                        borderColor: filled
-                          ? `${theme.accent}70`
-                          : theme.border,
-                        backgroundColor: filled
-                          ? theme.accentSoft
-                          : theme.surface,
-                        borderRadius: "12px",
-                      }}
-                    >
-                      <Coffee
-                        size={20}
+                    <div key={index} className="min-w-0 text-center">
+                      <div
+                        className="flex aspect-square items-center justify-center border"
                         style={{
-                          color: filled ? theme.accent : theme.textMuted,
-                          fill: filled ? theme.accent : "transparent",
+                          borderColor: filled
+                            ? `${theme.accent}70`
+                            : theme.border,
+                          backgroundColor: filled
+                            ? theme.accentSoft
+                            : theme.surface,
+                          borderRadius: "12px",
                         }}
-                      />
+                      >
+                        <Coffee
+                          size={20}
+                          style={{
+                            color: filled ? theme.accent : theme.textMuted,
+                            fill: filled ? theme.accent : "transparent",
+                          }}
+                        />
+                      </div>
+
+                      <p
+                        className="mt-1.5 min-h-4 truncate text-[10px] font-medium"
+                        style={{
+                          color: filled ? theme.textMuted : "transparent",
+                        }}
+                      >
+                        {filled && stampDate
+                          ? new Intl.DateTimeFormat("en-GB", {
+                              day: "numeric",
+                              month: "numeric",
+                            }).format(new Date(stampDate))
+                          : "—"}
+                      </p>
                     </div>
                   );
                 })}

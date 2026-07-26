@@ -41,7 +41,7 @@ type ScanResult = {
 
 const SCANNER_ELEMENT_ID = "phone-qr-reader";
 const SAME_CUSTOMER_COOLDOWN = 5000;
-const RESULT_DISPLAY_TIME = 1500;
+const RESULT_DISPLAY_TIME = 7000; // 7 seconds
 
 function playSuccessSound() {
   try {

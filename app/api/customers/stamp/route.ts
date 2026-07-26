@@ -5,12 +5,9 @@ import { requireActiveCafe } from "@/lib/require-active-cafe";
 
 function extractPublicToken(value: string) {
   const cleanedValue = value.trim();
-
-  if (cleanedValue.startsWith("BL:")) {
-    return cleanedValue.slice(3).trim();
-  }
-
-  return cleanedValue;
+  return cleanedValue.startsWith("BL:")
+    ? cleanedValue.slice(3).trim()
+    : cleanedValue;
 }
 
 export async function POST(request: NextRequest) {
@@ -19,7 +16,7 @@ export async function POST(request: NextRequest) {
   if (!access.allowed) {
     return NextResponse.json(
       { message: access.message },
-      { status: access.status }
+      { status: access.status },
     );
   }
 
@@ -28,46 +25,29 @@ export async function POST(request: NextRequest) {
   if (!authData.cafe || !authData.cafeId) {
     return NextResponse.json(
       { message: "Café account required." },
-      { status: 403 }
+      { status: 403 },
     );
   }
 
   try {
     const body = await request.json();
-
     const customerId =
       typeof body.id === "string" ? body.id.trim() : "";
-
     const rawToken =
-      typeof body.token === "string"
-        ? body.token.trim()
-        : "";
-
-    const publicToken = rawToken
-      ? extractPublicToken(rawToken)
-      : "";
+      typeof body.token === "string" ? body.token.trim() : "";
+    const publicToken = rawToken ? extractPublicToken(rawToken) : "";
 
     if (!customerId && !publicToken) {
       return NextResponse.json(
-        {
-          message:
-            "Customer ID or customer scan code is required.",
-        },
-        { status: 400 }
+        { message: "Customer ID or customer scan code is required." },
+        { status: 400 },
       );
     }
 
     const customer = await prisma.customer.findFirst({
       where: {
         cafeId: authData.cafeId,
-
-        ...(publicToken
-          ? {
-              publicToken,
-            }
-          : {
-              id: customerId,
-            }),
+        ...(publicToken ? { publicToken } : { id: customerId }),
       },
       select: {
         id: true,
@@ -84,85 +64,78 @@ export async function POST(request: NextRequest) {
 
     if (!customer) {
       return NextResponse.json(
-        {
-          message:
-            "This member does not belong to this café.",
-        },
-        { status: 404 }
+        { message: "This member does not belong to this café." },
+        { status: 404 },
       );
     }
 
-    const rewardTarget = Math.max(
-      authData.cafe.rewardTarget,
-      1
-    );
+    const rewardTarget = Math.max(authData.cafe.rewardTarget, 1);
+    const paidStampTarget = Math.max(rewardTarget - 1, 0);
 
-    const nextStampCount = customer.stamps + 1;
-    const rewardEarned =
-      nextStampCount >= rewardTarget;
-
-    const updatedCustomer =
-      await prisma.$transaction(
-        async (transaction) => {
-          const updated =
-            await transaction.customer.update({
-              where: {
-                id: customer.id,
-              },
-              data: {
-                stamps: rewardEarned
-                  ? 0
-                  : nextStampCount,
-              },
-              select: {
-                id: true,
-                memberNumber: true,
-                publicToken: true,
-                name: true,
-                phone: true,
-                birthday: true,
-                stamps: true,
-                createdAt: true,
-                updatedAt: true,
-              },
-            });
-
-          await transaction.stampTransaction.create({
-            data: {
-              cafeId: authData.cafeId,
-              customerId: customer.id,
-              userId: authData.user.id,
-              type: "ADD",
-              description: rewardEarned
-                ? `${authData.cafe.rewardName} completed and card reset`
-                : "Drink stamp added",
-            },
-          });
-
-          return updated;
-        }
+    if (customer.stamps >= paidStampTarget) {
+      return NextResponse.json(
+        {
+          message: `${authData.cafe.rewardName || "Reward"} is ready. Redeem it instead of adding another stamp.`,
+          rewardReady: true,
+        },
+        { status: 409 },
       );
+    }
+
+    const result = await prisma.$transaction(async (transaction) => {
+      const updatedCustomer = await transaction.customer.update({
+        where: { id: customer.id },
+        data: { stamps: { increment: 1 } },
+        select: {
+          id: true,
+          memberNumber: true,
+          publicToken: true,
+          name: true,
+          phone: true,
+          birthday: true,
+          stamps: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      });
+
+      const stampTransaction = await transaction.stampTransaction.create({
+        data: {
+          cafeId: authData.cafeId,
+          customerId: customer.id,
+          userId: authData.user.id,
+          type: "ADD",
+          description: "Drink stamp added",
+        },
+        select: { createdAt: true },
+      });
+
+      return {
+        updatedCustomer,
+        stampCreatedAt: stampTransaction.createdAt,
+      };
+    });
 
     return NextResponse.json({
-      customer: updatedCustomer,
-      previousStamps: customer.stamps,
-      stamps: updatedCustomer.stamps,
+      customer: {
+        ...result.updatedCustomer,
+        stampDates: [],
+      },
+      stampCreatedAt: result.stampCreatedAt,
       rewardTarget,
-      rewardEarned,
-      rewardName:
-        authData.cafe.rewardName || "Reward",
-      message: rewardEarned
-        ? `${authData.cafe.rewardName || "Reward"} earned. New card started.`
-        : "Stamp added successfully.",
+      rewardReady: result.updatedCustomer.stamps >= paidStampTarget,
+      rewardName: authData.cafe.rewardName || "Reward",
+      message:
+        result.updatedCustomer.stamps >= paidStampTarget
+          ? `${authData.cafe.rewardName || "Reward"} is now ready.`
+          : "Stamp added successfully.",
     });
   } catch (error) {
     console.error("Add stamp error:", error);
 
     return NextResponse.json(
-      {
-        message: "Failed to add stamp.",
-      },
-      { status: 500 }
+      { message: "Failed to add stamp." },
+      { status: 500 },
     );
   }
 }

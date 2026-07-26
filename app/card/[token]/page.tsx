@@ -226,6 +226,10 @@ export default function DigitalCardPage() {
   const token = params.token;
 
   const previousStampCount = useRef<number | null>(null);
+  const requestInProgress = useRef(false);
+  const hasLoadedCard = useRef(false);
+  const activeController = useRef<AbortController | null>(null);
+  const stampAnimationTimeout = useRef<number | null>(null);
 
   const [customer, setCustomer] = useState<Customer | null>(null);
 
@@ -248,9 +252,18 @@ export default function DigitalCardPage() {
 
   const loadCard = useCallback(
     async (showRefreshing = false) => {
-      if (!token) {
+      if (!token || requestInProgress.current) {
         return;
       }
+
+      requestInProgress.current = true;
+
+      const controller = new AbortController();
+      activeController.current = controller;
+
+      const requestTimeout = window.setTimeout(() => {
+        controller.abort();
+      }, 10_000);
 
       try {
         if (showRefreshing) {
@@ -261,6 +274,7 @@ export default function DigitalCardPage() {
           `/api/customers/card/${encodeURIComponent(token)}`,
           {
             cache: "no-store",
+            signal: controller.signal,
           },
         );
 
@@ -278,24 +292,48 @@ export default function DigitalCardPage() {
         ) {
           setNewStampIndex(incomingCustomer.stamps - 1);
 
-          window.setTimeout(() => {
+          if (stampAnimationTimeout.current !== null) {
+            window.clearTimeout(stampAnimationTimeout.current);
+          }
+
+          stampAnimationTimeout.current = window.setTimeout(() => {
             setNewStampIndex(null);
+            stampAnimationTimeout.current = null;
           }, 1200);
         }
 
         previousStampCount.current = incomingCustomer.stamps;
+        hasLoadedCard.current = true;
 
         setCustomer(incomingCustomer);
         setError("");
-      } catch (error) {
-        console.error(error);
+      } catch (caughtError) {
+        const requestWasAborted =
+          caughtError instanceof DOMException &&
+          caughtError.name === "AbortError";
 
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Failed to load loyalty card.",
-        );
+        if (requestWasAborted) {
+          console.warn("Card refresh timed out.");
+        } else {
+          console.error(caughtError);
+        }
+
+        // A failed background refresh should never replace a working card.
+        if (!hasLoadedCard.current) {
+          setError(
+            caughtError instanceof Error && !requestWasAborted
+              ? caughtError.message
+              : "The card took too long to load. Please try again.",
+          );
+        }
       } finally {
+        window.clearTimeout(requestTimeout);
+
+        if (activeController.current === controller) {
+          activeController.current = null;
+        }
+
+        requestInProgress.current = false;
         setLoading(false);
         setRefreshing(false);
       }
@@ -304,38 +342,53 @@ export default function DigitalCardPage() {
   );
 
   useEffect(() => {
-    loadCard();
+    let pollingTimeout: number | null = null;
+    let stopped = false;
 
-    const interval = window.setInterval(() => {
-      loadCard();
-    }, 3000);
+    const scheduleNextRefresh = () => {
+      if (stopped) {
+        return;
+      }
 
-    return () => {
-      window.clearInterval(interval);
+      pollingTimeout = window.setTimeout(async () => {
+        if (document.visibilityState === "visible") {
+          await loadCard();
+        }
+
+        scheduleNextRefresh();
+      }, 5000);
     };
-  }, [loadCard]);
 
-  useEffect(() => {
-    if (!showQrCode) {
-      return;
-    }
+    void loadCard();
+    scheduleNextRefresh();
 
-    const previousOverflow = document.body.style.overflow;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setShowQrCode(false);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void loadCard();
       }
     };
 
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
+      stopped = true;
+
+      if (pollingTimeout !== null) {
+        window.clearTimeout(pollingTimeout);
+      }
+
+      if (stampAnimationTimeout.current !== null) {
+        window.clearTimeout(stampAnimationTimeout.current);
+      }
+
+      activeController.current?.abort();
+
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange,
+      );
     };
-  }, [showQrCode]);
+  }, [loadCard]);
 
   useEffect(() => {
     if (!customer || searchParams.get("welcome") !== "1") {
@@ -384,11 +437,29 @@ export default function DigitalCardPage() {
       return;
     }
 
-    const previousOverflow = document.body.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") {
+        return;
+      }
+
+      setShowQrCode(false);
+      setShowRatingModal(false);
+      setShowGooglePrompt(false);
+      setShowHomeScreenHelp(false);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [
     showQrCode,
@@ -514,6 +585,9 @@ export default function DigitalCardPage() {
 
   const rewardReady = customer.stamps >= rewardTarget;
 
+  const cardGlowsGreen =
+    customer.stamps >= Math.max(rewardTarget - 1, 0);
+
   const remainingStamps = Math.max(rewardTarget - customer.stamps, 0);
 
   const progressMessage = getProgressMessage(
@@ -581,6 +655,14 @@ export default function DigitalCardPage() {
 
   const secondaryGlow = withAlpha(secondaryColor, 0.25);
 
+  const rewardEmerald = "#163F36";
+
+  const rewardEmeraldLight = "#2D6A5A";
+
+  const rewardChampagne = "#D8BE82";
+
+  const rewardIvory = "#F7EFD9";
+
   return (
     <main
       className="min-h-screen px-4 py-6 transition-colors duration-700 sm:px-6 sm:py-10"
@@ -607,32 +689,50 @@ export default function DigitalCardPage() {
           style={{
             borderColor: cardBorder,
             backgroundColor: cardBackground,
+            boxShadow: "0 35px 120px rgba(0,0,0,0.35)",
           }}
         >
-          {rewardReady && (
-            <>
-              <div className="pointer-events-none absolute left-[12%] top-10 h-2 w-2 animate-ping rounded-full bg-emerald-400/60" />
-
-              <div className="pointer-events-none absolute right-[18%] top-24 h-2 w-2 animate-ping rounded-full bg-amber-300/60 [animation-delay:300ms]" />
-
-              <div className="pointer-events-none absolute bottom-40 left-[20%] h-2 w-2 animate-ping rounded-full bg-emerald-300/60 [animation-delay:600ms]" />
-
-              <div className="pointer-events-none absolute bottom-24 right-[12%] h-2 w-2 animate-ping rounded-full bg-amber-300/60 [animation-delay:900ms]" />
-            </>
-          )}
-
           <header
             className="relative overflow-hidden border-b px-6 pb-7 pt-8"
             style={{
               borderColor: cardBorder,
             }}
           >
+            {cardGlowsGreen ? (
+              <>
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-1/2 top-[-9rem] h-[21rem] w-[155%] -translate-x-1/2 rounded-[50%] blur-3xl"
+                  style={{
+                    background: `
+                      radial-gradient(
+                        ellipse at center,
+                        rgba(216, 190, 130, 0.14) 0%,
+                        rgba(64, 126, 104, 0.18) 24%,
+                        rgba(22, 63, 54, 0.1) 48%,
+                        transparent 72%
+                      )
+                    `,
+                  }}
+                />
+
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-[15%] right-[15%] top-0 h-px"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, transparent, rgba(216,190,130,0.34), transparent)",
+                    boxShadow:
+                      "0 8px 34px rgba(70,137,113,0.18)",
+                  }}
+                />
+              </>
+            ) : null}
+
             <div
               className="absolute -right-16 -top-20 h-56 w-56 rounded-full blur-3xl"
               style={{
-                backgroundColor: rewardReady
-                  ? "rgba(16,185,129,0.18)"
-                  : primaryGlow,
+                backgroundColor: primaryGlow,
               }}
             />
 
@@ -659,7 +759,7 @@ export default function DigitalCardPage() {
                       <h2
                         className="break-words text-2xl font-semibold tracking-[0.07em] sm:text-3xl"
                         style={{
-                          color: rewardReady ? "#10B981" : textPrimary,
+                          color: textPrimary,
                         }}
                       >
                         {customer.cafe.name}
@@ -711,23 +811,14 @@ export default function DigitalCardPage() {
             <section
               className="relative overflow-hidden rounded-3xl border p-5 transition-all duration-700"
               style={{
-                borderColor: rewardReady
-                  ? "rgba(16,185,129,0.35)"
-                  : primaryBorder,
-
-                backgroundColor: rewardReady
-                  ? cardIsLight
-                    ? "rgba(16,185,129,0.10)"
-                    : "rgba(16,185,129,0.12)"
-                  : primarySoft,
+                borderColor: primaryBorder,
+                backgroundColor: primarySoft,
               }}
             >
               <div
                 className="absolute -right-12 -top-12 h-36 w-36 rounded-full blur-3xl"
                 style={{
-                  backgroundColor: rewardReady
-                    ? "rgba(52,211,153,0.16)"
-                    : primaryGlow,
+                  backgroundColor: primaryGlow,
                 }}
               />
 
@@ -736,7 +827,7 @@ export default function DigitalCardPage() {
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
                   style={{
                     backgroundColor: surfaceRaised,
-                    color: rewardReady ? "#10B981" : primaryColor,
+                    color: primaryColor,
                   }}
                 >
                   {rewardReady ? <Gift size={23} /> : <Sparkles size={22} />}
@@ -746,7 +837,7 @@ export default function DigitalCardPage() {
                   <p
                     className="font-semibold"
                     style={{
-                      color: rewardReady ? "#10B981" : textPrimary,
+                      color: textPrimary,
                     }}
                   >
                     {progressMessage.title}
@@ -790,15 +881,9 @@ export default function DigitalCardPage() {
                 <span
                   className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold"
                   style={{
-                    borderColor: rewardReady
-                      ? "rgba(16,185,129,0.35)"
-                      : primaryBorder,
-
-                    backgroundColor: rewardReady
-                      ? "rgba(16,185,129,0.12)"
-                      : primarySoft,
-
-                    color: rewardReady ? "#10B981" : primaryColor,
+                    borderColor: primaryBorder,
+                    backgroundColor: primarySoft,
+                    color: primaryColor,
                   }}
                 >
                   {rewardReady
@@ -815,10 +900,6 @@ export default function DigitalCardPage() {
 
                   const isNewStamp = newStampIndex === index;
 
-                  const filledBackground = rewardReady
-                    ? "#10B981"
-                    : primaryColor;
-
                   return (
                     <div
                       key={index}
@@ -826,19 +907,28 @@ export default function DigitalCardPage() {
                         isNewStamp ? "scale-125" : "scale-100"
                       }`}
                       style={{
-                        borderColor: filled
-                          ? rewardReady
-                            ? "rgba(16,185,129,0.55)"
-                            : primaryColor
-                          : cardBorder,
+                        borderColor:
+                          filled && cardGlowsGreen
+                            ? "rgba(216,190,130,0.58)"
+                            : filled
+                              ? primaryColor
+                              : cardBorder,
 
-                        backgroundColor: filled
-                          ? filledBackground
-                          : emptyStampBackground,
+                        background:
+                          filled && cardGlowsGreen
+                            ? `linear-gradient(145deg, ${rewardEmeraldLight} 0%, ${rewardEmerald} 48%, #0B2822 100%)`
+                            : filled
+                              ? primaryColor
+                              : emptyStampBackground,
 
-                        boxShadow: isNewStamp
-                          ? `0 0 30px ${primaryGlow}`
-                          : "none",
+                        boxShadow:
+                          filled && cardGlowsGreen
+                            ? isNewStamp
+                              ? "inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -12px 24px rgba(0,0,0,0.2), 0 0 0 1px rgba(216,190,130,0.2), 0 14px 30px rgba(6,31,26,0.42)"
+                              : "inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -12px 24px rgba(0,0,0,0.18), 0 0 0 1px rgba(216,190,130,0.14), 0 10px 22px rgba(6,31,26,0.3)"
+                            : isNewStamp
+                              ? `0 0 30px ${primaryGlow}`
+                              : "none",
                       }}
                     >
                       <Coffee
@@ -848,18 +938,23 @@ export default function DigitalCardPage() {
                         }`}
                         style={{
                           color: filled
-                            ? rewardReady
-                              ? "#FFFFFF"
+                            ? cardGlowsGreen
+                              ? rewardIvory
                               : accentText
                             : emptyStampText,
 
                           fill: filled
-                            ? rewardReady
-                              ? "#FFFFFF"
+                            ? cardGlowsGreen
+                              ? rewardIvory
                               : accentText
                             : "transparent",
 
                           opacity: filled ? 1 : 0.65,
+
+                          filter:
+                            filled && cardGlowsGreen
+                              ? "drop-shadow(0 2px 4px rgba(0,0,0,0.34))"
+                              : "none",
                         }}
                       />
                     </div>
@@ -877,7 +972,12 @@ export default function DigitalCardPage() {
                   className="h-full rounded-full transition-all duration-700"
                   style={{
                     width: `${progressPercentage}%`,
-                    backgroundColor: rewardReady ? "#10B981" : primaryColor,
+                    background: cardGlowsGreen
+                      ? `linear-gradient(90deg, ${rewardEmerald} 0%, ${rewardEmeraldLight} 72%, ${rewardChampagne} 100%)`
+                      : primaryColor,
+                    boxShadow: cardGlowsGreen
+                      ? "inset 0 1px 0 rgba(255,255,255,0.28), 0 3px 12px rgba(13,58,49,0.34)"
+                      : "none",
                   }}
                 />
               </div>

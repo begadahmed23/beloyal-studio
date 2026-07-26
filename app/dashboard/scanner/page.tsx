@@ -38,7 +38,7 @@ type ScanResult = {
   message: string;
 };
 
-const RESET_DELAY = 3000;
+const RESET_DELAY = 7000;
 const SAME_CUSTOMER_COOLDOWN = 5000;
 const AUTO_SCAN_DELAY = 1000;
 function playSuccessSound() {
