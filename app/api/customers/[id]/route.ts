@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
@@ -14,16 +14,24 @@ export async function PATCH(
   request: NextRequest,
   context: RouteContext
 ) {
-  const authData = await requireAuth(request.headers);
-
-  if (!authData) {
-    return NextResponse.json(
-      { message: "Unauthorized." },
-      { status: 401 }
-    );
-  }
-
   try {
+    const authData = await requireAuth(request.headers);
+
+    if (!authData) {
+      return NextResponse.json(
+        { message: "Unauthorized." },
+        { status: 401 }
+      );
+    }
+
+    if (!authData.cafe) {
+      return NextResponse.json(
+        { message: "Café account not found." },
+        { status: 404 }
+      );
+    }
+
+    const cafeId = authData.cafe.id;
     const { id } = await context.params;
     const body = await request.json();
 
@@ -52,8 +60,7 @@ export async function PATCH(
     if (name.length > 100) {
       return NextResponse.json(
         {
-          message:
-            "Name must be 100 characters or fewer.",
+          message: "Name must be 100 characters or fewer.",
         },
         { status: 400 }
       );
@@ -82,7 +89,10 @@ export async function PATCH(
       await prisma.customer.findFirst({
         where: {
           id,
-          cafeId: authData.cafeId,
+          cafeId,
+        },
+        select: {
+          id: true,
         },
       });
 
@@ -96,11 +106,14 @@ export async function PATCH(
     const existingPhone =
       await prisma.customer.findFirst({
         where: {
-          cafeId: authData.cafeId,
+          cafeId,
           phone,
           NOT: {
             id,
           },
+        },
+        select: {
+          id: true,
         },
       });
 
@@ -117,7 +130,7 @@ export async function PATCH(
     const updatedCustomer =
       await prisma.customer.update({
         where: {
-          id,
+          id: existingCustomer.id,
         },
         data: {
           name,
@@ -166,23 +179,38 @@ export async function DELETE(
   request: NextRequest,
   context: RouteContext
 ) {
-  const authData = await requireAuth(request.headers);
-
-  if (!authData) {
-    return NextResponse.json(
-      { message: "Unauthorized." },
-      { status: 401 }
-    );
-  }
-
   try {
+    const authData = await requireAuth(request.headers);
+
+    if (!authData) {
+      return NextResponse.json(
+        { message: "Unauthorized." },
+        { status: 401 }
+      );
+    }
+
+    if (!authData.cafe) {
+      return NextResponse.json(
+        { message: "Café account not found." },
+        { status: 404 }
+      );
+    }
+
+    const cafeId = authData.cafe.id;
     const { id } = await context.params;
+
+    if (!id) {
+      return NextResponse.json(
+        { message: "Member ID is required." },
+        { status: 400 }
+      );
+    }
 
     const customer =
       await prisma.customer.findFirst({
         where: {
           id,
-          cafeId: authData.cafeId,
+          cafeId,
         },
         select: {
           id: true,

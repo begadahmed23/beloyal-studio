@@ -4,29 +4,28 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
 
 export async function GET(request: NextRequest) {
-  const authData = await requireAuth(request.headers);
-
-  if (!authData) {
-    return NextResponse.json(
-      { message: "Unauthorized." },
-      { status: 401 }
-    );
-  }
-
   try {
+    const authData = await requireAuth(request.headers);
+
+    if (!authData) {
+      return NextResponse.json(
+        { message: "Unauthorized." },
+        { status: 401 },
+      );
+    }
+
+    if (!authData.cafe) {
+      return NextResponse.json(
+        { message: "Café account not found." },
+        { status: 404 },
+      );
+    }
+
+    const cafeId = authData.cafe.id;
+    const rewardTarget = authData.cafe.rewardTarget;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
-  const cafeId = authData.cafeId;
-
-if (!authData.cafe) {
-  return Response.json(
-    { error: "Cafe not found" },
-    { status: 404 }
-  );
-}
-
-const rewardTarget = authData.cafe.rewardTarget;
 
     const [
       totalMembers,
@@ -81,7 +80,7 @@ const rewardTarget = authData.cafe.rewardTarget;
 
     return NextResponse.json(
       { message: "Failed to load analytics." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

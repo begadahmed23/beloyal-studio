@@ -108,8 +108,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const cafeId = access.authData.cafe.id;
+const cafe = access.authData.cafe;
 
+if (!cafe) {
+  return NextResponse.json(
+    { message: "Café account not found." },
+    { status: 404 },
+  );
+}
+
+const cafeId = cafe.id;
     const search =
       request.nextUrl.searchParams
         .get("search")
@@ -188,7 +196,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const cafeId = access.authData.cafe.id;
+const cafe = access.authData.cafe;
+
+if (!cafe) {
+  return NextResponse.json(
+    { message: "Café account not found." },
+    { status: 404 },
+  );
+}
+
+const cafeId = cafe.id;
     const body = await request.json();
 
     const name =

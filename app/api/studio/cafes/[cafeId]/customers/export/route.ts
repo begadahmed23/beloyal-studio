@@ -5,7 +5,7 @@ import { requireSuperAdmin } from "@/lib/require-super-admin";
 
 type RouteContext = {
   params: Promise<{
-    cafeID: string;
+    cafeId: string;
   }>;
 };
 
@@ -41,11 +41,11 @@ export async function GET(
   }
 
   try {
-    const { cafeID } = await params;
+    const { cafeId } = await params;
 
     const cafe = await prisma.cafe.findUnique({
       where: {
-        id: cafeID,
+        id: cafeId,
       },
       select: {
         id: true,

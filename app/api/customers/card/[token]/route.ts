@@ -28,9 +28,7 @@ export async function GET(
     const customer = await prisma.customer.findFirst({
       where: {
         publicToken: cleanToken,
-        cafeId: {
-          not: null,
-        },
+        
         cafe: {
           isActive: true,
         },
