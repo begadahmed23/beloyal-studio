@@ -38,8 +38,8 @@ export default function MemberList() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<
-  "newest" | "recently-stamped"
->("newest");
+    "newest" | "recently-stamped"
+  >("newest");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -218,11 +218,13 @@ export default function MemberList() {
           >
             {search
               ? "Showing members that match your search."
-              : "The newest loyalty members appear first."}
+              : sortBy === "recently-stamped"
+                ? "The most recently stamped members appear first."
+                : "The newest loyalty members appear first."}
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-3">
           {refreshing && (
             <div
               className="flex items-center gap-2 text-xs"
@@ -236,6 +238,36 @@ export default function MemberList() {
               />
               Updating
             </div>
+          )}
+
+          {!loading && !error && (
+            <button
+              type="button"
+              onClick={() =>
+                setSortBy((current) =>
+                  current === "newest"
+                    ? "recently-stamped"
+                    : "newest"
+                )
+              }
+              aria-label={`Sort by ${
+                sortBy === "newest"
+                  ? "recently stamped"
+                  : "newest members"
+              }`}
+              className="flex h-9 items-center gap-2 border px-3 text-xs font-medium transition hover:opacity-80"
+              style={{
+                borderColor: theme.inputBorder,
+                backgroundColor: theme.inputBackground,
+                color: theme.textSecondary,
+                borderRadius: theme.radiusMedium,
+              }}
+            >
+              <ArrowDownUp size={14} />
+              {sortBy === "newest"
+                ? "Newest"
+                : "Recently stamped"}
+            </button>
           )}
 
           {!loading && !error && (

@@ -32,7 +32,7 @@ type ScanResult = {
     name: string;
     stamps: number;
   };
-  stamps: number;
+  stamps?: number;
   rewardTarget: number;
   rewardEarned: boolean;
   rewardName: string;
@@ -422,7 +422,9 @@ export default function PhoneScannerPage() {
                   </h3>
 
                   <p className="mt-3 text-lg text-white/70">
-                    {result.stamps} /{" "}
+                    {result.stamps ??
+                      result.customer.stamps}{" "}
+                    /{" "}
                     {result.rewardTarget} stamps
                   </p>
                 </div>
