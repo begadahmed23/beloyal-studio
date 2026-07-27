@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Building2,
@@ -15,6 +15,7 @@ import {
   Save,
   ShieldCheck,
   Star,
+  Trash2,
   TriangleAlert,
   Users,
 } from "lucide-react";
@@ -212,6 +213,7 @@ async function readJsonResponse(response: Response) {
 }
 
 export default function ManageCafePage() {
+  const router = useRouter();
   const params = useParams<{
     cafeId: string;
   }>();
@@ -226,6 +228,12 @@ export default function ManageCafePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] =
+    useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] =
+    useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -499,6 +507,55 @@ export default function ManageCafePage() {
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function deleteCafe() {
+    if (
+      !cafe ||
+      deleting ||
+      deleteConfirmation !== cafe.name
+    ) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setDeleteError("");
+
+      const response = await fetch(
+        `/api/studio/cafes/${cafeId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            confirmationName: deleteConfirmation,
+          }),
+        }
+      );
+
+      const data = await readJsonResponse(response);
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to delete café."
+        );
+      }
+
+      router.replace("/studio");
+      router.refresh();
+    } catch (error) {
+      console.error(error);
+
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete café."
+      );
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -946,6 +1003,133 @@ export default function ManageCafePage() {
           </div>
         </div>
       </section>
+
+      <section className="rounded-[28px] border border-red-200 bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.055)]">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-red-700">
+              Danger zone
+            </h2>
+
+            <p className="mt-1 max-w-2xl text-sm text-[#77777E]">
+              Permanently delete this café, its admin
+              account, customers, ratings, and stamp
+              history. This action cannot be undone.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setDeleteConfirmation("");
+              setDeleteError("");
+              setDeleteDialogOpen(true);
+            }}
+            className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-5 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+          >
+            <Trash2 size={17} />
+            Delete café
+          </button>
+        </div>
+      </section>
+
+      {deleteDialogOpen && (
+        <div
+          role="presentation"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-5 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              !deleting
+            ) {
+              setDeleteDialogOpen(false);
+            }
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-cafe-title"
+            className="w-full max-w-md rounded-[28px] border border-black/[0.08] bg-white p-6 shadow-2xl"
+          >
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-700">
+              <Trash2 size={22} />
+            </div>
+
+            <h2
+              id="delete-cafe-title"
+              className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-[#171719]"
+            >
+              Delete {cafe.name}?
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-[#68686F]">
+              This permanently removes the café and all
+              related data. Type{" "}
+              <strong className="text-[#171719]">
+                {cafe.name}
+              </strong>{" "}
+              exactly to confirm.
+            </p>
+
+            <input
+              autoFocus
+              value={deleteConfirmation}
+              onChange={(event) => {
+                setDeleteConfirmation(
+                  event.target.value
+                );
+                setDeleteError("");
+              }}
+              disabled={deleting}
+              placeholder={cafe.name}
+              className="mt-5 h-12 w-full rounded-xl border border-black/[0.12] bg-[#F8F8F9] px-4 text-sm text-[#171719] outline-none transition focus:border-red-400 focus:ring-4 focus:ring-red-100 disabled:opacity-60"
+            />
+
+            {deleteError && (
+              <p className="mt-3 text-sm text-red-700">
+                {deleteError}
+              </p>
+            )}
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() =>
+                  setDeleteDialogOpen(false)
+                }
+                className="h-11 rounded-xl border border-black/[0.1] bg-white text-sm font-semibold text-[#343438] transition hover:bg-[#F3F3F4] disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={
+                  deleting ||
+                  deleteConfirmation !== cafe.name
+                }
+                onClick={deleteCafe}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-red-600 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {deleting ? (
+                  <LoaderCircle
+                    size={17}
+                    className="animate-spin"
+                  />
+                ) : (
+                  <Trash2 size={17} />
+                )}
+
+                {deleting
+                  ? "Deleting..."
+                  : "Delete permanently"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 }

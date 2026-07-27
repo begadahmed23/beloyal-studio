@@ -576,3 +576,98 @@ export async function PATCH(
     );
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: RouteContext
+) {
+  const admin = await requireSuperAdmin(request.headers);
+
+  if (!admin) {
+    return NextResponse.json(
+      { message: "Forbidden." },
+      { status: 403 }
+    );
+  }
+
+  try {
+    const { cafeId } = await params;
+    const body: unknown = await request.json().catch(() => null);
+    const confirmationName =
+      body &&
+      typeof body === "object" &&
+      "confirmationName" in body &&
+      typeof body.confirmationName === "string"
+        ? body.confirmationName.trim()
+        : "";
+
+    const cafe = await prisma.cafe.findUnique({
+      where: { id: cafeId },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    if (!cafe) {
+      return NextResponse.json(
+        { message: "Café not found." },
+        { status: 404 }
+      );
+    }
+
+    if (confirmationName !== cafe.name) {
+      return NextResponse.json(
+        {
+          message:
+            "Type the café name exactly to confirm deletion.",
+        },
+        { status: 400 }
+      );
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.stampTransaction.deleteMany({
+        where: {
+          OR: [
+            { cafeId },
+            { customer: { cafeId } },
+            { user: { cafeId } },
+          ],
+        },
+      });
+
+      await tx.customerReview.deleteMany({
+        where: { cafeId },
+      });
+
+      await tx.customer.deleteMany({
+        where: { cafeId },
+      });
+
+      await tx.user.deleteMany({
+        where: { cafeId },
+      });
+
+      await tx.cafe.delete({
+        where: { id: cafeId },
+      });
+    });
+
+    return NextResponse.json({
+      message: `${cafe.name} was permanently deleted.`,
+    });
+  } catch (error) {
+    console.error("DELETE Studio café error:", error);
+
+    return NextResponse.json(
+      {
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete café.",
+      },
+      { status: 500 }
+    );
+  }
+}
