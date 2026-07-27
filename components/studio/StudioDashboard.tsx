@@ -21,7 +21,6 @@ import {
   LoaderCircle,
   RefreshCw,
   Search,
-  ShieldCheck,
   TriangleAlert,
   TrendingUp,
   Users,
@@ -181,22 +180,22 @@ function getStatusStyles(
   isActive: boolean,
 ) {
   if (!isActive || status === "SUSPENDED") {
-    return "border-red-400/20 bg-red-400/[0.08] text-red-300";
+    return "border-red-200 bg-red-50 text-red-700";
   }
 
   if (status === "ACTIVE") {
-    return "border-emerald-400/20 bg-emerald-400/[0.08] text-emerald-300";
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
   }
 
   if (status === "TRIAL") {
-    return "border-amber-400/20 bg-amber-400/[0.08] text-amber-200";
+    return "border-amber-200 bg-amber-50 text-amber-700";
   }
 
   if (status === "PAST_DUE") {
-    return "border-orange-400/20 bg-orange-400/[0.08] text-orange-300";
+    return "border-orange-200 bg-orange-50 text-orange-700";
   }
 
-  return "border-white/[0.08] bg-white/[0.04] text-[#8E8E93]";
+  return "border-zinc-200 bg-zinc-100 text-zinc-600";
 }
 
 function getExpiryText(cafe: Cafe) {
@@ -345,19 +344,21 @@ export default function StudioDashboard() {
         value: formatCompactNumber(data.summary.totalCafes),
         icon: Building2,
         iconClass:
-          "bg-violet-500/10 text-violet-300 ring-violet-400/20",
+          "bg-violet-500/10 text-slate-600 ring-violet-400/20",
       },
       {
-        label: "Active cafés",
-        helper: `${platformStats.conversionRate}% of all accounts`,
-        value: formatCompactNumber(data.summary.activeCafes),
-        icon: ShieldCheck,
+        label: "Paid conversion",
+        helper: `${data.summary.activeCafes} active of ${data.summary.totalCafes} cafés`,
+        value: `${platformStats.conversionRate}%`,
+        icon: TrendingUp,
         iconClass:
           "bg-emerald-500/10 text-emerald-300 ring-emerald-400/20",
       },
       {
         label: "Total members",
-        helper: "Across the entire platform",
+        helper: `${formatCompactNumber(
+          platformStats.totalTransactions,
+        )} loyalty transactions recorded`,
         value: formatCompactNumber(platformStats.totalMembers),
         icon: Users,
         iconClass:
@@ -365,9 +366,9 @@ export default function StudioDashboard() {
       },
       {
         label: "Monthly revenue",
-        helper: `${formatMoney(
-          data.summary.expectedRevenue,
-        )} potential`,
+        helper: `${data.summary.activeCafes} active paid café${
+          data.summary.activeCafes === 1 ? "" : "s"
+        }`,
         value: formatMoney(data.summary.monthlyRevenue),
         icon: CircleDollarSign,
         iconClass:
@@ -453,18 +454,18 @@ export default function StudioDashboard() {
     return (
       <div className="flex min-h-[520px] items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04]">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-black/[0.09] bg-black/[0.025]">
             <LoaderCircle
               size={25}
-              className="animate-spin text-violet-300"
+              className="animate-spin text-slate-600"
             />
           </div>
 
-          <p className="mt-5 text-sm font-medium text-[#D1D1D6]">
+          <p className="mt-5 text-sm font-medium text-[#343438]">
             Loading BeLoyal Studio
           </p>
 
-          <p className="mt-1 text-xs text-[#6E6E73]">
+          <p className="mt-1 text-xs text-[#8A8A91]">
             Preparing your platform data...
           </p>
         </div>
@@ -500,30 +501,30 @@ export default function StudioDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <section className="relative overflow-hidden rounded-[30px] border border-white/[0.08] bg-[#111217] p-6 shadow-[0_30px_100px_rgba(0,0,0,0.28)] sm:p-8">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-500/[0.10] blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 left-1/3 h-64 w-64 rounded-full bg-blue-500/[0.06] blur-3xl" />
+    <div className="space-y-6 rounded-[34px] bg-[#F3F4F6] p-3 text-[#171719] sm:p-5">
+      <section className="relative overflow-hidden rounded-[30px] border border-black/[0.09] bg-gradient-to-br from-white via-[#FAFAFA] to-[#F1F2F4] p-6 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:p-8">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-slate-300/30 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 left-1/3 h-64 w-64 rounded-full bg-zinc-200/40 blur-3xl" />
 
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="flex items-center gap-2">
               <span className="flex h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.75)]" />
 
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#8E8E93]">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#68686F]">
                 Platform overview
               </p>
             </div>
 
-            <h2 className="mt-4 max-w-2xl text-2xl font-semibold tracking-[-0.03em] text-[#F5F5F7] sm:text-3xl">
+            <h2 className="mt-4 max-w-2xl text-2xl font-semibold tracking-[-0.03em] text-[#171719] sm:text-3xl">
               Everything across BeLoyal,
-              <span className="text-[#8E8E93]">
+              <span className="text-[#68686F]">
                 {" "}
                 controlled from one place.
               </span>
             </h2>
 
-            <p className="mt-3 max-w-xl text-sm leading-6 text-[#8E8E93]">
+            <p className="mt-3 max-w-xl text-sm leading-6 text-[#68686F]">
               Monitor café accounts, subscriptions, members,
               activity, and platform revenue.
             </p>
@@ -534,7 +535,7 @@ export default function StudioDashboard() {
               type="button"
               onClick={() => loadData(true)}
               disabled={refreshing}
-              className="flex h-11 items-center justify-center gap-2 rounded-xl border border-white/[0.09] bg-white/[0.045] px-4 text-sm font-medium text-[#D1D1D6] transition hover:border-white/[0.14] hover:bg-white/[0.075] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-11 items-center justify-center gap-2 rounded-xl border border-black/[0.10] bg-black/[0.025] px-4 text-sm font-medium text-[#343438] transition hover:border-black/[0.16] hover:bg-black/[0.04] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <RefreshCw
                 size={15}
@@ -557,7 +558,7 @@ export default function StudioDashboard() {
           return (
             <article
               key={card.label}
-              className="group rounded-[24px] border border-white/[0.07] bg-[#14151A] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.16)] transition duration-300 hover:-translate-y-0.5 hover:border-white/[0.12] hover:bg-[#17181E]"
+              className="group rounded-[24px] border border-black/[0.08] bg-white/90 p-5 shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-0.5 hover:border-black/[0.14] hover:bg-[#F8F8F9]"
             >
               <div className="flex items-start justify-between">
                 <div
@@ -568,19 +569,19 @@ export default function StudioDashboard() {
 
                 <Activity
                   size={16}
-                  className="text-[#48484A] transition group-hover:text-[#8E8E93]"
+                  className="text-[#B4B4BA] transition group-hover:text-[#68686F]"
                 />
               </div>
 
-              <p className="mt-6 text-[28px] font-semibold tracking-[-0.04em] text-[#F5F5F7]">
+              <p className="mt-6 text-[28px] font-semibold tracking-[-0.04em] text-[#171719]">
                 {card.value}
               </p>
 
-              <p className="mt-2 text-sm font-medium text-[#D1D1D6]">
+              <p className="mt-2 text-sm font-medium text-[#343438]">
                 {card.label}
               </p>
 
-              <p className="mt-1 text-xs text-[#6E6E73]">
+              <p className="mt-1 text-xs text-[#8A8A91]">
                 {card.helper}
               </p>
             </article>
@@ -589,18 +590,18 @@ export default function StudioDashboard() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
-        <article className="rounded-[28px] border border-white/[0.07] bg-[#14151A] p-6">
+        <article className="rounded-[28px] border border-black/[0.08] bg-white/90 p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.17em] text-[#6E6E73]">
+              <p className="text-xs font-semibold uppercase tracking-[0.17em] text-[#8A8A91]">
                 Financial overview
               </p>
 
-              <h2 className="mt-2 text-xl font-semibold tracking-tight text-[#F5F5F7]">
+              <h2 className="mt-2 text-xl font-semibold tracking-tight text-[#171719]">
                 Subscription revenue
               </h2>
 
-              <p className="mt-2 text-sm text-[#8E8E93]">
+              <p className="mt-2 text-sm text-[#68686F]">
                 Confirmed income compared with your potential
                 monthly value.
               </p>
@@ -613,103 +614,74 @@ export default function StudioDashboard() {
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-[20px] border border-white/[0.06] bg-[#0E0F13] p-5">
+            <div className="rounded-[20px] border border-black/[0.07] bg-[#F7F7F8] p-5">
               <CircleDollarSign
                 size={18}
                 className="text-emerald-300"
               />
 
-              <p className="mt-4 text-xs text-[#6E6E73]">
+              <p className="mt-4 text-xs text-[#8A8A91]">
                 Confirmed revenue
               </p>
 
-              <p className="mt-2 text-xl font-semibold text-[#F5F5F7]">
+              <p className="mt-2 text-xl font-semibold text-[#171719]">
                 {formatMoney(data.summary.monthlyRevenue)}
               </p>
             </div>
 
-            <div className="rounded-[20px] border border-white/[0.06] bg-[#0E0F13] p-5">
+            <div className="rounded-[20px] border border-black/[0.07] bg-[#F7F7F8] p-5">
               <CreditCard
                 size={18}
-                className="text-violet-300"
+                className="text-slate-600"
               />
 
-              <p className="mt-4 text-xs text-[#6E6E73]">
+              <p className="mt-4 text-xs text-[#8A8A91]">
                 Potential revenue
               </p>
 
-              <p className="mt-2 text-xl font-semibold text-[#F5F5F7]">
+              <p className="mt-2 text-xl font-semibold text-[#171719]">
                 {formatMoney(data.summary.expectedRevenue)}
               </p>
             </div>
 
-            <div className="rounded-[20px] border border-white/[0.06] bg-[#0E0F13] p-5">
+            <div className="rounded-[20px] border border-black/[0.07] bg-[#F7F7F8] p-5">
               <TriangleAlert
                 size={18}
                 className="text-orange-300"
               />
 
-              <p className="mt-4 text-xs text-[#6E6E73]">
+              <p className="mt-4 text-xs text-[#8A8A91]">
                 Unconfirmed value
               </p>
 
-              <p className="mt-2 text-xl font-semibold text-[#F5F5F7]">
+              <p className="mt-2 text-xl font-semibold text-[#171719]">
                 {formatMoney(platformStats.revenueGap)}
               </p>
             </div>
           </div>
 
-          <div className="mt-5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-[#8E8E93]">
-                Revenue realization
-              </span>
+          <div className="mt-5 flex flex-col gap-2 rounded-[18px] border border-black/[0.07] bg-[#F7F7F8] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-xs text-[#68686F]">
+              Active paid subscriptions
+            </span>
 
-              <span className="font-medium text-[#D1D1D6]">
-                {data.summary.expectedRevenue > 0
-                  ? Math.min(
-                      Math.round(
-                        (data.summary.monthlyRevenue /
-                          data.summary.expectedRevenue) *
-                          100,
-                      ),
-                      100,
-                    )
-                  : 0}
-                %
-              </span>
-            </div>
-
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/[0.05]">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-violet-500 to-blue-400"
-                style={{
-                  width: `${
-                    data.summary.expectedRevenue > 0
-                      ? Math.min(
-                          (data.summary.monthlyRevenue /
-                            data.summary.expectedRevenue) *
-                            100,
-                          100,
-                        )
-                      : 0
-                  }%`,
-                }}
-              />
-            </div>
+            <span className="text-sm font-semibold text-[#343438]">
+              {data.summary.activeCafes} café
+              {data.summary.activeCafes === 1 ? "" : "s"}
+            </span>
           </div>
         </article>
 
-        <article className="rounded-[28px] border border-white/[0.07] bg-[#14151A] p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.17em] text-[#6E6E73]">
+        <article className="rounded-[28px] border border-black/[0.08] bg-white/90 p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.17em] text-[#8A8A91]">
             Platform health
           </p>
 
-          <h2 className="mt-2 text-xl font-semibold tracking-tight text-[#F5F5F7]">
+          <h2 className="mt-2 text-xl font-semibold tracking-tight text-[#171719]">
             Accounts requiring attention
           </h2>
 
-          <p className="mt-2 text-sm text-[#8E8E93]">
+          <p className="mt-2 text-sm text-[#68686F]">
             Subscription and access issues across all cafés.
           </p>
 
@@ -791,19 +763,19 @@ export default function StudioDashboard() {
         </article>
       </section>
 
-      <section className="overflow-hidden rounded-[28px] border border-white/[0.07] bg-[#14151A]">
-        <header className="border-b border-white/[0.07] p-5 sm:p-6">
+      <section className="overflow-hidden rounded-[28px] border border-black/[0.08] bg-white/90">
+        <header className="border-b border-black/[0.08] p-5 sm:p-6">
           <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.17em] text-[#6E6E73]">
+              <p className="text-xs font-semibold uppercase tracking-[0.17em] text-[#8A8A91]">
                 Café directory
               </p>
 
-              <h2 className="mt-2 text-xl font-semibold tracking-tight text-[#F5F5F7]">
+              <h2 className="mt-2 text-xl font-semibold tracking-tight text-[#171719]">
                 All café accounts
               </h2>
 
-              <p className="mt-2 text-sm text-[#8E8E93]">
+              <p className="mt-2 text-sm text-[#68686F]">
                 Search, inspect, and manage every café on
                 BeLoyal.
               </p>
@@ -813,7 +785,7 @@ export default function StudioDashboard() {
               <div className="relative min-w-0 lg:w-[290px]">
                 <Search
                   size={16}
-                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6E6E73]"
+                  className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8A8A91]"
                 />
 
                 <input
@@ -823,7 +795,7 @@ export default function StudioDashboard() {
                     setSearchQuery(event.target.value)
                   }
                   placeholder="Search café, owner, or email"
-                  className="h-11 w-full rounded-xl border border-white/[0.08] bg-[#0E0F13] pl-10 pr-10 text-sm text-[#F5F5F7] outline-none transition placeholder:text-[#55555A] focus:border-violet-400/40 focus:ring-2 focus:ring-violet-400/10"
+                  className="h-11 w-full rounded-xl border border-black/[0.09] bg-[#F7F7F8] pl-10 pr-10 text-sm text-[#171719] outline-none transition placeholder:text-[#A0A0A7] focus:border-slate-400 focus:ring-2 focus:ring-slate-300/40"
                 />
 
                 {searchQuery && (
@@ -831,7 +803,7 @@ export default function StudioDashboard() {
                     type="button"
                     onClick={() => setSearchQuery("")}
                     aria-label="Clear search"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6E6E73] transition hover:text-[#D1D1D6]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A8A91] transition hover:text-[#343438]"
                   >
                     <X size={15} />
                   </button>
@@ -846,7 +818,7 @@ export default function StudioDashboard() {
                       event.target.value as StatusFilter,
                     )
                   }
-                  className="h-11 w-full appearance-none rounded-xl border border-white/[0.08] bg-[#0E0F13] pl-4 pr-10 text-sm text-[#D1D1D6] outline-none transition focus:border-violet-400/40 lg:w-[155px]"
+                  className="h-11 w-full appearance-none rounded-xl border border-black/[0.09] bg-[#F7F7F8] pl-4 pr-10 text-sm text-[#343438] outline-none transition focus:border-slate-400 lg:w-[155px]"
                 >
                   <option value="ALL">All statuses</option>
                   <option value="ACTIVE">Active</option>
@@ -858,7 +830,7 @@ export default function StudioDashboard() {
 
                 <ChevronDown
                   size={15}
-                  className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[#6E6E73]"
+                  className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8A8A91]"
                 />
               </div>
 
@@ -870,7 +842,7 @@ export default function StudioDashboard() {
                       event.target.value as SortOption,
                     )
                   }
-                  className="h-11 w-full appearance-none rounded-xl border border-white/[0.08] bg-[#0E0F13] pl-4 pr-10 text-sm text-[#D1D1D6] outline-none transition focus:border-violet-400/40 lg:w-[155px]"
+                  className="h-11 w-full appearance-none rounded-xl border border-black/[0.09] bg-[#F7F7F8] pl-4 pr-10 text-sm text-[#343438] outline-none transition focus:border-slate-400 lg:w-[155px]"
                 >
                   <option value="NEWEST">Newest first</option>
                   <option value="OLDEST">Oldest first</option>
@@ -881,20 +853,20 @@ export default function StudioDashboard() {
 
                 <ChevronDown
                   size={15}
-                  className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[#6E6E73]"
+                  className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[#8A8A91]"
                 />
               </div>
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] pt-4">
-            <p className="text-xs text-[#6E6E73]">
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-black/[0.07] pt-4">
+            <p className="text-xs text-[#8A8A91]">
               Showing{" "}
-              <span className="font-medium text-[#D1D1D6]">
+              <span className="font-medium text-[#343438]">
                 {filteredCafes.length}
               </span>{" "}
               of{" "}
-              <span className="font-medium text-[#D1D1D6]">
+              <span className="font-medium text-[#343438]">
                 {data.cafes.length}
               </span>{" "}
               cafés
@@ -904,7 +876,7 @@ export default function StudioDashboard() {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="flex items-center gap-1.5 text-xs font-medium text-violet-300 transition hover:text-violet-200"
+                className="flex items-center gap-1.5 text-xs font-medium text-slate-600 transition hover:text-slate-700"
               >
                 <X size={13} />
                 Clear filters
@@ -915,15 +887,15 @@ export default function StudioDashboard() {
 
         {data.cafes.length === 0 ? (
           <div className="p-16 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.035]">
-              <Coffee size={24} className="text-[#6E6E73]" />
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-black/[0.08] bg-black/[0.02]">
+              <Coffee size={24} className="text-[#8A8A91]" />
             </div>
 
-            <p className="mt-5 font-medium text-[#D1D1D6]">
+            <p className="mt-5 font-medium text-[#343438]">
               No cafés yet
             </p>
 
-            <p className="mt-2 text-sm text-[#6E6E73]">
+            <p className="mt-2 text-sm text-[#8A8A91]">
               Create your first café account to begin.
             </p>
           </div>
@@ -931,21 +903,21 @@ export default function StudioDashboard() {
           <div className="p-16 text-center">
             <Search
               size={27}
-              className="mx-auto text-[#6E6E73]"
+              className="mx-auto text-[#8A8A91]"
             />
 
-            <p className="mt-4 font-medium text-[#D1D1D6]">
+            <p className="mt-4 font-medium text-[#343438]">
               No matching cafés
             </p>
 
-            <p className="mt-2 text-sm text-[#6E6E73]">
+            <p className="mt-2 text-sm text-[#8A8A91]">
               Try changing your search or status filter.
             </p>
 
             <button
               type="button"
               onClick={clearFilters}
-              className="mt-5 text-sm font-medium text-violet-300 transition hover:text-violet-200"
+              className="mt-5 text-sm font-medium text-slate-600 transition hover:text-slate-700"
             >
               Clear all filters
             </button>
@@ -955,7 +927,7 @@ export default function StudioDashboard() {
             {filteredCafes.map((cafe) => (
               <article
                 key={cafe.id}
-                className="group p-5 transition duration-200 hover:bg-white/[0.018] sm:p-6"
+                className="group p-5 transition duration-200 hover:bg-black/[0.018] sm:p-6"
               >
                 <div className="grid gap-6 xl:grid-cols-[minmax(230px,1.2fr)_minmax(520px,2fr)_auto] xl:items-center">
                   <div className="flex min-w-0 items-center gap-4">
@@ -982,7 +954,7 @@ export default function StudioDashboard() {
 
                     <div className="min-w-0">
                       <div className="flex min-w-0 items-center gap-2">
-                        <h3 className="truncate font-semibold text-[#F5F5F7]">
+                        <h3 className="truncate font-semibold text-[#171719]">
                           {cafe.name}
                         </h3>
 
@@ -999,11 +971,11 @@ export default function StudioDashboard() {
                         </span>
                       </div>
 
-                      <p className="mt-1.5 truncate text-sm text-[#8E8E93]">
+                      <p className="mt-1.5 truncate text-sm text-[#68686F]">
                         {cafe.user?.email || "No owner account"}
                       </p>
 
-                      <p className="mt-1 truncate text-xs text-[#55555A]">
+                      <p className="mt-1 truncate text-xs text-[#A0A0A7]">
                         beloyal.app/{cafe.slug}
                       </p>
                     </div>
@@ -1011,14 +983,14 @@ export default function StudioDashboard() {
 
                   <div className="grid grid-cols-2 gap-x-5 gap-y-5 sm:grid-cols-4">
                     <div>
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-[#55555A]">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-[#A0A0A7]">
                         Members
                       </p>
 
-                      <p className="mt-2 flex items-center gap-2 text-sm font-medium text-[#D1D1D6]">
+                      <p className="mt-2 flex items-center gap-2 text-sm font-medium text-[#343438]">
                         <Users
                           size={14}
-                          className="text-[#6E6E73]"
+                          className="text-[#8A8A91]"
                         />
                         {formatCompactNumber(
                           cafe._count.customers,
@@ -1027,14 +999,14 @@ export default function StudioDashboard() {
                     </div>
 
                     <div>
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-[#55555A]">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-[#A0A0A7]">
                         Activity
                       </p>
 
-                      <p className="mt-2 flex items-center gap-2 text-sm font-medium text-[#D1D1D6]">
+                      <p className="mt-2 flex items-center gap-2 text-sm font-medium text-[#343438]">
                         <Activity
                           size={14}
-                          className="text-[#6E6E73]"
+                          className="text-[#8A8A91]"
                         />
                         {formatCompactNumber(
                           cafe._count.transactions,
@@ -1043,28 +1015,28 @@ export default function StudioDashboard() {
                     </div>
 
                     <div>
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-[#55555A]">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-[#A0A0A7]">
                         Monthly price
                       </p>
 
-                      <p className="mt-2 flex items-center gap-2 text-sm font-medium text-[#D1D1D6]">
+                      <p className="mt-2 flex items-center gap-2 text-sm font-medium text-[#343438]">
                         <CircleDollarSign
                           size={14}
-                          className="text-[#6E6E73]"
+                          className="text-[#8A8A91]"
                         />
                         {formatMoney(cafe.monthlyPrice)}
                       </p>
                     </div>
 
                     <div>
-                      <p className="text-[11px] font-medium uppercase tracking-wide text-[#55555A]">
+                      <p className="text-[11px] font-medium uppercase tracking-wide text-[#A0A0A7]">
                         Expiry
                       </p>
 
-                      <p className="mt-2 flex items-center gap-2 text-sm font-medium text-[#D1D1D6]">
+                      <p className="mt-2 flex items-center gap-2 text-sm font-medium text-[#343438]">
                         <CalendarDays
                           size={14}
-                          className="text-[#6E6E73]"
+                          className="text-[#8A8A91]"
                         />
                         {formatDate(
                           cafe.subscriptionStatus === "TRIAL"
@@ -1073,7 +1045,7 @@ export default function StudioDashboard() {
                         )}
                       </p>
 
-                      <p className="mt-1 text-[11px] text-[#55555A]">
+                      <p className="mt-1 text-[11px] text-[#A0A0A7]">
                         {getExpiryText(cafe)}
                       </p>
                     </div>
@@ -1082,7 +1054,7 @@ export default function StudioDashboard() {
                   <div className="flex items-center xl:justify-end">
                     <Link
                       href={`/studio/cafes/${cafe.id}`}
-                      className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/[0.09] bg-white/[0.045] px-4 text-sm font-medium text-[#D1D1D6] transition hover:border-violet-400/30 hover:bg-violet-400/[0.08] hover:text-white xl:w-auto"
+                      className="flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-black/[0.10] bg-black/[0.025] px-4 text-sm font-medium text-[#343438] transition hover:border-slate-400 hover:bg-slate-100 hover:text-[#171719] xl:w-auto"
                     >
                       Manage
                       <ArrowUpRight size={15} />

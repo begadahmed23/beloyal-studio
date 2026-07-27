@@ -2,7 +2,7 @@ export type CafeThemeName =
   | "COFFEE_CLASSIC"
   | "MODERN_MINIMAL"
   | "DARK_LUXURY"
-  | "SOFT_PASTEL"
+  | "MEDITERRANEAN_BLUE"
   | "ORGANIC";
 
 export type CafeThemeConfig = {
@@ -123,11 +123,11 @@ const themes: Record<CafeThemeName, CafeThemeConfig> = {
   },
 
   /*
-   * The database value remains SOFT_PASTEL so we do not need
+   * The database value remains MEDITERRANEAN_BLUE so we do not need
    * a Prisma migration. In the interface, it will be displayed
    * as “Mediterranean Blue”.
    */
-  SOFT_PASTEL: {
+  MEDITERRANEAN_BLUE: {
     pageBackground: "#eaf3f5",
     surface: "#fbfdfc",
     surfaceRaised: "#dbe9eb",

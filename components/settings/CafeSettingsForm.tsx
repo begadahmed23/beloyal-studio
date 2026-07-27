@@ -62,7 +62,7 @@ const themeOptions: Array<{
       "Deep espresso and bronze for an intimate, high-end experience.",
   },
   {
-    value: "SOFT_PASTEL",
+    value: "MEDITERRANEAN_BLUE",
     label: "Mediterranean Blue",
     description:
       "Calm coastal blues, warm ivory, and an airy Mediterranean feeling.",
@@ -1143,7 +1143,7 @@ function getPreviewColors(
       "#cba477",
       "#0b0908",
     ],
-    SOFT_PASTEL: [
+    MEDITERRANEAN_BLUE: [
       "#5f8994",
       "#426c77",
       "#eaf3f5",

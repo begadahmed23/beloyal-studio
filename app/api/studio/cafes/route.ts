@@ -324,7 +324,7 @@ export async function POST(request: NextRequest) {
         theme:
           theme === "MODERN_MINIMAL" ||
           theme === "DARK_LUXURY" ||
-          theme === "SOFT_PASTEL" ||
+          theme === "MEDITERRANEAN_BLUE" ||
           theme === "ORGANIC"
             ? theme
             : "COFFEE_CLASSIC",

@@ -33,8 +33,6 @@ const selectCafe = {
   subscriptionStartedAt: true,
   subscriptionEndsAt: true,
   lastPaymentAt: true,
-  nextReminderAt: true,
-  reminderSentAt: true,
   monthlyPrice: true,
   isActive: true,
   createdAt: true,
@@ -44,13 +42,30 @@ const selectCafe = {
       id: true,
       name: true,
       email: true,
-      role: true,
     },
   },
   _count: {
     select: {
       customers: true,
       transactions: true,
+      reviews: true,
+    },
+  },
+  reviews: {
+    orderBy: { updatedAt: "desc" },
+    take: 20,
+    select: {
+      id: true,
+      rating: true,
+      createdAt: true,
+      updatedAt: true,
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          memberNumber: true,
+        },
+      },
     },
   },
 } satisfies Prisma.CafeSelect;
@@ -59,12 +74,39 @@ type CafeResult = Prisma.CafeGetPayload<{
   select: typeof selectCafe;
 }>;
 
-function normalizeCafe(cafe: CafeResult) {
+async function normalizeCafe(cafe: CafeResult) {
+  const [ratingAggregate, ratingGroups] = await Promise.all([
+    prisma.customerReview.aggregate({
+      where: { cafeId: cafe.id },
+      _avg: { rating: true },
+      _count: { rating: true },
+    }),
+    prisma.customerReview.groupBy({
+      by: ["rating"],
+      where: { cafeId: cafe.id },
+      _count: { rating: true },
+    }),
+  ]);
+
+  const breakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+  for (const group of ratingGroups) {
+    if (group.rating >= 1 && group.rating <= 5) {
+      breakdown[group.rating as keyof typeof breakdown] =
+        group._count.rating;
+    }
+  }
+
   return {
     ...cafe,
     monthlyPrice: cafe.monthlyPrice?.toNumber() ?? null,
     minimumPurchaseAmount:
       cafe.minimumPurchaseAmount?.toNumber() ?? null,
+    reviewSummary: {
+      averageRating: ratingAggregate._avg.rating ?? 0,
+      totalRatings: ratingAggregate._count.rating,
+      breakdown,
+    },
   };
 }
 
@@ -140,7 +182,7 @@ export async function GET(
     }
 
     return NextResponse.json({
-      cafe: normalizeCafe(cafe),
+      cafe: await normalizeCafe(cafe),
     });
   } catch (error) {
     console.error("GET Studio café error:", error);
@@ -389,8 +431,6 @@ export async function PATCH(
       "subscriptionStartedAt",
       "subscriptionEndsAt",
       "lastPaymentAt",
-      "nextReminderAt",
-      "reminderSentAt",
     ] as const) {
       if (field in body) {
         const value = nullableDate(body[field]);
@@ -505,7 +545,7 @@ export async function PATCH(
     }
 
     return NextResponse.json({
-      cafe: normalizeCafe(cafe),
+      cafe: await normalizeCafe(cafe),
       message: "Café updated successfully.",
     });
   } catch (error) {

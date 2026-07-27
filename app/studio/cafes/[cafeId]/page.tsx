@@ -29,7 +29,7 @@ type CafeTheme =
   | "COFFEE_CLASSIC"
   | "MODERN_MINIMAL"
   | "DARK_LUXURY"
-  | "SOFT_PASTEL"
+  | "MEDITERRANEAN_BLUE"
   | "ORGANIC";
 
 type SubscriptionStatus =
@@ -81,6 +81,31 @@ type Cafe = {
   _count: {
     customers: number;
     transactions: number;
+    reviews: number;
+  };
+
+  reviews: {
+    id: string;
+    rating: number;
+    createdAt: string;
+    updatedAt: string;
+    customer: {
+      id: string;
+      name: string;
+      memberNumber: string;
+    };
+  }[];
+
+  reviewSummary: {
+    averageRating: number;
+    totalRatings: number;
+    breakdown: {
+      1: number;
+      2: number;
+      3: number;
+      4: number;
+      5: number;
+    };
   };
 };
 
@@ -101,7 +126,7 @@ const themes: {
     label: "Dark Luxury",
   },
   {
-    value: "SOFT_PASTEL",
+    value: "MEDITERRANEAN_BLUE",
     label: "Mediterranean Blue",
   },
   {
@@ -170,6 +195,20 @@ function formatMoney(value: number) {
     currency: "EGP",
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+async function readJsonResponse(response: Response) {
+  const contentType = response.headers.get("content-type") || "";
+
+  if (!contentType.includes("application/json")) {
+    throw new Error(
+      response.status === 404
+        ? "The café API route was not found. Restart the development server and try again."
+        : `The server returned an unexpected response (${response.status}).`
+    );
+  }
+
+  return response.json();
 }
 
 export default function ManageCafePage() {
@@ -343,27 +382,30 @@ export default function ManageCafePage() {
         }
       );
 
-      const data = await response.json();
+      const data = await readJsonResponse(response);
 
-     if (!response.ok) {
-  throw new Error(
-    data.message || "Failed to load café."
-  );
-}
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to load café."
+        );
+      }
 
-const returnedCafe = data.cafe ?? data;
+      const returnedCafe = data.cafe ?? data;
 
-if (!returnedCafe?.id || !returnedCafe?.name) {
-  console.error("Unexpected café API response:", data);
+      if (!returnedCafe?.id || !returnedCafe?.name) {
+        console.error(
+          "Unexpected café API response:",
+          data
+        );
 
-  throw new Error(
-    "The café API returned an invalid response."
-  );
-}
+        throw new Error(
+          "The café API returned an invalid response."
+        );
+      }
 
-fillForm(returnedCafe);
-} catch (error) {
-  console.error(error);
+      fillForm(returnedCafe);
+    } catch (error) {
+      console.error(error);
 
       setError(
         error instanceof Error
@@ -433,7 +475,7 @@ fillForm(returnedCafe);
         }
       );
 
-      const data = await response.json();
+      const data = await readJsonResponse(response);
 
       if (!response.ok) {
         throw new Error(
@@ -462,14 +504,14 @@ fillForm(returnedCafe);
 
   if (loading) {
     return (
-      <div className="flex min-h-[500px] items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[#F5F5F7]">
         <div className="text-center">
           <LoaderCircle
             size={30}
-            className="mx-auto animate-spin text-[#F5F5F7]"
+            className="mx-auto animate-spin text-[#55565B]"
           />
 
-          <p className="mt-4 text-sm text-[#8E8E93]">
+          <p className="mt-4 text-sm text-[#77777E]">
             Loading café...
           </p>
         </div>
@@ -479,27 +521,29 @@ fillForm(returnedCafe);
 
   if (error && !cafe) {
     return (
-      <div className="rounded-[28px] border border-red-500/20 bg-red-500/[0.06] p-8 text-center">
-        <TriangleAlert
-          size={28}
-          className="mx-auto text-red-300"
-        />
+      <div className="flex min-h-screen items-center justify-center bg-[#F5F5F7] p-5">
+        <div className="w-full max-w-xl rounded-[28px] border border-red-600/15 bg-white p-8 text-center shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+          <TriangleAlert
+            size={28}
+            className="mx-auto text-red-600"
+          />
 
-        <p className="mt-4 font-medium text-red-200">
-          Café could not load
-        </p>
+          <p className="mt-4 font-medium text-[#171719]">
+            Café could not load
+          </p>
 
-        <p className="mt-2 text-sm text-red-200/70">
-          {error}
-        </p>
+          <p className="mt-2 text-sm text-[#77777E]">
+            {error}
+          </p>
 
-        <button
-          type="button"
-          onClick={loadCafe}
-          className="mt-6 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-200 transition hover:bg-red-500/20"
-        >
-          Try again
-        </button>
+          <button
+            type="button"
+            onClick={loadCafe}
+            className="mt-6 rounded-xl bg-[#1D1D1F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#343438]"
+          >
+            Try again
+          </button>
+        </div>
       </div>
     );
   }
@@ -509,15 +553,15 @@ fillForm(returnedCafe);
   return (
     <form
       onSubmit={saveCafe}
-      className="space-y-7 pb-12 text-[#EAF2FF]"
+      className="min-h-screen space-y-7 bg-[#F5F5F7] px-5 py-6 pb-12 text-[#171719] sm:px-7 lg:px-10"
     >
-      <header className="relative overflow-hidden rounded-[30px] border border-[#2388FF]/20 bg-gradient-to-br from-[#101D33] via-[#0D1728] to-[#0A111E] p-6 shadow-[0_24px_80px_rgba(0,70,180,0.16)] sm:p-8 lg:flex lg:items-center lg:justify-between">
-        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-[#0A84FF]/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-[#64D2FF]/10 blur-3xl" />
+      <header className="relative overflow-hidden rounded-[30px] border border-black/[0.07] bg-white/90 p-6 shadow-[0_22px_70px_rgba(15,23,42,0.07)] backdrop-blur-xl sm:p-8 lg:flex lg:items-center lg:justify-between">
+        <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-[#D9DCE2]/55 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-48 w-48 rounded-full bg-white blur-3xl" />
         <div>
           <Link
             href="/studio"
-            className="relative inline-flex items-center gap-2 text-sm text-[#91A7C7] transition hover:text-[#EAF2FF]"
+            className="relative inline-flex items-center gap-2 text-sm font-medium text-[#74747B] transition hover:text-[#171719]"
           >
             <ArrowLeft size={16} />
             Back to Studio
@@ -545,15 +589,15 @@ fillForm(returnedCafe);
 
             <div>
               <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-3xl font-semibold tracking-tight text-[#F4F8FF]">
+                <h1 className="text-3xl font-semibold tracking-[-0.04em] text-[#171719]">
                   {cafe.name}
                 </h1>
 
                 <span
                   className={`rounded-full border px-3 py-1 text-xs font-semibold ${
                     cafe.isActive
-                      ? "border-emerald-500/20 bg-emerald-500/[0.08] text-emerald-300"
-                      : "border-red-500/20 bg-red-500/[0.08] text-red-300"
+                      ? "border-emerald-600/15 bg-emerald-50 text-emerald-700"
+                      : "border-red-600/15 bg-red-50 text-red-700"
                   }`}
                 >
                   {cafe.isActive
@@ -562,7 +606,7 @@ fillForm(returnedCafe);
                 </span>
               </div>
 
-              <p className="mt-1 text-sm text-[#91A7C7]">
+              <p className="mt-1 text-sm text-[#77777E]">
                 /{cafe.slug}
               </p>
             </div>
@@ -573,7 +617,7 @@ fillForm(returnedCafe);
           <a
             href={`/api/studio/cafes/${cafeId}/customers/export`}
             download
-            className="flex h-11 items-center justify-center gap-2 rounded-xl border border-[#0A84FF]/25 bg-[#0A84FF]/10 px-5 text-sm font-semibold text-[#64D2FF] transition hover:bg-[#0A84FF]/20"
+            className="flex h-11 items-center justify-center gap-2 rounded-xl border border-black/[0.08] bg-[#F7F7F8] px-5 text-sm font-semibold text-[#343438] transition hover:bg-[#EEEEF0]"
           >
             <Download size={17} />
             Export customers CSV
@@ -582,7 +626,7 @@ fillForm(returnedCafe);
           <button
             type="submit"
             disabled={saving}
-            className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#0A84FF] px-5 text-sm font-semibold text-white transition hover:bg-[#409CFF] disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[#1D1D1F] px-5 text-sm font-semibold text-white shadow-[0_8px_24px_rgba(0,0,0,0.14)] transition hover:bg-[#343438] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {saving ? (
               <LoaderCircle
@@ -767,10 +811,25 @@ fillForm(returnedCafe);
 
       <FormSection
         icon={Star}
-        title="Google Reviews"
-        description="Manage the café Google Reviews configuration."
+        title="Customer ratings"
+        description="See ratings submitted from this café's digital loyalty cards."
       >
-        <div className="grid gap-4 sm:grid-cols-2">
+        <RatingsOverview
+          averageRating={cafe.reviewSummary?.averageRating ?? 0}
+          totalRatings={cafe.reviewSummary?.totalRatings ?? 0}
+          breakdown={
+            cafe.reviewSummary?.breakdown ?? {
+              1: 0,
+              2: 0,
+              3: 0,
+              4: 0,
+              5: 0,
+            }
+          }
+          reviews={cafe.reviews ?? []}
+        />
+
+        <div className="mt-7 border-t border-black/[0.07] pt-6">
           <Field
             label="Google Review URL"
             value={googleReviewUrl}
@@ -845,18 +904,18 @@ fillForm(returnedCafe);
         </div>
       </FormSection>
 
-      <section className="rounded-[28px] border border-[#2388FF]/15 bg-[#101A2B] p-6 shadow-[0_18px_55px_rgba(0,40,110,0.12)]">
+      <section className="rounded-[28px] border border-black/[0.07] bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.055)]">
         <div className="flex items-start gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#2997FF]/25 bg-[#0A84FF]/12 text-[#64D2FF]">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-black/[0.07] bg-gradient-to-br from-white to-[#E4E6EA] text-[#4E5055] shadow-sm">
             <ShieldCheck size={20} />
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-[#F4F8FF]">
+            <h2 className="text-lg font-semibold text-[#171719]">
               Current account state
             </h2>
 
-            <p className="mt-1 text-sm text-[#91A7C7]">
+            <p className="mt-1 text-sm text-[#77777E]">
               These values come directly from the
               existing café database record.
             </p>
@@ -896,6 +955,151 @@ type IconType = React.ComponentType<{
   className?: string;
 }>;
 
+function RatingsOverview({
+  averageRating,
+  totalRatings,
+  breakdown,
+  reviews,
+}: {
+  averageRating: number;
+  totalRatings: number;
+  breakdown: Cafe["reviewSummary"]["breakdown"];
+  reviews: Cafe["reviews"];
+}) {
+  const safeAverage = Number.isFinite(averageRating)
+    ? averageRating
+    : 0;
+
+  return (
+    <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="rounded-[24px] border border-black/[0.07] bg-[#FAFAFB] p-5">
+        <div className="flex items-end gap-3">
+          <p className="text-5xl font-semibold tracking-[-0.06em] text-[#171719]">
+            {totalRatings > 0 ? safeAverage.toFixed(1) : "—"}
+          </p>
+
+          <p className="pb-1 text-sm text-[#77777E]">
+            {totalRatings === 1
+              ? "1 rating"
+              : `${totalRatings} ratings`}
+          </p>
+        </div>
+
+        <div className="mt-3 flex gap-1">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <Star
+              key={star}
+              size={20}
+              className={
+                star <= Math.round(safeAverage)
+                  ? "fill-amber-400 text-amber-400"
+                  : "fill-black/[0.06] text-black/[0.12]"
+              }
+            />
+          ))}
+        </div>
+
+        <div className="mt-6 space-y-3">
+          {[5, 4, 3, 2, 1].map((rating) => {
+            const count =
+              breakdown[rating as keyof typeof breakdown] ?? 0;
+            const percentage =
+              totalRatings > 0
+                ? (count / totalRatings) * 100
+                : 0;
+
+            return (
+              <div
+                key={rating}
+                className="grid grid-cols-[34px_1fr_28px] items-center gap-3"
+              >
+                <span className="text-sm font-medium text-[#55565B]">
+                  {rating}★
+                </span>
+
+                <div className="h-2 overflow-hidden rounded-full bg-black/[0.06]">
+                  <div
+                    className="h-full rounded-full bg-amber-400 transition-[width]"
+                    style={{ width: `${percentage}%` }}
+                  />
+                </div>
+
+                <span className="text-right text-xs text-[#77777E]">
+                  {count}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="font-semibold text-[#171719]">
+          Recent ratings
+        </h3>
+
+        <p className="mt-1 text-sm text-[#77777E]">
+          Latest 20 customer submissions.
+        </p>
+
+        {reviews.length === 0 ? (
+          <div className="mt-4 rounded-[20px] border border-dashed border-black/[0.12] bg-[#FAFAFB] p-7 text-center">
+            <Star
+              size={24}
+              className="mx-auto text-[#A0A0A6]"
+            />
+
+            <p className="mt-3 text-sm font-medium text-[#55565B]">
+              No customer ratings yet
+            </p>
+
+            <p className="mt-1 text-xs text-[#8A8A91]">
+              New ratings will appear here automatically.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-4 max-h-[340px] space-y-2 overflow-y-auto pr-1">
+            {reviews.map((review) => (
+              <article
+                key={review.id}
+                className="flex items-center justify-between gap-4 rounded-[18px] border border-black/[0.07] bg-[#FAFAFB] px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-[#343438]">
+                    {review.customer.name}
+                  </p>
+
+                  <p className="mt-0.5 text-xs text-[#8A8A91]">
+                    Member {review.customer.memberNumber} ·{" "}
+                    {formatDate(review.updatedAt)}
+                  </p>
+                </div>
+
+                <div
+                  className="flex shrink-0 gap-0.5"
+                  aria-label={`${review.rating} out of 5 stars`}
+                >
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      size={15}
+                      className={
+                        star <= review.rating
+                          ? "fill-amber-400 text-amber-400"
+                          : "fill-black/[0.05] text-black/[0.1]"
+                      }
+                    />
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function SummaryCard({
   icon: Icon,
   label,
@@ -906,16 +1110,16 @@ function SummaryCard({
   value: string;
 }) {
   return (
-    <article className="group rounded-[24px] border border-[#2388FF]/15 bg-[#101A2B] p-5 shadow-[0_16px_50px_rgba(0,40,110,0.10)] transition hover:-translate-y-0.5 hover:border-[#2997FF]/35 hover:bg-[#132039]">
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#2997FF]/25 bg-[#0A84FF]/12 text-[#64D2FF] transition group-hover:bg-[#0A84FF]/20">
+    <article className="group rounded-[24px] border border-black/[0.07] bg-white p-5 shadow-[0_16px_45px_rgba(15,23,42,0.055)] transition hover:-translate-y-0.5 hover:border-black/[0.13] hover:bg-[#FCFCFD]">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/[0.07] bg-gradient-to-br from-white to-[#E4E6EA] text-[#4E5055] shadow-sm transition group-hover:to-[#D8DADE]">
         <Icon size={18} />
       </div>
 
-      <p className="mt-5 text-2xl font-semibold text-[#F4F8FF]">
+      <p className="mt-5 text-2xl font-semibold tracking-[-0.035em] text-[#171719]">
         {value}
       </p>
 
-      <p className="mt-1 text-sm text-[#91A7C7]">
+      <p className="mt-1 text-sm text-[#77777E]">
         {label}
       </p>
     </article>
@@ -934,18 +1138,18 @@ function FormSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="overflow-hidden rounded-[28px] border border-[#2388FF]/15 bg-[#101A2B] shadow-[0_18px_55px_rgba(0,40,110,0.10)]">
-      <header className="flex items-start gap-4 border-b border-[#2388FF]/12 bg-[#132039]/60 p-6">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#2997FF]/25 bg-[#0A84FF]/12 text-[#64D2FF]">
+    <section className="overflow-hidden rounded-[28px] border border-black/[0.07] bg-white shadow-[0_18px_55px_rgba(15,23,42,0.055)]">
+      <header className="flex items-start gap-4 border-b border-black/[0.06] bg-[#FAFAFB] p-6">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-black/[0.07] bg-gradient-to-br from-white to-[#E4E6EA] text-[#4E5055]">
           <Icon size={20} />
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold text-[#F4F8FF]">
+          <h2 className="text-lg font-semibold text-[#171719]">
             {title}
           </h2>
 
-          <p className="mt-1 text-sm text-[#91A7C7]">
+          <p className="mt-1 text-sm text-[#77777E]">
             {description}
           </p>
         </div>
@@ -977,7 +1181,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-[#C7D6EC]">
+      <label className="mb-2 block text-sm font-medium text-[#45454A]">
         {label}
       </label>
 
@@ -991,7 +1195,7 @@ function Field({
         placeholder={placeholder}
         min={min}
         max={max}
-        className="h-12 w-full rounded-xl border border-[#284261] bg-[#0B1422] px-4 text-sm text-[#F4F8FF] outline-none transition placeholder:text-[#607693] hover:border-[#35577D] focus:border-[#2997FF] focus:ring-2 focus:ring-[#0A84FF]/15"
+        className="h-12 w-full rounded-xl border border-black/[0.09] bg-[#FAFAFB] px-4 text-sm text-[#171719] outline-none transition placeholder:text-[#A1A1A7] hover:border-black/[0.18] focus:border-[#8E9197] focus:ring-2 focus:ring-black/[0.04]"
       />
     </div>
   );
@@ -1030,7 +1234,7 @@ function TextAreaField({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-[#C7D6EC]">
+      <label className="mb-2 block text-sm font-medium text-[#45454A]">
         {label}
       </label>
 
@@ -1041,7 +1245,7 @@ function TextAreaField({
         }
         placeholder={placeholder}
         rows={4}
-        className="w-full resize-none rounded-xl border border-[#284261] bg-[#0B1422] px-4 py-3 text-sm text-[#F4F8FF] outline-none transition placeholder:text-[#607693] hover:border-[#35577D] focus:border-[#2997FF] focus:ring-2 focus:ring-[#0A84FF]/15"
+        className="w-full resize-none rounded-xl border border-black/[0.09] bg-[#FAFAFB] px-4 py-3 text-sm text-[#171719] outline-none transition placeholder:text-[#A1A1A7] hover:border-black/[0.18] focus:border-[#8E9197] focus:ring-2 focus:ring-black/[0.04]"
       />
     </div>
   );
@@ -1063,7 +1267,7 @@ function SelectField({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-[#C7D6EC]">
+      <label className="mb-2 block text-sm font-medium text-[#45454A]">
         {label}
       </label>
 
@@ -1072,7 +1276,7 @@ function SelectField({
         onChange={(event) =>
           onChange(event.target.value)
         }
-        className="h-12 w-full rounded-xl border border-[#284261] bg-[#0B1422] px-4 text-sm text-[#F4F8FF] outline-none transition hover:border-[#35577D] focus:border-[#2997FF] focus:ring-2 focus:ring-[#0A84FF]/15"
+        className="h-12 w-full rounded-xl border border-black/[0.09] bg-[#FAFAFB] px-4 text-sm text-[#171719] outline-none transition hover:border-black/[0.18] focus:border-[#8E9197] focus:ring-2 focus:ring-black/[0.04]"
       >
         {options.map((option) => (
           <option
@@ -1098,11 +1302,11 @@ function ColorField({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-[#C7D6EC]">
+      <label className="mb-2 block text-sm font-medium text-[#45454A]">
         {label}
       </label>
 
-      <div className="flex h-12 items-center gap-3 rounded-xl border border-[#284261] bg-[#0B1422] px-3 transition hover:border-[#35577D] focus-within:border-[#2997FF] focus-within:ring-2 focus-within:ring-[#0A84FF]/15">
+      <div className="flex h-12 items-center gap-3 rounded-xl border border-black/[0.09] bg-[#FAFAFB] px-3 transition hover:border-black/[0.18] focus-within:border-[#8E9197] focus-within:ring-2 focus-within:ring-black/[0.04]">
         <input
           type="color"
           value={value}
@@ -1117,7 +1321,7 @@ function ColorField({
           onChange={(event) =>
             onChange(event.target.value)
           }
-          className="min-w-0 flex-1 bg-transparent text-sm text-[#F4F8FF] outline-none"
+          className="min-w-0 flex-1 bg-transparent text-sm text-[#171719] outline-none"
         />
       </div>
     </div>
@@ -1136,13 +1340,13 @@ function ToggleField({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <div className="flex min-h-12 items-center justify-between gap-4 rounded-xl border border-[#284261] bg-[#0B1422] px-4 py-3">
+    <div className="flex min-h-12 items-center justify-between gap-4 rounded-xl border border-black/[0.09] bg-[#FAFAFB] px-4 py-3">
       <div>
-        <p className="text-sm font-medium text-[#F4F8FF]">
+        <p className="text-sm font-medium text-[#171719]">
           {label}
         </p>
 
-        <p className="mt-1 text-xs text-[#91A7C7]">
+        <p className="mt-1 text-xs text-[#77777E]">
           {description}
         </p>
       </div>
@@ -1153,7 +1357,7 @@ function ToggleField({
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={`relative h-7 w-12 shrink-0 rounded-full transition ${
-          checked ? "bg-[#2997FF]" : "bg-[#3A3A3C]"
+          checked ? "bg-[#242426]" : "bg-[#C7C8CC]"
         }`}
       >
         <span
@@ -1175,11 +1379,11 @@ function InfoItem({
 }) {
   return (
     <div>
-      <p className="text-xs text-[#7890AE]">
+      <p className="text-xs text-[#8A8A91]">
         {label}
       </p>
 
-      <p className="mt-1 font-medium text-[#C7D6EC]">
+      <p className="mt-1 font-medium text-[#45454A]">
         {value}
       </p>
     </div>

@@ -7,67 +7,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum CafeTheme {
-  COFFEE_CLASSIC
-  MODERN_MINIMAL
-  DARK_LUXURY
-  SOFT_PASTEL
-  ORGANIC
-}
-
-enum StampType {
-  ADD
-  REDEEM
-}
-
-enum UserRole {
-  SUPER_ADMIN
-  CAFE_ADMIN
-}
-
 model Cafe {
-  id   String @id @default(cuid())
-  name String
-  slug String @unique
-
-  logoUrl String?
-
-  theme           CafeTheme @default(COFFEE_CLASSIC)
-  primaryColor    String    @default("#8e6045")
-  secondaryColor  String    @default("#d6b08c")
-  backgroundColor String    @default("#0c0c0c")
-
-  rewardTarget      Int     @default(7)
-  rewardName        String  @default("Free Drink")
-  rewardDescription String?
-
-  minimumPurchaseAmount       Decimal? @db.Decimal(10, 2)
+  id                          String             @id @default(cuid())
+  name                        String
+  slug                        String             @unique
+  logoUrl                     String?
+  theme                       CafeTheme          @default(COFFEE_CLASSIC)
+  primaryColor                String             @default("#8e6045")
+  secondaryColor              String             @default("#d6b08c")
+  backgroundColor             String             @default("#0c0c0c")
+  rewardTarget                Int                @default(7)
+  rewardName                  String             @default("Free Drink")
+  rewardDescription           String?
+  minimumPurchaseAmount       Decimal?           @db.Decimal(10, 2)
   eligiblePurchaseDescription String?
-
-  googleReviewUrl String?
-
-  subscriptionStatus SubscriptionStatus @default(TRIAL)
-
-  trialStartedAt DateTime?
-  trialEndsAt    DateTime?
-
-  subscriptionStartedAt DateTime?
-  subscriptionEndsAt    DateTime?
-
-  lastPaymentAt  DateTime?
-  nextReminderAt DateTime?
-  reminderSentAt DateTime?
-
-  monthlyPrice Decimal? @db.Decimal(10, 2)
-
-  isActive Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user         User?
-  customers    Customer[]
-  transactions StampTransaction[]
+  isActive                    Boolean            @default(true)
+  createdAt                   DateTime           @default(now())
+  updatedAt                   DateTime           @updatedAt
+  lastPaymentAt               DateTime?
+  monthlyPrice                Decimal?           @db.Decimal(10, 2)
+  nextReminderAt              DateTime?
+  reminderSentAt              DateTime?
+  subscriptionEndsAt          DateTime?
+  subscriptionStartedAt       DateTime?
+  subscriptionStatus          SubscriptionStatus @default(TRIAL)
+  trialEndsAt                 DateTime?
+  trialStartedAt              DateTime?
+  googleReviewUrl             String?
+  customers                   Customer[]
+  reviews                     CustomerReview[]
+  transactions                StampTransaction[]
+  user                        User?
 
   @@index([subscriptionStatus])
   @@index([trialEndsAt])
@@ -83,18 +53,18 @@ model Employee {
 }
 
 model Customer {
-  id           String   @id @default(cuid())
+  id           String             @id @default(cuid())
   memberNumber String
   name         String
   phone        String
   birthday     DateTime
-  stamps       Int      @default(0)
-  publicToken  String   @unique
+  stamps       Int                @default(0)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  publicToken  String             @unique
   cafeId       String
-  cafe         Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
+  cafe         Cafe               @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  review       CustomerReview?
   transactions StampTransaction[]
 
   @@unique([cafeId, phone])
@@ -103,20 +73,31 @@ model Customer {
   @@index([cafeId, name])
 }
 
+model CustomerReview {
+  id         String   @id @default(cuid())
+  rating     Int
+  cafeId     String
+  customerId String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  cafe       Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([cafeId])
+  @@index([cafeId, createdAt])
+}
+
 model StampTransaction {
   id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  customerId  String
   type        StampType
   description String?
-  createdAt   DateTime  @default(now())
-
-  cafeId String?
-  cafe   Cafe?   @relation(fields: [cafeId], references: [id])
-
-  customerId String
-  userId     String
-
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  cafeId      String?
+  cafe        Cafe?     @relation(fields: [cafeId], references: [id])
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([cafeId])
   @@index([customerId])
@@ -125,23 +106,19 @@ model StampTransaction {
 }
 
 model User {
-  id            String  @id
+  id            String             @id
   name          String
-  email         String  @unique
-  emailVerified Boolean @default(false)
+  email         String             @unique
+  emailVerified Boolean            @default(false)
   image         String?
-
-  role UserRole @default(CAFE_ADMIN)
-
-  cafeId String? @unique
-  cafe   Cafe?   @relation(fields: [cafeId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  sessions     Session[]
-  accounts     Account[]
-  transactions StampTransaction[]
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  cafeId        String?            @unique
+  role          UserRole           @default(CAFE_ADMIN)
+  transactions  StampTransaction[]
+  accounts      Account[]
+  sessions      Session[]
+  cafe          Cafe?              @relation(fields: [cafeId], references: [id])
 
   @@index([cafeId])
   @@map("user")
@@ -153,12 +130,10 @@ model Session {
   token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   ipAddress String?
   userAgent String?
   userId    String
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("session")
@@ -178,8 +153,7 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("account")
@@ -204,6 +178,24 @@ model RateLimit {
   lastRequest BigInt
 
   @@map("rateLimit")
+}
+
+enum CafeTheme {
+  COFFEE_CLASSIC
+  MODERN_MINIMAL
+  DARK_LUXURY
+  MEDITERRANEAN_BLUE
+  ORGANIC
+}
+
+enum StampType {
+  ADD
+  REDEEM
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  CAFE_ADMIN
 }
 
 enum SubscriptionStatus {

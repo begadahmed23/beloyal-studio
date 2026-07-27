@@ -246,6 +246,8 @@ export default function DigitalCardPage() {
   const [showGooglePrompt, setShowGooglePrompt] = useState(false);
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [hoveredRating, setHoveredRating] = useState<number | null>(null);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState("");
   const [showHomeScreenHelp, setShowHomeScreenHelp] = useState(false);
   const [installPrompt, setInstallPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
@@ -511,13 +513,55 @@ export default function DigitalCardPage() {
     return calculateBirthdayCountdown(customer.birthday);
   }, [customer]);
 
-  const handleRatingSelect = (rating: number) => {
-    setSelectedRating(rating);
-    setShowRatingModal(false);
+  const handleRatingSelect = async (rating: number) => {
+    if (!customer || reviewSubmitting) {
+      return;
+    }
 
-    window.setTimeout(() => {
-      setShowGooglePrompt(true);
-    }, 250);
+    setSelectedRating(rating);
+    setReviewSubmitting(true);
+    setReviewError("");
+
+    try {
+      const response = await fetch(
+        `/api/customers/card/${encodeURIComponent(
+          customer.publicToken,
+        )}/review`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ rating }),
+        },
+      );
+
+      const contentType = response.headers.get("content-type") ?? "";
+      const data = contentType.includes("application/json")
+        ? ((await response.json()) as { message?: string })
+        : null;
+
+      if (!response.ok) {
+        throw new Error(
+          data?.message || "Unable to save your rating right now.",
+        );
+      }
+
+      setShowRatingModal(false);
+
+      window.setTimeout(() => {
+        setShowGooglePrompt(true);
+      }, 250);
+    } catch (caughtError) {
+      console.error("Customer review submission failed:", caughtError);
+      setReviewError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Unable to save your rating right now.",
+      );
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
   const handleOpenGoogleReview = () => {
@@ -1257,12 +1301,13 @@ export default function DigitalCardPage() {
                   <button
                     key={rating}
                     type="button"
+                    disabled={reviewSubmitting}
                     onMouseEnter={() => setHoveredRating(rating)}
                     onFocus={() => setHoveredRating(rating)}
                     onBlur={() => setHoveredRating(null)}
-                    onClick={() => handleRatingSelect(rating)}
+                    onClick={() => void handleRatingSelect(rating)}
                     aria-label={`${rating} star${rating === 1 ? "" : "s"}`}
-                    className="rounded-full p-1 transition hover:scale-110 active:scale-95"
+                    className="rounded-full p-1 transition hover:scale-110 active:scale-95 disabled:cursor-wait disabled:opacity-60"
                   >
                     <Star
                       size={38}
@@ -1277,10 +1322,36 @@ export default function DigitalCardPage() {
               })}
             </div>
 
+            {reviewSubmitting ? (
+              <div
+                className="mt-5 flex items-center justify-center gap-2 text-sm"
+                role="status"
+                style={{ color: textSecondary }}
+              >
+                <LoaderCircle size={16} className="animate-spin" />
+                Saving your rating...
+              </div>
+            ) : null}
+
+            {reviewError ? (
+              <p
+                className="mt-5 rounded-2xl border px-4 py-3 text-sm leading-5"
+                role="alert"
+                style={{
+                  borderColor: withAlpha("#EF4444", 0.32),
+                  backgroundColor: withAlpha("#EF4444", 0.1),
+                  color: mixColors("#EF4444", textPrimary, 0.72),
+                }}
+              >
+                {reviewError}
+              </p>
+            ) : null}
+
             <button
               type="button"
+              disabled={reviewSubmitting}
               onClick={() => setShowRatingModal(false)}
-              className="mt-7 h-11 w-full rounded-2xl border text-sm font-semibold transition hover:opacity-80"
+              className="mt-7 h-11 w-full rounded-2xl border text-sm font-semibold transition hover:opacity-80 disabled:cursor-wait disabled:opacity-50"
               style={{
                 borderColor: cardBorder,
                 backgroundColor: surfaceColor,
