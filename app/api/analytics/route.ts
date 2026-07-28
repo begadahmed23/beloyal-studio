@@ -183,6 +183,9 @@ export async function GET(request: NextRequest) {
       newMembersToday,
       activeMemberGroups,
       freeDrinksThisMonth,
+      ratingAggregate,
+      ratingGroups,
+      recentRatings,
     ] = await Promise.all([
       prisma.customer.count({
         where: {
@@ -224,7 +227,68 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
+
+      prisma.customerReview.aggregate({
+        where: {
+          cafeId,
+        },
+        _avg: {
+          rating: true,
+        },
+        _count: {
+          rating: true,
+        },
+      }),
+
+      prisma.customerReview.groupBy({
+        by: ["rating"],
+        where: {
+          cafeId,
+        },
+        _count: {
+          rating: true,
+        },
+      }),
+
+      prisma.customerReview.findMany({
+        where: {
+          cafeId,
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+        take: 10,
+        select: {
+          id: true,
+          rating: true,
+          createdAt: true,
+          updatedAt: true,
+          customer: {
+            select: {
+              id: true,
+              name: true,
+              memberNumber: true,
+            },
+          },
+        },
+      }),
     ]);
+
+    const ratingBreakdown = {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+    };
+
+    for (const group of ratingGroups) {
+      if (group.rating >= 1 && group.rating <= 5) {
+        ratingBreakdown[
+          group.rating as keyof typeof ratingBreakdown
+        ] = group._count.rating;
+      }
+    }
 
     return NextResponse.json({
       totalMembers,
@@ -234,6 +298,14 @@ export async function GET(request: NextRequest) {
       rewardTarget: authData.cafe.rewardTarget,
       rewardName:
         authData.cafe.rewardName || "Free Drink",
+      reviews: {
+        averageRating:
+          ratingAggregate._avg.rating ?? 0,
+        totalRatings:
+          ratingAggregate._count.rating,
+        breakdown: ratingBreakdown,
+        recentRatings,
+      },
     });
   } catch (error) {
     console.error("Analytics error:", error);
