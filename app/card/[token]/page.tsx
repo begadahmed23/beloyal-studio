@@ -280,6 +280,7 @@ export default function DigitalCardPage() {
   const hasLoadedCard = useRef(false);
   const activeController = useRef<AbortController | null>(null);
   const stampAnimationTimeout = useRef<number | null>(null);
+  const isWelcomeVisit = useRef(searchParams.get("welcome") === "1");
 
   const [customer, setCustomer] = useState<Customer | null>(null);
 
@@ -481,7 +482,22 @@ export default function DigitalCardPage() {
   }, [loadCard]);
 
   useEffect(() => {
-    if (!customer || searchParams.get("welcome") !== "1") {
+    if (!isWelcomeVisit.current) {
+      return;
+    }
+
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("welcome");
+
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`,
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!customer || !isWelcomeVisit.current) {
       return;
     }
 
@@ -498,7 +514,7 @@ export default function DigitalCardPage() {
     }, 1000);
 
     return () => window.clearTimeout(timeout);
-  }, [customer, searchParams]);
+  }, [customer]);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (event: Event) => {

@@ -4,15 +4,23 @@ import {
   Check,
   Coffee,
   Gift,
+  ImagePlus,
   Loader2,
   Star,
   Palette,
   RotateCcw,
   Save,
   Store,
+  Trash2,
   UserRound,
 } from "lucide-react";
-import { FormEvent, useEffect, useState } from "react";
+import {
+  ChangeEvent,
+  FormEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -134,6 +142,12 @@ export default function CafeSettingsForm({
     useState<FormState>(createInitialState);
 
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] =
+    useState(false);
+  const [logoPreviewFailed, setLogoPreviewFailed] =
+    useState(false);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -180,9 +194,100 @@ export default function CafeSettingsForm({
     const originalState = createInitialState();
 
     setForm(originalState);
+    setLogoPreviewFailed(false);
     resetPreviewTheme();
     setMessage(null);
   }
+
+  async function handleLogoUpload(
+    event: ChangeEvent<HTMLInputElement>
+  ) {
+    const file = event.target.files?.[0];
+
+    event.target.value = "";
+
+    if (!file) {
+      return;
+    }
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      setMessage({
+        type: "error",
+        text: "Logo must be a PNG, JPG, or WebP image.",
+      });
+      return;
+    }
+
+    if (file.size > 4 * 1024 * 1024) {
+      setMessage({
+        type: "error",
+        text: "Logo must be smaller than 4 MB.",
+      });
+      return;
+    }
+
+    setUploadingLogo(true);
+    setLogoPreviewFailed(false);
+    setMessage(null);
+
+    try {
+      const uploadData = new FormData();
+      uploadData.append("logo", file);
+
+      const response = await fetch("/api/cafe/logo", {
+        method: "POST",
+        body: uploadData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.error ?? "Unable to upload the café logo."
+        );
+      }
+
+      setForm((current) => ({
+        ...current,
+        logoUrl: result.logoUrl,
+      }));
+
+      setMessage({
+        type: "success",
+        text:
+          result.message ?? "Logo uploaded successfully.",
+      });
+
+      router.refresh();
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Unable to upload the café logo.",
+      });
+    } finally {
+      setUploadingLogo(false);
+    }
+  }
+
+  function removeLogo() {
+    updateField("logoUrl", "");
+    setLogoPreviewFailed(false);
+    setMessage({
+      type: "success",
+      text:
+        "Logo removed from the form. Press Save Changes to confirm.",
+    });
+  }
+
 function getThemeColors(theme: CafeThemeName) {
   const [primaryColor, secondaryColor, backgroundColor] =
     getPreviewColors(theme);
@@ -321,7 +426,7 @@ router.refresh();
           <button
             type="button"
             onClick={resetForm}
-            disabled={saving}
+            disabled={saving || uploadingLogo}
             className="flex h-11 items-center justify-center gap-2 border px-4 text-sm font-medium transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
             style={{
               borderColor: theme.border,
@@ -336,7 +441,7 @@ router.refresh();
 
           <button
             type="submit"
-            disabled={saving}
+            disabled={saving || uploadingLogo}
             className="flex h-11 items-center justify-center gap-2 px-5 text-sm font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             style={{
               backgroundColor: theme.accent,
@@ -441,28 +546,70 @@ router.refresh();
             <div className="lg:col-span-2">
               <Field
               theme={theme}
-                label="Logo URL"
-                description="Paste a direct image URL. File uploading will be added later."
+                label="Café logo"
+                description="Upload a permanent PNG, JPG, or WebP logo up to 4 MB. You can also paste a direct image URL."
               >
-                <input
-                  type="url"
-                  value={form.logoUrl}
-                  onChange={(event) =>
-                    updateField(
-                      "logoUrl",
-                      event.target.value
-                    )
-                  }
-                  placeholder="https://example.com/logo.png"
-                  maxLength={500}
-                  className="h-12 w-full border px-4 text-sm outline-none transition focus:ring-2 focus:ring-current/20"
-                  style={inputStyle}
-                />
+                <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleLogoUpload}
+                    className="sr-only"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      logoInputRef.current?.click()
+                    }
+                    disabled={uploadingLogo || saving}
+                    className="flex h-12 items-center justify-center gap-2 border px-5 text-sm font-semibold transition hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
+                    style={{
+                      borderColor: theme.accent,
+                      backgroundColor: theme.accentSoft,
+                      color: theme.accent,
+                      borderRadius: theme.radiusMedium,
+                    }}
+                  >
+                    {uploadingLogo ? (
+                      <Loader2
+                        size={17}
+                        className="animate-spin"
+                      />
+                    ) : (
+                      <ImagePlus size={17} />
+                    )}
+
+                    {uploadingLogo
+                      ? "Uploading..."
+                      : form.logoUrl
+                        ? "Replace logo"
+                        : "Upload logo"}
+                  </button>
+
+                  <input
+                    type="url"
+                    value={form.logoUrl}
+                    onChange={(event) => {
+                      updateField(
+                        "logoUrl",
+                        event.target.value
+                      );
+                      setLogoPreviewFailed(false);
+                    }}
+                    placeholder="Or paste a direct image URL"
+                    maxLength={1000}
+                    disabled={uploadingLogo}
+                    className="h-12 w-full border px-4 text-sm outline-none transition focus:ring-2 focus:ring-current/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    style={inputStyle}
+                  />
+                </div>
               </Field>
 
               {form.logoUrl && (
                 <div
-                  className="mt-4 flex min-h-24 items-center justify-center border p-4"
+                  className="mt-4 flex min-h-28 flex-col items-center justify-center gap-4 border p-4 sm:flex-row sm:justify-between"
                   style={{
                     borderColor: theme.border,
                     backgroundColor:
@@ -470,11 +617,45 @@ router.refresh();
                     borderRadius: theme.radiusMedium,
                   }}
                 >
-                  <img
-                    src={form.logoUrl}
-                    alt="Logo preview"
-                    className="max-h-16 max-w-[240px] object-contain"
-                  />
+                  <div className="flex min-h-20 flex-1 items-center justify-center">
+                    {logoPreviewFailed ? (
+                      <p
+                        className="text-center text-sm"
+                        style={{ color: theme.danger }}
+                      >
+                        This image could not be loaded. Upload
+                        the logo instead or check the URL.
+                      </p>
+                    ) : (
+                      <img
+                        src={form.logoUrl}
+                        alt="Logo preview"
+                        onLoad={() =>
+                          setLogoPreviewFailed(false)
+                        }
+                        onError={() =>
+                          setLogoPreviewFailed(true)
+                        }
+                        className="max-h-20 max-w-[240px] object-contain"
+                      />
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={removeLogo}
+                    disabled={uploadingLogo || saving}
+                    className="flex h-10 shrink-0 items-center justify-center gap-2 border px-4 text-sm font-medium transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                    style={{
+                      borderColor: theme.danger,
+                      color: theme.danger,
+                      backgroundColor: theme.surface,
+                      borderRadius: theme.radiusMedium,
+                    }}
+                  >
+                    <Trash2 size={16} />
+                    Remove
+                  </button>
                 </div>
               )}
             </div>
