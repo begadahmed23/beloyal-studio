@@ -102,6 +102,11 @@ export async function POST(request: NextRequest) {
     }
 
     const extension = FILE_EXTENSIONS[uploadedFile.type];
+    const storeId = process.env.BLOB_PUBLIC_STORE_ID;
+
+    if (!storeId) {
+      throw new Error("BLOB_PUBLIC_STORE_ID is not configured.");
+    }
 
     const blob = await put(
       `cafes/${cafe.slug}/logo-${Date.now()}.${extension}`,
@@ -109,6 +114,7 @@ export async function POST(request: NextRequest) {
       {
         access: "public",
         addRandomSuffix: true,
+        storeId,
       },
     );
 
