@@ -212,6 +212,55 @@ function getReadableText(hex: string) {
   return isLightColor(hex) ? "#171717" : "#FFFFFF";
 }
 
+function getDirectLogoUrl(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  let url = value.trim();
+
+  if (!url) {
+    return null;
+  }
+
+  if (url.startsWith("//")) {
+    url = `https:${url}`;
+  } else if (!/^https?:\/\//i.test(url)) {
+    url = `https://${url}`;
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+
+    if (
+      parsedUrl.hostname === "drive.google.com" ||
+      parsedUrl.hostname === "www.drive.google.com"
+    ) {
+      const fileMatch = parsedUrl.pathname.match(/\/file\/d\/([^/]+)/);
+      const fileId = fileMatch?.[1] || parsedUrl.searchParams.get("id");
+
+      if (fileId) {
+        return `https://drive.google.com/thumbnail?id=${encodeURIComponent(
+          fileId,
+        )}&sz=w1000`;
+      }
+    }
+
+    if (
+      parsedUrl.hostname === "dropbox.com" ||
+      parsedUrl.hostname === "www.dropbox.com"
+    ) {
+      parsedUrl.hostname = "dl.dropboxusercontent.com";
+      parsedUrl.searchParams.delete("dl");
+      parsedUrl.searchParams.delete("raw");
+      return parsedUrl.toString();
+    }
+
+    return parsedUrl.toString();
+  } catch {
+    return null;
+  }
+}
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -253,6 +302,7 @@ export default function DigitalCardPage() {
   const [showHomeScreenHelp, setShowHomeScreenHelp] = useState(false);
   const [installPrompt, setInstallPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
+  const [failedLogoUrl, setFailedLogoUrl] = useState<string | null>(null);
 
   const loadCard = useCallback(
     async (showRefreshing = false, forceFresh = false) => {
@@ -423,10 +473,7 @@ export default function DigitalCardPage() {
       activeController.current = null;
       requestInProgress.current = false;
 
-      document.removeEventListener(
-        "visibilitychange",
-        handleVisibilityChange,
-      );
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("pageshow", handlePageShow);
       window.removeEventListener("focus", refreshAfterResume);
       window.removeEventListener("online", refreshAfterResume);
@@ -751,10 +798,16 @@ export default function DigitalCardPage() {
 
   const rewardIvory = "#F7EFD9";
 
+  const logoUrl = getDirectLogoUrl(customer.cafe.logoUrl);
+  const showLogo = Boolean(logoUrl && failedLogoUrl !== logoUrl);
+  const cafeInitial = customer.cafe.name.trim().charAt(0).toUpperCase() || "B";
+
   return (
     <main
-      className="min-h-screen px-4 py-6 transition-colors duration-700 sm:px-6 sm:py-10"
+      className="min-h-screen w-full overflow-x-hidden px-3 py-3 transition-colors duration-700 min-[380px]:px-4 min-[380px]:py-5 sm:px-6 sm:py-10"
       style={{
+        WebkitTextSizeAdjust: "100%",
+        textSizeAdjust: "100%",
         color: textPrimary,
         background: `
           radial-gradient(
@@ -771,9 +824,9 @@ export default function DigitalCardPage() {
         `,
       }}
     >
-      <div className="mx-auto max-w-md">
+      <div className="mx-auto w-full max-w-md">
         <div
-          className="relative overflow-hidden rounded-[34px] border shadow-[0_35px_120px_rgba(0,0,0,0.35)] transition-all duration-700"
+          className="relative w-full overflow-hidden rounded-[26px] border shadow-[0_35px_120px_rgba(0,0,0,0.35)] transition-all duration-700 min-[380px]:rounded-[30px] sm:rounded-[34px]"
           style={{
             borderColor: cardBorder,
             backgroundColor: cardBackground,
@@ -781,7 +834,7 @@ export default function DigitalCardPage() {
           }}
         >
           <header
-            className="relative overflow-hidden border-b px-6 pb-7 pt-8"
+            className="relative overflow-hidden border-b px-4 pb-5 pt-6 min-[380px]:px-5 min-[380px]:pb-6 min-[380px]:pt-7 sm:px-6 sm:pb-7 sm:pt-8"
             style={{
               borderColor: cardBorder,
             }}
@@ -810,8 +863,7 @@ export default function DigitalCardPage() {
                   style={{
                     background:
                       "linear-gradient(90deg, transparent, rgba(216,190,130,0.34), transparent)",
-                    boxShadow:
-                      "0 8px 34px rgba(70,137,113,0.18)",
+                    boxShadow: "0 8px 34px rgba(70,137,113,0.18)",
                   }}
                 />
               </>
@@ -832,20 +884,32 @@ export default function DigitalCardPage() {
             />
 
             <div className="relative">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start justify-between gap-3 sm:gap-4">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-4">
-                    {customer.cafe.logoUrl ? (
+                  <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                    {showLogo && logoUrl ? (
                       <img
-                        src={customer.cafe.logoUrl}
+                        src={logoUrl}
                         alt={`${customer.cafe.name} logo`}
-                        className="h-12 w-12 shrink-0 object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,0.14)] sm:h-14 sm:w-14"
+                        className="h-10 w-10 shrink-0 object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,0.14)] min-[380px]:h-12 min-[380px]:w-12 sm:h-14 sm:w-14"
+                        referrerPolicy="no-referrer"
+                        onError={() => setFailedLogoUrl(logoUrl)}
                       />
-                    ) : null}
+                    ) : (
+                      <div
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold min-[380px]:h-12 min-[380px]:w-12 min-[380px]:rounded-2xl min-[380px]:text-base sm:h-14 sm:w-14"
+                        style={{
+                          backgroundColor: primarySoft,
+                          color: primaryColor,
+                        }}
+                      >
+                        {cafeInitial}
+                      </div>
+                    )}
 
                     <div className="min-w-0">
                       <h2
-                        className="break-words text-2xl font-semibold tracking-[0.07em] sm:text-3xl"
+                        className="break-words text-xl font-semibold tracking-[0.04em] min-[380px]:text-2xl min-[380px]:tracking-[0.07em] sm:text-3xl"
                         style={{
                           color: textPrimary,
                         }}
@@ -885,7 +949,7 @@ export default function DigitalCardPage() {
               </div>
 
               <h1
-                className="mt-10 text-3xl font-semibold tracking-tight"
+                className="mt-7 break-words text-[1.65rem] font-semibold tracking-tight min-[380px]:mt-9 min-[380px]:text-3xl sm:mt-10"
                 style={{
                   color: textPrimary,
                 }}
@@ -895,7 +959,7 @@ export default function DigitalCardPage() {
             </div>
           </header>
 
-          <div className="space-y-6 p-6">
+          <div className="space-y-5 p-4 min-[380px]:space-y-6 min-[380px]:p-5 sm:p-6">
             <section
               className="relative overflow-hidden rounded-3xl border p-5 transition-all duration-700"
               style={{
@@ -980,7 +1044,7 @@ export default function DigitalCardPage() {
                 </span>
               </div>
 
-              <div className="mt-5 grid grid-cols-4 gap-3">
+              <div className="mt-5 grid grid-cols-4 gap-2 min-[380px]:gap-3">
                 {Array.from({
                   length: rewardTarget,
                 }).map((_, index) => {
@@ -1436,8 +1500,7 @@ export default function DigitalCardPage() {
               onMouseLeave={() => setHoveredRating(null)}
             >
               {[1, 2, 3, 4, 5].map((rating) => {
-                const active =
-                  rating <= (hoveredRating ?? selectedRating ?? 0);
+                const active = rating <= (hoveredRating ?? selectedRating ?? 0);
 
                 return (
                   <button
@@ -1620,10 +1683,7 @@ export default function DigitalCardPage() {
               <X size={18} />
             </button>
 
-            <Smartphone
-              size={30}
-              style={{ color: primaryColor }}
-            />
+            <Smartphone size={30} style={{ color: primaryColor }} />
 
             <p className="mt-5 text-xl font-semibold">Add to Home Screen</p>
             <p
@@ -1638,8 +1698,8 @@ export default function DigitalCardPage() {
               className="mt-4 text-sm leading-6"
               style={{ color: textSecondary }}
             >
-              On Android: open the browser menu and choose “Add to Home
-              screen” or “Install app”.
+              On Android: open the browser menu and choose “Add to Home screen”
+              or “Install app”.
             </p>
 
             <button
@@ -1659,7 +1719,7 @@ export default function DigitalCardPage() {
 
       {showQrCode ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-5 py-8 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 px-3 py-4 backdrop-blur-md min-[380px]:px-5 min-[380px]:py-8"
           role="dialog"
           aria-modal="true"
           aria-label="Loyalty card QR code"
@@ -1670,7 +1730,7 @@ export default function DigitalCardPage() {
           }}
         >
           <div
-            className="relative w-full max-w-sm overflow-hidden rounded-[30px] border p-6 shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
+            className="relative w-full max-w-sm overflow-hidden rounded-[24px] border p-4 shadow-[0_30px_100px_rgba(0,0,0,0.55)] min-[380px]:rounded-[30px] min-[380px]:p-6"
             style={{
               borderColor: cardBorder,
               backgroundColor: cardBackground,
@@ -1699,11 +1759,13 @@ export default function DigitalCardPage() {
             </button>
 
             <div className="relative text-center">
-              {customer.cafe.logoUrl ? (
+              {showLogo && logoUrl ? (
                 <img
-                  src={customer.cafe.logoUrl}
+                  src={logoUrl}
                   alt={`${customer.cafe.name} logo`}
                   className="mx-auto h-12 w-12 object-contain"
+                  referrerPolicy="no-referrer"
+                  onError={() => setFailedLogoUrl(logoUrl)}
                 />
               ) : (
                 <div
@@ -1713,7 +1775,7 @@ export default function DigitalCardPage() {
                     color: primaryColor,
                   }}
                 >
-                  {customer.cafe.name.trim().charAt(0).toUpperCase()}
+                  {cafeInitial}
                 </div>
               )}
 
@@ -1736,10 +1798,10 @@ export default function DigitalCardPage() {
                 purchase.
               </p>
 
-              <div className="mx-auto mt-6 w-fit rounded-[24px] bg-white p-4 shadow-[0_20px_50px_rgba(0,0,0,0.18)]">
+              <div className="mx-auto mt-5 w-fit max-w-full rounded-[20px] bg-white p-3 shadow-[0_20px_50px_rgba(0,0,0,0.18)] min-[380px]:mt-6 min-[380px]:rounded-[24px] min-[380px]:p-4">
                 <QRCode
                   value={`BL:${customer.publicToken}`}
-                  size={220}
+                  size={200}
                   bgColor="#FFFFFF"
                   fgColor="#111111"
                   level="M"
@@ -1834,13 +1896,11 @@ export default function DigitalCardPage() {
         }
 
         .reward-reveal {
-          animation: reward-reveal 560ms cubic-bezier(0.16, 1, 0.3, 1)
-            both;
+          animation: reward-reveal 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
         .reward-gift {
-          animation: reward-gift 720ms cubic-bezier(0.16, 1, 0.3, 1)
-            160ms both;
+          animation: reward-gift 720ms cubic-bezier(0.16, 1, 0.3, 1) 160ms both;
         }
 
         @media (prefers-reduced-motion: reduce) {
