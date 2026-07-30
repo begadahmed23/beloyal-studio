@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     }
 
     const extension = FILE_EXTENSIONS[uploadedFile.type];
-    const storeId = process.env.BLOB_PUBLIC_STORE_ID;
+    const storeId = process.env.BOLB_PUBLIC_STORE_ID;
 
     if (!storeId) {
       throw new Error("BLOB_PUBLIC_STORE_ID is not configured.");
