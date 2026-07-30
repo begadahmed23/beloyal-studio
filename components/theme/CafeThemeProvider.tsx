@@ -7,8 +7,10 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   CafeThemeConfig,
@@ -75,6 +77,11 @@ export default function CafeThemeProvider({
   cafe,
   children,
 }: Props) {
+  const router = useRouter();
+
+  const hiddenAtRef = useRef<number | null>(null);
+  const lastRefreshAtRef = useRef(0);
+
   const [currentCafe, setCurrentCafe] =
     useState<CafeSettings>(cafe);
 
@@ -92,6 +99,56 @@ export default function CafeThemeProvider({
     setSavedThemeName(themeName);
     setPreviewThemeName(themeName);
   }, [themeName]);
+
+  useEffect(() => {
+    const refreshAppData = () => {
+      const now = Date.now();
+
+      if (now - lastRefreshAtRef.current < 1000) {
+        return;
+      }
+
+      lastRefreshAtRef.current = now;
+      router.refresh();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        hiddenAtRef.current = Date.now();
+        return;
+      }
+
+      if (document.visibilityState === "visible") {
+        const hiddenAt = hiddenAtRef.current;
+
+        hiddenAtRef.current = null;
+
+        if (hiddenAt && Date.now() - hiddenAt >= 1000) {
+          refreshAppData();
+        }
+      }
+    };
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        refreshAppData();
+      }
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange,
+    );
+
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange,
+      );
+    };
+  }, [router]);
 
   const setPreviewTheme = useCallback(
     (newThemeName: CafeThemeName) => {

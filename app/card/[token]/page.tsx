@@ -255,8 +255,18 @@ export default function DigitalCardPage() {
     useState<BeforeInstallPromptEvent | null>(null);
 
   const loadCard = useCallback(
-    async (showRefreshing = false) => {
-      if (!token || requestInProgress.current) {
+    async (showRefreshing = false, forceFresh = false) => {
+      if (!token) {
+        return;
+      }
+
+      if (forceFresh && requestInProgress.current) {
+        activeController.current?.abort();
+        activeController.current = null;
+        requestInProgress.current = false;
+      }
+
+      if (requestInProgress.current) {
         return;
       }
 
@@ -271,9 +281,13 @@ export default function DigitalCardPage() {
         }
 
         const response = await fetch(
-          `/api/customers/card/${encodeURIComponent(token)}`,
+          `/api/customers/card/${encodeURIComponent(token)}?fresh=${Date.now()}`,
           {
             cache: "no-store",
+            headers: {
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
+            },
             signal: controller.signal,
           },
         );
@@ -375,13 +389,24 @@ export default function DigitalCardPage() {
     void loadCard();
     scheduleNextRefresh();
 
+    const refreshAfterResume = () => {
+      void loadCard(false, true);
+    };
+
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        void loadCard();
+        refreshAfterResume();
       }
     };
 
+    const handlePageShow = () => {
+      refreshAfterResume();
+    };
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pageshow", handlePageShow);
+    window.addEventListener("focus", refreshAfterResume);
+    window.addEventListener("online", refreshAfterResume);
 
     return () => {
       stopped = true;
@@ -402,6 +427,9 @@ export default function DigitalCardPage() {
         "visibilitychange",
         handleVisibilityChange,
       );
+      window.removeEventListener("pageshow", handlePageShow);
+      window.removeEventListener("focus", refreshAfterResume);
+      window.removeEventListener("online", refreshAfterResume);
     };
   }, [loadCard]);
 
