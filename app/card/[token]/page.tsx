@@ -760,10 +760,13 @@ export default function DigitalCardPage() {
 
   const pageIsLight = isLightColor(backgroundColor);
 
+  // Keep the café background as the base, while tinting the complete card with
+  // the Studio primary colour. The previous 10–14% tint was too subtle and
+  // made legitimate Studio colour changes appear to have no effect.
   const cardBackground = mixColors(
     backgroundColor,
-    pageIsLight ? "#FFFFFF" : primaryColor,
-    pageIsLight ? 0.9 : 0.86,
+    primaryColor,
+    pageIsLight ? 0.78 : 0.7,
   );
 
   const cardIsLight = isLightColor(cardBackground);
@@ -845,7 +848,19 @@ export default function DigitalCardPage() {
           className="relative w-full overflow-hidden rounded-[26px] border shadow-[0_35px_120px_rgba(0,0,0,0.35)] transition-all duration-700 min-[380px]:rounded-[30px] sm:rounded-[34px]"
           style={{
             borderColor: cardBorder,
-            backgroundColor: cardBackground,
+            background: `
+              radial-gradient(
+                circle at 92% 4%,
+                ${withAlpha(primaryColor, cardIsLight ? 0.16 : 0.24)} 0%,
+                transparent 34%
+              ),
+              radial-gradient(
+                circle at 5% 64%,
+                ${withAlpha(secondaryColor, cardIsLight ? 0.12 : 0.18)} 0%,
+                transparent 40%
+              ),
+              ${cardBackground}
+            `,
             boxShadow: "0 35px 120px rgba(0,0,0,0.35)",
           }}
         >
