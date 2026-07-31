@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import {
+  applyPublicRateLimit,
+  publicApiRateLimiters,
+} from "@/lib/public-api-security";
 
 type RouteContext = {
   params: Promise<{
@@ -8,75 +13,180 @@ type RouteContext = {
   }>;
 };
 
+const MAX_REQUEST_BODY_BYTES = 500;
+
+const tokenSchema = z
+  .string()
+  .trim()
+  .regex(/^[a-f0-9]{48}$/i);
+
+const reviewSchema = z
+  .object({
+    rating: z.number().int().min(1).max(5),
+  })
+  .strict();
+
+function jsonResponse(
+  body: Record<string, unknown>,
+  status = 200
+) {
+  return NextResponse.json(body, {
+    status,
+    headers: {
+      "Cache-Control": "private, no-store, max-age=0",
+      Pragma: "no-cache",
+      "X-Content-Type-Options": "nosniff",
+    },
+  });
+}
+
+async function readRequestBody(request: NextRequest) {
+  const contentType = request.headers.get("content-type");
+
+  if (
+    !contentType ||
+    !contentType.toLowerCase().includes("application/json")
+  ) {
+    return {
+      error: jsonResponse(
+        {
+          message: "Content-Type must be application/json.",
+        },
+        415
+      ),
+    };
+  }
+
+  const declaredLength = Number(
+    request.headers.get("content-length")
+  );
+
+  if (
+    Number.isFinite(declaredLength) &&
+    declaredLength > MAX_REQUEST_BODY_BYTES
+  ) {
+    return {
+      error: jsonResponse(
+        {
+          message: "Request body is too large.",
+        },
+        413
+      ),
+    };
+  }
+
+  const rawBody = await request.text();
+  const bodySize = new TextEncoder().encode(rawBody).length;
+
+  if (bodySize === 0) {
+    return {
+      error: jsonResponse(
+        {
+          message: "Rating is required.",
+        },
+        400
+      ),
+    };
+  }
+
+  if (bodySize > MAX_REQUEST_BODY_BYTES) {
+    return {
+      error: jsonResponse(
+        {
+          message: "Request body is too large.",
+        },
+        413
+      ),
+    };
+  }
+
+  try {
+    return {
+      data: JSON.parse(rawBody) as unknown,
+    };
+  } catch {
+    return {
+      error: jsonResponse(
+        {
+          message: "Invalid JSON request.",
+        },
+        400
+      ),
+    };
+  }
+}
+
 export async function POST(
   request: NextRequest,
   context: RouteContext
 ) {
   try {
-    const { token } = await context.params;
-    const cleanToken = token?.trim();
-
-    if (!cleanToken) {
-      return NextResponse.json(
-        { message: "Customer card token is required." },
-        { status: 400 }
-      );
-    }
-
-    const body: unknown = await request.json();
-
-    if (
-      !body ||
-      typeof body !== "object" ||
-      !("rating" in body)
-    ) {
-      return NextResponse.json(
-        { message: "Rating is required." },
-        { status: 400 }
-      );
-    }
-
-    const rating = Number(
-      (body as { rating: unknown }).rating
+    /*
+     * Use an IP-based scope so changing fake tokens cannot
+     * bypass the limiter and repeatedly query PostgreSQL.
+     */
+    const rateLimitResponse = await applyPublicRateLimit(
+      request,
+      publicApiRateLimiters.review,
+      "customer-review"
     );
 
-    if (
-      !Number.isInteger(rating) ||
-      rating < 1 ||
-      rating > 5
-    ) {
-      return NextResponse.json(
-        { message: "Rating must be a whole number from 1 to 5." },
-        { status: 400 }
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
+    const { token } = await context.params;
+    const tokenResult = tokenSchema.safeParse(token);
+
+    if (!tokenResult.success) {
+      return jsonResponse(
+        {
+          message: "Customer card was not found.",
+        },
+        404
       );
     }
 
-    const customer = await prisma.customer.findUnique({
+    const bodyResult = await readRequestBody(request);
+
+    if (bodyResult.error) {
+      return bodyResult.error;
+    }
+
+    const validationResult = reviewSchema.safeParse(
+      bodyResult.data
+    );
+
+    if (!validationResult.success) {
+      return jsonResponse(
+        {
+          message:
+            "Rating must be a whole number from 1 to 5.",
+        },
+        400
+      );
+    }
+
+    const customer = await prisma.customer.findFirst({
       where: {
-        publicToken: cleanToken,
+        publicToken: tokenResult.data,
+
+        cafe: {
+          isActive: true,
+        },
       },
       select: {
         id: true,
         cafeId: true,
-        cafe: {
-          select: {
-            isActive: true,
-          },
-        },
       },
     });
 
     if (!customer) {
-      return NextResponse.json(
-        { message: "Customer card was not found." },
-        { status: 404 }
-      );
-    }
-
-    if (!customer.cafe.isActive) {
-      return NextResponse.json(
-        { message: "This café is currently unavailable." },
-        { status: 403 }
+      return jsonResponse(
+        {
+          message: "Customer card was not found.",
+        },
+        404
       );
     }
 
@@ -85,11 +195,11 @@ export async function POST(
         customerId: customer.id,
       },
       update: {
-        rating,
+        rating: validationResult.data.rating,
         cafeId: customer.cafeId,
       },
       create: {
-        rating,
+        rating: validationResult.data.rating,
         customerId: customer.id,
         cafeId: customer.cafeId,
       },
@@ -101,16 +211,18 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({
+    return jsonResponse({
       message: "Thank you. Your rating has been saved.",
       review,
     });
   } catch (error) {
     console.error("Save customer review error:", error);
 
-    return NextResponse.json(
-      { message: "Unable to save your rating right now." },
-      { status: 500 }
+    return jsonResponse(
+      {
+        message: "Unable to save your rating right now.",
+      },
+      500
     );
   }
 }
