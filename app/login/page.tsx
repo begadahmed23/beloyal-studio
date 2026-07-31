@@ -42,16 +42,14 @@ export default function Home() {
       setLoading(true);
       setError("");
 
-      const { error } =
+      const { data, error: signInError } =
         await authClient.signIn.email({
           email: cleanEmail,
           password,
           rememberMe,
           fetchOptions: {
             onError: async (context) => {
-              if (
-                context.response.status === 429
-              ) {
+              if (context.response.status === 429) {
                 const retryAfter =
                   context.response.headers.get(
                     "X-Retry-After"
@@ -67,50 +65,41 @@ export default function Home() {
           },
         });
 
-      if (error) {
-        if (error.status === 429) {
+      if (signInError) {
+        if (signInError.status === 429) {
           return;
         }
 
         setError(
-          error.message ||
+          signInError.message ||
             "The email or password is incorrect."
         );
 
         return;
       }
 
-      const sessionResponse = await fetch(
-        "/api/auth/get-session",
-        {
-          cache: "no-store",
-        }
-      );
-
-      const sessionData =
-        await sessionResponse.json();
-
-      if (
-        !sessionResponse.ok ||
-        !sessionData?.user
-      ) {
+      if (!data?.user) {
         setError(
-          "Login succeeded, but the session could not be loaded."
+          "Login succeeded, but the user account could not be loaded."
         );
         return;
       }
 
-      if (
-        sessionData.user.role === "SUPER_ADMIN"
-      ) {
-        router.replace("/studio");
-      } else {
-        router.replace("/dashboard");
-      }
+     const userRole =
+  "role" in data.user &&
+  typeof data.user.role === "string"
+    ? data.user.role
+    : null;
 
+const destination =
+  userRole === "SUPER_ADMIN"
+    ? "/studio"
+    : "/dashboard";
+
+      router.replace(destination);
       router.refresh();
     } catch (error) {
-      console.error(error);
+      console.error("Login error:", error);
 
       setError(
         "Something went wrong. Please try again."
@@ -198,9 +187,7 @@ export default function Home() {
                   }
                   value={password}
                   onChange={(event) =>
-                    setPassword(
-                      event.target.value
-                    )
+                    setPassword(event.target.value)
                   }
                   placeholder="Password"
                   autoComplete="current-password"
@@ -237,9 +224,7 @@ export default function Home() {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(event) =>
-                  setRememberMe(
-                    event.target.checked
-                  )
+                  setRememberMe(event.target.checked)
                 }
                 disabled={loading}
                 className="h-4 w-4 rounded border-black/20 accent-black"
