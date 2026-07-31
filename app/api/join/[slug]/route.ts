@@ -2,8 +2,13 @@ import { randomBytes } from "crypto";
 
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import {
+  applyPublicRateLimit,
+  publicApiRateLimiters,
+} from "@/lib/public-api-security";
 
 type RouteContext = {
   params: Promise<{
@@ -11,15 +16,46 @@ type RouteContext = {
   }>;
 };
 
-type JoinRequestBody = {
-  action?: unknown;
-  name?: unknown;
-  phone?: unknown;
-  birthday?: unknown;
-};
+const MAX_REQUEST_BODY_BYTES = 2_000;
+
+const slugSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(80)
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+
+const joinRequestSchema = z
+  .object({
+    action: z.enum(["join", "recover"]).default("join"),
+
+    name: z
+      .string()
+      .trim()
+      .min(2)
+      .max(80)
+      .optional(),
+
+    phone: z
+      .string()
+      .trim()
+      .min(1)
+      .max(32),
+
+    birthday: z
+      .string()
+      .trim()
+      .max(10)
+      .optional(),
+  })
+  .strict();
 
 function normalizePhone(value: string) {
   return value.replace(/\D/g, "");
+}
+
+function normalizeName(value: string) {
+  return value.replace(/\s+/g, " ").trim();
 }
 
 function createPublicToken() {
@@ -35,15 +71,25 @@ function createMemberNumber() {
 }
 
 function parseBirthday(value: string) {
-  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
 
-  if (!datePattern.test(value)) {
+  if (!match) {
     return null;
   }
 
-  const birthday = new Date(`${value}T12:00:00.000Z`);
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
 
-  if (Number.isNaN(birthday.getTime())) {
+  const birthday = new Date(
+    Date.UTC(year, month - 1, day, 12)
+  );
+
+  if (
+    birthday.getUTCFullYear() !== year ||
+    birthday.getUTCMonth() !== month - 1 ||
+    birthday.getUTCDate() !== day
+  ) {
     return null;
   }
 
@@ -53,9 +99,13 @@ function parseBirthday(value: string) {
     return null;
   }
 
-  const oldestAllowedBirthday = new Date();
-  oldestAllowedBirthday.setFullYear(
-    now.getFullYear() - 120
+  const oldestAllowedBirthday = new Date(
+    Date.UTC(
+      now.getUTCFullYear() - 120,
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      12
+    )
   );
 
   if (birthday < oldestAllowedBirthday) {
@@ -63,6 +113,94 @@ function parseBirthday(value: string) {
   }
 
   return birthday;
+}
+
+function jsonResponse(
+  body: Record<string, unknown>,
+  status = 200
+) {
+  return NextResponse.json(body, {
+    status,
+    headers: {
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
+async function readRequestBody(request: NextRequest) {
+  const contentType = request.headers.get("content-type");
+
+  if (
+    !contentType ||
+    !contentType.toLowerCase().includes("application/json")
+  ) {
+    return {
+      error: jsonResponse(
+        {
+          error: "Content-Type must be application/json.",
+        },
+        415
+      ),
+    };
+  }
+
+  const declaredLength = Number(
+    request.headers.get("content-length")
+  );
+
+  if (
+    Number.isFinite(declaredLength) &&
+    declaredLength > MAX_REQUEST_BODY_BYTES
+  ) {
+    return {
+      error: jsonResponse(
+        {
+          error: "Request body is too large.",
+        },
+        413
+      ),
+    };
+  }
+
+  const rawBody = await request.text();
+  const bodySize = new TextEncoder().encode(rawBody).length;
+
+  if (bodySize === 0) {
+    return {
+      error: jsonResponse(
+        {
+          error: "Request body is required.",
+        },
+        400
+      ),
+    };
+  }
+
+  if (bodySize > MAX_REQUEST_BODY_BYTES) {
+    return {
+      error: jsonResponse(
+        {
+          error: "Request body is too large.",
+        },
+        413
+      ),
+    };
+  }
+
+  try {
+    return {
+      data: JSON.parse(rawBody) as unknown,
+    };
+  } catch {
+    return {
+      error: jsonResponse(
+        {
+          error: "Invalid JSON request.",
+        },
+        400
+      ),
+    };
+  }
 }
 
 async function ensureCustomerToken(
@@ -73,25 +211,41 @@ async function ensureCustomerToken(
     return currentToken;
   }
 
-  const token = createPublicToken();
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const token = createPublicToken();
 
-  const updatedCustomer = await prisma.customer.update({
-    where: {
-      id: customerId,
-    },
-    data: {
-      publicToken: token,
-    },
-    select: {
-      publicToken: true,
-    },
-  });
+      const updatedCustomer = await prisma.customer.update({
+        where: {
+          id: customerId,
+        },
+        data: {
+          publicToken: token,
+        },
+        select: {
+          publicToken: true,
+        },
+      });
 
-  if (!updatedCustomer.publicToken) {
-    throw new Error("Customer token was not created.");
+      if (!updatedCustomer.publicToken) {
+        throw new Error("Customer token was not created.");
+      }
+
+      return updatedCustomer.publicToken;
+    } catch (error) {
+      if (
+        error instanceof
+          Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        continue;
+      }
+
+      throw error;
+    }
   }
 
-  return updatedCustomer.publicToken;
+  throw new Error("Customer token was not created.");
 }
 
 export async function POST(
@@ -99,28 +253,66 @@ export async function POST(
   context: RouteContext
 ) {
   try {
-    const { slug } = await context.params;
+    const params = await context.params;
+    const slugResult = slugSchema.safeParse(params.slug);
 
-    const body =
-      (await request.json()) as JoinRequestBody;
-
-    const action =
-      body.action === "recover" ? "recover" : "join";
-
-    const phone =
-      typeof body.phone === "string"
-        ? normalizePhone(body.phone)
-        : "";
-
-    if (phone.length !== 11) {
-      return NextResponse.json(
+    if (!slugResult.success) {
+      return jsonResponse(
         {
           error:
-            "Please enter a valid 11-digit phone number.",
+            "This loyalty program is currently unavailable.",
         },
+        404
+      );
+    }
+
+    const slug = slugResult.data;
+
+    /*
+     * Stop excessive requests before parsing input or
+     * accessing the primary PostgreSQL database.
+     */
+    const rateLimitResponse = await applyPublicRateLimit(
+      request,
+      publicApiRateLimiters.join,
+      slug
+    );
+
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
+    const bodyResult = await readRequestBody(request);
+
+    if (bodyResult.error) {
+      return bodyResult.error;
+    }
+
+    const validationResult = joinRequestSchema.safeParse(
+      bodyResult.data
+    );
+
+    if (!validationResult.success) {
+      return jsonResponse(
         {
-          status: 400,
-        }
+          error: "Please check the information entered.",
+        },
+        400
+      );
+    }
+
+    const { action } = validationResult.data;
+    const phone = normalizePhone(
+      validationResult.data.phone
+    );
+
+    if (!/^01\d{9}$/.test(phone)) {
+      return jsonResponse(
+        {
+          error:
+            "Please enter a valid Egyptian 11-digit phone number.",
+        },
+        400
       );
     }
 
@@ -135,14 +327,12 @@ export async function POST(
     });
 
     if (!cafe || !cafe.isActive) {
-      return NextResponse.json(
+      return jsonResponse(
         {
           error:
             "This loyalty program is currently unavailable.",
         },
-        {
-          status: 404,
-        }
+        404
       );
     }
 
@@ -161,19 +351,16 @@ export async function POST(
       });
 
     /*
-     * Existing-card recovery:
-     * Only opens an existing card and never creates a customer.
+     * Recovery only opens an existing card.
      */
     if (action === "recover") {
       if (!existingCustomer) {
-        return NextResponse.json(
+        return jsonResponse(
           {
             error:
               "We could not find a loyalty card with this phone number.",
           },
-          {
-            status: 404,
-          }
+          404
         );
       }
 
@@ -182,7 +369,7 @@ export async function POST(
         existingCustomer.publicToken
       );
 
-      return NextResponse.json({
+      return jsonResponse({
         success: true,
         existingCustomer: true,
         token,
@@ -190,8 +377,8 @@ export async function POST(
     }
 
     /*
-     * Regular registration:
-     * Existing phone numbers continue opening their existing card.
+     * Registering with an existing phone opens the
+     * customer's existing card.
      */
     if (existingCustomer) {
       const token = await ensureCustomerToken(
@@ -199,64 +386,60 @@ export async function POST(
         existingCustomer.publicToken
       );
 
-      return NextResponse.json({
+      return jsonResponse({
         success: true,
         existingCustomer: true,
         token,
       });
     }
 
-    const name =
-      typeof body.name === "string"
-        ? body.name.trim()
-        : "";
+    const name = normalizeName(
+      validationResult.data.name ?? ""
+    );
 
-    const birthdayValue =
-      typeof body.birthday === "string"
-        ? body.birthday.trim()
-        : "";
-
-    if (name.length < 2 || name.length > 80) {
-      return NextResponse.json(
+    if (
+      name.length < 2 ||
+      name.length > 80 ||
+      /[\u0000-\u001F\u007F]/.test(name)
+    ) {
+      return jsonResponse(
         {
           error: "Please enter a valid full name.",
         },
-        {
-          status: 400,
-        }
+        400
       );
     }
+
+    const birthdayValue =
+      validationResult.data.birthday ?? "";
 
     const birthday = parseBirthday(birthdayValue);
 
     if (!birthday) {
-      return NextResponse.json(
+      return jsonResponse(
         {
           error: "Please enter a valid birthday.",
         },
-        {
-          status: 400,
-        }
+        400
       );
     }
 
     for (let attempt = 0; attempt < 5; attempt += 1) {
       try {
-        const customer =
-          await prisma.customer.create({
-            data: {
-              cafeId: cafe.id,
-              memberNumber: createMemberNumber(),
-              publicToken: createPublicToken(),
-              name,
-              phone,
-              birthday,
-              stamps: 0,
-            },
-            select: {
-              publicToken: true,
-            },
-          });
+        const customer = await prisma.customer.create({
+          data: {
+            cafeId: cafe.id,
+            memberNumber: createMemberNumber(),
+            publicToken: createPublicToken(),
+            name,
+            phone,
+            birthday,
+            stamps: 0,
+          },
+          select: {
+            publicToken: true,
+          },
+        });
 
         if (!customer.publicToken) {
           throw new Error(
@@ -264,15 +447,13 @@ export async function POST(
           );
         }
 
-        return NextResponse.json(
+        return jsonResponse(
           {
             success: true,
             existingCustomer: false,
             token: customer.publicToken,
           },
-          {
-            status: 201,
-          }
+          201
         );
       } catch (error) {
         if (
@@ -300,7 +481,7 @@ export async function POST(
               customerCreatedByAnotherRequest.publicToken
             );
 
-            return NextResponse.json({
+            return jsonResponse({
               success: true,
               existingCustomer: true,
               token,
@@ -314,14 +495,12 @@ export async function POST(
       }
     }
 
-    return NextResponse.json(
+    return jsonResponse(
       {
         error:
           "We could not generate a membership number. Please try again.",
       },
-      {
-        status: 500,
-      }
+      500
     );
   } catch (error) {
     console.error(
@@ -329,14 +508,12 @@ export async function POST(
       error
     );
 
-    return NextResponse.json(
+    return jsonResponse(
       {
         error:
           "Something went wrong while accessing your loyalty card.",
       },
-      {
-        status: 500,
-      }
+      500
     );
   }
 }
