@@ -52,6 +52,15 @@ const themes = [
 const inputClassName =
   "h-12 w-full rounded-xl border border-black/[0.09] bg-white px-4 text-sm text-[#202124] outline-none transition placeholder:text-[#A0A1A6] hover:border-black/[0.15] focus:border-[#8B8F96] focus:ring-4 focus:ring-black/[0.035] disabled:cursor-not-allowed disabled:bg-[#F1F1F3] disabled:opacity-70";
 
+function isStrongPassword(value: string) {
+  return (
+    value.length >= 8 &&
+    /[A-Z]/.test(value) &&
+    /[a-z]/.test(value) &&
+    /[0-9]/.test(value)
+  );
+}
+
 export default function CreateCafeDialog({
   onCreated,
 }: Props) {
@@ -110,6 +119,13 @@ export default function CreateCafeDialog({
     event.preventDefault();
 
     if (loading) {
+      return;
+    }
+
+    if (!isStrongPassword(password)) {
+      setError(
+        "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number."
+      );
       return;
     }
 
@@ -346,8 +362,8 @@ export default function CreateCafeDialog({
                   onChange={(event) =>
                     setPassword(event.target.value)
                   }
-                  placeholder="Minimum 12 characters"
-                  minLength={12}
+                  placeholder="At least 8 characters"
+                  minLength={8}
                   required
                   disabled={loading}
                   className={`${inputClassName} pr-12`}
@@ -376,7 +392,7 @@ export default function CreateCafeDialog({
 
               <p className="mt-2 flex items-center gap-1.5 text-xs text-[#929298]">
                 <ShieldCheck size={13} />
-                At least 12 characters for secure access.
+                8+ characters with uppercase, lowercase, and a number.
               </p>
             </div>
           </section>

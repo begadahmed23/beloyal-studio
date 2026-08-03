@@ -15,6 +15,15 @@ function createSlug(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
+function isStrongPassword(value: string) {
+  return (
+    value.length >= 8 &&
+    /[A-Z]/.test(value) &&
+    /[a-z]/.test(value) &&
+    /[0-9]/.test(value)
+  );
+}
+
 export async function GET(request: NextRequest) {
   const admin = await requireSuperAdmin(request.headers);
 
@@ -27,9 +36,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const cafes = await prisma.cafe.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: { createdAt: "desc" },
       select: {
         id: true,
         name: true,
@@ -39,10 +46,8 @@ export async function GET(request: NextRequest) {
         primaryColor: true,
         secondaryColor: true,
         backgroundColor: true,
-
         rewardTarget: true,
         rewardName: true,
-
         subscriptionStatus: true,
         trialStartedAt: true,
         trialEndsAt: true,
@@ -50,11 +55,9 @@ export async function GET(request: NextRequest) {
         subscriptionEndsAt: true,
         lastPaymentAt: true,
         monthlyPrice: true,
-
         isActive: true,
         createdAt: true,
         updatedAt: true,
-
         user: {
           select: {
             id: true,
@@ -62,7 +65,6 @@ export async function GET(request: NextRequest) {
             email: true,
           },
         },
-
         _count: {
           select: {
             customers: true,
@@ -74,8 +76,7 @@ export async function GET(request: NextRequest) {
 
     const normalized = cafes.map((cafe) => ({
       ...cafe,
-      monthlyPrice:
-        cafe.monthlyPrice?.toNumber() ?? 0,
+      monthlyPrice: cafe.monthlyPrice?.toNumber() ?? 0,
     }));
 
     const monthlyRevenue = normalized.reduce(
@@ -110,29 +111,23 @@ export async function GET(request: NextRequest) {
       cafes: normalized,
       summary: {
         totalCafes: normalized.length,
-
         activeCafes: normalized.filter(
           (cafe) =>
             cafe.subscriptionStatus === "ACTIVE" &&
             cafe.isActive
         ).length,
-
         trialCafes: normalized.filter(
-          (cafe) =>
-            cafe.subscriptionStatus === "TRIAL"
+          (cafe) => cafe.subscriptionStatus === "TRIAL"
         ).length,
-
         suspendedCafes: normalized.filter(
           (cafe) =>
             cafe.subscriptionStatus === "SUSPENDED" ||
             !cafe.isActive
         ).length,
-
         pastDueCafes: normalized.filter(
           (cafe) =>
             cafe.subscriptionStatus === "PAST_DUE"
         ).length,
-
         monthlyRevenue,
         expectedRevenue,
       },
@@ -164,27 +159,22 @@ export async function POST(request: NextRequest) {
       typeof body.cafeName === "string"
         ? body.cafeName.trim()
         : "";
-
     const requestedSlug =
       typeof body.slug === "string"
         ? body.slug.trim()
         : "";
-
     const ownerName =
       typeof body.ownerName === "string"
         ? body.ownerName.trim()
         : "";
-
     const email =
       typeof body.email === "string"
         ? body.email.trim().toLowerCase()
         : "";
-
     const password =
       typeof body.password === "string"
         ? body.password
         : "";
-
     const rewardName =
       typeof body.rewardName === "string"
         ? body.rewardName.trim()
@@ -192,18 +182,12 @@ export async function POST(request: NextRequest) {
 
     const rewardTarget = Number(body.rewardTarget);
     const monthlyPrice = Number(body.monthlyPrice);
-
     const theme =
       typeof body.theme === "string"
         ? body.theme
         : "COFFEE_CLASSIC";
 
-    if (
-      !cafeName ||
-      !ownerName ||
-      !email ||
-      !password
-    ) {
+    if (!cafeName || !ownerName || !email || !password) {
       return NextResponse.json(
         {
           message:
@@ -220,11 +204,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (password.length < 12) {
+    if (!isStrongPassword(password)) {
       return NextResponse.json(
         {
           message:
-            "Password must contain at least 12 characters.",
+            "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.",
         },
         { status: 400 }
       );
@@ -244,10 +228,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (
-      !Number.isFinite(monthlyPrice) ||
-      monthlyPrice < 0
-    ) {
+    if (!Number.isFinite(monthlyPrice) || monthlyPrice < 0) {
       return NextResponse.json(
         {
           message:
@@ -257,9 +238,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const slug = createSlug(
-      requestedSlug || cafeName
-    );
+    const slug = createSlug(requestedSlug || cafeName);
 
     if (!slug) {
       return NextResponse.json(
@@ -271,30 +250,18 @@ export async function POST(request: NextRequest) {
     const [existingCafe, existingUser] =
       await Promise.all([
         prisma.cafe.findUnique({
-          where: {
-            slug,
-          },
-          select: {
-            id: true,
-          },
+          where: { slug },
+          select: { id: true },
         }),
-
         prisma.user.findUnique({
-          where: {
-            email,
-          },
-          select: {
-            id: true,
-          },
+          where: { email },
+          select: { id: true },
         }),
       ]);
 
     if (existingCafe) {
       return NextResponse.json(
-        {
-          message:
-            "A café already exists with this slug.",
-        },
+        { message: "A café already exists with this slug." },
         { status: 409 }
       );
     }
@@ -310,17 +277,13 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date();
-
     const trialEndsAt = new Date(now);
-    trialEndsAt.setDate(
-      trialEndsAt.getDate() + TRIAL_DAYS
-    );
+    trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
 
     const cafe = await prisma.cafe.create({
       data: {
         name: cafeName,
         slug,
-
         theme:
           theme === "MODERN_MINIMAL" ||
           theme === "DARK_LUXURY" ||
@@ -328,11 +291,8 @@ export async function POST(request: NextRequest) {
           theme === "ORGANIC"
             ? theme
             : "COFFEE_CLASSIC",
-
         rewardTarget,
-        rewardName:
-          rewardName || "Free Drink",
-
+        rewardName: rewardName || "Free Drink",
         subscriptionStatus: "TRIAL",
         trialStartedAt: now,
         trialEndsAt,
@@ -342,13 +302,13 @@ export async function POST(request: NextRequest) {
     });
 
     try {
-    const signup = await provisioningAuth.api.signUpEmail({
-  body: {
-    name: ownerName,
-    email,
-    password,
-  },
-});
+      const signup = await provisioningAuth.api.signUpEmail({
+        body: {
+          name: ownerName,
+          email,
+          password,
+        },
+      });
 
       if (!signup.user) {
         throw new Error(
@@ -357,9 +317,7 @@ export async function POST(request: NextRequest) {
       }
 
       const user = await prisma.user.update({
-        where: {
-          id: signup.user.id,
-        },
+        where: { id: signup.user.id },
         data: {
           role: "CAFE_ADMIN",
           cafeId: cafe.id,
@@ -384,9 +342,7 @@ export async function POST(request: NextRequest) {
       );
     } catch (accountError) {
       await prisma.cafe.delete({
-        where: {
-          id: cafe.id,
-        },
+        where: { id: cafe.id },
       });
 
       throw accountError;
@@ -395,8 +351,7 @@ export async function POST(request: NextRequest) {
     console.error("POST Studio café error:", error);
 
     if (
-      error instanceof
-        Prisma.PrismaClientKnownRequestError &&
+      error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
       return NextResponse.json(

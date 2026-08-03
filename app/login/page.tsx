@@ -85,16 +85,16 @@ export default function Home() {
         return;
       }
 
-     const userRole =
-  "role" in data.user &&
-  typeof data.user.role === "string"
-    ? data.user.role
-    : null;
+      const userRole =
+        "role" in data.user &&
+        typeof data.user.role === "string"
+          ? data.user.role
+          : null;
 
-const destination =
-  userRole === "SUPER_ADMIN"
-    ? "/studio"
-    : "/dashboard";
+      const destination =
+        userRole === "SUPER_ADMIN"
+          ? "/studio"
+          : "/dashboard";
 
       router.replace(destination);
       router.refresh();
@@ -253,6 +253,15 @@ const destination =
                 "Sign in"
               )}
             </Button>
+
+            <div className="pt-1 text-center">
+              <a
+                href="mailto:begad.ahmed124@gmail.com?subject=BeLoyal%20%E2%80%93%20Login%20help&body=Hello%20BeLoyal%2C%0A%0AI%20need%20help%20accessing%20my%20cafe%20account.%0A%0ACafe%20name%3A%20%0AAccount%20email%3A%20"
+                className="text-sm font-medium text-[#6e6e73] transition-colors hover:text-[#111111] hover:underline"
+              >
+                Need help signing in?
+              </a>
+            </div>
           </form>
         </div>
       </div>
