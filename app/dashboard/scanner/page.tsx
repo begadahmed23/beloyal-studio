@@ -31,7 +31,7 @@ type ScanResult = {
     stamps: number;
   };
   previousStamps: number;
-  stamps: number;
+  stamps?: number;
   rewardTarget: number;
   rewardEarned: boolean;
   rewardName: string;
@@ -397,7 +397,7 @@ playSuccessSound();
                 </h3>
 
                 <p className="mt-3 text-base opacity-65">
-                  {result.stamps} /{" "}
+                  {result.stamps ?? result.customer.stamps} /{" "}
                   {result.rewardTarget} stamps
                 </p>
 
@@ -406,7 +406,8 @@ playSuccessSound();
                     className="h-full rounded-full bg-emerald-500 transition-all duration-500"
                     style={{
                       width: `${
-                        (result.stamps /
+                        ((result.stamps ??
+                          result.customer.stamps) /
                           result.rewardTarget) *
                         100
                       }%`,

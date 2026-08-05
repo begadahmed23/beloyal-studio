@@ -13,6 +13,40 @@ type HomeScreenHelpModalProps = {
   onClose: () => void;
 };
 
+type InstructionStepProps = {
+  number: number;
+  children: React.ReactNode;
+  primaryColor: string;
+  accentText: string;
+  textSecondary: string;
+};
+
+function InstructionStep({
+  number,
+  children,
+  primaryColor,
+  accentText,
+  textSecondary,
+}: InstructionStepProps) {
+  return (
+    <div className="flex items-center gap-3">
+      <span
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+        style={{
+          backgroundColor: primaryColor,
+          color: accentText,
+        }}
+      >
+        {number}
+      </span>
+
+      <p className="text-sm leading-5" style={{ color: textSecondary }}>
+        {children}
+      </p>
+    </div>
+  );
+}
+
 export default function HomeScreenHelpModal({
   cardBorder,
   cardBackground,
@@ -59,22 +93,70 @@ export default function HomeScreenHelpModal({
 
         <Smartphone size={30} style={{ color: primaryColor }} />
 
-        <p className="mt-5 text-xl font-semibold">Add to Home Screen</p>
-        <p
-          className="mt-2 text-sm leading-6"
-          style={{ color: textSecondary }}
-        >
-          On iPhone: open this card in Safari, tap the Share button, choose
-          “Add to Home Screen”, then tap “Add”.
-        </p>
+        <p className="mt-5 text-xl font-semibold">Save your loyalty card</p>
 
-        <p
-          className="mt-4 text-sm leading-6"
-          style={{ color: textSecondary }}
-        >
-          On Android: open the browser menu and choose “Add to Home screen” or
-          “Install app”.
-        </p>
+        <div className="mt-5">
+          <p className="text-sm font-semibold">On iPhone</p>
+
+          <div className="mt-3 space-y-3">
+            <InstructionStep
+              number={1}
+              primaryColor={primaryColor}
+              accentText={accentText}
+              textSecondary={textSecondary}
+            >
+              Open this card in Safari.
+            </InstructionStep>
+
+            <InstructionStep
+              number={2}
+              primaryColor={primaryColor}
+              accentText={accentText}
+              textSecondary={textSecondary}
+            >
+              Tap the Share button.
+            </InstructionStep>
+
+            <InstructionStep
+              number={3}
+              primaryColor={primaryColor}
+              accentText={accentText}
+              textSecondary={textSecondary}
+            >
+              Tap “Add to Home Screen”.
+            </InstructionStep>
+
+          </div>
+        </div>
+
+        <div
+          className="my-5 h-px"
+          style={{ backgroundColor: cardBorder }}
+        />
+
+        <div>
+          <p className="text-sm font-semibold">On Android</p>
+
+          <div className="mt-3 space-y-3">
+            <InstructionStep
+              number={1}
+              primaryColor={primaryColor}
+              accentText={accentText}
+              textSecondary={textSecondary}
+            >
+              Open the browser menu.
+            </InstructionStep>
+
+            <InstructionStep
+              number={2}
+              primaryColor={primaryColor}
+              accentText={accentText}
+              textSecondary={textSecondary}
+            >
+              Tap “Add to Home screen” or “Install app”.
+            </InstructionStep>
+          </div>
+        </div>
 
         <button
           type="button"
