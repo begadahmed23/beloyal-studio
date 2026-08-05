@@ -101,6 +101,7 @@ export default function JoinQRCode() {
           minHeight: `${POSTER_HEIGHT}px`,
           margin: "0",
           transform: "none",
+          boxShadow: "none",
         },
       });
 
