@@ -22,6 +22,10 @@ export default function JoinQRCode() {
 
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [downloadMessage, setDownloadMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const joinUrl = useMemo(() => {
     const baseUrl =
@@ -70,6 +74,7 @@ export default function JoinQRCode() {
     }
 
     setDownloading(true);
+    setDownloadMessage(null);
 
     try {
       const poster = posterRef.current;
@@ -99,19 +104,47 @@ export default function JoinQRCode() {
         },
       });
 
+      const imageResponse = await fetch(image);
+      const imageBlob = await imageResponse.blob();
+      const objectUrl = URL.createObjectURL(imageBlob);
       const link = document.createElement("a");
+      const isIOS =
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" &&
+          navigator.maxTouchPoints > 1);
 
       link.download = `${cafe.slug}-loyalty-qr.png`;
-      link.href = image;
+      link.href = objectUrl;
+
+      if (isIOS) {
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+      }
 
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
+
+      window.setTimeout(() => {
+        URL.revokeObjectURL(objectUrl);
+      }, 10000);
+
+      setDownloadMessage({
+        type: "success",
+        text: isIOS
+          ? "Poster opened. Tap Share, then Save to Photos."
+          : "QR poster downloaded successfully.",
+      });
     } catch (error) {
       console.error(
         "Could not download QR poster:",
         error
       );
+
+      setDownloadMessage({
+        type: "error",
+        text: "The QR poster could not be downloaded. Please try again.",
+      });
     } finally {
       setDownloading(false);
     }
@@ -246,6 +279,26 @@ export default function JoinQRCode() {
                   : "Download PNG"}
               </button>
             </div>
+
+            {downloadMessage ? (
+              <div
+                role="status"
+                aria-live="polite"
+                className="mt-3 flex items-start gap-2 text-sm font-medium"
+                style={{
+                  color:
+                    downloadMessage.type === "success"
+                      ? "#16a34a"
+                      : "#dc2626",
+                }}
+              >
+                {downloadMessage.type === "success" ? (
+                  <Check className="mt-0.5 shrink-0" size={17} />
+                ) : null}
+
+                <span>{downloadMessage.text}</span>
+              </div>
+            ) : null}
           </div>
         </div>
 
