@@ -150,6 +150,8 @@ export default function LoyaltyCard({
             ${cardBackground}
           `,
           boxShadow: "0 35px 120px rgba(0,0,0,0.35)",
+          colorScheme: cardIsLight ? "light" : "dark",
+          forcedColorAdjust: "none",
         }}
       >
         <header

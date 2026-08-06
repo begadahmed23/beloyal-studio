@@ -62,6 +62,7 @@ export default function QrCodeModal({
           borderColor: cardBorder,
           backgroundColor: cardBackground,
           color: textPrimary,
+          forcedColorAdjust: "none",
         }}
       >
         <div
@@ -108,20 +109,38 @@ export default function QrCodeModal({
             Your loyalty code
           </p>
 
-          <p
-            className="mt-2 text-sm leading-6"
-            style={{ color: textSecondary }}
-          >
+          <p className="mt-2 text-sm leading-6" style={{ color: textSecondary }}>
             Show this code to the cashier when you make an eligible purchase.
           </p>
 
-          <div className="mx-auto mt-5 w-fit max-w-full rounded-[20px] bg-white p-3 shadow-[0_20px_50px_rgba(0,0,0,0.18)] min-[380px]:mt-6 min-[380px]:rounded-[24px] min-[380px]:p-4">
+          <div
+            className="mx-auto mt-5 w-fit max-w-full rounded-[20px] bg-white p-3 shadow-[0_20px_50px_rgba(0,0,0,0.18)] min-[380px]:mt-6 min-[380px]:rounded-[24px] min-[380px]:p-4"
+            style={{
+              backgroundColor: "#FFFFFF",
+              colorScheme: "light",
+              forcedColorAdjust: "none",
+              isolation: "isolate",
+              filter: "none",
+              opacity: 1,
+            }}
+          >
             <QRCode
               value={`BL:${publicToken}`}
               size={200}
               bgColor="#FFFFFF"
-              fgColor="#111111"
+              fgColor="#000000"
               level="M"
+              style={{
+                display: "block",
+                width: "100%",
+                height: "auto",
+                maxWidth: "200px",
+                backgroundColor: "#FFFFFF",
+                colorScheme: "light",
+                forcedColorAdjust: "none",
+                filter: "none",
+                opacity: 1,
+              }}
             />
           </div>
 
