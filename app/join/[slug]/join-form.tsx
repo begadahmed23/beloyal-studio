@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type JoinFormProps = {
@@ -37,6 +37,28 @@ export default function JoinForm({
   const [birthday, setBirthday] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingSavedCard, setIsCheckingSavedCard] =
+    useState(true);
+
+  const storageKey = `beloyal:${cafeSlug}:cardToken`;
+
+  useEffect(() => {
+    try {
+      const savedToken = window.localStorage.getItem(storageKey);
+
+      if (savedToken) {
+        router.replace(`/card/${savedToken}`);
+        return;
+      }
+    } catch (storageError) {
+      console.error(
+        "Could not read saved loyalty card:",
+        storageError,
+      );
+    }
+
+    setIsCheckingSavedCard(false);
+  }, [router, storageKey]);
 
   function changeMode(nextMode: FormMode) {
     setMode(nextMode);
@@ -47,7 +69,9 @@ export default function JoinForm({
     setPhone(value.replace(/\D/g, "").slice(0, 11));
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault();
     setError("");
 
@@ -100,9 +124,19 @@ export default function JoinForm({
 
       if (!response.ok || !data.token) {
         setError(
-          data.error || "Something went wrong. Please try again.",
+          data.error ||
+            "Something went wrong. Please try again.",
         );
         return;
+      }
+
+      try {
+        window.localStorage.setItem(storageKey, data.token);
+      } catch (storageError) {
+        console.error(
+          "Could not save loyalty card on this device:",
+          storageError,
+        );
       }
 
       const welcomeQuery =
@@ -112,7 +146,10 @@ export default function JoinForm({
 
       router.push(`/card/${data.token}${welcomeQuery}`);
     } catch (requestError) {
-      console.error("Loyalty card request failed:", requestError);
+      console.error(
+        "Loyalty card request failed:",
+        requestError,
+      );
 
       setError(
         "We could not connect to the server. Please check your internet connection.",
@@ -124,6 +161,25 @@ export default function JoinForm({
 
   const inputClassName =
     "h-14 w-full rounded-2xl border bg-white/[0.06] px-4 text-base text-white outline-none transition placeholder:text-white/30 focus:bg-white/[0.09]";
+
+  if (isCheckingSavedCard) {
+    return (
+      <div className="flex min-h-[260px] items-center justify-center">
+        <div className="text-center">
+          <div
+            className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-white/15"
+            style={{
+              borderTopColor: secondaryColor,
+            }}
+          />
+
+          <p className="mt-4 text-sm text-white/45">
+            Opening your loyalty card...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -232,7 +288,9 @@ export default function JoinForm({
             }
             autoComplete="tel"
             inputMode="numeric"
-            enterKeyHint={mode === "recover" ? "go" : "next"}
+            enterKeyHint={
+              mode === "recover" ? "go" : "next"
+            }
             placeholder="01XXXXXXXXX"
             minLength={11}
             maxLength={11}
@@ -325,14 +383,14 @@ export default function JoinForm({
             </div>
 
             <p className="text-center text-xs leading-5 text-white/35">
-              By joining, you agree that {cafeName} may store your
-              loyalty membership information.
+              By joining, you agree that {cafeName} may store
+              your loyalty membership information.
             </p>
           </>
         ) : (
           <p className="text-center text-xs leading-5 text-white/35">
-            Your phone number is only used to locate your existing
-            {` ${cafeName} `}loyalty card.
+            Your phone number is only used to locate your
+            existing {` ${cafeName} `}loyalty card.
           </p>
         )}
       </form>
