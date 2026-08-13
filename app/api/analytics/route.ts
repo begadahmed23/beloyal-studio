@@ -186,6 +186,7 @@ export async function GET(request: NextRequest) {
       ratingAggregate,
       ratingGroups,
       recentRatings,
+      recentFeedback,
     ] = await Promise.all([
       prisma.customer.count({
         where: {
@@ -257,7 +258,7 @@ export async function GET(request: NextRequest) {
         orderBy: {
           updatedAt: "desc",
         },
-        take: 10,
+        take: 35,
         select: {
           id: true,
           rating: true,
@@ -268,6 +269,33 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               memberNumber: true,
+            },
+          },
+        },
+      }),
+
+      prisma.customerFeedback.findMany({
+        where: {
+          cafeId,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 35,
+        select: {
+          id: true,
+          comment: true,
+          createdAt: true,
+          customer: {
+            select: {
+              id: true,
+              name: true,
+              memberNumber: true,
+              review: {
+                select: {
+                  rating: true,
+                },
+              },
             },
           },
         },
@@ -290,6 +318,20 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    const formattedRecentFeedback = recentFeedback.map(
+      (feedback) => ({
+        id: feedback.id,
+        comment: feedback.comment,
+        createdAt: feedback.createdAt,
+        customer: {
+          id: feedback.customer.id,
+          name: feedback.customer.name,
+          memberNumber: feedback.customer.memberNumber,
+        },
+        rating: feedback.customer.review?.rating ?? null,
+      })
+    );
+
     return NextResponse.json({
       totalMembers,
       newMembersToday,
@@ -305,6 +347,7 @@ export async function GET(request: NextRequest) {
           ratingAggregate._count.rating,
         breakdown: ratingBreakdown,
         recentRatings,
+        recentFeedback: formattedRecentFeedback,
       },
     });
   } catch (error) {

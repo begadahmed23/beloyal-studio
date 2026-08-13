@@ -36,6 +36,7 @@ model Cafe {
   googleReviewUrl             String?
   customers                   Customer[]
   reviews                     CustomerReview[]
+  feedbacks                   CustomerFeedback[]
   transactions                StampTransaction[]
   user                        User?
 
@@ -53,19 +54,21 @@ model Employee {
 }
 
 model Customer {
-  id           String             @id @default(cuid())
-  memberNumber String
-  name         String
-  phone        String
-  birthday     DateTime
-  stamps       Int                @default(0)
-  createdAt    DateTime           @default(now())
-  updatedAt    DateTime           @updatedAt
-  publicToken  String             @unique
-  cafeId       String
-  cafe         Cafe               @relation(fields: [cafeId], references: [id], onDelete: Cascade)
-  review       CustomerReview?
-  transactions StampTransaction[]
+  id                 String             @id @default(cuid())
+  memberNumber       String
+  name               String
+  phone              String
+  birthday           DateTime
+  stamps             Int                @default(0)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  publicToken        String             @unique
+  cafeId             String
+  cafe               Cafe               @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  review             CustomerReview?
+  feedbackRewardedAt DateTime?
+  feedbacks          CustomerFeedback[]
+  transactions       StampTransaction[]
 
   @@unique([cafeId, phone])
   @@unique([cafeId, memberNumber])
@@ -84,6 +87,21 @@ model CustomerReview {
   customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@index([cafeId])
+  @@index([cafeId, createdAt])
+}
+
+model CustomerFeedback {
+  id         String   @id @default(cuid())
+  comment    String
+  cafeId     String
+  customerId String
+  createdAt  DateTime @default(now())
+
+  cafe     Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([cafeId])
+  @@index([customerId])
   @@index([cafeId, createdAt])
 }
 

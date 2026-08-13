@@ -4,11 +4,11 @@ import {
   CalendarDays,
   CheckCircle2,
   Coffee,
+  Gift,
   Heart,
+  MessageCircle,
   QrCode,
   RefreshCw,
-  Smartphone,
-  Gift,
   Sparkles,
 } from "lucide-react";
 import { withAlpha } from "../card-utils";
@@ -54,7 +54,10 @@ type LoyaltyCardProps = {
   rewardReady: boolean;
   cardGlowsGreen: boolean;
   remainingStamps: number;
-  progressMessage: { title: string; description: string };
+  progressMessage: {
+    title: string;
+    description: string;
+  };
   progressPercentage: number;
   primaryColor: string;
   secondaryColor: string;
@@ -83,7 +86,7 @@ type LoyaltyCardProps = {
   onRefresh: () => void;
   onLogoError: (logoUrl: string) => void;
   onShowQrCode: () => void;
-  onAddToHomeScreen: () => void;
+  onShowFeedback: () => void;
 };
 
 export default function LoyaltyCard({
@@ -128,7 +131,7 @@ export default function LoyaltyCard({
   onRefresh,
   onLogoError,
   onShowQrCode,
-  onAddToHomeScreen,
+  onShowFeedback,
 }: LoyaltyCardProps) {
   return (
     <div className="mx-auto w-full max-w-md">
@@ -139,18 +142,27 @@ export default function LoyaltyCard({
           background: `
             radial-gradient(
               circle at 92% 4%,
-              ${withAlpha(primaryColor, cardIsLight ? 0.16 : 0.24)} 0%,
+              ${withAlpha(
+                primaryColor,
+                cardIsLight ? 0.16 : 0.24,
+              )} 0%,
               transparent 34%
             ),
             radial-gradient(
               circle at 5% 64%,
-              ${withAlpha(secondaryColor, cardIsLight ? 0.12 : 0.18)} 0%,
+              ${withAlpha(
+                secondaryColor,
+                cardIsLight ? 0.12 : 0.18,
+              )} 0%,
               transparent 40%
             ),
             ${cardBackground}
           `,
-          boxShadow: "0 35px 120px rgba(0,0,0,0.35)",
-          colorScheme: cardIsLight ? "light" : "dark",
+          boxShadow:
+            "0 35px 120px rgba(0,0,0,0.35)",
+          colorScheme: cardIsLight
+            ? "light"
+            : "dark",
           forcedColorAdjust: "none",
         }}
       >
@@ -177,33 +189,34 @@ export default function LoyaltyCard({
                   `,
                 }}
               />
-    
+
               <div
                 aria-hidden="true"
                 className="pointer-events-none absolute left-[15%] right-[15%] top-0 h-px"
                 style={{
                   background:
                     "linear-gradient(90deg, transparent, rgba(216,190,130,0.34), transparent)",
-                  boxShadow: "0 8px 34px rgba(70,137,113,0.18)",
+                  boxShadow:
+                    "0 8px 34px rgba(70,137,113,0.18)",
                 }}
               />
             </>
           ) : null}
-    
+
           <div
             className="absolute -right-16 -top-20 h-56 w-56 rounded-full blur-3xl"
             style={{
               backgroundColor: primaryGlow,
             }}
           />
-    
+
           <div
             className="absolute -bottom-24 -left-16 h-48 w-48 rounded-full blur-3xl"
             style={{
               backgroundColor: secondaryGlow,
             }}
           />
-    
+
           <div className="relative">
             <div className="flex items-start justify-between gap-3 sm:gap-4">
               <div className="min-w-0">
@@ -214,20 +227,23 @@ export default function LoyaltyCard({
                       alt={`${customer.cafe.name} logo`}
                       className="h-10 w-10 shrink-0 object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,0.14)] min-[380px]:h-12 min-[380px]:w-12 sm:h-14 sm:w-14"
                       referrerPolicy="no-referrer"
-                      onError={() => onLogoError(logoUrl)}
+                      onError={() =>
+                        onLogoError(logoUrl)
+                      }
                     />
                   ) : (
                     <div
                       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold min-[380px]:h-12 min-[380px]:w-12 min-[380px]:rounded-2xl min-[380px]:text-base sm:h-14 sm:w-14"
                       style={{
-                        backgroundColor: primarySoft,
+                        backgroundColor:
+                          primarySoft,
                         color: primaryColor,
                       }}
                     >
                       {cafeInitial}
                     </div>
                   )}
-    
+
                   <div className="min-w-0">
                     <h2
                       className="break-words text-xl font-semibold tracking-[0.04em] min-[380px]:text-2xl min-[380px]:tracking-[0.07em] sm:text-3xl"
@@ -237,7 +253,7 @@ export default function LoyaltyCard({
                     >
                       {customer.cafe.name}
                     </h2>
-    
+
                     <p
                       className="mt-2 text-[10px] font-semibold tracking-[0.16em]"
                       style={{
@@ -249,7 +265,7 @@ export default function LoyaltyCard({
                   </div>
                 </div>
               </div>
-    
+
               <button
                 type="button"
                 onClick={onRefresh}
@@ -264,11 +280,15 @@ export default function LoyaltyCard({
               >
                 <RefreshCw
                   size={16}
-                  className={refreshing ? "animate-spin" : ""}
+                  className={
+                    refreshing
+                      ? "animate-spin"
+                      : ""
+                  }
                 />
               </button>
             </div>
-    
+
             <h1
               className="mt-7 break-words text-[1.65rem] font-semibold tracking-tight min-[380px]:mt-9 min-[380px]:text-3xl sm:mt-10"
               style={{
@@ -279,7 +299,7 @@ export default function LoyaltyCard({
             </h1>
           </div>
         </header>
-    
+
         <div className="space-y-5 p-4 min-[380px]:space-y-6 min-[380px]:p-5 sm:p-6">
           <section
             className="relative overflow-hidden rounded-3xl border p-5 transition-all duration-700"
@@ -294,18 +314,23 @@ export default function LoyaltyCard({
                 backgroundColor: primaryGlow,
               }}
             />
-    
+
             <div className="relative flex items-center gap-4">
               <div
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
                 style={{
-                  backgroundColor: surfaceRaised,
+                  backgroundColor:
+                    surfaceRaised,
                   color: primaryColor,
                 }}
               >
-                {rewardReady ? <Gift size={23} /> : <Sparkles size={22} />}
+                {rewardReady ? (
+                  <Gift size={23} />
+                ) : (
+                  <Sparkles size={22} />
+                )}
               </div>
-    
+
               <div className="min-w-0">
                 <p
                   className="font-semibold"
@@ -315,7 +340,7 @@ export default function LoyaltyCard({
                 >
                   {progressMessage.title}
                 </p>
-    
+
                 <p
                   className="mt-1 text-xs leading-5"
                   style={{
@@ -327,7 +352,7 @@ export default function LoyaltyCard({
               </div>
             </div>
           </section>
-    
+
           <section>
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -339,18 +364,19 @@ export default function LoyaltyCard({
                 >
                   Your stamp card
                 </p>
-    
+
                 <p
                   className="mt-1 text-xs"
                   style={{
                     color: textMuted,
                   }}
                 >
-                  {customer.cafe.eligiblePurchaseDescription ||
+                  {customer.cafe
+                    .eligiblePurchaseDescription ||
                     "One stamp per eligible purchase"}
                 </p>
               </div>
-    
+
               <span
                 className="shrink-0 rounded-full border px-3 py-1.5 text-xs font-semibold"
                 style={{
@@ -364,38 +390,45 @@ export default function LoyaltyCard({
                   : `${visibleStamps}/${rewardTarget}`}
               </span>
             </div>
-    
+
             <div className="mt-5 grid grid-cols-4 gap-2 min-[380px]:gap-3">
               {Array.from({
                 length: rewardTarget,
               }).map((_, index) => {
-                const filled = index < visibleStamps;
-    
-                const isNewStamp = newStampIndex === index;
-    
+                const filled =
+                  index < visibleStamps;
+
+                const isNewStamp =
+                  newStampIndex === index;
+
                 return (
                   <div
                     key={index}
                     className={`flex aspect-square items-center justify-center rounded-2xl border transition-all duration-500 ${
-                      isNewStamp ? "scale-125" : "scale-100"
+                      isNewStamp
+                        ? "scale-125"
+                        : "scale-100"
                     }`}
                     style={{
                       borderColor:
-                        filled && cardGlowsGreen
+                        filled &&
+                        cardGlowsGreen
                           ? "rgba(216,190,130,0.58)"
                           : filled
                             ? primaryColor
                             : cardBorder,
-    
+
                       background:
-                        filled && cardGlowsGreen
+                        filled &&
+                        cardGlowsGreen
                           ? `linear-gradient(145deg, ${rewardEmeraldLight} 0%, ${rewardEmerald} 48%, #0B2822 100%)`
                           : filled
                             ? primaryColor
                             : emptyStampBackground,
-    
+
                       boxShadow:
-                        filled && cardGlowsGreen
+                        filled &&
+                        cardGlowsGreen
                           ? isNewStamp
                             ? "inset 0 1px 0 rgba(255,255,255,0.16), inset 0 -12px 24px rgba(0,0,0,0.2), 0 0 0 1px rgba(216,190,130,0.2), 0 14px 30px rgba(6,31,26,0.42)"
                             : "inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -12px 24px rgba(0,0,0,0.18), 0 0 0 1px rgba(216,190,130,0.14), 0 10px 22px rgba(6,31,26,0.3)"
@@ -407,7 +440,9 @@ export default function LoyaltyCard({
                     <Coffee
                       size={23}
                       className={`transition-all duration-500 ${
-                        isNewStamp ? "rotate-12 scale-125" : ""
+                        isNewStamp
+                          ? "rotate-12 scale-125"
+                          : ""
                       }`}
                       style={{
                         color: filled
@@ -415,17 +450,20 @@ export default function LoyaltyCard({
                             ? rewardIvory
                             : accentText
                           : emptyStampText,
-    
+
                         fill: filled
                           ? cardGlowsGreen
                             ? rewardIvory
                             : accentText
                           : "transparent",
-    
-                        opacity: filled ? 1 : 0.65,
-    
+
+                        opacity: filled
+                          ? 1
+                          : 0.65,
+
                         filter:
-                          filled && cardGlowsGreen
+                          filled &&
+                          cardGlowsGreen
                             ? "drop-shadow(0 2px 4px rgba(0,0,0,0.34))"
                             : "none",
                       }}
@@ -434,7 +472,7 @@ export default function LoyaltyCard({
                 );
               })}
             </div>
-    
+
             <div
               className="mt-5 h-2 overflow-hidden rounded-full"
               style={{
@@ -445,16 +483,18 @@ export default function LoyaltyCard({
                 className="h-full rounded-full transition-all duration-700"
                 style={{
                   width: `${progressPercentage}%`,
-                  background: cardGlowsGreen
-                    ? `linear-gradient(90deg, ${rewardEmerald} 0%, ${rewardEmeraldLight} 72%, ${rewardChampagne} 100%)`
-                    : primaryColor,
-                  boxShadow: cardGlowsGreen
-                    ? "inset 0 1px 0 rgba(255,255,255,0.28), 0 3px 12px rgba(13,58,49,0.34)"
-                    : "none",
+                  background:
+                    cardGlowsGreen
+                      ? `linear-gradient(90deg, ${rewardEmerald} 0%, ${rewardEmeraldLight} 72%, ${rewardChampagne} 100%)`
+                      : primaryColor,
+                  boxShadow:
+                    cardGlowsGreen
+                      ? "inset 0 1px 0 rgba(255,255,255,0.28), 0 3px 12px rgba(13,58,49,0.34)"
+                      : "none",
                 }}
               />
             </div>
-    
+
             <p
               className="mt-3 text-sm"
               style={{
@@ -463,17 +503,22 @@ export default function LoyaltyCard({
             >
               {rewardReady
                 ? `You completed your card. Your ${
-                    customer.cafe.rewardName || "reward"
+                    customer.cafe
+                      .rewardName || "reward"
                   } is ready.`
                 : `${remainingStamps} more ${
-                    remainingStamps === 1 ? "stamp" : "stamps"
+                    remainingStamps === 1
+                      ? "stamp"
+                      : "stamps"
                   } until your ${
-                    customer.cafe.rewardName?.toLowerCase() || "reward"
+                    customer.cafe.rewardName?.toLowerCase() ||
+                    "reward"
                   }.`}
             </p>
           </section>
-    
-          {customer.cafe.rewardDescription ? (
+
+          {customer.cafe
+            .rewardDescription ? (
             <section
               className="rounded-2xl border p-4"
               style={{
@@ -489,18 +534,21 @@ export default function LoyaltyCard({
               >
                 Your reward
               </p>
-    
+
               <p
                 className="mt-1 text-sm leading-6"
                 style={{
                   color: textSecondary,
                 }}
               >
-                {customer.cafe.rewardDescription}
+                {
+                  customer.cafe
+                    .rewardDescription
+                }
               </p>
             </section>
           ) : null}
-    
+
           <section className="grid gap-3">
             <div
               className="flex items-center gap-4 rounded-2xl border p-4"
@@ -512,13 +560,14 @@ export default function LoyaltyCard({
               <div
                 className="flex h-10 w-10 items-center justify-center rounded-xl"
                 style={{
-                  backgroundColor: primarySoft,
+                  backgroundColor:
+                    primarySoft,
                   color: primaryColor,
                 }}
               >
                 <CalendarDays size={19} />
               </div>
-    
+
               <div>
                 <p
                   className="text-xs"
@@ -528,7 +577,7 @@ export default function LoyaltyCard({
                 >
                   Birthday
                 </p>
-    
+
                 <p
                   className="mt-1 text-sm font-medium"
                   style={{
@@ -539,7 +588,7 @@ export default function LoyaltyCard({
                 </p>
               </div>
             </div>
-    
+
             <div
               className="flex items-center gap-4 rounded-2xl border p-4"
               style={{
@@ -550,13 +599,14 @@ export default function LoyaltyCard({
               <div
                 className="flex h-10 w-10 items-center justify-center rounded-xl"
                 style={{
-                  backgroundColor: primarySoft,
+                  backgroundColor:
+                    primarySoft,
                   color: primaryColor,
                 }}
               >
                 <CheckCircle2 size={19} />
               </div>
-    
+
               <div>
                 <p
                   className="text-xs"
@@ -566,7 +616,7 @@ export default function LoyaltyCard({
                 >
                   Birthday countdown
                 </p>
-    
+
                 <p
                   className="mt-1 text-sm font-medium"
                   style={{
@@ -576,13 +626,16 @@ export default function LoyaltyCard({
                   {daysUntilBirthday === 0
                     ? "Happy birthday!"
                     : `${daysUntilBirthday} ${
-                        daysUntilBirthday === 1 ? "day" : "days"
+                        daysUntilBirthday ===
+                        1
+                          ? "day"
+                          : "days"
                       } to go`}
                 </p>
               </div>
             </div>
           </section>
-    
+
           <section
             className="rounded-2xl border p-4"
             style={{
@@ -598,7 +651,7 @@ export default function LoyaltyCard({
             >
               Last updated
             </p>
-    
+
             <p
               className="mt-1 text-sm font-medium"
               style={{
@@ -608,7 +661,7 @@ export default function LoyaltyCard({
               {lastUpdated}
             </p>
           </section>
-    
+
           <section
             className="space-y-3 border-t pt-6"
             style={{
@@ -626,35 +679,76 @@ export default function LoyaltyCard({
               }}
             >
               <QrCode size={18} />
-    
+
               <span>Show QR Code</span>
             </button>
-    
+
             <button
               type="button"
-              onClick={onAddToHomeScreen}
-              className="flex h-12 w-full items-center justify-center gap-2.5 rounded-2xl border px-5 text-sm font-semibold transition duration-200 hover:-translate-y-0.5 hover:opacity-85 active:translate-y-0 active:scale-[0.99]"
+              onClick={onShowFeedback}
+              className="flex min-h-14 w-full items-center justify-between gap-4 rounded-2xl border px-4 py-3.5 text-left transition duration-200 hover:-translate-y-0.5 hover:opacity-90 active:translate-y-0 active:scale-[0.99]"
               style={{
-                borderColor: cardBorder,
-                backgroundColor: surfaceColor,
+                borderColor: primaryBorder,
+                backgroundColor: primarySoft,
                 color: textPrimary,
               }}
             >
-              <Smartphone size={18} />
-              <span>Add to Home Screen</span>
+              <div className="flex min-w-0 items-center gap-3.5">
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                  style={{
+                    backgroundColor:
+                      surfaceRaised,
+                    color: primaryColor,
+                  }}
+                >
+                  <MessageCircle size={18} />
+                </div>
+
+                <div className="min-w-0">
+                  <p
+                    className="text-sm font-semibold"
+                    style={{
+                      color: textPrimary,
+                    }}
+                  >
+                    Share your thoughts
+                  </p>
+
+                  <p
+                    className="mt-0.5 text-[11px] leading-4"
+                    style={{
+                      color: textMuted,
+                    }}
+                  >
+                    Your first note comes
+                    with a stamp, on us.
+                  </p>
+                </div>
+              </div>
+
+              <span
+                aria-hidden="true"
+                className="shrink-0 text-lg"
+                style={{
+                  color: primaryColor,
+                }}
+              >
+                →
+              </span>
             </button>
-    
+
             <p
               className="px-3 text-center text-[11px] leading-5"
               style={{
                 color: textMuted,
               }}
             >
-              Add your card to your Home Screen or show the QR code directly
-              to the cashier.
+              Show your QR code to the cashier
+              when collecting a stamp.
             </p>
           </section>
-    
+
           <footer
             className="border-t pt-5 text-center"
             style={{
@@ -668,10 +762,13 @@ export default function LoyaltyCard({
               }}
             >
               <Heart size={13} />
-    
-              <span>Thank you for being part of {customer.cafe.name}</span>
+
+              <span>
+                Thank you for being part of{" "}
+                {customer.cafe.name}
+              </span>
             </div>
-    
+
             <p
               className="mt-3 text-xs"
               style={{
@@ -680,7 +777,7 @@ export default function LoyaltyCard({
             >
               Member since {memberSince}
             </p>
-    
+
             <p
               className="mt-2 text-xs"
               style={{
