@@ -18,6 +18,8 @@ type RouteContext = {
 
 const MAX_REQUEST_BODY_BYTES = 2_000;
 
+const CARD_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
 const slugSchema = z
   .string()
   .trim()
@@ -68,6 +70,10 @@ function createMemberNumber() {
     .toUpperCase();
 
   return `BL-${randomPart}`;
+}
+
+function getCardCookieName(cafeSlug: string) {
+  return `beloyal_card_${cafeSlug}`;
 }
 
 function parseBirthday(value: string) {
@@ -125,6 +131,32 @@ function jsonResponse(
       "Cache-Control": "no-store",
     },
   });
+}
+
+function cardResponse(
+  body: Record<string, unknown>,
+  cafeSlug: string,
+  token: string,
+  status = 200
+) {
+  const response = NextResponse.json(body, {
+    status,
+    headers: {
+      "Cache-Control": "no-store",
+    },
+  });
+
+  response.cookies.set({
+    name: getCardCookieName(cafeSlug),
+    value: token,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: CARD_COOKIE_MAX_AGE,
+  });
+
+  return response;
 }
 
 async function readRequestBody(request: NextRequest) {
@@ -268,10 +300,6 @@ export async function POST(
 
     const slug = slugResult.data;
 
-    /*
-     * Stop excessive requests before parsing input or
-     * accessing the primary PostgreSQL database.
-     */
     const rateLimitResponse = await applyPublicRateLimit(
       request,
       publicApiRateLimiters.join,
@@ -302,6 +330,7 @@ export async function POST(
     }
 
     const { action } = validationResult.data;
+
     const phone = normalizePhone(
       validationResult.data.phone
     );
@@ -369,11 +398,15 @@ export async function POST(
         existingCustomer.publicToken
       );
 
-      return jsonResponse({
-        success: true,
-        existingCustomer: true,
-        token,
-      });
+      return cardResponse(
+        {
+          success: true,
+          existingCustomer: true,
+          token,
+        },
+        slug,
+        token
+      );
     }
 
     /*
@@ -386,11 +419,15 @@ export async function POST(
         existingCustomer.publicToken
       );
 
-      return jsonResponse({
-        success: true,
-        existingCustomer: true,
-        token,
-      });
+      return cardResponse(
+        {
+          success: true,
+          existingCustomer: true,
+          token,
+        },
+        slug,
+        token
+      );
     }
 
     const name = normalizeName(
@@ -447,12 +484,14 @@ export async function POST(
           );
         }
 
-        return jsonResponse(
+        return cardResponse(
           {
             success: true,
             existingCustomer: false,
             token: customer.publicToken,
           },
+          slug,
+          customer.publicToken,
           201
         );
       } catch (error) {
@@ -481,11 +520,15 @@ export async function POST(
               customerCreatedByAnotherRequest.publicToken
             );
 
-            return jsonResponse({
-              success: true,
-              existingCustomer: true,
-              token,
-            });
+            return cardResponse(
+              {
+                success: true,
+                existingCustomer: true,
+                token,
+              },
+              slug,
+              token
+            );
           }
 
           continue;
