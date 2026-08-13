@@ -1,4 +1,6 @@
-import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
+import { notFound, redirect } from "next/navigation";
+
 import { prisma } from "@/lib/prisma";
 import JoinForm from "./join-form";
 
@@ -8,7 +10,13 @@ type JoinPageProps = {
   }>;
 };
 
-export default async function JoinPage({ params }: JoinPageProps) {
+function getCardCookieName(cafeSlug: string) {
+  return `beloyal_card_${cafeSlug}`;
+}
+
+export default async function JoinPage({
+  params,
+}: JoinPageProps) {
   const { slug } = await params;
 
   const cafe = await prisma.cafe.findUnique({
@@ -31,6 +39,43 @@ export default async function JoinPage({ params }: JoinPageProps) {
 
   if (!cafe || !cafe.isActive) {
     notFound();
+  }
+
+  /*
+   * Check whether this device already has a remembered
+   * loyalty card for this specific café.
+   */
+  const cookieStore = await cookies();
+
+  const savedToken = cookieStore.get(
+    getCardCookieName(cafe.slug)
+  )?.value;
+
+  if (savedToken) {
+    /*
+     * Never trust the cookie blindly.
+     *
+     * Verify that:
+     * 1. The customer still exists.
+     * 2. The token is valid.
+     * 3. The customer belongs to this café.
+     */
+    const rememberedCustomer =
+      await prisma.customer.findFirst({
+        where: {
+          publicToken: savedToken,
+          cafeId: cafe.id,
+        },
+        select: {
+          publicToken: true,
+        },
+      });
+
+    if (rememberedCustomer) {
+      redirect(
+        `/card/${rememberedCustomer.publicToken}`
+      );
+    }
   }
 
   return (

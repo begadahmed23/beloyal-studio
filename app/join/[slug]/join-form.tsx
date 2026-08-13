@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type JoinFormProps = {
@@ -37,28 +37,6 @@ export default function JoinForm({
   const [birthday, setBirthday] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCheckingSavedCard, setIsCheckingSavedCard] =
-    useState(true);
-
-  const storageKey = `beloyal:${cafeSlug}:cardToken`;
-
-  useEffect(() => {
-    try {
-      const savedToken = window.localStorage.getItem(storageKey);
-
-      if (savedToken) {
-        router.replace(`/card/${savedToken}`);
-        return;
-      }
-    } catch (storageError) {
-      console.error(
-        "Could not read saved loyalty card:",
-        storageError,
-      );
-    }
-
-    setIsCheckingSavedCard(false);
-  }, [router, storageKey]);
 
   function changeMode(nextMode: FormMode) {
     setMode(nextMode);
@@ -130,15 +108,6 @@ export default function JoinForm({
         return;
       }
 
-      try {
-        window.localStorage.setItem(storageKey, data.token);
-      } catch (storageError) {
-        console.error(
-          "Could not save loyalty card on this device:",
-          storageError,
-        );
-      }
-
       const welcomeQuery =
         mode === "join" && !data.existingCustomer
           ? "?welcome=1"
@@ -161,25 +130,6 @@ export default function JoinForm({
 
   const inputClassName =
     "h-14 w-full rounded-2xl border bg-white/[0.06] px-4 text-base text-white outline-none transition placeholder:text-white/30 focus:bg-white/[0.09]";
-
-  if (isCheckingSavedCard) {
-    return (
-      <div className="flex min-h-[260px] items-center justify-center">
-        <div className="text-center">
-          <div
-            className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-white/15"
-            style={{
-              borderTopColor: secondaryColor,
-            }}
-          />
-
-          <p className="mt-4 text-sm text-white/45">
-            Opening your loyalty card...
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div>
