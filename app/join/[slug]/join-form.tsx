@@ -324,12 +324,12 @@ export default function JoinForm({
               }}
             >
               <p className="text-center text-sm leading-6 text-white/55">
-                Collect {rewardTarget} stamps to receive{" "}
-                <span className="font-medium text-white">
-                  {rewardName}
-                </span>
-                .
-              </p>
+  Collect {Math.max(rewardTarget - 1, 1)} stamps to receive{" "}
+  <span className="font-medium text-white">
+    {rewardName}
+  </span>
+  .
+</p>
             </div>
 
             <p className="text-center text-xs leading-5 text-white/35">
