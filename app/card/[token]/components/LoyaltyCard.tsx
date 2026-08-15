@@ -36,6 +36,7 @@ export type Customer = {
   name: string;
   birthday: string;
   stamps: number;
+  feedbackRewardedAt: string | null;
   createdAt: string;
   updatedAt: string;
   cafe: Cafe;
@@ -716,14 +717,15 @@ export default function LoyaltyCard({
                   </p>
 
                   <p
-                    className="mt-0.5 text-[11px] leading-4"
-                    style={{
-                      color: textMuted,
-                    }}
-                  >
-                    Your first note comes
-                    with a stamp, on us.
-                  </p>
+  className="mt-0.5 text-[11px] leading-4"
+  style={{
+    color: textMuted,
+  }}
+>
+  {customer.feedbackRewardedAt
+    ? "Thanks for helping us improve."
+    : "Your first note comes with a stamp, on us."}
+</p>
                 </div>
               </div>
 

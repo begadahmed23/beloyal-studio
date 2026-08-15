@@ -79,6 +79,7 @@ export async function GET(
         name: true,
         birthday: true,
         stamps: true,
+        feedbackRewardedAt: true,
         createdAt: true,
         updatedAt: true,
 
@@ -118,6 +119,7 @@ export async function GET(
       name: customer.name,
       birthday: customer.birthday,
       stamps: customer.stamps,
+      feedbackRewardedAt: customer.feedbackRewardedAt,
       createdAt: customer.createdAt,
       updatedAt: customer.updatedAt,
       cafe: customer.cafe,

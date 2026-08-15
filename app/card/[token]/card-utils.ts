@@ -1,4 +1,6 @@
-export function calculateBirthdayCountdown(birthday: string) {
+export function calculateBirthdayCountdown(
+  birthday: string,
+) {
   const birthdayDate = new Date(birthday);
   const today = new Date();
 
@@ -15,11 +17,14 @@ export function calculateBirthdayCountdown(birthday: string) {
   );
 
   if (nextBirthday < todayStart) {
-    nextBirthday.setFullYear(today.getFullYear() + 1);
+    nextBirthday.setFullYear(
+      today.getFullYear() + 1,
+    );
   }
 
   return Math.ceil(
-    (nextBirthday.getTime() - todayStart.getTime()) /
+    (nextBirthday.getTime() -
+      todayStart.getTime()) /
       86_400_000,
   );
 }
@@ -29,17 +34,34 @@ export function getProgressMessage(
   rewardTarget: number,
   rewardName: string,
 ) {
-  const safeRewardName = rewardName?.trim() || "reward";
-  const lowerRewardName = safeRewardName.toLowerCase();
+  const safeRewardName =
+    rewardName?.trim() || "reward";
 
-  if (stamps >= rewardTarget) {
+  const lowerRewardName =
+    safeRewardName.toLowerCase();
+
+  /*
+   * rewardTarget includes the reward position.
+   *
+   * Example:
+   * rewardTarget = 7
+   * customer collects 6 paid stamps
+   * reward becomes ready at 6.
+   */
+  const stampGoal = Math.max(
+    rewardTarget - 1,
+    1,
+  );
+
+  if (stamps >= stampGoal) {
     return {
       title: `${safeRewardName} is ready`,
       description: `Show this card to the cashier to redeem your ${lowerRewardName}.`,
     };
   }
 
-  const remaining = rewardTarget - stamps;
+  const remaining =
+    stampGoal - stamps;
 
   if (remaining === 1) {
     return {
@@ -48,7 +70,10 @@ export function getProgressMessage(
     };
   }
 
-  if (stamps >= Math.ceil(rewardTarget / 2)) {
+  if (
+    stamps >=
+    Math.ceil(stampGoal / 2)
+  ) {
     return {
       title: "More than halfway there",
       description: `Keep going. Your ${lowerRewardName} is getting closer.`,
@@ -69,17 +94,39 @@ export function getProgressMessage(
   };
 }
 
-export function withAlpha(hex: string, alpha: number) {
+export function withAlpha(
+  hex: string,
+  alpha: number,
+) {
   const cleanHex = hex.replace("#", "");
 
-  if (!/^[0-9a-fA-F]{6}$/.test(cleanHex)) {
+  if (
+    !/^[0-9a-fA-F]{6}$/.test(
+      cleanHex,
+    )
+  ) {
     return hex;
   }
 
-  const red = parseInt(cleanHex.slice(0, 2), 16);
-  const green = parseInt(cleanHex.slice(2, 4), 16);
-  const blue = parseInt(cleanHex.slice(4, 6), 16);
-  const safeAlpha = Math.min(1, Math.max(0, alpha));
+  const red = parseInt(
+    cleanHex.slice(0, 2),
+    16,
+  );
+
+  const green = parseInt(
+    cleanHex.slice(2, 4),
+    16,
+  );
+
+  const blue = parseInt(
+    cleanHex.slice(4, 6),
+    16,
+  );
+
+  const safeAlpha = Math.min(
+    1,
+    Math.max(0, alpha),
+  );
 
   return `rgba(${red}, ${green}, ${blue}, ${safeAlpha})`;
 }

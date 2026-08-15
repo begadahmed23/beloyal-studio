@@ -950,7 +950,7 @@ export default function DigitalCardPage() {
 
   const visibleStamps = Math.min(
     customer.stamps,
-    rewardTarget,
+    unlockAt,
   );
 
   const rewardReady =
@@ -971,8 +971,8 @@ export default function DigitalCardPage() {
     );
 
   const progressPercentage =
-    (visibleStamps / rewardTarget) *
-    100;
+  (Math.min(customer.stamps, unlockAt) / unlockAt) *
+  100;
 
   const primaryColor = normalizeHex(
     customer.cafe.primaryColor,
@@ -1129,7 +1129,7 @@ export default function DigitalCardPage() {
         }
         lastUpdated={lastUpdated}
         memberSince={memberSince}
-        rewardTarget={rewardTarget}
+        rewardTarget={unlockAt}
         visibleStamps={visibleStamps}
         rewardReady={rewardReady}
         cardGlowsGreen={

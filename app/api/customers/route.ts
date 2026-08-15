@@ -106,9 +106,11 @@ function parseBirthday(value: unknown) {
 }
 
 function generateMemberNumber() {
-  return String(
-    Math.floor(100000 + Math.random() * 900000),
-  );
+  const randomPart = randomBytes(4)
+    .toString("hex")
+    .toUpperCase();
+
+  return `BL-${randomPart}`;
 }
 
 function isUniqueConstraintError(
