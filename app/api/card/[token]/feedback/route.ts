@@ -123,12 +123,8 @@ export async function POST(
         /*
          * Atomically claim the one-time feedback reward.
          *
-         * updateMany is intentional here:
-         * only the first request where feedbackRewardedAt
+         * Only the first request where feedbackRewardedAt
          * is still null can succeed.
-         *
-         * This prevents double stamps if the customer
-         * taps Submit twice or sends two requests at once.
          */
         const rewardClaim =
           await tx.customer.updateMany({
@@ -146,6 +142,33 @@ export async function POST(
 
         const rewardGranted =
           rewardClaim.count === 1;
+
+        /*
+         * Keep stamp history consistent with the stamp count.
+         *
+         * userId is null because this is an automatic
+         * system/customer reward, not a cashier-added stamp.
+         */
+        if (rewardGranted) {
+  await tx.stampTransaction.create({
+    data: {
+      type: "ADD",
+      description: "Feedback reward",
+
+      customer: {
+        connect: {
+          id: customer.id,
+        },
+      },
+
+      cafe: {
+        connect: {
+          id: customer.cafeId,
+        },
+      },
+    },
+  });
+}
 
         /*
          * Get the final stamp count after the possible

@@ -111,11 +111,12 @@ model StampTransaction {
   customerId  String
   type        StampType
   description String?
-  userId      String
+  userId      String?
   cafeId      String?
+
   cafe        Cafe?     @relation(fields: [cafeId], references: [id])
   customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([cafeId])
   @@index([customerId])

@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -5,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
 
 const MAX_REQUEST_BODY_BYTES = 500;
+const STAMP_COOLDOWN_MS = 5_000;
+const MAX_TRANSACTION_ATTEMPTS = 3;
 
 const requestSchema = z
   .object({
@@ -12,13 +15,9 @@ const requestSchema = z
     token: z.string().trim().max(100).optional(),
   })
   .strict()
-  .refine(
-    (value) => Boolean(value.id || value.token),
-    {
-      message:
-        "Customer ID or customer scan code is required.",
-    }
-  );
+  .refine((value) => Boolean(value.id || value.token), {
+    message: "Customer ID or customer scan code is required.",
+  });
 
 const publicTokenSchema = z
   .string()
@@ -34,7 +33,7 @@ function extractPublicToken(value: string) {
 
 function jsonResponse(
   body: Record<string, unknown>,
-  status = 200
+  status = 200,
 ) {
   return NextResponse.json(body, {
     status,
@@ -51,23 +50,20 @@ async function readRequestBody(request: NextRequest) {
 
   if (
     !contentType ||
-    !contentType
-      .toLowerCase()
-      .includes("application/json")
+    !contentType.toLowerCase().includes("application/json")
   ) {
     return {
       error: jsonResponse(
         {
-          message:
-            "Content-Type must be application/json.",
+          message: "Content-Type must be application/json.",
         },
-        415
+        415,
       ),
     };
   }
 
   const declaredLength = Number(
-    request.headers.get("content-length")
+    request.headers.get("content-length"),
   );
 
   if (
@@ -79,13 +75,15 @@ async function readRequestBody(request: NextRequest) {
         {
           message: "Request body is too large.",
         },
-        413
+        413,
       ),
     };
   }
 
   const rawBody = await request.text();
-  const bodySize = new TextEncoder().encode(rawBody).length;
+
+  const bodySize =
+    new TextEncoder().encode(rawBody).length;
 
   if (bodySize === 0) {
     return {
@@ -94,7 +92,7 @@ async function readRequestBody(request: NextRequest) {
           message:
             "Customer ID or customer scan code is required.",
         },
-        400
+        400,
       ),
     };
   }
@@ -105,7 +103,7 @@ async function readRequestBody(request: NextRequest) {
         {
           message: "Request body is too large.",
         },
-        413
+        413,
       ),
     };
   }
@@ -120,7 +118,7 @@ async function readRequestBody(request: NextRequest) {
         {
           message: "Invalid JSON request.",
         },
-        400
+        400,
       ),
     };
   }
@@ -134,7 +132,7 @@ export async function POST(request: NextRequest) {
       {
         message: access.message,
       },
-      access.status
+      access.status,
     );
   }
 
@@ -145,7 +143,7 @@ export async function POST(request: NextRequest) {
       {
         message: "Café account required.",
       },
-      403
+      403,
     );
   }
 
@@ -156,9 +154,8 @@ export async function POST(request: NextRequest) {
       return bodyResult.error;
     }
 
-    const validationResult = requestSchema.safeParse(
-      bodyResult.data
-    );
+    const validationResult =
+      requestSchema.safeParse(bodyResult.data);
 
     if (!validationResult.success) {
       return jsonResponse(
@@ -167,7 +164,7 @@ export async function POST(request: NextRequest) {
             validationResult.error.issues[0]?.message ||
             "Invalid request.",
         },
-        400
+        400,
       );
     }
 
@@ -190,7 +187,7 @@ export async function POST(request: NextRequest) {
           message:
             "This member does not belong to this café.",
         },
-        404
+        404,
       );
     }
 
@@ -208,7 +205,6 @@ export async function POST(request: NextRequest) {
       },
       select: {
         id: true,
-        stamps: true,
       },
     });
 
@@ -218,129 +214,270 @@ export async function POST(request: NextRequest) {
           message:
             "This member does not belong to this café.",
         },
-        404
+        404,
       );
     }
 
     const rewardTarget = Math.max(
       authData.cafe.rewardTarget,
-      1
+      1,
     );
 
     const paidStampTarget = Math.max(
       rewardTarget - 1,
-      0
+      0,
     );
 
-    if (customer.stamps >= paidStampTarget) {
-      return jsonResponse(
-        {
-          message: `${
-            authData.cafe.rewardName || "Reward"
-          } is ready. Redeem it instead of adding another stamp.`,
-          rewardReady: true,
-        },
-        409
-      );
-    }
+    for (
+      let attempt = 0;
+      attempt < MAX_TRANSACTION_ATTEMPTS;
+      attempt += 1
+    ) {
+      try {
+        const result = await prisma.$transaction(
+          async (transaction) => {
+            /*
+             * Read the customer again inside the transaction.
+             * We do not trust the stamp count fetched outside
+             * the transaction because another request may have
+             * changed it meanwhile.
+             */
+            const currentCustomer =
+              await transaction.customer.findFirst({
+                where: {
+                  id: customer.id,
+                  cafeId: authData.cafeId,
+                },
+                select: {
+                  id: true,
+                  stamps: true,
+                },
+              });
 
-    const result = await prisma.$transaction(
-      async (transaction) => {
-        /*
-         * This conditional update prevents two simultaneous
-         * requests from adding stamps beyond the reward target.
-         */
-        const updateResult =
-          await transaction.customer.updateMany({
-            where: {
-              id: customer.id,
-              cafeId: authData.cafeId,
-              stamps: {
-                lt: paidStampTarget,
-              },
-            },
-            data: {
-              stamps: {
-                increment: 1,
-              },
-            },
-          });
+            if (!currentCustomer) {
+              return {
+                type: "not-found" as const,
+              };
+            }
 
-        if (updateResult.count !== 1) {
-          return null;
+            if (
+              currentCustomer.stamps >= paidStampTarget
+            ) {
+              return {
+                type: "reward-ready" as const,
+              };
+            }
+
+            /*
+             * Server-side duplicate protection.
+             *
+             * The scanner UI may also have a cooldown,
+             * but the API itself must enforce it.
+             */
+            const lastAdd =
+              await transaction.stampTransaction.findFirst({
+                where: {
+                  cafeId: authData.cafeId,
+                  customerId: currentCustomer.id,
+                  type: "ADD",
+                },
+                orderBy: {
+                  createdAt: "desc",
+                },
+                select: {
+                  createdAt: true,
+                },
+              });
+
+            if (lastAdd) {
+              const elapsedMs =
+                Date.now() - lastAdd.createdAt.getTime();
+
+              if (elapsedMs < STAMP_COOLDOWN_MS) {
+                const remainingMs =
+                  STAMP_COOLDOWN_MS - elapsedMs;
+
+                return {
+                  type: "cooldown" as const,
+                  retryAfterMs: remainingMs,
+                };
+              }
+            }
+
+            /*
+             * Increment only if the customer is still below
+             * the paid-stamp target.
+             */
+            const updateResult =
+              await transaction.customer.updateMany({
+                where: {
+                  id: currentCustomer.id,
+                  cafeId: authData.cafeId,
+                  stamps: {
+                    lt: paidStampTarget,
+                  },
+                },
+                data: {
+                  stamps: {
+                    increment: 1,
+                  },
+                },
+              });
+
+            if (updateResult.count !== 1) {
+              return {
+                type: "reward-ready" as const,
+              };
+            }
+
+            /*
+             * Every stamp increment must have a matching
+             * StampTransaction so stampDates / lastStampedAt
+             * remain accurate.
+             */
+            const stampTransaction =
+              await transaction.stampTransaction.create({
+                data: {
+                  cafeId: authData.cafeId,
+                  customerId: currentCustomer.id,
+                  userId: authData.user.id,
+                  type: "ADD",
+                  description: "Drink stamp added",
+                },
+                select: {
+                  createdAt: true,
+                },
+              });
+
+            const updatedCustomer =
+              await transaction.customer.findUniqueOrThrow({
+                where: {
+                  id: currentCustomer.id,
+                },
+                select: {
+                  id: true,
+                  memberNumber: true,
+                  publicToken: true,
+                  name: true,
+                  phone: true,
+                  birthday: true,
+                  stamps: true,
+                  createdAt: true,
+                  updatedAt: true,
+                },
+              });
+
+            return {
+              type: "success" as const,
+              updatedCustomer,
+              stampCreatedAt:
+                stampTransaction.createdAt,
+            };
+          },
+          {
+            /*
+             * This is important.
+             *
+             * If two stamp requests arrive at virtually the
+             * same time, PostgreSQL will not allow both
+             * transactions to behave as if they were first.
+             */
+            isolationLevel:
+              Prisma.TransactionIsolationLevel.Serializable,
+          },
+        );
+
+        if (result.type === "not-found") {
+          return jsonResponse(
+            {
+              message:
+                "This member does not belong to this café.",
+            },
+            404,
+          );
         }
 
-        const updatedCustomer =
-          await transaction.customer.findUniqueOrThrow({
-            where: {
-              id: customer.id,
-            },
-            select: {
-              id: true,
-              memberNumber: true,
-              publicToken: true,
-              name: true,
-              phone: true,
-              birthday: true,
-              stamps: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          });
+        if (result.type === "cooldown") {
+          const retryAfterSeconds = Math.max(
+            1,
+            Math.ceil(result.retryAfterMs / 1000),
+          );
 
-        const stampTransaction =
-          await transaction.stampTransaction.create({
-            data: {
-              cafeId: authData.cafeId,
-              customerId: customer.id,
-              userId: authData.user.id,
-              type: "ADD",
-              description: "Drink stamp added",
+          return jsonResponse(
+            {
+              message: `Please wait ${retryAfterSeconds} second${
+                retryAfterSeconds === 1 ? "" : "s"
+              } before adding another stamp.`,
+              cooldown: true,
+              retryAfterMs: result.retryAfterMs,
             },
-            select: {
-              createdAt: true,
-            },
-          });
+            409,
+          );
+        }
 
-        return {
-          updatedCustomer,
-          stampCreatedAt:
-            stampTransaction.createdAt,
-        };
+        if (result.type === "reward-ready") {
+          return jsonResponse(
+            {
+              message: `${
+                authData.cafe.rewardName || "Reward"
+              } is ready. Redeem it instead of adding another stamp.`,
+              rewardReady: true,
+            },
+            409,
+          );
+        }
+
+        const rewardReady =
+          result.updatedCustomer.stamps >=
+          paidStampTarget;
+
+        return jsonResponse({
+          customer: {
+            ...result.updatedCustomer,
+            stampDates: [],
+          },
+          stampCreatedAt: result.stampCreatedAt,
+          rewardTarget,
+          rewardReady,
+          rewardName:
+            authData.cafe.rewardName || "Reward",
+          message: rewardReady
+            ? `${
+                authData.cafe.rewardName || "Reward"
+              } is now ready.`
+            : "Stamp added successfully.",
+        });
+      } catch (error) {
+        /*
+         * Prisma P2034 = transaction conflict / deadlock.
+         *
+         * With Serializable isolation this can happen when
+         * two stamp requests arrive simultaneously.
+         *
+         * Retry. On the next attempt, the new ADD transaction
+         * will be visible and the 5-second cooldown will stop
+         * the duplicate request.
+         */
+        if (
+          error instanceof
+            Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2034" &&
+          attempt < MAX_TRANSACTION_ATTEMPTS - 1
+        ) {
+          continue;
+        }
+
+        throw error;
       }
-    );
-
-    if (!result) {
-      return jsonResponse(
-        {
-          message: `${
-            authData.cafe.rewardName || "Reward"
-          } is ready. Redeem it instead of adding another stamp.`,
-          rewardReady: true,
-        },
-        409
-      );
     }
 
-    const rewardReady =
-      result.updatedCustomer.stamps >= paidStampTarget;
-
-    return jsonResponse({
-      customer: {
-        ...result.updatedCustomer,
-        stampDates: [],
+    return jsonResponse(
+      {
+        message:
+          "The stamp could not be added safely. Please try again.",
       },
-      stampCreatedAt: result.stampCreatedAt,
-      rewardTarget,
-      rewardReady,
-      rewardName:
-        authData.cafe.rewardName || "Reward",
-      message: rewardReady
-        ? `${
-            authData.cafe.rewardName || "Reward"
-          } is now ready.`
-        : "Stamp added successfully.",
-    });
+      409,
+    );
   } catch (error) {
     console.error("Add stamp error:", error);
 
@@ -348,7 +485,7 @@ export async function POST(request: NextRequest) {
       {
         message: "Failed to add stamp.",
       },
-      500
+      500,
     );
   }
 }
