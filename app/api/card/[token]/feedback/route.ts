@@ -39,7 +39,9 @@ export async function POST(
     const { token } = await context.params;
 
     const cleanToken =
-      typeof token === "string" ? token.trim() : "";
+      typeof token === "string"
+        ? token.trim()
+        : "";
 
     if (!cleanToken) {
       return jsonResponse(
@@ -70,143 +72,210 @@ export async function POST(
       return jsonResponse(
         {
           error:
-            validationResult.error.issues[0]?.message ||
+            validationResult.error.issues[0]
+              ?.message ||
             "Please check your feedback.",
         },
         400,
       );
     }
 
-    const comment = validationResult.data.comment;
+    const comment =
+      validationResult.data.comment;
 
-    const result = await prisma.$transaction(
-      async (tx) => {
-        const customer =
-          await tx.customer.findUnique({
-            where: {
-              publicToken: cleanToken,
-            },
-            select: {
-              id: true,
-              cafeId: true,
-              feedbackRewardedAt: true,
-              stamps: true,
-              cafe: {
-                select: {
-                  isActive: true,
-                  googleReviewUrl: true,
+    const result =
+      await prisma.$transaction(
+        async (tx) => {
+          const customer =
+            await tx.customer.findUnique({
+              where: {
+                publicToken: cleanToken,
+              },
+
+              select: {
+                id: true,
+                cafeId: true,
+                stamps: true,
+                feedbackRewardedAt: true,
+                rewardEarnedAt: true,
+
+                cafe: {
+                  select: {
+                    isActive: true,
+                    googleReviewUrl: true,
+                    rewardTarget: true,
+                  },
                 },
               },
-            },
-          });
+            });
 
-        if (!customer || !customer.cafe.isActive) {
-          return {
-            type: "not-found" as const,
-          };
-        }
+          if (
+            !customer ||
+            !customer.cafe.isActive
+          ) {
+            return {
+              type: "not-found" as const,
+            };
+          }
 
-        /*
-         * Always save the feedback.
-         *
-         * Customers are allowed to submit feedback
-         * more than once.
-         */
-        await tx.customerFeedback.create({
-          data: {
-            comment,
-            customerId: customer.id,
-            cafeId: customer.cafeId,
-          },
-        });
-
-        /*
-         * Atomically claim the one-time feedback reward.
-         *
-         * Only the first request where feedbackRewardedAt
-         * is still null can succeed.
-         */
-        const rewardClaim =
-          await tx.customer.updateMany({
-            where: {
-              id: customer.id,
-              feedbackRewardedAt: null,
-            },
+          /*
+           * Always save feedback.
+           *
+           * Customers may submit as many written
+           * feedback notes as they want.
+           */
+          await tx.customerFeedback.create({
             data: {
-              feedbackRewardedAt: new Date(),
-              stamps: {
-                increment: 1,
+              comment,
+              customerId: customer.id,
+              cafeId: customer.cafeId,
+            },
+          });
+
+          /*
+           * Claim the one-time feedback stamp.
+           *
+           * Only a customer whose feedbackRewardedAt
+           * is still null can receive this reward.
+           */
+          const rewardClaim =
+            await tx.customer.updateMany({
+              where: {
+                id: customer.id,
+                feedbackRewardedAt: null,
               },
-            },
-          });
 
-        const rewardGranted =
-          rewardClaim.count === 1;
+              data: {
+                feedbackRewardedAt:
+                  new Date(),
 
-        /*
-         * Keep stamp history consistent with the stamp count.
-         *
-         * userId is null because this is an automatic
-         * system/customer reward, not a cashier-added stamp.
-         */
-        if (rewardGranted) {
-  await tx.stampTransaction.create({
-    data: {
-      type: "ADD",
-      description: "Feedback reward",
+                stamps: {
+                  increment: 1,
+                },
+              },
+            });
 
-      customer: {
-        connect: {
-          id: customer.id,
+          const rewardGranted =
+            rewardClaim.count === 1;
+
+          /*
+           * If the feedback bonus was actually granted,
+           * also create the matching audit transaction.
+           */
+          if (rewardGranted) {
+            await tx.stampTransaction.create({
+              data: {
+                type: "ADD",
+                description:
+                  "Feedback reward",
+
+                customer: {
+                  connect: {
+                    id: customer.id,
+                  },
+                },
+
+                cafe: {
+                  connect: {
+                    id: customer.cafeId,
+                  },
+                },
+              },
+            });
+          }
+
+          /*
+           * Read the customer's new state after the
+           * possible +1 feedback stamp.
+           */
+          let updatedCustomer =
+            await tx.customer.findUnique({
+              where: {
+                id: customer.id,
+              },
+
+              select: {
+                stamps: true,
+                feedbackRewardedAt: true,
+                rewardEarnedAt: true,
+              },
+            });
+
+          if (!updatedCustomer) {
+            throw new Error(
+              "Customer disappeared during feedback submission.",
+            );
+          }
+
+          /*
+           * The café rewardTarget includes the reward
+           * position.
+           *
+           * Example:
+           *
+           * rewardTarget = 7
+           * paid stamps needed = 6
+           */
+          const paidStampTarget =
+            Math.max(
+              customer.cafe.rewardTarget -
+                1,
+              1,
+            );
+
+          /*
+           * If this feedback stamp completed the
+           * customer's card, permanently lock in the
+           * earned reward.
+           *
+           * Once rewardEarnedAt is set, a later café
+           * target change cannot remove this reward.
+           */
+          if (
+            !updatedCustomer.rewardEarnedAt &&
+            updatedCustomer.stamps >=
+              paidStampTarget
+          ) {
+            updatedCustomer =
+              await tx.customer.update({
+                where: {
+                  id: customer.id,
+                },
+
+                data: {
+                  rewardEarnedAt:
+                    new Date(),
+                },
+
+                select: {
+                  stamps: true,
+                  feedbackRewardedAt:
+                    true,
+                  rewardEarnedAt: true,
+                },
+              });
+          }
+
+          return {
+            type: "success" as const,
+            rewardGranted,
+            stamps:
+              updatedCustomer.stamps,
+            feedbackRewardedAt:
+              updatedCustomer.feedbackRewardedAt,
+            rewardEarnedAt:
+              updatedCustomer.rewardEarnedAt,
+            googleReviewUrl:
+              customer.cafe.googleReviewUrl,
+          };
         },
-      },
-
-      cafe: {
-        connect: {
-          id: customer.cafeId,
-        },
-      },
-    },
-  });
-}
-
-        /*
-         * Get the final stamp count after the possible
-         * reward has been applied.
-         */
-        const updatedCustomer =
-          await tx.customer.findUnique({
-            where: {
-              id: customer.id,
-            },
-            select: {
-              stamps: true,
-              feedbackRewardedAt: true,
-            },
-          });
-
-        if (!updatedCustomer) {
-          throw new Error(
-            "Customer disappeared during feedback submission.",
-          );
-        }
-
-        return {
-          type: "success" as const,
-          rewardGranted,
-          stamps: updatedCustomer.stamps,
-          feedbackRewardedAt:
-            updatedCustomer.feedbackRewardedAt,
-          googleReviewUrl:
-            customer.cafe.googleReviewUrl,
-        };
-      },
-    );
+      );
 
     if (result.type === "not-found") {
       return jsonResponse(
         {
-          error: "Loyalty card not found.",
+          error:
+            "Loyalty card not found.",
         },
         404,
       );
@@ -214,13 +283,22 @@ export async function POST(
 
     return jsonResponse({
       success: true,
+
       message: result.rewardGranted
         ? "Thanks for your feedback! 1 stamp has been added to your card."
         : "Thanks for your feedback!",
-      rewardGranted: result.rewardGranted,
+
+      rewardGranted:
+        result.rewardGranted,
+
       stamps: result.stamps,
+
       feedbackRewardedAt:
         result.feedbackRewardedAt,
+
+      rewardEarnedAt:
+        result.rewardEarnedAt,
+
       googleReviewUrl:
         result.googleReviewUrl,
     });

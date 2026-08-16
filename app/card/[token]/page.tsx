@@ -939,40 +939,68 @@ export default function DigitalCardPage() {
   }
 
   const rewardTarget = Math.max(
-    customer.cafe.rewardTarget,
-    1,
-  );
+  customer.cafe.rewardTarget,
+  1,
+);
 
-  const unlockAt = Math.max(
-    rewardTarget - 1,
-    1,
-  );
+const unlockAt = Math.max(
+  rewardTarget - 1,
+  1,
+);
 
-  const visibleStamps = Math.min(
-    customer.stamps,
-    unlockAt,
-  );
+/*
+ * rewardEarnedAt is the source of truth once a reward
+ * has been earned.
+ *
+ * This means a later café settings change cannot take
+ * away a reward that was already earned.
+ *
+ * The stamp comparison remains as a compatibility
+ * fallback for customers who qualified before the new
+ * rewardEarnedAt field was introduced.
+ */
+const rewardReady =
+  Boolean(customer.rewardEarnedAt) ||
+  customer.stamps >= unlockAt;
 
-  const rewardReady =
-    customer.stamps >= unlockAt;
+const visibleStamps = rewardReady
+  ? unlockAt
+  : Math.min(
+      customer.stamps,
+      unlockAt,
+    );
 
-  const cardGlowsGreen = rewardReady;
+const cardGlowsGreen = rewardReady;
 
-  const remainingStamps = Math.max(
-    unlockAt - customer.stamps,
-    0,
-  );
+const remainingStamps = rewardReady
+  ? 0
+  : Math.max(
+      unlockAt - customer.stamps,
+      0,
+    );
 
-  const progressMessage =
-    getProgressMessage(
+const progressMessage = rewardReady
+  ? {
+      title: `${
+        customer.cafe.rewardName ||
+        "Reward"
+      } is ready`,
+      description: `Show this card to the cashier to redeem your ${
+        customer.cafe.rewardName?.toLowerCase() ||
+        "reward"
+      }.`,
+    }
+  : getProgressMessage(
       customer.stamps,
       rewardTarget,
       customer.cafe.rewardName,
     );
 
-  const progressPercentage =
-  (Math.min(customer.stamps, unlockAt) / unlockAt) *
-  100;
+const progressPercentage = rewardReady
+  ? 100
+  : (Math.min(customer.stamps, unlockAt) /
+      unlockAt) *
+    100;
 
   const primaryColor = normalizeHex(
     customer.cafe.primaryColor,

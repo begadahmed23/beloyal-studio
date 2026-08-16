@@ -35,13 +35,16 @@ async function readRequestBody(request: NextRequest) {
   ) {
     return {
       error: jsonResponse(
-        { message: "Content-Type must be application/json." },
+        {
+          message: "Content-Type must be application/json.",
+        },
         415,
       ),
     };
   }
 
-  const contentLength = request.headers.get("content-length");
+  const contentLength =
+    request.headers.get("content-length");
 
   if (contentLength !== null) {
     const declaredLength = Number(contentLength);
@@ -52,7 +55,9 @@ async function readRequestBody(request: NextRequest) {
     ) {
       return {
         error: jsonResponse(
-          { message: "Request body is too large." },
+          {
+            message: "Request body is too large.",
+          },
           413,
         ),
       };
@@ -60,12 +65,16 @@ async function readRequestBody(request: NextRequest) {
   }
 
   const rawBody = await request.text();
-  const bodySize = new TextEncoder().encode(rawBody).length;
+
+  const bodySize =
+    new TextEncoder().encode(rawBody).length;
 
   if (bodySize === 0) {
     return {
       error: jsonResponse(
-        { message: "Customer ID is required." },
+        {
+          message: "Customer ID is required.",
+        },
         400,
       ),
     };
@@ -74,7 +83,9 @@ async function readRequestBody(request: NextRequest) {
   if (bodySize > MAX_REQUEST_BODY_BYTES) {
     return {
       error: jsonResponse(
-        { message: "Request body is too large." },
+        {
+          message: "Request body is too large.",
+        },
         413,
       ),
     };
@@ -87,7 +98,9 @@ async function readRequestBody(request: NextRequest) {
   } catch {
     return {
       error: jsonResponse(
-        { message: "Invalid JSON request." },
+        {
+          message: "Invalid JSON request.",
+        },
         400,
       ),
     };
@@ -95,11 +108,15 @@ async function readRequestBody(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const access = await requireActiveCafe(request.headers);
+  const access = await requireActiveCafe(
+    request.headers,
+  );
 
   if (!access.allowed) {
     return jsonResponse(
-      { message: access.message },
+      {
+        message: access.message,
+      },
       access.status,
     );
   }
@@ -108,30 +125,36 @@ export async function POST(request: NextRequest) {
 
   if (!authData.cafe || !authData.cafeId) {
     return jsonResponse(
-      { message: "Café account required." },
+      {
+        message: "Café account required.",
+      },
       403,
     );
   }
 
   try {
-    const bodyResult = await readRequestBody(request);
+    const bodyResult =
+      await readRequestBody(request);
 
     if (bodyResult.error) {
       return bodyResult.error;
     }
 
-    const validationResult = requestSchema.safeParse(
-      bodyResult.data,
-    );
+    const validationResult =
+      requestSchema.safeParse(bodyResult.data);
 
     if (!validationResult.success) {
       return jsonResponse(
-        { message: "Customer ID is required." },
+        {
+          message: "Customer ID is required.",
+        },
         400,
       );
     }
 
-    const customerId = validationResult.data.id;
+    const customerId =
+      validationResult.data.id;
+
     const rewardName =
       authData.cafe.rewardName || "Reward";
 
@@ -140,26 +163,23 @@ export async function POST(request: NextRequest) {
       1,
     );
 
-    /*
-     * Require at least one paid stamp, even if a café has an
-     * invalid reward target of 1. This prevents unlimited
-     * redemptions while the stamp balance is already zero.
-     */
     const paidStampTarget = Math.max(
       rewardTarget - 1,
       1,
     );
 
-    const customer = await prisma.customer.findFirst({
-      where: {
-        id: customerId,
-        cafeId: authData.cafeId,
-      },
-      select: {
-        id: true,
-        stamps: true,
-      },
-    });
+    const customer =
+      await prisma.customer.findFirst({
+        where: {
+          id: customerId,
+          cafeId: authData.cafeId,
+        },
+        select: {
+          id: true,
+          stamps: true,
+          rewardEarnedAt: true,
+        },
+      });
 
     if (!customer) {
       return jsonResponse(
@@ -171,7 +191,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (customer.stamps < paidStampTarget) {
+    /*
+     * A reward is redeemable when:
+     *
+     * 1. rewardEarnedAt is already set, meaning the customer
+     *    earned it under an earlier/current reward rule.
+     *
+     * OR
+     *
+     * 2. Their stamps already satisfy the current target.
+     *    This second condition also keeps older customers
+     *    compatible while rewardEarnedAt is being introduced.
+     */
+    const hasLockedReward =
+      Boolean(customer.rewardEarnedAt);
+
+    const qualifiesUnderCurrentTarget =
+      customer.stamps >= paidStampTarget;
+
+    if (
+      !hasLockedReward &&
+      !qualifiesUnderCurrentTarget
+    ) {
       return jsonResponse(
         {
           message:
@@ -181,62 +222,90 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const updatedCustomer = await prisma.$transaction(
-      async (transaction) => {
-        /*
-         * Only one simultaneous request can change the eligible
-         * stamp balance to zero. Later requests will update
-         * nothing and therefore cannot create another redemption.
-         */
-        const redeemResult =
-          await transaction.customer.updateMany({
-            where: {
-              id: customer.id,
-              cafeId: authData.cafeId,
-              stamps: {
-                gte: paidStampTarget,
+    const updatedCustomer =
+      await prisma.$transaction(
+        async (transaction) => {
+          /*
+           * Redeem only if the customer still has either:
+           *
+           * - a locked earned reward
+           * - or enough stamps under the current target
+           *
+           * This also prevents two simultaneous redemption
+           * requests from both succeeding.
+           */
+          const redeemResult =
+            await transaction.customer.updateMany({
+              where: {
+                id: customer.id,
+                cafeId: authData.cafeId,
+
+                OR: [
+                  {
+                    rewardEarnedAt: {
+                      not: null,
+                    },
+                  },
+                  {
+                    stamps: {
+                      gte: paidStampTarget,
+                    },
+                  },
+                ],
               },
-            },
+              data: {
+                /*
+                 * Start the next reward cycle fresh.
+                 */
+                stamps: 0,
+
+                /*
+                 * The earned reward has now been used.
+                 *
+                 * The customer's next cycle will follow
+                 * whatever reward target the café currently
+                 * has configured.
+                 */
+                rewardEarnedAt: null,
+              },
+            });
+
+          if (redeemResult.count !== 1) {
+            return null;
+          }
+
+          const updated =
+            await transaction.customer.findUniqueOrThrow({
+              where: {
+                id: customer.id,
+              },
+              select: {
+                id: true,
+                memberNumber: true,
+                publicToken: true,
+                name: true,
+                phone: true,
+                birthday: true,
+                stamps: true,
+                rewardEarnedAt: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            });
+
+          await transaction.stampTransaction.create({
             data: {
-              stamps: 0,
+              cafeId: authData.cafeId,
+              customerId: customer.id,
+              userId: authData.user.id,
+              type: "REDEEM",
+              description: `${rewardName} redeemed`,
             },
           });
 
-        if (redeemResult.count !== 1) {
-          return null;
-        }
-
-        const updated =
-          await transaction.customer.findUniqueOrThrow({
-            where: {
-              id: customer.id,
-            },
-            select: {
-              id: true,
-              memberNumber: true,
-              publicToken: true,
-              name: true,
-              phone: true,
-              birthday: true,
-              stamps: true,
-              createdAt: true,
-              updatedAt: true,
-            },
-          });
-
-        await transaction.stampTransaction.create({
-          data: {
-            cafeId: authData.cafeId,
-            customerId: customer.id,
-            userId: authData.user.id,
-            type: "REDEEM",
-            description: `${rewardName} redeemed`,
-          },
-        });
-
-        return updated;
-      },
-    );
+          return updated;
+        },
+      );
 
     if (!updatedCustomer) {
       return jsonResponse(
@@ -253,10 +322,15 @@ export async function POST(request: NextRequest) {
       stampDates: [],
     });
   } catch (error) {
-    console.error("Redeem reward error:", error);
+    console.error(
+      "Redeem reward error:",
+      error,
+    );
 
     return jsonResponse(
-      { message: "Failed to redeem reward." },
+      {
+        message: "Failed to redeem reward.",
+      },
       500,
     );
   }

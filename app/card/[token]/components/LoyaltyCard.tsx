@@ -37,6 +37,7 @@ export type Customer = {
   birthday: string;
   stamps: number;
   feedbackRewardedAt: string | null;
+  rewardEarnedAt: string | null;
   createdAt: string;
   updatedAt: string;
   cafe: Cafe;

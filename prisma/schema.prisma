@@ -67,6 +67,7 @@ model Customer {
   cafe               Cafe               @relation(fields: [cafeId], references: [id], onDelete: Cascade)
   review             CustomerReview?
   feedbackRewardedAt DateTime?
+  rewardEarnedAt DateTime?
   feedbacks          CustomerFeedback[]
   transactions       StampTransaction[]
 

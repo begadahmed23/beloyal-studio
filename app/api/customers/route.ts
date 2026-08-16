@@ -16,17 +16,24 @@ const createCustomerSchema = z
       .string()
       .trim()
       .min(1, "Customer name is required.")
-      .max(100, "Customer name must be 100 characters or fewer."),
+      .max(
+        100,
+        "Customer name must be 100 characters or fewer.",
+      ),
     phone: z.string(),
     birthday: z.string(),
   })
   .strict();
 
-function jsonResponse(data: unknown, status = 200) {
+function jsonResponse(
+  data: unknown,
+  status = 200,
+) {
   return NextResponse.json(data, {
     status,
     headers: {
-      "Cache-Control": "private, no-store, max-age=0",
+      "Cache-Control":
+        "private, no-store, max-age=0",
       Pragma: "no-cache",
       "X-Content-Type-Options": "nosniff",
     },
@@ -40,7 +47,9 @@ function cleanPhone(value: unknown) {
 }
 
 function parseBirthday(value: unknown) {
-  if (typeof value !== "string") return null;
+  if (typeof value !== "string") {
+    return null;
+  }
 
   const cleanValue = value.trim();
 
@@ -70,16 +79,22 @@ function parseBirthday(value: unknown) {
       ? Number(isoMatch[1])
       : 0;
 
-  if (!day || !month || !year) return null;
+  if (!day || !month || !year) {
+    return null;
+  }
 
-  const date = new Date(Date.UTC(year, month - 1, day));
+  const date = new Date(
+    Date.UTC(year, month - 1, day),
+  );
 
   const isRealDate =
     date.getUTCFullYear() === year &&
     date.getUTCMonth() === month - 1 &&
     date.getUTCDate() === day;
 
-  if (!isRealDate) return null;
+  if (!isRealDate) {
+    return null;
+  }
 
   const now = new Date();
 
@@ -91,9 +106,14 @@ function parseBirthday(value: unknown) {
     ),
   );
 
-  const earliestAllowedBirthday = new Date(
-    Date.UTC(now.getUTCFullYear() - 120, 0, 1),
-  );
+  const earliestAllowedBirthday =
+    new Date(
+      Date.UTC(
+        now.getUTCFullYear() - 120,
+        0,
+        1,
+      ),
+    );
 
   if (
     date > currentDate ||
@@ -117,13 +137,16 @@ function isUniqueConstraintError(
   error: unknown,
 ): error is Prisma.PrismaClientKnownRequestError {
   return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error instanceof
+      Prisma.PrismaClientKnownRequestError &&
     error.code === "P2002"
   );
 }
 
 function uniqueErrorFields(error: unknown) {
-  if (!isUniqueConstraintError(error)) return [];
+  if (!isUniqueConstraintError(error)) {
+    return [];
+  }
 
   const target = error.meta?.target;
 
@@ -138,8 +161,11 @@ function uniqueErrorFields(error: unknown) {
   return [];
 }
 
-async function readRequestBody(request: NextRequest) {
-  const contentType = request.headers.get("content-type");
+async function readRequestBody(
+  request: NextRequest,
+) {
+  const contentType =
+    request.headers.get("content-type");
 
   if (
     !contentType ||
@@ -162,15 +188,20 @@ async function readRequestBody(request: NextRequest) {
     request.headers.get("content-length");
 
   if (contentLength !== null) {
-    const declaredLength = Number(contentLength);
+    const declaredLength =
+      Number(contentLength);
 
     if (
       Number.isFinite(declaredLength) &&
-      declaredLength > MAX_REQUEST_BODY_BYTES
+      declaredLength >
+        MAX_REQUEST_BODY_BYTES
     ) {
       return {
         error: jsonResponse(
-          { message: "Request body is too large." },
+          {
+            message:
+              "Request body is too large.",
+          },
           413,
         ),
       };
@@ -178,22 +209,33 @@ async function readRequestBody(request: NextRequest) {
   }
 
   const rawBody = await request.text();
+
   const bodySize =
-    new TextEncoder().encode(rawBody).length;
+    new TextEncoder().encode(
+      rawBody,
+    ).length;
 
   if (bodySize === 0) {
     return {
       error: jsonResponse(
-        { message: "Request body is required." },
+        {
+          message:
+            "Request body is required.",
+        },
         400,
       ),
     };
   }
 
-  if (bodySize > MAX_REQUEST_BODY_BYTES) {
+  if (
+    bodySize > MAX_REQUEST_BODY_BYTES
+  ) {
     return {
       error: jsonResponse(
-        { message: "Request body is too large." },
+        {
+          message:
+            "Request body is too large.",
+        },
         413,
       ),
     };
@@ -201,36 +243,50 @@ async function readRequestBody(request: NextRequest) {
 
   try {
     return {
-      data: JSON.parse(rawBody) as unknown,
+      data: JSON.parse(
+        rawBody,
+      ) as unknown,
     };
   } catch {
     return {
       error: jsonResponse(
-        { message: "Invalid JSON request." },
+        {
+          message:
+            "Invalid JSON request.",
+        },
         400,
       ),
     };
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+) {
   try {
-    const access = await requireActiveCafe(
-      request.headers,
-    );
+    const access =
+      await requireActiveCafe(
+        request.headers,
+      );
 
     if (!access.allowed) {
       return jsonResponse(
-        { message: access.message },
+        {
+          message: access.message,
+        },
         access.status,
       );
     }
 
-    const cafe = access.authData.cafe;
+    const cafe =
+      access.authData.cafe;
 
     if (!cafe) {
       return jsonResponse(
-        { message: "Café account not found." },
+        {
+          message:
+            "Café account not found.",
+        },
         404,
       );
     }
@@ -240,7 +296,10 @@ export async function GET(request: NextRequest) {
         .get("search")
         ?.trim() ?? "";
 
-    if (search.length > MAX_SEARCH_LENGTH) {
+    if (
+      search.length >
+      MAX_SEARCH_LENGTH
+    ) {
       return jsonResponse(
         {
           message:
@@ -250,97 +309,131 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const cleanedSearchPhone = cleanPhone(search);
+    const cleanedSearchPhone =
+      cleanPhone(search);
 
-    const customers = await prisma.customer.findMany({
-      where: {
-        cafeId: cafe.id,
+    const customers =
+      await prisma.customer.findMany({
+        where: {
+          cafeId: cafe.id,
 
-        ...(search
-          ? {
-              OR: [
-                {
-                  name: {
-                    contains: search,
-                    mode: "insensitive" as const,
+          ...(search
+            ? {
+                OR: [
+                  {
+                    name: {
+                      contains:
+                        search,
+                      mode:
+                        "insensitive" as const,
+                    },
                   },
-                },
 
-                ...(cleanedSearchPhone
-                  ? [
-                      {
-                        phone: {
-                          contains: cleanedSearchPhone,
+                  ...(cleanedSearchPhone
+                    ? [
+                        {
+                          phone:
+                            {
+                              contains:
+                                cleanedSearchPhone,
+                            },
                         },
-                      },
-                    ]
-                  : []),
+                      ]
+                    : []),
 
-                {
-                  memberNumber: {
-                    contains: search,
+                  {
+                    memberNumber: {
+                      contains:
+                        search,
+                    },
                   },
-                },
-              ],
-            }
-          : {}),
-      },
+                ],
+              }
+            : {}),
+        },
 
-      orderBy: {
-        createdAt: "desc",
-      },
+        orderBy: {
+          createdAt: "desc",
+        },
 
-      take: MAX_CUSTOMERS_PER_REQUEST,
+        take:
+          MAX_CUSTOMERS_PER_REQUEST,
 
-      select: {
-        id: true,
-        memberNumber: true,
-        name: true,
-        phone: true,
-        birthday: true,
-        stamps: true,
-        publicToken: true,
-        createdAt: true,
-        updatedAt: true,
+        select: {
+          id: true,
+          memberNumber: true,
+          name: true,
+          phone: true,
+          birthday: true,
+          stamps: true,
+          publicToken: true,
 
-        transactions: {
-          orderBy: {
-            createdAt: "desc",
-          },
+          /*
+           * Needed by MemberCard so an
+           * already-earned reward stays
+           * locked even if the café later
+           * changes its reward target.
+           */
+          rewardEarnedAt: true,
 
-          select: {
-            type: true,
-            createdAt: true,
+          createdAt: true,
+          updatedAt: true,
+
+          transactions: {
+            orderBy: {
+              createdAt: "desc",
+            },
+
+            select: {
+              type: true,
+              createdAt: true,
+            },
           },
         },
-      },
-    });
+      });
 
     const result = customers.map(
-      ({ transactions, ...customer }) => {
+      ({
+        transactions,
+        ...customer
+      }) => {
         const lastStampedAt =
           transactions.find(
             (transaction) =>
-              transaction.type === "ADD",
+              transaction.type ===
+              "ADD",
           )?.createdAt ?? null;
 
-        const activeStampDates: Date[] = [];
+        const activeStampDates:
+          Date[] = [];
 
-        for (const transaction of transactions) {
-          if (transaction.type === "REDEEM") {
+        for (
+          const transaction of transactions
+        ) {
+          if (
+            transaction.type ===
+            "REDEEM"
+          ) {
             break;
           }
 
-          if (transaction.type === "ADD") {
+          if (
+            transaction.type ===
+            "ADD"
+          ) {
             activeStampDates.push(
               transaction.createdAt,
             );
           }
         }
 
-        const stampDates = activeStampDates
-          .slice(0, customer.stamps)
-          .reverse();
+        const stampDates =
+          activeStampDates
+            .slice(
+              0,
+              customer.stamps,
+            )
+            .reverse();
 
         return {
           ...customer,
@@ -352,36 +445,55 @@ export async function GET(request: NextRequest) {
 
     return jsonResponse(result);
   } catch (error) {
-    console.error("GET customers error:", error);
+    console.error(
+      "GET customers error:",
+      error,
+    );
 
     return jsonResponse(
-      { message: "Failed to load customers." },
+      {
+        message:
+          "Failed to load customers.",
+      },
       500,
     );
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+) {
   try {
-    const access = await requireActiveCafe(
-      request.headers,
-    );
+    const access =
+      await requireActiveCafe(
+        request.headers,
+      );
 
     if (!access.allowed) {
       return jsonResponse(
-        { message: access.message },
+        {
+          message: access.message,
+        },
         access.status,
       );
     }
 
-    if (!access.authData.cafeId) {
+    if (
+      !access.authData.cafeId
+    ) {
       return jsonResponse(
-        { message: "Café account required." },
+        {
+          message:
+            "Café account required.",
+        },
         403,
       );
     }
 
-    const bodyResult = await readRequestBody(request);
+    const bodyResult =
+      await readRequestBody(
+        request,
+      );
 
     if (bodyResult.error) {
       return bodyResult.error;
@@ -392,25 +504,32 @@ export async function POST(request: NextRequest) {
         bodyResult.data,
       );
 
-    if (!validationResult.success) {
+    if (
+      !validationResult.success
+    ) {
       return jsonResponse(
         {
           message:
-            validationResult.error.issues[0]
-              ?.message || "Invalid customer details.",
+            validationResult.error
+              .issues[0]?.message ||
+            "Invalid customer details.",
         },
         400,
       );
     }
 
-    const name = validationResult.data.name;
+    const name =
+      validationResult.data.name;
+
     const phone = cleanPhone(
       validationResult.data.phone,
     );
 
-    const birthday = parseBirthday(
-      validationResult.data.birthday,
-    );
+    const birthday =
+      parseBirthday(
+        validationResult.data
+          .birthday,
+      );
 
     if (phone.length !== 11) {
       return jsonResponse(
@@ -432,7 +551,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const cafeId = access.authData.cafeId;
+    const cafeId =
+      access.authData.cafeId;
 
     const existingCustomer =
       await prisma.customer.findFirst({
@@ -456,19 +576,31 @@ export async function POST(request: NextRequest) {
     }
 
     /*
-     * The database unique constraint is the final protection.
-     * Retrying handles a rare member-number collision safely.
+     * The database unique constraint
+     * is the final protection.
+     *
+     * Retrying handles a rare
+     * member-number collision safely.
      */
-    for (let attempt = 0; attempt < 20; attempt += 1) {
+    for (
+      let attempt = 0;
+      attempt < 20;
+      attempt += 1
+    ) {
       try {
         const customer =
           await prisma.customer.create({
             data: {
               cafeId,
-              memberNumber: generateMemberNumber(),
-              publicToken: randomBytes(24).toString(
-                "hex",
-              ),
+
+              memberNumber:
+                generateMemberNumber(),
+
+              publicToken:
+                randomBytes(
+                  24,
+                ).toString("hex"),
+
               name,
               phone,
               birthday,
@@ -482,6 +614,10 @@ export async function POST(request: NextRequest) {
               phone: true,
               birthday: true,
               stamps: true,
+
+              rewardEarnedAt:
+                true,
+
               createdAt: true,
               updatedAt: true,
             },
@@ -496,15 +632,24 @@ export async function POST(request: NextRequest) {
           201,
         );
       } catch (error) {
-        if (!isUniqueConstraintError(error)) {
+        if (
+          !isUniqueConstraintError(
+            error,
+          )
+        ) {
           throw error;
         }
 
-        const fields = uniqueErrorFields(error);
+        const fields =
+          uniqueErrorFields(
+            error,
+          );
 
         if (
           fields.some((field) =>
-            field.toLowerCase().includes("phone"),
+            field
+              .toLowerCase()
+              .includes("phone"),
           )
         ) {
           return jsonResponse(
@@ -521,10 +666,14 @@ export async function POST(request: NextRequest) {
           fields.some((field) =>
             field
               .toLowerCase()
-              .includes("membernumber"),
+              .includes(
+                "membernumber",
+              ),
           );
 
-        if (memberNumberCollision) {
+        if (
+          memberNumberCollision
+        ) {
           continue;
         }
 
@@ -536,10 +685,16 @@ export async function POST(request: NextRequest) {
       "Could not generate a unique member number.",
     );
   } catch (error) {
-    console.error("POST customer error:", error);
+    console.error(
+      "POST customer error:",
+      error,
+    );
 
     return jsonResponse(
-      { message: "Failed to create customer." },
+      {
+        message:
+          "Failed to create customer.",
+      },
       500,
     );
   }

@@ -20,7 +20,7 @@ const tokenSchema = z
 
 function jsonResponse(
   body: Record<string, unknown>,
-  status = 200
+  status = 200,
 ) {
   return NextResponse.json(body, {
     status,
@@ -34,7 +34,7 @@ function jsonResponse(
 
 export async function GET(
   request: NextRequest,
-  context: RouteContext
+  context: RouteContext,
 ) {
   try {
     /*
@@ -45,7 +45,7 @@ export async function GET(
     const rateLimitResponse = await applyPublicRateLimit(
       request,
       publicApiRateLimiters.card,
-      "public-card"
+      "public-card",
     );
 
     if (rateLimitResponse) {
@@ -60,7 +60,7 @@ export async function GET(
         {
           message: "Loyalty card not found.",
         },
-        404
+        404,
       );
     }
 
@@ -72,6 +72,7 @@ export async function GET(
           isActive: true,
         },
       },
+
       select: {
         id: true,
         memberNumber: true,
@@ -79,7 +80,20 @@ export async function GET(
         name: true,
         birthday: true,
         stamps: true,
+
+        /*
+         * Tracks whether the customer already received
+         * their one-time feedback bonus.
+         */
         feedbackRewardedAt: true,
+
+        /*
+         * Tracks whether a loyalty reward has already been
+         * earned and must remain available until redemption,
+         * even if the café later changes its reward target.
+         */
+        rewardEarnedAt: true,
+
         createdAt: true,
         updatedAt: true,
 
@@ -108,7 +122,7 @@ export async function GET(
         {
           message: "Loyalty card not found.",
         },
-        404
+        404,
       );
     }
 
@@ -119,9 +133,16 @@ export async function GET(
       name: customer.name,
       birthday: customer.birthday,
       stamps: customer.stamps,
-      feedbackRewardedAt: customer.feedbackRewardedAt,
+
+      feedbackRewardedAt:
+        customer.feedbackRewardedAt,
+
+      rewardEarnedAt:
+        customer.rewardEarnedAt,
+
       createdAt: customer.createdAt,
       updatedAt: customer.updatedAt,
+
       cafe: customer.cafe,
     });
   } catch (error) {
@@ -131,7 +152,7 @@ export async function GET(
       {
         message: "Failed to load loyalty card.",
       },
-      500
+      500,
     );
   }
 }

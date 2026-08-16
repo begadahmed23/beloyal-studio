@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
 
     const paidStampTarget = Math.max(
       rewardTarget - 1,
-      0,
+      1,
     );
 
     for (
@@ -236,12 +236,6 @@ export async function POST(request: NextRequest) {
       try {
         const result = await prisma.$transaction(
           async (transaction) => {
-            /*
-             * Read the customer again inside the transaction.
-             * We do not trust the stamp count fetched outside
-             * the transaction because another request may have
-             * changed it meanwhile.
-             */
             const currentCustomer =
               await transaction.customer.findFirst({
                 where: {
@@ -251,6 +245,7 @@ export async function POST(request: NextRequest) {
                 select: {
                   id: true,
                   stamps: true,
+                  rewardEarnedAt: true,
                 },
               });
 
@@ -260,9 +255,35 @@ export async function POST(request: NextRequest) {
               };
             }
 
+            /*
+             * Once a reward has been earned, it stays
+             * locked until redemption.
+             *
+             * Future café target changes do not remove it.
+             */
+            if (currentCustomer.rewardEarnedAt) {
+              return {
+                type: "reward-ready" as const,
+              };
+            }
+
+            /*
+             * If the customer's existing stamps already
+             * satisfy the current requirement, lock the
+             * reward before returning.
+             */
             if (
               currentCustomer.stamps >= paidStampTarget
             ) {
+              await transaction.customer.update({
+                where: {
+                  id: currentCustomer.id,
+                },
+                data: {
+                  rewardEarnedAt: new Date(),
+                },
+              });
+
               return {
                 type: "reward-ready" as const,
               };
@@ -270,9 +291,6 @@ export async function POST(request: NextRequest) {
 
             /*
              * Server-side duplicate protection.
-             *
-             * The scanner UI may also have a cooldown,
-             * but the API itself must enforce it.
              */
             const lastAdd =
               await transaction.stampTransaction.findFirst({
@@ -304,15 +322,27 @@ export async function POST(request: NextRequest) {
               }
             }
 
+            const newStampCount =
+              currentCustomer.stamps + 1;
+
+            const rewardWillBeEarned =
+              newStampCount >= paidStampTarget;
+
+            const earnedAt =
+              rewardWillBeEarned
+                ? new Date()
+                : null;
+
             /*
-             * Increment only if the customer is still below
-             * the paid-stamp target.
+             * Add the stamp and, when this stamp completes
+             * the requirement, permanently lock the reward.
              */
             const updateResult =
               await transaction.customer.updateMany({
                 where: {
                   id: currentCustomer.id,
                   cafeId: authData.cafeId,
+                  rewardEarnedAt: null,
                   stamps: {
                     lt: paidStampTarget,
                   },
@@ -321,6 +351,12 @@ export async function POST(request: NextRequest) {
                   stamps: {
                     increment: 1,
                   },
+
+                  ...(earnedAt
+                    ? {
+                        rewardEarnedAt: earnedAt,
+                      }
+                    : {}),
                 },
               });
 
@@ -331,9 +367,7 @@ export async function POST(request: NextRequest) {
             }
 
             /*
-             * Every stamp increment must have a matching
-             * StampTransaction so stampDates / lastStampedAt
-             * remain accurate.
+             * Keep audit history synchronized with stamps.
              */
             const stampTransaction =
               await transaction.stampTransaction.create({
@@ -362,6 +396,7 @@ export async function POST(request: NextRequest) {
                   phone: true,
                   birthday: true,
                   stamps: true,
+                  rewardEarnedAt: true,
                   createdAt: true,
                   updatedAt: true,
                 },
@@ -375,13 +410,6 @@ export async function POST(request: NextRequest) {
             };
           },
           {
-            /*
-             * This is important.
-             *
-             * If two stamp requests arrive at virtually the
-             * same time, PostgreSQL will not allow both
-             * transactions to behave as if they were first.
-             */
             isolationLevel:
               Prisma.TransactionIsolationLevel.Serializable,
           },
@@ -427,20 +455,27 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const rewardReady =
-          result.updatedCustomer.stamps >=
-          paidStampTarget;
+        const rewardReady = Boolean(
+          result.updatedCustomer.rewardEarnedAt,
+        );
 
         return jsonResponse({
           customer: {
             ...result.updatedCustomer,
             stampDates: [],
           },
-          stampCreatedAt: result.stampCreatedAt,
+
+          stampCreatedAt:
+            result.stampCreatedAt,
+
           rewardTarget,
+
           rewardReady,
+
           rewardName:
-            authData.cafe.rewardName || "Reward",
+            authData.cafe.rewardName ||
+            "Reward",
+
           message: rewardReady
             ? `${
                 authData.cafe.rewardName || "Reward"
@@ -448,16 +483,6 @@ export async function POST(request: NextRequest) {
             : "Stamp added successfully.",
         });
       } catch (error) {
-        /*
-         * Prisma P2034 = transaction conflict / deadlock.
-         *
-         * With Serializable isolation this can happen when
-         * two stamp requests arrive simultaneously.
-         *
-         * Retry. On the next attempt, the new ADD transaction
-         * will be visible and the 5-second cooldown will stop
-         * the duplicate request.
-         */
         if (
           error instanceof
             Prisma.PrismaClientKnownRequestError &&
