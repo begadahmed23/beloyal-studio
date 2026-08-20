@@ -117,7 +117,7 @@ export default function QrCodeModal({
             className="mx-auto mt-5 w-fit max-w-full rounded-[20px] bg-white p-3 shadow-[0_20px_50px_rgba(0,0,0,0.18)] min-[380px]:mt-6 min-[380px]:rounded-[24px] min-[380px]:p-4"
             style={{
               backgroundColor: "#FFFFFF",
-              colorScheme: "light",
+              colorScheme: "only light",
               forcedColorAdjust: "none",
               isolation: "isolate",
               filter: "none",
@@ -136,7 +136,7 @@ export default function QrCodeModal({
                 height: "auto",
                 maxWidth: "200px",
                 backgroundColor: "#FFFFFF",
-                colorScheme: "light",
+                colorScheme: "only light",
                 forcedColorAdjust: "none",
                 filter: "none",
                 opacity: 1,
