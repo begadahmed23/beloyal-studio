@@ -1,3 +1,5 @@
+import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+
 export function calculateBirthdayCountdown(
   birthday: string,
 ) {
@@ -33,7 +35,9 @@ export function getProgressMessage(
   stamps: number,
   rewardTarget: number,
   rewardName: string,
+  businessType: "CAFE" | "BARBERSHOP" = "CAFE",
 ) {
+  const isBarbershop = businessType === "BARBERSHOP";
   const safeRewardName =
     rewardName?.trim() || "reward";
 
@@ -48,15 +52,17 @@ export function getProgressMessage(
    * customer collects 6 paid stamps
    * reward becomes ready at 6.
    */
-  const stampGoal = Math.max(
-    rewardTarget - 1,
-    1,
-  );
+  const stampGoal = getLoyaltyProgressTarget({
+    businessType,
+    rewardTarget,
+  });
 
   if (stamps >= stampGoal) {
     return {
       title: `${safeRewardName} is ready`,
-      description: `Show this card to the cashier to redeem your ${lowerRewardName}.`,
+      description: `Show this card to the ${
+        isBarbershop ? "barber" : "cashier"
+      } to redeem your ${lowerRewardName}.`,
     };
   }
 
@@ -65,7 +71,7 @@ export function getProgressMessage(
 
   if (remaining === 1) {
     return {
-      title: "One more stamp",
+      title: isBarbershop ? "One more visit" : "One more stamp",
       description: `Your ${lowerRewardName} is almost ready.`,
     };
   }
@@ -83,14 +89,17 @@ export function getProgressMessage(
   if (stamps > 0) {
     return {
       title: "Great start",
-      description: `Every eligible purchase brings you closer to your ${lowerRewardName}.`,
+      description: `Every eligible ${
+        isBarbershop ? "service" : "purchase"
+      } brings you closer to your ${lowerRewardName}.`,
     };
   }
 
   return {
     title: "Your journey starts here",
-    description:
-      "Make an eligible purchase to receive your first stamp.",
+    description: isBarbershop
+      ? "Complete an eligible service to receive your first visit."
+      : "Make an eligible purchase to receive your first stamp.",
   };
 }
 

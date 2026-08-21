@@ -10,14 +10,14 @@ const questions = [
       "Yes. The joining process and customer card work in modern mobile browsers on both iPhone and Android.",
   },
   {
-    question: "How are stamps added?",
+    question: "How are stamps or visits recorded?",
     answer:
-      "The café scans the QR code on the customer card using a phone camera or a compatible USB QR scanner.",
+      "Staff scan the QR code on the customer card using a phone camera or compatible USB QR scanner, then confirm the eligible purchase or service.",
   },
   {
-    question: "Can the reward and stamp target be changed?",
+    question: "Can the loyalty target and reward be changed?",
     answer:
-      "Yes. Each café can configure its own stamp target and the reward shown to customers.",
+      "Yes. Each business can configure its own target, qualifying activity, reward details, colors, and customer experience.",
   },
   {
     question: "Can customers keep using the same card?",
@@ -25,9 +25,14 @@ const questions = [
       "Yes. Each customer keeps the same personal loyalty card and uses it during future visits.",
   },
   {
-    question: "How can a café start using BeLoyal?",
+    question: "How can a business start using BeLoyal?",
     answer:
-      "BeLoyal is currently onboarding cafés directly. Contact us and we will handle the setup and provide access to the platform.",
+      "BeLoyal is currently onboarding cafés and barbershops directly. Contact us and we will configure the account, loyalty rules, branding, and access.",
+  },
+  {
+    question: "Is the café experience different from the barber experience?",
+    answer:
+      "Yes. Cafés use stamps and purchase-based rewards, while barbershops use visits, service-based rewards, and a separate barber interface.",
   },
 ];
 

@@ -19,7 +19,9 @@ import {
 import { Input } from "@/components/ui/input";
 
 export default function NewCustomerDialog() {
-  const { theme } = useCafeTheme();
+  const { theme, cafe } = useCafeTheme();
+  const isBarbershop = cafe.businessType === "BARBERSHOP";
+  const personLabel = isBarbershop ? "client" : "member";
 
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -84,7 +86,7 @@ export default function NewCustomerDialog() {
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Failed to create member."
+          data.message || `Failed to create ${personLabel}.`
         );
       }
 
@@ -100,7 +102,7 @@ export default function NewCustomerDialog() {
       setError(
         error instanceof Error
           ? error.message
-          : "Something went wrong while creating the member."
+          : `Something went wrong while creating the ${personLabel}.`
       );
     } finally {
       setLoading(false);
@@ -130,7 +132,7 @@ export default function NewCustomerDialog() {
         }}
       >
         <Plus size={18} />
-        New Member
+        New {isBarbershop ? "Client" : "Member"}
       </button>
 
       <Dialog
@@ -180,7 +182,7 @@ export default function NewCustomerDialog() {
                   color: theme.textPrimary,
                 }}
               >
-                New member
+                New {personLabel}
               </DialogTitle>
 
               <p
@@ -189,7 +191,7 @@ export default function NewCustomerDialog() {
                   color: theme.textMuted,
                 }}
               >
-                Create a loyalty account for a customer.
+                Create a loyalty account for a {personLabel}.
               </p>
             </DialogHeader>
           </div>
@@ -352,7 +354,7 @@ export default function NewCustomerDialog() {
               >
                 {loading
                   ? "Creating..."
-                  : "Create Member"}
+                  : `Create ${isBarbershop ? "Client" : "Member"}`}
               </button>
             </div>
           </div>

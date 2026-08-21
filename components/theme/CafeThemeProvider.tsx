@@ -15,13 +15,14 @@ import { useRouter } from "next/navigation";
 import {
   CafeThemeConfig,
   CafeThemeName,
-  getCafeTheme,
+  getBusinessTheme,
 } from "@/lib/cafe-theme";
 
 export type CafeSettings = {
   id: string;
   name: string;
   slug: string;
+  businessType: "CAFE" | "BARBERSHOP";
   logoUrl: string | null;
 
   rewardTarget: number;
@@ -174,8 +175,12 @@ export default function CafeThemeProvider({
   );
 
   const theme = useMemo(
-    () => getCafeTheme(previewThemeName),
-    [previewThemeName],
+    () =>
+      getBusinessTheme(
+        previewThemeName,
+        currentCafe.businessType,
+      ),
+    [previewThemeName, currentCafe.businessType],
   );
 
   const contextValue = useMemo(

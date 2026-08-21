@@ -49,7 +49,7 @@ export default function Navbar() {
           href="/login"
           className="rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800"
         >
-           login
+          Business login
         </Link>
       </div>
     </header>

@@ -11,6 +11,7 @@ model Cafe {
   id                          String             @id @default(cuid())
   name                        String
   slug                        String             @unique
+  businessType                BusinessType       @default(CAFE)
   logoUrl                     String?
   theme                       CafeTheme          @default(COFFEE_CLASSIC)
   primaryColor                String             @default("#8e6045")
@@ -198,6 +199,11 @@ model RateLimit {
   lastRequest BigInt
 
   @@map("rateLimit")
+}
+
+enum BusinessType {
+  CAFE
+  BARBERSHOP
 }
 
 enum CafeTheme {

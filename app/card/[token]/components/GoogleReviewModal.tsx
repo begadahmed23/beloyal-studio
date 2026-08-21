@@ -3,6 +3,7 @@
 import { Star } from "lucide-react";
 
 type GoogleReviewModalProps = {
+  businessType: "CAFE" | "BARBERSHOP";
   selectedRating: number | null;
   googleReviewUrl: string | null;
   cardBorder: string;
@@ -18,6 +19,7 @@ type GoogleReviewModalProps = {
 };
 
 export default function GoogleReviewModal({
+  businessType,
   selectedRating,
   googleReviewUrl,
   cardBorder,
@@ -101,7 +103,9 @@ export default function GoogleReviewModal({
 
         {!googleReviewUrl ? (
           <p className="mt-4 text-xs" style={{ color: textMuted }}>
-            This café has not added a Google review link yet.
+            This {businessType === "BARBERSHOP"
+              ? "barbershop"
+              : "café"} has not added a Google review link yet.
           </p>
         ) : null}
       </div>

@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
+import { BusinessType, Prisma } from "@prisma/client";
 
 import { provisioningAuth } from "@/lib/provisioning-auth";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdmin } from "@/lib/require-super-admin";
+import {
+  getBusinessThemeColors,
+  type CafeThemeName,
+} from "@/lib/cafe-theme";
 
 const TRIAL_DAYS = 14;
 
@@ -35,48 +39,71 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const cafes = await prisma.cafe.findMany({
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        logoUrl: true,
-        theme: true,
-        primaryColor: true,
-        secondaryColor: true,
-        backgroundColor: true,
-        rewardTarget: true,
-        rewardName: true,
-        subscriptionStatus: true,
-        trialStartedAt: true,
-        trialEndsAt: true,
-        subscriptionStartedAt: true,
-        subscriptionEndsAt: true,
-        lastPaymentAt: true,
-        monthlyPrice: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    const monthStartedAt = new Date();
+    monthStartedAt.setUTCDate(1);
+    monthStartedAt.setUTCHours(0, 0, 0, 0);
+
+    const [cafes, newCustomerGroups] = await Promise.all([
+      prisma.cafe.findMany({
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          businessType: true,
+          logoUrl: true,
+          theme: true,
+          primaryColor: true,
+          secondaryColor: true,
+          backgroundColor: true,
+          rewardTarget: true,
+          rewardName: true,
+          subscriptionStatus: true,
+          trialStartedAt: true,
+          trialEndsAt: true,
+          subscriptionStartedAt: true,
+          subscriptionEndsAt: true,
+          lastPaymentAt: true,
+          monthlyPrice: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          _count: {
+            select: {
+              customers: true,
+              transactions: true,
+            },
           },
         },
-        _count: {
-          select: {
-            customers: true,
-            transactions: true,
-          },
+      }),
+      prisma.customer.groupBy({
+        by: ["cafeId"],
+        where: {
+          createdAt: { gte: monthStartedAt },
         },
-      },
-    });
+        _count: { _all: true },
+      }),
+    ]);
+
+    const newCustomersByCafe = new Map(
+      newCustomerGroups.map((group) => [
+        group.cafeId,
+        group._count._all,
+      ]),
+    );
 
     const normalized = cafes.map((cafe) => ({
       ...cafe,
       monthlyPrice: cafe.monthlyPrice?.toNumber() ?? 0,
+      newCustomersThisMonth:
+        newCustomersByCafe.get(cafe.id) ?? 0,
     }));
 
     const monthlyRevenue = normalized.reduce(
@@ -111,6 +138,12 @@ export async function GET(request: NextRequest) {
       cafes: normalized,
       summary: {
         totalCafes: normalized.length,
+        cafeCount: normalized.filter(
+          (cafe) => cafe.businessType === "CAFE",
+        ).length,
+        barbershopCount: normalized.filter(
+          (cafe) => cafe.businessType === "BARBERSHOP",
+        ).length,
         activeCafes: normalized.filter(
           (cafe) =>
             cafe.subscriptionStatus === "ACTIVE" &&
@@ -128,6 +161,11 @@ export async function GET(request: NextRequest) {
           (cafe) =>
             cafe.subscriptionStatus === "PAST_DUE"
         ).length,
+        newMembersThisMonth: normalized.reduce(
+          (total, cafe) =>
+            total + cafe.newCustomersThisMonth,
+          0,
+        ),
         monthlyRevenue,
         expectedRevenue,
       },
@@ -175,23 +213,45 @@ export async function POST(request: NextRequest) {
       typeof body.password === "string"
         ? body.password
         : "";
+    const businessType =
+      body.businessType === undefined
+        ? BusinessType.CAFE
+        : typeof body.businessType === "string" &&
+            Object.values(BusinessType).includes(
+              body.businessType as BusinessType,
+            )
+          ? (body.businessType as BusinessType)
+          : null;
+    const defaultRewardName =
+      businessType === BusinessType.BARBERSHOP
+        ? "Free Haircut"
+        : "Free Drink";
     const rewardName =
       typeof body.rewardName === "string"
         ? body.rewardName.trim()
-        : "Free Drink";
+        : defaultRewardName;
 
     const rewardTarget = Number(body.rewardTarget);
     const monthlyPrice = Number(body.monthlyPrice);
     const theme =
       typeof body.theme === "string"
         ? body.theme
-        : "COFFEE_CLASSIC";
+        : businessType === BusinessType.BARBERSHOP
+          ? "DARK_LUXURY"
+          : "COFFEE_CLASSIC";
+
+    if (!businessType) {
+      return NextResponse.json(
+        { message: "Select a valid business type." },
+        { status: 400 },
+      );
+    }
 
     if (!cafeName || !ownerName || !email || !password) {
       return NextResponse.json(
         {
           message:
-            "Café name, account name, email, and password are required.",
+            "Business name, account name, email, and password are required.",
         },
         { status: 400 }
       );
@@ -261,7 +321,7 @@ export async function POST(request: NextRequest) {
 
     if (existingCafe) {
       return NextResponse.json(
-        { message: "A café already exists with this slug." },
+        { message: "A business already exists with this slug." },
         { status: 409 }
       );
     }
@@ -280,19 +340,35 @@ export async function POST(request: NextRequest) {
     const trialEndsAt = new Date(now);
     trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
 
+    const savedTheme: CafeThemeName =
+      businessType === BusinessType.BARBERSHOP
+        ? theme === "MODERN_MINIMAL" ||
+          theme === "COFFEE_CLASSIC"
+          ? theme
+          : "DARK_LUXURY"
+        : theme === "MODERN_MINIMAL" ||
+            theme === "DARK_LUXURY" ||
+            theme === "MEDITERRANEAN_BLUE" ||
+            theme === "ORGANIC"
+          ? theme
+          : "COFFEE_CLASSIC";
+    const [
+      primaryColor,
+      secondaryColor,
+      backgroundColor,
+    ] = getBusinessThemeColors(savedTheme, businessType);
+
     const cafe = await prisma.cafe.create({
       data: {
         name: cafeName,
         slug,
-        theme:
-          theme === "MODERN_MINIMAL" ||
-          theme === "DARK_LUXURY" ||
-          theme === "MEDITERRANEAN_BLUE" ||
-          theme === "ORGANIC"
-            ? theme
-            : "COFFEE_CLASSIC",
+        businessType,
+        theme: savedTheme,
+        primaryColor,
+        secondaryColor,
+        backgroundColor,
         rewardTarget,
-        rewardName: rewardName || "Free Drink",
+        rewardName: rewardName || defaultRewardName,
         subscriptionStatus: "TRIAL",
         trialStartedAt: now,
         trialEndsAt,
@@ -312,7 +388,7 @@ export async function POST(request: NextRequest) {
 
       if (!signup.user) {
         throw new Error(
-          "The café login account was not created."
+          "The business login account was not created."
         );
       }
 
@@ -357,7 +433,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           message:
-            "That café slug or login email already exists.",
+            "That business slug or login email already exists.",
         },
         { status: 409 }
       );
@@ -368,7 +444,7 @@ export async function POST(request: NextRequest) {
         message:
           error instanceof Error
             ? error.message
-            : "Failed to create café.",
+            : "Failed to create business.",
       },
       { status: 500 }
     );

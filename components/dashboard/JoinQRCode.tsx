@@ -17,6 +17,7 @@ const POSTER_HEIGHT = 720;
 
 export default function JoinQRCode() {
   const { theme, cafe } = useCafeTheme();
+  const isBarbershop = cafe.businessType === "BARBERSHOP";
 
   const posterRef = useRef<HTMLDivElement>(null);
 
@@ -114,7 +115,9 @@ export default function JoinQRCode() {
         (navigator.platform === "MacIntel" &&
           navigator.maxTouchPoints > 1);
 
-      link.download = `${cafe.slug}-loyalty-qr.png`;
+      link.download = `${cafe.slug}-${
+        isBarbershop ? "barber" : "loyalty"
+      }-qr.png`;
       link.href = objectUrl;
 
       if (isIOS) {
@@ -169,7 +172,7 @@ export default function JoinQRCode() {
                 color: theme.accent,
               }}
             >
-              Customer join QR
+              {isBarbershop ? "Client join QR" : "Customer join QR"}
             </p>
 
             <h3
@@ -178,7 +181,7 @@ export default function JoinQRCode() {
                 color: theme.textPrimary,
               }}
             >
-              Let customers join in seconds
+              Let {isBarbershop ? "clients" : "customers"} join in seconds
             </h3>
 
             <p
@@ -188,8 +191,11 @@ export default function JoinQRCode() {
               }}
             >
               Download this branded QR poster, print it,
-              and place it near the cashier. Customers can
-              scan it to create their loyalty card.
+              and place it near the {isBarbershop
+                ? "front desk"
+                : "cashier"}. {isBarbershop
+                ? "Clients"
+                : "Customers"} can scan it to create their loyalty card.
             </p>
           </div>
 
@@ -210,7 +216,7 @@ export default function JoinQRCode() {
                       color: theme.textMuted,
                     }}
                   >
-                    Customer join link
+                    {isBarbershop ? "Client join link" : "Customer join link"}
                   </p>
 
                   <p
@@ -227,7 +233,9 @@ export default function JoinQRCode() {
                   href={joinUrl}
                   target="_blank"
                   rel="noreferrer"
-                  aria-label="Open customer join page"
+                  aria-label={`Open ${
+                    isBarbershop ? "client" : "customer"
+                  } join page`}
                   className="flex h-10 w-10 shrink-0 items-center justify-center border transition hover:opacity-80"
                   style={{
                     borderColor: theme.border,
@@ -419,7 +427,9 @@ export default function JoinQRCode() {
                     textTransform: "uppercase",
                   }}
                 >
-                  Let coffee connect us
+                  {isBarbershop
+                    ? "Sharp style. Loyal clients."
+                    : "Let coffee connect us"}
                 </p>
               </div>
 
@@ -473,7 +483,7 @@ export default function JoinQRCode() {
                       letterSpacing: "-0.025em",
                     }}
                   >
-                    Collect stamps.
+                    Collect {isBarbershop ? "visits" : "stamps"}.
                   </p>
 
                   <p
@@ -486,7 +496,9 @@ export default function JoinQRCode() {
                       letterSpacing: "-0.025em",
                     }}
                   >
-                    Earn free drinks.
+                    {isBarbershop
+                      ? `Earn ${(cafe.rewardName || "Free Haircut").toLowerCase()}.`
+                      : "Earn free drinks."}
                   </p>
 
                   <p

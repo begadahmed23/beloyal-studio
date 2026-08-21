@@ -102,6 +102,7 @@ export async function GET(
             id: true,
             name: true,
             slug: true,
+            businessType: true,
             logoUrl: true,
             theme: true,
             primaryColor: true,

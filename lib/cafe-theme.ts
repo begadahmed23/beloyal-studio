@@ -5,6 +5,14 @@ export type CafeThemeName =
   | "MEDITERRANEAN_BLUE"
   | "ORGANIC";
 
+export type ThemeBusinessType = "CAFE" | "BARBERSHOP";
+
+export type BusinessThemeOption = {
+  value: CafeThemeName;
+  label: string;
+  description: string;
+};
+
 export type CafeThemeConfig = {
   pageBackground: string;
   surface: string;
@@ -185,6 +193,208 @@ const themes: Record<CafeThemeName, CafeThemeConfig> = {
     radiusMedium: "18px",
   },
 };
+
+const barberThemes: Partial<
+  Record<CafeThemeName, CafeThemeConfig>
+> = {
+  DARK_LUXURY: {
+    pageBackground: "#0E1513",
+    surface: "#141B19",
+    surfaceRaised: "#202725",
+    border: "rgba(219, 207, 189, 0.14)",
+
+    textPrimary: "#F2EEE7",
+    textSecondary: "#CDC5B8",
+    textMuted: "#89908B",
+
+    accent: "#9B6546",
+    accentHover: "#AC7554",
+    accentSoft: "rgba(155, 101, 70, 0.17)",
+    accentText: "#FEFAF3",
+
+    success: "#668777",
+    warning: "#C5905D",
+    danger: "#C76E63",
+
+    inputBackground: "#19201E",
+    inputBorder: "rgba(219, 207, 189, 0.16)",
+
+    buttonText: "#FEFAF3",
+    cardShadow: "0 30px 90px rgba(0, 0, 0, 0.38)",
+
+    radiusLarge: "26px",
+    radiusMedium: "16px",
+  },
+
+  MODERN_MINIMAL: {
+    pageBackground: "#E7E5E0",
+    surface: "#F4F3F0",
+    surfaceRaised: "#D8D6D1",
+    border: "rgba(27, 29, 30, 0.12)",
+
+    textPrimary: "#17191A",
+    textSecondary: "#43484A",
+    textMuted: "#7C8182",
+
+    accent: "#343A3C",
+    accentHover: "#24292B",
+    accentSoft: "rgba(52, 58, 60, 0.10)",
+    accentText: "#FFFFFF",
+
+    success: "#527565",
+    warning: "#A9773F",
+    danger: "#B85E58",
+
+    inputBackground: "#FAF9F7",
+    inputBorder: "rgba(27, 29, 30, 0.15)",
+
+    buttonText: "#FFFFFF",
+    cardShadow: "0 24px 70px rgba(24, 28, 29, 0.12)",
+
+    radiusLarge: "24px",
+    radiusMedium: "14px",
+  },
+
+  COFFEE_CLASSIC: {
+    pageBackground: "#1B1815",
+    surface: "#24201C",
+    surfaceRaised: "#312A24",
+    border: "rgba(224, 184, 143, 0.17)",
+
+    textPrimary: "#F4EDE5",
+    textSecondary: "#D8C6B5",
+    textMuted: "#9A8D82",
+
+    accent: "#B8613C",
+    accentHover: "#CA7149",
+    accentSoft: "rgba(184, 97, 60, 0.15)",
+    accentText: "#FFF8F1",
+
+    success: "#708778",
+    warning: "#C18755",
+    danger: "#CC6B60",
+
+    inputBackground: "#29231E",
+    inputBorder: "rgba(224, 184, 143, 0.19)",
+
+    buttonText: "#FFF7F0",
+    cardShadow: "0 32px 100px rgba(0, 0, 0, 0.44)",
+
+    radiusLarge: "26px",
+    radiusMedium: "15px",
+  },
+};
+
+export const cafeThemeOptions: BusinessThemeOption[] = [
+  {
+    value: "COFFEE_CLASSIC",
+    label: "Coffee Classic",
+    description:
+      "Warm cream and walnut tones for a timeless coffee-house atmosphere.",
+  },
+  {
+    value: "MODERN_MINIMAL",
+    label: "Modern Minimal",
+    description:
+      "Soft ivory, stone, and charcoal for bright contemporary cafés.",
+  },
+  {
+    value: "DARK_LUXURY",
+    label: "Dark Luxury",
+    description:
+      "Deep espresso and bronze for an intimate, high-end experience.",
+  },
+  {
+    value: "MEDITERRANEAN_BLUE",
+    label: "Mediterranean Blue",
+    description:
+      "Calm coastal blues, warm ivory, and an airy Mediterranean feeling.",
+  },
+  {
+    value: "ORGANIC",
+    label: "Organic",
+    description:
+      "Sage, oat, and natural tones for calm wellness-focused cafés.",
+  },
+];
+
+export const barberThemeOptions: BusinessThemeOption[] = [
+  {
+    value: "DARK_LUXURY",
+    label: "Forest & Walnut",
+    description:
+      "Deep forest charcoal, walnut leather, and warm ivory.",
+  },
+  {
+    value: "MODERN_MINIMAL",
+    label: "Concrete & Chrome",
+    description:
+      "Pale concrete, graphite, and brushed silver for a clean studio look.",
+  },
+  {
+    value: "COFFEE_CLASSIC",
+    label: "Brick & Black",
+    description:
+      "Industrial charcoal, warm brick, and soft sandstone highlights.",
+  },
+];
+
+export function getBusinessThemeOptions(
+  businessType: ThemeBusinessType,
+) {
+  return businessType === "BARBERSHOP"
+    ? barberThemeOptions
+    : cafeThemeOptions;
+}
+
+export function getBusinessTheme(
+  themeName: CafeThemeName | string,
+  businessType: ThemeBusinessType,
+): CafeThemeConfig {
+  if (businessType === "BARBERSHOP") {
+    return (
+      barberThemes[themeName as CafeThemeName] ??
+      barberThemes.DARK_LUXURY!
+    );
+  }
+
+  return getCafeTheme(themeName);
+}
+
+export function getBusinessThemeColors(
+  themeName: CafeThemeName | string,
+  businessType: ThemeBusinessType,
+): [string, string, string] {
+  if (businessType === "BARBERSHOP") {
+    if (themeName === "MODERN_MINIMAL") {
+      return ["#343A3C", "#A5AAAB", "#E7E5E0"];
+    }
+
+    if (themeName === "COFFEE_CLASSIC") {
+      return ["#B8613C", "#E0B88F", "#1B1815"];
+    }
+
+    return ["#9B6546", "#D7CAB8", "#0E1513"];
+  }
+
+  if (themeName === "MODERN_MINIMAL") {
+    return ["#20201E", "#77756E", "#FFFEFA"];
+  }
+
+  if (themeName === "DARK_LUXURY") {
+    return ["#B98552", "#CBA477", "#0B0908"];
+  }
+
+  if (themeName === "MEDITERRANEAN_BLUE") {
+    return ["#5F8994", "#426C77", "#EAF3F5"];
+  }
+
+  if (themeName === "ORGANIC") {
+    return ["#758B64", "#556849", "#EDF0E5"];
+  }
+
+  return ["#7B4F35", "#6F4A35", "#F3EDE5"];
+}
 
 export function getCafeTheme(
   themeName: CafeThemeName | string

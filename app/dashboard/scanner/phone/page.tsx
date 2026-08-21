@@ -15,6 +15,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type ScannerStatus =
   | "starting"
@@ -93,6 +94,9 @@ function playSuccessSound() {
 }
 
 export default function PhoneScannerPage() {
+  const { cafe } = useCafeTheme();
+  const isBarbershop = cafe.businessType === "BARBERSHOP";
+  const personLabel = isBarbershop ? "client" : "customer";
   const scannerRef = useRef<
     import("html5-qrcode").Html5Qrcode | null
   >(null);
@@ -166,7 +170,7 @@ export default function PhoneScannerPage() {
         if (!response.ok) {
           throw new Error(
             data.message ||
-              "The stamp could not be added."
+              `The ${isBarbershop ? "visit" : "stamp"} could not be recorded.`
           );
         }
 
@@ -216,7 +220,7 @@ export default function PhoneScannerPage() {
         setError(
           scanError instanceof Error
             ? scanError.message
-            : "The stamp could not be added."
+            : `The ${isBarbershop ? "visit" : "stamp"} could not be recorded.`
         );
 
         resetTimeoutRef.current = setTimeout(
@@ -238,7 +242,7 @@ export default function PhoneScannerPage() {
         );
       }
     },
-    []
+    [isBarbershop]
   );
 
   useEffect(() => {
@@ -358,11 +362,11 @@ export default function PhoneScannerPage() {
         </p>
 
         <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-          Scan customer
+          Scan {personLabel}
         </h2>
 
         <p className="mt-2 text-sm leading-6 opacity-60">
-          Point the phone camera at the customer&apos;s
+          Point the phone camera at the {personLabel}&apos;s
           BeLoyal QR code.
         </p>
       </div>
@@ -401,7 +405,7 @@ export default function PhoneScannerPage() {
                   />
 
                   <h3 className="mt-5 text-xl font-semibold">
-                    Adding stamp
+                    {isBarbershop ? "Recording visit" : "Adding stamp"}
                   </h3>
                 </div>
               )}
@@ -414,7 +418,7 @@ export default function PhoneScannerPage() {
                   />
 
                   <p className="mt-5 text-sm font-medium text-emerald-400">
-                    Stamp added
+                    {isBarbershop ? "Visit recorded" : "Stamp added"}
                   </p>
 
                   <h3 className="mt-2 text-3xl font-semibold">
@@ -425,7 +429,8 @@ export default function PhoneScannerPage() {
                     {result.stamps ??
                       result.customer.stamps}{" "}
                     /{" "}
-                    {result.rewardTarget} stamps
+                    {result.rewardTarget}{" "}
+                    {isBarbershop ? "visits" : "stamps"}
                   </p>
                 </div>
               )}
@@ -492,9 +497,11 @@ export default function PhoneScannerPage() {
       </section>
 
       <p className="mt-4 text-center text-xs leading-5 opacity-50">
-        The same customer cannot receive another stamp
+        The same {personLabel} cannot receive another {isBarbershop
+          ? "visit"
+          : "stamp"}{" "}
         from this scanner for five seconds. Different
-        customers can scan immediately.
+        {" "}{isBarbershop ? "clients" : "customers"} can scan immediately.
       </p>
     </div>
   );

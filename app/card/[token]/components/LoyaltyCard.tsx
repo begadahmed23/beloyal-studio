@@ -17,6 +17,7 @@ export type Cafe = {
   id: string;
   name: string;
   slug: string;
+  businessType: "CAFE" | "BARBERSHOP";
   logoUrl: string | null;
   theme: string;
   primaryColor: string | null;
@@ -91,6 +92,58 @@ type LoyaltyCardProps = {
   onShowFeedback: () => void;
 };
 
+type BarberScissorsIconProps = {
+  size?: number;
+  color: string;
+  isSnipping?: boolean;
+  opacity?: number;
+  filter?: string;
+};
+
+function BarberScissorsIcon({
+  size = 21,
+  color,
+  isSnipping = false,
+  opacity = 1,
+  filter = "none",
+}: BarberScissorsIconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={`barber-scissors ${
+        isSnipping ? "barber-scissors--snipping" : ""
+      }`}
+      style={{ color, opacity, filter }}
+    >
+      <g className="barber-scissors__top">
+        <circle cx="5.5" cy="6.5" r="3" />
+        <path d="M7.8 8.25 11.5 12 20.5 6.8" />
+      </g>
+
+      <g className="barber-scissors__bottom">
+        <circle cx="5.5" cy="17.5" r="3" />
+        <path d="M7.8 15.75 11.5 12 20.5 17.2" />
+      </g>
+
+      <circle
+        cx="11.5"
+        cy="12"
+        r="1.05"
+        fill="currentColor"
+        stroke="none"
+      />
+    </svg>
+  );
+}
+
 export default function LoyaltyCard({
   customer,
   refreshing,
@@ -135,6 +188,11 @@ export default function LoyaltyCard({
   onShowQrCode,
   onShowFeedback,
 }: LoyaltyCardProps) {
+  const isBarbershop =
+    customer.cafe.businessType === "BARBERSHOP";
+  const isBrickBarber =
+    isBarbershop && customer.cafe.theme === "COFFEE_CLASSIC";
+
   return (
     <div className="mx-auto w-full max-w-md">
       <div
@@ -146,7 +204,11 @@ export default function LoyaltyCard({
               circle at 92% 4%,
               ${withAlpha(
                 primaryColor,
-                cardIsLight ? 0.16 : 0.24,
+                isBrickBarber
+                  ? 0.1
+                  : cardIsLight
+                    ? 0.16
+                    : 0.24,
               )} 0%,
               transparent 34%
             ),
@@ -154,7 +216,11 @@ export default function LoyaltyCard({
               circle at 5% 64%,
               ${withAlpha(
                 secondaryColor,
-                cardIsLight ? 0.12 : 0.18,
+                isBrickBarber
+                  ? 0.08
+                  : cardIsLight
+                    ? 0.12
+                    : 0.18,
               )} 0%,
               transparent 40%
             ),
@@ -364,7 +430,9 @@ export default function LoyaltyCard({
                     color: textPrimary,
                   }}
                 >
-                  Your stamp card
+                  {isBarbershop
+                    ? "Your visit card"
+                    : "Your stamp card"}
                 </p>
 
                 <p
@@ -375,7 +443,9 @@ export default function LoyaltyCard({
                 >
                   {customer.cafe
                     .eligiblePurchaseDescription ||
-                    "One stamp per eligible purchase"}
+                    (isBarbershop
+                      ? "One visit per eligible service"
+                      : "One stamp per eligible purchase")}
                 </p>
               </div>
 
@@ -393,7 +463,13 @@ export default function LoyaltyCard({
               </span>
             </div>
 
-            <div className="mt-5 grid grid-cols-4 gap-2 min-[380px]:gap-3">
+            <div
+              className={
+                isBarbershop
+                  ? "mx-auto mt-5 grid w-full max-w-[17rem] grid-cols-3 gap-3"
+                  : "mt-5 grid grid-cols-4 gap-2 min-[380px]:gap-3"
+              }
+            >
               {Array.from({
                 length: rewardTarget,
               }).map((_, index) => {
@@ -406,9 +482,11 @@ export default function LoyaltyCard({
                 return (
                   <div
                     key={index}
-                    className={`flex aspect-square items-center justify-center rounded-2xl border transition-all duration-500 ${
+                    className={`flex aspect-square items-center justify-center border transition-all duration-500 ${
+                      isBarbershop ? "rounded-xl" : "rounded-2xl"
+                    } ${
                       isNewStamp
-                        ? "scale-125"
+                        ? "scale-110"
                         : "scale-100"
                     }`}
                     style={{
@@ -439,37 +517,51 @@ export default function LoyaltyCard({
                             : "none",
                     }}
                   >
-                    <Coffee
-                      size={23}
-                      className={`transition-all duration-500 ${
-                        isNewStamp
-                          ? "rotate-12 scale-125"
-                          : ""
-                      }`}
-                      style={{
-                        color: filled
-                          ? cardGlowsGreen
-                            ? rewardIvory
-                            : accentText
-                          : emptyStampText,
-
-                        fill: filled
-                          ? cardGlowsGreen
-                            ? rewardIvory
-                            : accentText
-                          : "transparent",
-
-                        opacity: filled
-                          ? 1
-                          : 0.65,
-
-                        filter:
-                          filled &&
-                          cardGlowsGreen
+                    {isBarbershop ? (
+                      <BarberScissorsIcon
+                        size={21}
+                        isSnipping={isNewStamp}
+                        color={
+                          filled
+                            ? cardGlowsGreen
+                              ? rewardIvory
+                              : accentText
+                            : emptyStampText
+                        }
+                        opacity={filled ? 1 : 0.6}
+                        filter={
+                          filled && cardGlowsGreen
                             ? "drop-shadow(0 2px 4px rgba(0,0,0,0.34))"
-                            : "none",
-                      }}
-                    />
+                            : "none"
+                        }
+                      />
+                    ) : (
+                      <Coffee
+                        size={23}
+                        className={`transition-all duration-500 ${
+                          isNewStamp
+                            ? "rotate-12 scale-125"
+                            : ""
+                        }`}
+                        style={{
+                          color: filled
+                            ? cardGlowsGreen
+                              ? rewardIvory
+                              : accentText
+                            : emptyStampText,
+                          fill: filled
+                            ? cardGlowsGreen
+                              ? rewardIvory
+                              : accentText
+                            : "transparent",
+                          opacity: filled ? 1 : 0.65,
+                          filter:
+                            filled && cardGlowsGreen
+                              ? "drop-shadow(0 2px 4px rgba(0,0,0,0.34))"
+                              : "none",
+                        }}
+                      />
+                    )}
                   </div>
                 );
               })}
@@ -510,8 +602,12 @@ export default function LoyaltyCard({
                   } is ready.`
                 : `${remainingStamps} more ${
                     remainingStamps === 1
-                      ? "stamp"
-                      : "stamps"
+                      ? isBarbershop
+                        ? "visit"
+                        : "stamp"
+                      : isBarbershop
+                        ? "visits"
+                        : "stamps"
                   } until your ${
                     customer.cafe.rewardName?.toLowerCase() ||
                     "reward"
@@ -685,16 +781,17 @@ export default function LoyaltyCard({
               <span>Show QR Code</span>
             </button>
 
-            <button
-              type="button"
-              onClick={onShowFeedback}
-              className="flex min-h-14 w-full items-center justify-between gap-4 rounded-2xl border px-4 py-3.5 text-left transition duration-200 hover:-translate-y-0.5 hover:opacity-90 active:translate-y-0 active:scale-[0.99]"
-              style={{
-                borderColor: primaryBorder,
-                backgroundColor: primarySoft,
-                color: textPrimary,
-              }}
-            >
+            {!isBarbershop ? (
+              <button
+                type="button"
+                onClick={onShowFeedback}
+                className="flex min-h-14 w-full items-center justify-between gap-4 rounded-2xl border px-4 py-3.5 text-left transition duration-200 hover:-translate-y-0.5 hover:opacity-90 active:translate-y-0 active:scale-[0.99]"
+                style={{
+                  borderColor: primaryBorder,
+                  backgroundColor: primarySoft,
+                  color: textPrimary,
+                }}
+              >
               <div className="flex min-w-0 items-center gap-3.5">
                 <div
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
@@ -739,7 +836,8 @@ export default function LoyaltyCard({
               >
                 →
               </span>
-            </button>
+              </button>
+            ) : null}
 
             <p
               className="px-3 text-center text-[11px] leading-5"
@@ -747,8 +845,12 @@ export default function LoyaltyCard({
                 color: textMuted,
               }}
             >
-              Show your QR code to the cashier
-              when collecting a stamp.
+              Show your QR code to the {isBarbershop
+                ? "barber"
+                : "cashier"}{" "}
+              when collecting a {isBarbershop
+                ? "visit"
+                : "stamp"}.
             </p>
           </section>
 
@@ -792,6 +894,39 @@ export default function LoyaltyCard({
             </p>
           </footer>
         </div>
+
+        <style>{`
+          .barber-scissors__top,
+          .barber-scissors__bottom {
+            transform-box: view-box;
+            transform-origin: 11.5px 12px;
+          }
+
+          .barber-scissors--snipping .barber-scissors__top {
+            animation: barber-snip-top 680ms cubic-bezier(0.22, 1, 0.36, 1) 2;
+          }
+
+          .barber-scissors--snipping .barber-scissors__bottom {
+            animation: barber-snip-bottom 680ms cubic-bezier(0.22, 1, 0.36, 1) 2;
+          }
+
+          @keyframes barber-snip-top {
+            0%, 100% { transform: rotate(0deg); }
+            42%, 62% { transform: rotate(14deg); }
+          }
+
+          @keyframes barber-snip-bottom {
+            0%, 100% { transform: rotate(0deg); }
+            42%, 62% { transform: rotate(-14deg); }
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .barber-scissors--snipping .barber-scissors__top,
+            .barber-scissors--snipping .barber-scissors__bottom {
+              animation: none;
+            }
+          }
+        `}</style>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import QRCode from "react-qr-code";
 
 type QrCodeModalProps = {
+  businessType: "CAFE" | "BARBERSHOP";
   cafeName: string;
   memberNumber: string;
   publicToken: string;
@@ -25,6 +26,7 @@ type QrCodeModalProps = {
 };
 
 export default function QrCodeModal({
+  businessType,
   cafeName,
   memberNumber,
   publicToken,
@@ -44,6 +46,7 @@ export default function QrCodeModal({
   onClose,
   onLogoError,
 }: QrCodeModalProps) {
+  const isBarbershop = businessType === "BARBERSHOP";
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 px-3 py-4 backdrop-blur-md min-[380px]:px-5 min-[380px]:py-8"
@@ -110,14 +113,15 @@ export default function QrCodeModal({
           </p>
 
           <p className="mt-2 text-sm leading-6" style={{ color: textSecondary }}>
-            Show this code to the cashier when you make an eligible purchase.
+            Show this code to the {isBarbershop ? "barber" : "cashier"}{" "}
+            after an eligible {isBarbershop ? "service" : "purchase"}.
           </p>
 
           <div
             className="mx-auto mt-5 w-fit max-w-full rounded-[20px] bg-white p-3 shadow-[0_20px_50px_rgba(0,0,0,0.18)] min-[380px]:mt-6 min-[380px]:rounded-[24px] min-[380px]:p-4"
             style={{
               backgroundColor: "#FFFFFF",
-              colorScheme: "only light",
+              colorScheme: "light",
               forcedColorAdjust: "none",
               isolation: "isolate",
               filter: "none",
@@ -136,7 +140,7 @@ export default function QrCodeModal({
                 height: "auto",
                 maxWidth: "200px",
                 backgroundColor: "#FFFFFF",
-                colorScheme: "only light",
+                colorScheme: "light",
                 forcedColorAdjust: "none",
                 filter: "none",
                 opacity: 1,

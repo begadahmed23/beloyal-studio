@@ -21,33 +21,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { getBusinessTerminology } from "@/lib/business/terminology";
+import { getBusinessThemeOptions } from "@/lib/cafe-theme";
+
+import BusinessTypeSelector from "./BusinessTypeSelector";
+import type { BusinessType } from "./studio-types";
 
 type Props = {
   onCreated: () => void;
 };
-
-const themes = [
-  {
-    value: "COFFEE_CLASSIC",
-    label: "Coffee Classic",
-  },
-  {
-    value: "MODERN_MINIMAL",
-    label: "Modern Minimal",
-  },
-  {
-    value: "DARK_LUXURY",
-    label: "Dark Luxury",
-  },
-  {
-    value: "MEDITERRANEAN_BLUE",
-    label: "Mediterranean Blue",
-  },
-  {
-    value: "ORGANIC",
-    label: "Organic",
-  },
-];
 
 const inputClassName =
   "h-12 w-full rounded-xl border border-black/[0.09] bg-white px-4 text-sm text-[#202124] outline-none transition placeholder:text-[#A0A1A6] hover:border-black/[0.15] focus:border-[#8B8F96] focus:ring-4 focus:ring-black/[0.035] disabled:cursor-not-allowed disabled:bg-[#F1F1F3] disabled:opacity-70";
@@ -70,6 +52,8 @@ export default function CreateCafeDialog({
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
+  const [businessType, setBusinessType] =
+    useState<BusinessType>("CAFE");
   const [cafeName, setCafeName] = useState("");
   const [slug, setSlug] = useState("");
   const [accountName, setAccountName] = useState("");
@@ -84,7 +68,21 @@ export default function CreateCafeDialog({
   const [theme, setTheme] =
     useState("COFFEE_CLASSIC");
 
+  const terminology =
+    getBusinessTerminology(businessType);
+  const businessLabel =
+    businessType === "BARBERSHOP"
+      ? "Barbershop"
+      : "Café";
+  const loyaltyUnitLabel =
+    businessType === "BARBERSHOP"
+      ? "Visits"
+      : "Stamps";
+  const availableThemes =
+    getBusinessThemeOptions(businessType);
+
   function resetForm() {
+    setBusinessType("CAFE");
     setCafeName("");
     setSlug("");
     setAccountName("");
@@ -97,6 +95,24 @@ export default function CreateCafeDialog({
     setError("");
     setSuccess(false);
     setShowPassword(false);
+  }
+
+  function handleBusinessTypeChange(
+    nextBusinessType: BusinessType,
+  ) {
+    const nextTerminology =
+      getBusinessTerminology(nextBusinessType);
+
+    setBusinessType(nextBusinessType);
+    setRewardName(nextTerminology.defaultRewardName);
+    setRewardTarget(
+      nextBusinessType === "BARBERSHOP" ? "3" : "7",
+    );
+    setTheme(
+      nextBusinessType === "BARBERSHOP"
+        ? "DARK_LUXURY"
+        : "COFFEE_CLASSIC",
+    );
   }
 
   function generateSlug(value: string) {
@@ -140,6 +156,7 @@ export default function CreateCafeDialog({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          businessType,
           cafeName,
           slug,
           ownerName: accountName,
@@ -168,7 +185,7 @@ export default function CreateCafeDialog({
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Failed to create café."
+          data.message || "Failed to create business."
         );
       }
 
@@ -185,7 +202,7 @@ export default function CreateCafeDialog({
       setError(
         error instanceof Error
           ? error.message
-          : "Failed to create café."
+          : "Failed to create business."
       );
     } finally {
       setLoading(false);
@@ -207,7 +224,7 @@ export default function CreateCafeDialog({
         className="flex h-11 items-center justify-center gap-2 rounded-xl border border-[#C8CBD0] bg-gradient-to-b from-white to-[#E9EAEC] px-5 text-sm font-semibold text-[#202124] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_5px_14px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:border-[#B5B8BE] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_8px_20px_rgba(15,23,42,0.11)]"
       >
         <Plus size={17} />
-        Create Café
+        Create Business
       </DialogTrigger>
 
       <DialogContent className="max-h-[92vh] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-[28px] border border-black/[0.08] bg-[#F7F7F8] p-0 text-[#202124] shadow-[0_32px_100px_rgba(15,23,42,0.22)]">
@@ -221,11 +238,11 @@ export default function CreateCafeDialog({
 
             <div>
               <DialogTitle className="text-xl font-semibold tracking-[-0.03em] text-[#171719]">
-                Create a new café
+                Create a new business
               </DialogTitle>
 
               <DialogDescription className="mt-1.5 max-w-xl text-sm leading-6 text-[#74747B]">
-                Set up the café workspace, owner account,
+                Set up the workspace, owner account,
                 loyalty program, and 14-day free trial.
               </DialogDescription>
             </div>
@@ -237,6 +254,23 @@ export default function CreateCafeDialog({
           className="space-y-5 p-5 sm:p-7"
         >
           <section className="rounded-2xl border border-black/[0.07] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.035)] sm:p-6">
+            <p className="text-sm font-semibold text-[#252528]">
+              Business type
+            </p>
+            <p className="mt-1 text-xs text-[#898990]">
+              Controls the dashboard, wording, and loyalty defaults.
+            </p>
+
+            <div className="mt-4">
+              <BusinessTypeSelector
+                value={businessType}
+                onChange={handleBusinessTypeChange}
+                disabled={loading}
+              />
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-black/[0.07] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.035)] sm:p-6">
             <div className="mb-5 flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F0F1F3] text-[#565960]">
                 <Coffee size={17} />
@@ -244,7 +278,7 @@ export default function CreateCafeDialog({
 
               <div>
                 <p className="text-sm font-semibold text-[#252528]">
-                  Café information
+                  {businessLabel} information
                 </p>
                 <p className="mt-0.5 text-xs text-[#898990]">
                   Identity and public workspace address
@@ -255,7 +289,7 @@ export default function CreateCafeDialog({
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="mb-2 block text-sm font-medium text-[#48484D]">
-                  Café name
+                  {businessLabel} name
                 </label>
 
                 <input
@@ -263,7 +297,11 @@ export default function CreateCafeDialog({
                   onChange={(event) =>
                     handleCafeNameChange(event.target.value)
                   }
-                  placeholder="Coffee Lab"
+                  placeholder={
+                    businessType === "BARBERSHOP"
+                      ? "The Barber Club"
+                      : "Coffee Lab"
+                  }
                   required
                   disabled={loading}
                   className={inputClassName}
@@ -289,7 +327,7 @@ export default function CreateCafeDialog({
                 />
 
                 <p className="mt-2 text-xs text-[#929298]">
-                  Used in the café&apos;s unique web address.
+                  Used in the business&apos;s unique web address.
                 </p>
               </div>
             </div>
@@ -306,7 +344,7 @@ export default function CreateCafeDialog({
                   Owner login
                 </p>
                 <p className="mt-0.5 text-xs text-[#898990]">
-                  Credentials for the café dashboard
+                  Credentials for the business dashboard
                 </p>
               </div>
             </div>
@@ -424,7 +462,7 @@ export default function CreateCafeDialog({
                   onChange={(event) =>
                     setRewardName(event.target.value)
                   }
-                  placeholder="Free Drink"
+                  placeholder={terminology.defaultRewardName}
                   required
                   disabled={loading}
                   className={inputClassName}
@@ -433,7 +471,7 @@ export default function CreateCafeDialog({
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-[#48484D]">
-                  Stamps required
+                  {loyaltyUnitLabel} required
                 </label>
 
                 <input
@@ -487,7 +525,7 @@ export default function CreateCafeDialog({
                   disabled={loading}
                   className={inputClassName}
                 >
-                  {themes.map((themeOption) => (
+                  {availableThemes.map((themeOption) => (
                     <option
                       key={themeOption.value}
                       value={themeOption.value}
@@ -509,7 +547,7 @@ export default function CreateCafeDialog({
                   14-day free trial included
                 </p>
                 <p className="mt-1 text-xs leading-5 text-[#85868C]">
-                  The café starts in trial status. Its monthly
+                  The business starts in trial status. Its monthly
                   price is saved for subscription management.
                 </p>
               </div>
@@ -531,7 +569,7 @@ export default function CreateCafeDialog({
               className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
             >
               <CheckCircle2 size={18} />
-              Café created successfully.
+              Business created successfully.
             </div>
           )}
 
@@ -561,7 +599,7 @@ export default function CreateCafeDialog({
               ) : (
                 <>
                   <Plus size={17} />
-                  Create Café
+                  Create Business
                 </>
               )}
             </button>

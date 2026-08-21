@@ -2,10 +2,17 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  getBusinessTheme,
+  type CafeThemeName,
+} from "@/lib/cafe-theme";
+import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 type JoinFormProps = {
   cafeSlug: string;
   cafeName: string;
+  businessType: "CAFE" | "BARBERSHOP";
+  themeName: CafeThemeName;
   primaryColor: string;
   secondaryColor: string;
   rewardTarget: number;
@@ -24,12 +31,20 @@ type JoinResponse = {
 export default function JoinForm({
   cafeSlug,
   cafeName,
+  businessType,
+  themeName,
   primaryColor,
   secondaryColor,
   rewardTarget,
   rewardName,
 }: JoinFormProps) {
   const router = useRouter();
+  const isBarbershop = businessType === "BARBERSHOP";
+  const theme = getBusinessTheme(themeName, businessType);
+  const loyaltyTarget = getLoyaltyProgressTarget({
+    businessType,
+    rewardTarget,
+  });
 
   const [mode, setMode] = useState<FormMode>("join");
   const [name, setName] = useState("");
@@ -128,16 +143,24 @@ export default function JoinForm({
     }
   }
 
-  const inputClassName =
-    "h-14 w-full rounded-2xl border bg-white/[0.06] px-4 text-base text-white outline-none transition placeholder:text-white/30 focus:bg-white/[0.09]";
+  const inputClassName = `h-14 w-full rounded-2xl border px-4 text-base outline-none transition ${
+    themeName === "MODERN_MINIMAL" && isBarbershop
+      ? "placeholder:text-black/30"
+      : "placeholder:text-white/30"
+  }`;
+  const inputStyle = {
+    borderColor: theme.inputBorder,
+    backgroundColor: theme.inputBackground,
+    color: theme.textPrimary,
+  };
 
   return (
     <div>
       <div
         className="grid grid-cols-2 rounded-2xl border p-1"
         style={{
-          borderColor: `${secondaryColor}25`,
-          backgroundColor: `${primaryColor}0D`,
+          borderColor: theme.border,
+          backgroundColor: theme.surfaceRaised,
         }}
       >
         <button
@@ -151,8 +174,8 @@ export default function JoinForm({
                 : "transparent",
             color:
               mode === "join"
-                ? "#ffffff"
-                : "rgba(255,255,255,0.55)",
+                ? theme.buttonText
+                : theme.textMuted,
           }}
         >
           Create a card
@@ -169,8 +192,8 @@ export default function JoinForm({
                 : "transparent",
             color:
               mode === "recover"
-                ? "#ffffff"
-                : "rgba(255,255,255,0.55)",
+                ? theme.buttonText
+                : theme.textMuted,
           }}
         >
           I have a card
@@ -178,15 +201,23 @@ export default function JoinForm({
       </div>
 
       <div className="mb-6 mt-5">
-        <h2 className="text-lg font-semibold text-white">
+        <h2
+          className="text-lg font-semibold"
+          style={{ color: theme.textPrimary }}
+        >
           {mode === "join"
             ? "Create your loyalty card"
             : "Open your existing card"}
         </h2>
 
-        <p className="mt-1 text-sm leading-6 text-white/45">
+        <p
+          className="mt-1 text-sm leading-6"
+          style={{ color: theme.textMuted }}
+        >
           {mode === "join"
-            ? `Join ${cafeName} and start collecting stamps.`
+            ? `Join ${cafeName} and start collecting ${
+                isBarbershop ? "visits" : "stamps"
+              }.`
             : "Enter the phone number used when you created your card."}
         </p>
       </div>
@@ -196,7 +227,8 @@ export default function JoinForm({
           <div>
             <label
               htmlFor="customer-name"
-              className="mb-2 block text-sm font-medium text-white/75"
+              className="mb-2 block text-sm font-medium"
+              style={{ color: theme.textSecondary }}
             >
               Full name
             </label>
@@ -213,9 +245,7 @@ export default function JoinForm({
               maxLength={80}
               required
               className={inputClassName}
-              style={{
-                borderColor: `${secondaryColor}35`,
-              }}
+              style={inputStyle}
             />
           </div>
         )}
@@ -223,7 +253,8 @@ export default function JoinForm({
         <div>
           <label
             htmlFor="customer-phone"
-            className="mb-2 block text-sm font-medium text-white/75"
+            className="mb-2 block text-sm font-medium"
+            style={{ color: theme.textSecondary }}
           >
             Phone number
           </label>
@@ -246,12 +277,13 @@ export default function JoinForm({
             maxLength={11}
             required
             className={inputClassName}
-            style={{
-              borderColor: `${secondaryColor}35`,
-            }}
+            style={inputStyle}
           />
 
-          <p className="mt-2 text-xs text-white/40">
+          <p
+            className="mt-2 text-xs"
+            style={{ color: theme.textMuted }}
+          >
             Enter your 11-digit Egyptian phone number.
           </p>
         </div>
@@ -260,7 +292,8 @@ export default function JoinForm({
           <div>
             <label
               htmlFor="customer-birthday"
-              className="mb-2 block text-sm font-medium text-white/75"
+              className="mb-2 block text-sm font-medium"
+              style={{ color: theme.textSecondary }}
             >
               Birthday
             </label>
@@ -275,13 +308,18 @@ export default function JoinForm({
               }
               autoComplete="bday"
               required
-              className={`${inputClassName} [color-scheme:dark]`}
-              style={{
-                borderColor: `${secondaryColor}35`,
-              }}
+              className={`${inputClassName} ${
+                themeName === "MODERN_MINIMAL" && isBarbershop
+                  ? "[color-scheme:light]"
+                  : "[color-scheme:dark]"
+              }`}
+              style={inputStyle}
             />
 
-            <p className="mt-2 text-xs text-white/40">
+            <p
+              className="mt-2 text-xs"
+              style={{ color: theme.textMuted }}
+            >
               Your birthday helps {cafeName} provide birthday
               rewards.
             </p>
@@ -299,10 +337,11 @@ export default function JoinForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex h-14 w-full items-center justify-center rounded-2xl px-5 text-base font-semibold text-white transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-14 w-full items-center justify-center rounded-2xl px-5 text-base font-semibold transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
           style={{
             background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
             boxShadow: `0 14px 35px ${primaryColor}30`,
+            color: theme.buttonText,
           }}
         >
           {isSubmitting
@@ -319,26 +358,39 @@ export default function JoinForm({
             <div
               className="rounded-2xl border px-4 py-4"
               style={{
-                borderColor: `${secondaryColor}20`,
-                backgroundColor: `${primaryColor}0D`,
+                borderColor: theme.border,
+                backgroundColor: theme.accentSoft,
               }}
             >
-              <p className="text-center text-sm leading-6 text-white/55">
-  Collect {Math.max(rewardTarget - 1, 1)} stamps to receive{" "}
-  <span className="font-medium text-white">
-    {rewardName}
-  </span>
-  .
-</p>
+              <p
+                className="text-center text-sm leading-6"
+                style={{ color: theme.textSecondary }}
+              >
+                Collect {loyaltyTarget}{" "}
+                {isBarbershop ? "visits" : "stamps"} to receive{" "}
+                <span
+                  className="font-medium"
+                  style={{ color: theme.textPrimary }}
+                >
+                  {rewardName}
+                </span>
+                .
+              </p>
             </div>
 
-            <p className="text-center text-xs leading-5 text-white/35">
+            <p
+              className="text-center text-xs leading-5"
+              style={{ color: theme.textMuted }}
+            >
               By joining, you agree that {cafeName} may store
               your loyalty membership information.
             </p>
           </>
         ) : (
-          <p className="text-center text-xs leading-5 text-white/35">
+          <p
+            className="text-center text-xs leading-5"
+            style={{ color: theme.textMuted }}
+          >
             Your phone number is only used to locate your
             existing {` ${cafeName} `}loyalty card.
           </p>

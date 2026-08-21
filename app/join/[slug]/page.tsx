@@ -2,6 +2,10 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
+import {
+  getBusinessTheme,
+  getBusinessThemeColors,
+} from "@/lib/cafe-theme";
 import JoinForm from "./join-form";
 
 type JoinPageProps = {
@@ -27,6 +31,8 @@ export default async function JoinPage({
       id: true,
       name: true,
       slug: true,
+      businessType: true,
+      theme: true,
       logoUrl: true,
       primaryColor: true,
       secondaryColor: true,
@@ -40,6 +46,30 @@ export default async function JoinPage({
   if (!cafe || !cafe.isActive) {
     notFound();
   }
+
+  const businessTheme = getBusinessTheme(
+    cafe.theme,
+    cafe.businessType,
+  );
+  const [mappedPrimary, mappedSecondary, mappedBackground] =
+    getBusinessThemeColors(
+      cafe.theme,
+      cafe.businessType,
+    );
+  const primaryColor =
+    cafe.businessType === "BARBERSHOP"
+      ? mappedPrimary
+      : cafe.primaryColor;
+  const secondaryColor =
+    cafe.businessType === "BARBERSHOP"
+      ? mappedSecondary
+      : cafe.secondaryColor;
+  const backgroundColor =
+    cafe.businessType === "BARBERSHOP"
+      ? mappedBackground
+      : cafe.backgroundColor;
+  const isBarbershop =
+    cafe.businessType === "BARBERSHOP";
 
   /*
    * Check whether this device already has a remembered
@@ -85,10 +115,10 @@ export default async function JoinPage({
         background: `
           radial-gradient(
             circle at top,
-            ${cafe.primaryColor}30 0%,
+            ${primaryColor}30 0%,
             transparent 42%
           ),
-          ${cafe.backgroundColor}
+          ${backgroundColor}
         `,
       }}
     >
@@ -96,9 +126,9 @@ export default async function JoinPage({
         <div
           className="w-full overflow-hidden rounded-[32px] border shadow-2xl backdrop-blur-xl"
           style={{
-            borderColor: `${cafe.secondaryColor}35`,
-            backgroundColor: "rgba(15, 15, 15, 0.88)",
-            boxShadow: `0 30px 80px ${cafe.primaryColor}20`,
+            borderColor: businessTheme.border,
+            backgroundColor: businessTheme.surface,
+            boxShadow: businessTheme.cardShadow,
           }}
         >
           <div className="px-6 pb-5 pt-8 text-center sm:px-8">
@@ -112,7 +142,8 @@ export default async function JoinPage({
               <div
                 className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl text-3xl font-semibold text-white"
                 style={{
-                  background: `linear-gradient(135deg, ${cafe.primaryColor}, ${cafe.secondaryColor})`,
+                  background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
+                  color: businessTheme.buttonText,
                 }}
               >
                 {cafe.name.charAt(0).toUpperCase()}
@@ -122,26 +153,33 @@ export default async function JoinPage({
             <p
               className="mb-2 text-xs font-semibold uppercase tracking-[0.28em]"
               style={{
-                color: cafe.secondaryColor,
+                color: businessTheme.accent,
               }}
             >
-              Loyalty Club
+              {isBarbershop ? "Barber Loyalty" : "Loyalty Club"}
             </p>
 
-            <h1 className="text-3xl font-semibold tracking-tight text-white">
+            <h1
+              className="text-3xl font-semibold tracking-tight"
+              style={{ color: businessTheme.textPrimary }}
+            >
               Join {cafe.name}
             </h1>
 
-            <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-white/60">
-              Create your digital loyalty card and start collecting stamps with
-              every eligible purchase.
+            <p
+              className="mx-auto mt-3 max-w-sm text-sm leading-6"
+              style={{ color: businessTheme.textMuted }}
+            >
+              {isBarbershop
+                ? "Create your digital loyalty card and start collecting visits with every eligible service."
+                : "Create your digital loyalty card and start collecting stamps with every eligible purchase."}
             </p>
           </div>
 
           <div
             className="mx-6 h-px sm:mx-8"
             style={{
-              backgroundColor: `${cafe.secondaryColor}25`,
+              backgroundColor: businessTheme.border,
             }}
           />
 
@@ -149,8 +187,10 @@ export default async function JoinPage({
             <JoinForm
               cafeSlug={cafe.slug}
               cafeName={cafe.name}
-              primaryColor={cafe.primaryColor}
-              secondaryColor={cafe.secondaryColor}
+              businessType={cafe.businessType}
+              themeName={cafe.theme}
+              primaryColor={primaryColor}
+              secondaryColor={secondaryColor}
               rewardTarget={cafe.rewardTarget}
               rewardName={cafe.rewardName}
             />
