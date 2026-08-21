@@ -120,6 +120,9 @@ export default function Home() {
       <div className="relative w-full max-w-[430px]">
         <div className="rounded-[34px] border border-black/[0.06] bg-white/90 p-8 shadow-[0_35px_100px_rgba(0,0,0,0.10)] backdrop-blur-2xl sm:p-10">
           <div className="mb-10 text-center">
+            <p className="mb-5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8e8e93]">
+              Café and barbershop access
+            </p>
             <h1 className="tracking-tight">
               <span className="block text-5xl font-semibold text-[#111111]">
                 BeLoyal
@@ -129,6 +132,10 @@ export default function Home() {
                 Studio
               </span>
             </h1>
+
+            <p className="mx-auto mt-5 max-w-xs text-sm leading-6 text-[#8e8e93]">
+              Sign in to your business loyalty dashboard.
+            </p>
           </div>
 
           <form
@@ -256,7 +263,7 @@ export default function Home() {
 
             <div className="pt-1 text-center">
               <a
-                href="mailto:begad.ahmed124@gmail.com?subject=BeLoyal%20%E2%80%93%20Login%20help&body=Hello%20BeLoyal%2C%0A%0AI%20need%20help%20accessing%20my%20cafe%20account.%0A%0ACafe%20name%3A%20%0AAccount%20email%3A%20"
+                href="mailto:begad.ahmed124@gmail.com?subject=BeLoyal%20%E2%80%93%20Login%20help&body=Hello%20BeLoyal%2C%0A%0AI%20need%20help%20accessing%20my%20business%20account.%0A%0ABusiness%20name%3A%20%0AAccount%20email%3A%20"
                 className="text-sm font-medium text-[#6e6e73] transition-colors hover:text-[#111111] hover:underline"
               >
                 Need help signing in?

@@ -9,21 +9,22 @@ export default function Contact() {
       <div className="mx-auto max-w-7xl">
         <div className="rounded-[2.5rem] bg-neutral-100 px-6 py-16 text-center sm:px-12 lg:px-20 lg:py-24">
           <p className="text-sm font-medium uppercase tracking-[0.18em] text-neutral-400">
-            Café onboarding
+            Personal onboarding
           </p>
 
           <h2 className="mx-auto mt-5 max-w-4xl text-balance text-4xl font-semibold tracking-[-0.055em] sm:text-5xl lg:text-7xl">
-            A loyalty platform built around repeat visits.
+            Ready to turn visits into loyalty?
           </h2>
 
           <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-neutral-500">
-            BeLoyal is currently onboarding cafés directly while the platform
-            is being tested and refined in real locations.
+            BeLoyal currently onboards cafés and barbershops directly. We
+            configure the right loyalty model, brand experience, scanner flow,
+            and team access with you.
           </p>
 
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <a
-              href="mailto:begad.ahmed124@gmail.com?subject=BeLoyal%20cafe%20onboarding"
+              href="mailto:begad.ahmed124@gmail.com?subject=BeLoyal%20business%20onboarding"
               className="w-full rounded-full bg-black px-7 py-3.5 text-sm font-medium text-white transition hover:bg-neutral-800 sm:w-auto"
             >
               Contact BeLoyal
@@ -33,7 +34,7 @@ export default function Contact() {
               href="/login"
               className="w-full rounded-full border border-neutral-300 bg-white px-7 py-3.5 text-sm font-medium text-neutral-950 transition hover:bg-neutral-50 sm:w-auto"
             >
-               login
+              Business login
             </Link>
           </div>
         </div>
