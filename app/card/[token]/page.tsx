@@ -1332,6 +1332,7 @@ const progressPercentage = rewardReady
 
       {showGooglePrompt ? (
         <GoogleReviewModal
+          businessType={customer.cafe.businessType}
           selectedRating={
             selectedRating
           }
