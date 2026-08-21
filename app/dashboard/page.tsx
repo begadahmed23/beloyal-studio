@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -8,8 +10,20 @@ import {
 
 import JoinQRCode from "@/components/dashboard/JoinQRCode";
 import SimpleAnalytics from "@/components/dashboard/SimpleAnalytics";
+import BarberDashboardHome from "@/components/dashboard/barber/BarberDashboardHome";
+import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 export default function DashboardPage() {
+  const { cafe } = useCafeTheme();
+
+  if (cafe.businessType === "BARBERSHOP") {
+    return <BarberDashboardHome />;
+  }
+
+  return <CafeDashboardHome />;
+}
+
+function CafeDashboardHome() {
   return (
     <div>
       <div>

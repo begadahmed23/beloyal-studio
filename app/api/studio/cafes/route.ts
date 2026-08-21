@@ -4,6 +4,10 @@ import { BusinessType, Prisma } from "@prisma/client";
 import { provisioningAuth } from "@/lib/provisioning-auth";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdmin } from "@/lib/require-super-admin";
+import {
+  getBusinessThemeColors,
+  type CafeThemeName,
+} from "@/lib/cafe-theme";
 
 const TRIAL_DAYS = 14;
 
@@ -336,18 +340,33 @@ export async function POST(request: NextRequest) {
     const trialEndsAt = new Date(now);
     trialEndsAt.setDate(trialEndsAt.getDate() + TRIAL_DAYS);
 
+    const savedTheme: CafeThemeName =
+      businessType === BusinessType.BARBERSHOP
+        ? theme === "MODERN_MINIMAL" ||
+          theme === "COFFEE_CLASSIC"
+          ? theme
+          : "DARK_LUXURY"
+        : theme === "MODERN_MINIMAL" ||
+            theme === "DARK_LUXURY" ||
+            theme === "MEDITERRANEAN_BLUE" ||
+            theme === "ORGANIC"
+          ? theme
+          : "COFFEE_CLASSIC";
+    const [
+      primaryColor,
+      secondaryColor,
+      backgroundColor,
+    ] = getBusinessThemeColors(savedTheme, businessType);
+
     const cafe = await prisma.cafe.create({
       data: {
         name: cafeName,
         slug,
         businessType,
-        theme:
-          theme === "MODERN_MINIMAL" ||
-          theme === "DARK_LUXURY" ||
-          theme === "MEDITERRANEAN_BLUE" ||
-          theme === "ORGANIC"
-            ? theme
-            : "COFFEE_CLASSIC",
+        theme: savedTheme,
+        primaryColor,
+        secondaryColor,
+        backgroundColor,
         rewardTarget,
         rewardName: rewardName || defaultRewardName,
         subscriptionStatus: "TRIAL",

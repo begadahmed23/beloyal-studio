@@ -41,6 +41,8 @@ import {
   useParams,
   useSearchParams,
 } from "next/navigation";
+import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+import { getBusinessThemeColors } from "@/lib/cafe-theme";
 
 type FeedbackResponse = {
   success?: boolean;
@@ -943,10 +945,15 @@ export default function DigitalCardPage() {
   1,
 );
 
-const unlockAt = Math.max(
-  rewardTarget - 1,
-  1,
-);
+const isBarbershop =
+  customer.cafe.businessType === "BARBERSHOP";
+const isBrickBarber =
+  isBarbershop && customer.cafe.theme === "COFFEE_CLASSIC";
+
+const unlockAt = getLoyaltyProgressTarget({
+  businessType: customer.cafe.businessType,
+  rewardTarget,
+});
 
 /*
  * rewardEarnedAt is the source of truth once a reward
@@ -985,7 +992,9 @@ const progressMessage = rewardReady
         customer.cafe.rewardName ||
         "Reward"
       } is ready`,
-      description: `Show this card to the cashier to redeem your ${
+      description: `Show this card to the ${
+        isBarbershop ? "barber" : "cashier"
+      } to redeem your ${
         customer.cafe.rewardName?.toLowerCase() ||
         "reward"
       }.`,
@@ -994,6 +1003,7 @@ const progressMessage = rewardReady
       customer.stamps,
       rewardTarget,
       customer.cafe.rewardName,
+      customer.cafe.businessType,
     );
 
 const progressPercentage = rewardReady
@@ -1002,31 +1012,48 @@ const progressPercentage = rewardReady
       unlockAt) *
     100;
 
+  const [
+    barberPrimaryColor,
+    barberSecondaryColor,
+    barberBackgroundColor,
+  ] = getBusinessThemeColors(
+    customer.cafe.theme,
+    customer.cafe.businessType,
+  );
+
   const primaryColor = normalizeHex(
-    customer.cafe.primaryColor,
+    isBarbershop
+      ? barberPrimaryColor
+      : customer.cafe.primaryColor,
     "#2563EB",
   );
 
   const secondaryColor =
     normalizeHex(
-      customer.cafe.secondaryColor,
+      isBarbershop
+        ? barberSecondaryColor
+        : customer.cafe.secondaryColor,
       "#60A5FA",
     );
 
   const backgroundColor =
     normalizeHex(
-      customer.cafe.backgroundColor,
+      isBarbershop
+        ? barberBackgroundColor
+        : customer.cafe.backgroundColor,
       "#0B1220",
     );
 
   const pageIsLight =
     isLightColor(backgroundColor);
 
-  const cardBackground = mixColors(
-    backgroundColor,
-    primaryColor,
-    pageIsLight ? 0.78 : 0.7,
-  );
+  const cardBackground = isBrickBarber
+    ? "#211D1A"
+    : mixColors(
+        backgroundColor,
+        primaryColor,
+        pageIsLight ? 0.78 : 0.7,
+      );
 
   const cardIsLight =
     isLightColor(cardBackground);
@@ -1131,7 +1158,7 @@ const progressPercentage = rewardReady
             circle at 50% -10%,
             ${withAlpha(
               primaryColor,
-              0.42,
+              isBrickBarber ? 0.2 : 0.42,
             )} 0%,
             transparent 38%
           ),
@@ -1139,7 +1166,7 @@ const progressPercentage = rewardReady
             circle at 100% 55%,
             ${withAlpha(
               secondaryColor,
-              0.22,
+              isBrickBarber ? 0.12 : 0.22,
             )} 0%,
             transparent 42%
           ),
@@ -1341,6 +1368,7 @@ const progressPercentage = rewardReady
 
       {showQrCode ? (
         <QrCodeModal
+          businessType={customer.cafe.businessType}
           cafeName={
             customer.cafe.name
           }
@@ -1381,7 +1409,7 @@ const progressPercentage = rewardReady
       ) : null}
 
       {/* Feedback modal */}
-      {showFeedbackModal ? (
+      {!isBarbershop && showFeedbackModal ? (
         <div
           className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-3 backdrop-blur-sm sm:items-center sm:p-6"
           onMouseDown={(event) => {

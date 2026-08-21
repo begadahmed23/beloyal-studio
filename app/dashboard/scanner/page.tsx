@@ -14,6 +14,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type ScannerStatus =
   | "waiting"
@@ -89,6 +90,10 @@ function playSuccessSound() {
   }
 }
 export default function ScannerPage() {
+  const { cafe } = useCafeTheme();
+  const isBarbershop = cafe.businessType === "BARBERSHOP";
+  const personLabel = isBarbershop ? "client" : "customer";
+  const loyaltyUnit = isBarbershop ? "visit" : "stamp";
   const inputRef = useRef<HTMLInputElement>(null);
   const autoScanTimeoutRef =
   useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -238,7 +243,7 @@ if (autoScanTimeoutRef.current) {
       if (!response.ok) {
         throw new Error(
           data.message ||
-            "The stamp could not be added."
+            `The ${loyaltyUnit} could not be recorded.`
         );
       }
 
@@ -270,7 +275,7 @@ playSuccessSound();
       setError(
         error instanceof Error
           ? error.message
-          : "The stamp could not be added."
+          : `The ${loyaltyUnit} could not be recorded.`
       );
 
       setScanValue("");
@@ -303,13 +308,14 @@ playSuccessSound();
         </p>
 
         <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-          Scan customer
+          Scan {personLabel}
         </h2>
 
         <p className="mt-2 max-w-2xl text-sm leading-6 opacity-60">
-          Scan the customer&apos;s Apple Wallet pass or
-          BeLoyal QR code. One scan automatically adds
-          one stamp.
+          Scan the {personLabel}&apos;s Apple Wallet pass or
+          BeLoyal QR code. One scan automatically {isBarbershop
+            ? "records one visit"
+            : "adds one stamp"}.
         </p>
       </div>
 
@@ -347,7 +353,7 @@ playSuccessSound();
 
                 <p className="mt-3 max-w-md text-sm leading-6 opacity-60">
                   The USB scanner is active. Ask the
-                  customer to open their Wallet pass or
+                  {personLabel} to open their Wallet pass or
                   tap Show Scan Code.
                 </p>
 
@@ -358,7 +364,7 @@ playSuccessSound();
                     <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
                   </span>
 
-                  Waiting for customer
+                  Waiting for {personLabel}
                 </div>
               </>
             )}
@@ -373,7 +379,7 @@ playSuccessSound();
                 </div>
 
                 <h3 className="mt-7 text-2xl font-semibold">
-                  Adding stamp
+                  {isBarbershop ? "Recording visit" : "Adding stamp"}
                 </h3>
 
                 <p className="mt-3 text-sm opacity-60">
@@ -389,7 +395,7 @@ playSuccessSound();
                 </div>
 
                 <p className="mt-7 text-sm font-medium text-emerald-500">
-                  Stamp added
+                  {isBarbershop ? "Visit recorded" : "Stamp added"}
                 </p>
 
                 <h3 className="mt-2 text-3xl font-semibold">
@@ -398,7 +404,8 @@ playSuccessSound();
 
                 <p className="mt-3 text-base opacity-65">
                   {result.stamps ?? result.customer.stamps} /{" "}
-                  {result.rewardTarget} stamps
+                  {result.rewardTarget}{" "}
+                  {isBarbershop ? "visits" : "stamps"}
                 </p>
 
                 <div className="mt-7 h-2.5 w-full max-w-sm overflow-hidden rounded-full bg-current/10">
@@ -416,7 +423,7 @@ playSuccessSound();
                 </div>
 
                 <p className="mt-7 text-xs opacity-45">
-                  Ready for the next customer in a few
+                  Ready for the next {personLabel} in a few
                   seconds.
                 </p>
               </>
@@ -441,13 +448,13 @@ playSuccessSound();
                 </p>
 
                 <p className="mt-3 max-w-md text-sm leading-6 opacity-60">
-                  The final stamp was added and the
-                  customer&apos;s new card has started at
+                  The final {loyaltyUnit} was recorded and the
+                  {personLabel}&apos;s new card has started at
                   0 / {result.rewardTarget}.
                 </p>
 
                 <p className="mt-7 text-xs opacity-45">
-                  Ready for the next customer in a few
+                  Ready for the next {personLabel} in a few
                   seconds.
                 </p>
               </>
@@ -464,7 +471,9 @@ playSuccessSound();
                 </p>
 
                 <h3 className="mt-2 text-2xl font-semibold">
-                  Unable to add stamp
+                  Unable to {isBarbershop
+                    ? "record visit"
+                    : "add stamp"}
                 </h3>
 
                 <p className="mt-3 max-w-md text-sm leading-6 opacity-60">
@@ -492,7 +501,7 @@ playSuccessSound();
         <p className="mt-2 text-xs leading-5 opacity-60">
           Configure the scanner to send Enter after each
           QR code. Keep this page open while serving
-          customers.
+          {" "}{isBarbershop ? "clients" : "customers"}.
         </p>
       </div>
     </div>

@@ -22,6 +22,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { getBusinessTerminology } from "@/lib/business/terminology";
+import { getBusinessThemeOptions } from "@/lib/cafe-theme";
 
 import BusinessTypeSelector from "./BusinessTypeSelector";
 import type { BusinessType } from "./studio-types";
@@ -29,29 +30,6 @@ import type { BusinessType } from "./studio-types";
 type Props = {
   onCreated: () => void;
 };
-
-const themes = [
-  {
-    value: "COFFEE_CLASSIC",
-    label: "Coffee Classic",
-  },
-  {
-    value: "MODERN_MINIMAL",
-    label: "Modern Minimal",
-  },
-  {
-    value: "DARK_LUXURY",
-    label: "Dark Luxury",
-  },
-  {
-    value: "MEDITERRANEAN_BLUE",
-    label: "Mediterranean Blue",
-  },
-  {
-    value: "ORGANIC",
-    label: "Organic",
-  },
-];
 
 const inputClassName =
   "h-12 w-full rounded-xl border border-black/[0.09] bg-white px-4 text-sm text-[#202124] outline-none transition placeholder:text-[#A0A1A6] hover:border-black/[0.15] focus:border-[#8B8F96] focus:ring-4 focus:ring-black/[0.035] disabled:cursor-not-allowed disabled:bg-[#F1F1F3] disabled:opacity-70";
@@ -100,6 +78,8 @@ export default function CreateCafeDialog({
     businessType === "BARBERSHOP"
       ? "Visits"
       : "Stamps";
+  const availableThemes =
+    getBusinessThemeOptions(businessType);
 
   function resetForm() {
     setBusinessType("CAFE");
@@ -545,7 +525,7 @@ export default function CreateCafeDialog({
                   disabled={loading}
                   className={inputClassName}
                 >
-                  {themes.map((themeOption) => (
+                  {availableThemes.map((themeOption) => (
                     <option
                       key={themeOption.value}
                       value={themeOption.value}

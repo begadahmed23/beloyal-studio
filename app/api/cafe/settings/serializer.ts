@@ -1,4 +1,5 @@
 import {
+  BusinessType,
   CafeTheme,
   Prisma,
   SubscriptionStatus,
@@ -8,6 +9,7 @@ export type CafeSettingsRecord = {
   id: string;
   name: string;
   slug: string;
+  businessType: BusinessType;
   logoUrl: string | null;
   theme: CafeTheme;
 
@@ -38,6 +40,7 @@ export function serializeCafeSettings(cafe: CafeSettingsRecord) {
     id: cafe.id,
     name: cafe.name,
     slug: cafe.slug,
+    businessType: cafe.businessType,
     logoUrl: cafe.logoUrl,
     theme: cafe.theme,
 

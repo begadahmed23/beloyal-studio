@@ -12,11 +12,13 @@ import {
   Link2,
   Pencil,
   Phone,
+  Scissors,
   Share2,
   Trash2,
 } from "lucide-react";
 
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
+import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 import {
   Dialog,
@@ -63,6 +65,10 @@ export default function MemberCard({
   customer: originalCustomer,
 }: Props) {
   const { theme, cafe } = useCafeTheme();
+  const isBarbershop = cafe.businessType === "BARBERSHOP";
+  const LoyaltyIcon = isBarbershop ? Scissors : Coffee;
+  const personLabel = isBarbershop ? "client" : "member";
+  const loyaltyUnit = isBarbershop ? "visit" : "stamp";
 
   const [customer, setCustomer] =
     useState<Customer>({
@@ -95,15 +101,7 @@ export default function MemberCard({
   const [loading, setLoading] =
     useState(false);
 
-  const rewardTarget = Math.max(
-    cafe.rewardTarget,
-    1,
-  );
-
-  const paidStampTarget = Math.max(
-    rewardTarget - 1,
-    1,
-  );
+  const paidStampTarget = getLoyaltyProgressTarget(cafe);
 
   const rewardReady =
     Boolean(customer.rewardEarnedAt) ||
@@ -170,7 +168,7 @@ export default function MemberCard({
     if (!cardUrl) {
       showMessage(
         "Card unavailable",
-        "This member does not have a secure card token yet.",
+        `This ${personLabel} does not have a secure card token yet.`,
       );
 
       return;
@@ -189,7 +187,7 @@ export default function MemberCard({
     if (!cardUrl) {
       showMessage(
         "Card unavailable",
-        "This member does not have a secure card token yet.",
+        `This ${personLabel} does not have a secure card token yet.`,
       );
 
       return;
@@ -202,7 +200,7 @@ export default function MemberCard({
 
       showMessage(
         "Link copied",
-        "The customer card link is ready to paste.",
+        `The ${personLabel} card link is ready to paste.`,
       );
     } catch (error) {
       console.error(error);
@@ -220,7 +218,7 @@ export default function MemberCard({
     if (!cardUrl) {
       showMessage(
         "Card unavailable",
-        "This member does not have a secure card token yet.",
+        `This ${personLabel} does not have a secure card token yet.`,
       );
 
       return;
@@ -261,7 +259,7 @@ export default function MemberCard({
 
       showMessage(
         "Share failed",
-        "The browser could not share the customer card.",
+        `The browser could not share the ${personLabel} card.`,
       );
     }
   }
@@ -310,7 +308,7 @@ export default function MemberCard({
           "message" in data &&
           data.message
             ? data.message
-            : "Failed to add stamp.",
+            : `Failed to record ${loyaltyUnit}.`,
         );
       }
 
@@ -328,14 +326,16 @@ export default function MemberCard({
       notifyDashboard();
 
       showMessage(
-        "Stamp added",
-        "The customer card was updated successfully.",
+        isBarbershop ? "Visit recorded" : "Stamp added",
+        `The ${personLabel} card was updated successfully.`,
       );
     } catch (error) {
       console.error(error);
 
       showMessage(
-        "Could not add stamp",
+        isBarbershop
+          ? "Could not record visit"
+          : "Could not add stamp",
         error instanceof Error
           ? error.message
           : "Something went wrong.",
@@ -455,7 +455,7 @@ export default function MemberCard({
       if (!response.ok) {
         throw new Error(
           data.message ||
-            "Failed to delete member.",
+            `Failed to delete ${personLabel}.`,
         );
       }
 
@@ -489,8 +489,8 @@ export default function MemberCard({
     notifyDashboard();
 
     showMessage(
-      "Member updated",
-      "The member details were saved successfully.",
+      isBarbershop ? "Client updated" : "Member updated",
+      `The ${personLabel} details were saved successfully.`,
     );
   }
 
@@ -623,7 +623,9 @@ export default function MemberCard({
             return (
               <div
                 key={index}
-                className="flex aspect-square items-center justify-center border"
+                className={`flex items-center justify-center border ${
+                  isBarbershop ? "h-16" : "aspect-square"
+                }`}
                 style={{
                   borderColor:
                     filled
@@ -639,7 +641,7 @@ export default function MemberCard({
                     "10px",
                 }}
               >
-                <Coffee
+                <LoyaltyIcon
                   size={15}
                   style={{
                     color: filled
@@ -842,7 +844,9 @@ export default function MemberCard({
                         theme.textPrimary,
                     }}
                   >
-                    Digital stamp card
+                    {isBarbershop
+                      ? "Digital visit card"
+                      : "Digital stamp card"}
                   </p>
 
                   <p
@@ -853,7 +857,9 @@ export default function MemberCard({
                     }}
                   >
                     {cafe.eligiblePurchaseDescription ||
-                      "One stamp for every eligible purchase"}
+                      (isBarbershop
+                        ? "One visit for every eligible service"
+                        : "One stamp for every eligible purchase")}
                   </p>
                 </div>
 
@@ -900,7 +906,9 @@ export default function MemberCard({
                         className="min-w-0 text-center"
                       >
                         <div
-                          className="flex aspect-square items-center justify-center border"
+                          className={`flex items-center justify-center border ${
+                            isBarbershop ? "h-20" : "aspect-square"
+                          }`}
                           style={{
                             borderColor:
                               filled
@@ -916,7 +924,7 @@ export default function MemberCard({
                               "12px",
                           }}
                         >
-                          <Coffee
+                          <LoyaltyIcon
                             size={20}
                             style={{
                               color:
@@ -925,9 +933,9 @@ export default function MemberCard({
                                   : theme.textMuted,
 
                               fill:
-                                filled
-                                  ? theme.accent
-                                  : "transparent",
+                                isBarbershop || !filled
+                                  ? "transparent"
+                                  : theme.accent,
                             }}
                           />
                         </div>
@@ -972,7 +980,7 @@ export default function MemberCard({
                     theme.textMuted,
                 }}
               >
-                Customer card
+                {isBarbershop ? "Client card" : "Customer card"}
               </p>
 
               <div className="grid grid-cols-3 gap-2">
@@ -1054,7 +1062,7 @@ export default function MemberCard({
                   }}
                 >
                   <Link2 size={14} />
-                  This member needs a
+                  This {personLabel} needs a
                   secure card token.
                 </div>
               )}
@@ -1097,11 +1105,15 @@ export default function MemberCard({
                     theme.radiusMedium,
                 }}
               >
-                <Coffee size={18} />
+                <LoyaltyIcon size={18} />
 
                 {loading
-                  ? "Adding Stamp..."
-                  : "Add Stamp"}
+                  ? isBarbershop
+                    ? "Recording Visit..."
+                    : "Adding Stamp..."
+                  : isBarbershop
+                    ? "Record Visit"
+                    : "Add Stamp"}
               </button>
             )}
           </div>
@@ -1213,7 +1225,7 @@ export default function MemberCard({
             </div>
 
             <AlertDialogTitle>
-              Delete member?
+              Delete {personLabel}?
             </AlertDialogTitle>
 
             <AlertDialogDescription
@@ -1232,8 +1244,8 @@ export default function MemberCard({
                 {customer.name}
               </strong>
               , their digital loyalty
-              card, and their complete
-              stamp history. This
+              card, and their complete{" "}
+              {isBarbershop ? "visit" : "stamp"} history. This
               cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -1260,7 +1272,7 @@ export default function MemberCard({
             >
               {loading
                 ? "Deleting..."
-                : "Delete Member"}
+                : `Delete ${isBarbershop ? "Client" : "Member"}`}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

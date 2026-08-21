@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
+import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 const MAX_REQUEST_BODY_BYTES = 500;
 
@@ -163,10 +164,10 @@ export async function POST(request: NextRequest) {
       1,
     );
 
-    const paidStampTarget = Math.max(
-      rewardTarget - 1,
-      1,
-    );
+    const paidStampTarget = getLoyaltyProgressTarget({
+      businessType: authData.cafe.businessType,
+      rewardTarget,
+    });
 
     const customer =
       await prisma.customer.findFirst({

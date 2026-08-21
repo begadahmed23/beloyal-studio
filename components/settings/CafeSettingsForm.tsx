@@ -10,6 +10,7 @@ import {
   Palette,
   RotateCcw,
   Save,
+  Scissors,
   Store,
   Trash2,
   UserRound,
@@ -26,7 +27,14 @@ import { useRouter } from "next/navigation";
 import {
   useCafeTheme,
 } from "@/components/theme/CafeThemeProvider";
-import { getCafeTheme, type CafeThemeConfig, type CafeThemeName } from "@/lib/cafe-theme";
+import {
+  getBusinessTheme,
+  getBusinessThemeColors,
+  getBusinessThemeOptions,
+  type BusinessThemeOption,
+  type CafeThemeConfig,
+  type CafeThemeName,
+} from "@/lib/cafe-theme";
 
 type Props = {
   accountEmail: string;
@@ -45,43 +53,6 @@ type FormState = {
 
   googleReviewUrl: string;
 };
-
-const themeOptions: Array<{
-  value: CafeThemeName;
-  label: string;
-  description: string;
-}> = [
-  {
-    value: "COFFEE_CLASSIC",
-    label: "Coffee Classic",
-    description:
-      "Warm cream and walnut tones for a timeless coffee-house atmosphere.",
-  },
-  {
-    value: "MODERN_MINIMAL",
-    label: "Modern Minimal",
-    description:
-      "Soft ivory, stone, and charcoal for bright contemporary cafés.",
-  },
-  {
-    value: "DARK_LUXURY",
-    label: "Dark Luxury",
-    description:
-      "Deep espresso and bronze for an intimate, high-end experience.",
-  },
-  {
-    value: "MEDITERRANEAN_BLUE",
-    label: "Mediterranean Blue",
-    description:
-      "Calm coastal blues, warm ivory, and an airy Mediterranean feeling.",
-  },
-  {
-    value: "ORGANIC",
-    label: "Organic",
-    description:
-      "Sage, oat, and natural tones for calm wellness-focused cafés.",
-  },
-];
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -120,6 +91,11 @@ export default function CafeSettingsForm({
   resetPreviewTheme,
   applySavedSettings,
 } = useCafeTheme();
+  const isBarbershop = cafe.businessType === "BARBERSHOP";
+  const themeOptions = getBusinessThemeOptions(
+    cafe.businessType,
+  );
+  const PreviewIcon = isBarbershop ? Scissors : Coffee;
 
   const createInitialState = (): FormState => ({
     name: cafe.name,
@@ -290,7 +266,7 @@ export default function CafeSettingsForm({
 
 function getThemeColors(theme: CafeThemeName) {
   const [primaryColor, secondaryColor, backgroundColor] =
-    getPreviewColors(theme);
+    getBusinessThemeColors(theme, cafe.businessType);
 
   return {
     primaryColor,
@@ -397,7 +373,9 @@ router.refresh();
               color: theme.textMuted,
             }}
           >
-            Café configuration
+            {isBarbershop
+              ? "Barbershop configuration"
+              : "Café configuration"}
           </p>
 
           <h2
@@ -504,13 +482,17 @@ router.refresh();
            theme={theme}
             icon={Store}
             title="General"
-            description="Basic information displayed throughout your café dashboard and customer loyalty card."
+            description={`Basic information displayed throughout your ${
+              isBarbershop ? "barbershop" : "café"
+            } dashboard and customer loyalty card.`}
           />
 
           <div className="mt-7 grid gap-5 lg:grid-cols-2">
             <Field
              theme={theme}
-              label="Café name"
+              label={
+                isBarbershop ? "Barbershop name" : "Café name"
+              }
               description="The business name shown to staff and customers."
             >
               <input
@@ -531,7 +513,9 @@ router.refresh();
 
             <Field
               theme={theme}
-              label="Café slug"
+              label={
+                isBarbershop ? "Barbershop slug" : "Café slug"
+              }
               description="The permanent identifier used by the platform."
             >
               <input
@@ -546,7 +530,9 @@ router.refresh();
             <div className="lg:col-span-2">
               <Field
               theme={theme}
-                label="Café logo"
+                label={
+                  isBarbershop ? "Barbershop logo" : "Café logo"
+                }
                 description="Upload a permanent PNG, JPG, or WebP logo up to 4 MB. You can also paste a direct image URL."
               >
                 <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
@@ -670,13 +656,18 @@ router.refresh();
               theme={theme}
             icon={Palette}
             title="Branding"
-            description="Choose the visual identity used across the café dashboard."
+            description={`Choose the visual identity used across the ${
+              isBarbershop ? "barbershop" : "café"
+            } dashboard and customer card.`}
           />
 
           <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {themeOptions.map((option) => {
               const selected = form.theme === option.value;
-              const previewTheme = getCafeTheme(option.value);
+              const previewTheme = getBusinessTheme(
+                option.value,
+                cafe.businessType,
+              );
 
               return (
                 <ThemePreviewOption
@@ -684,9 +675,25 @@ router.refresh();
                   option={option}
                   selected={selected}
                   previewTheme={previewTheme}
-                  cafeName={form.name || cafe.name || "Your café"}
-                  rewardTarget={Math.max(Number(form.rewardTarget) || 8, 1)}
-                  rewardName={form.rewardName || "Free drink"}
+                  cafeName={
+                    form.name ||
+                    cafe.name ||
+                    (isBarbershop
+                      ? "Your barbershop"
+                      : "Your café")
+                  }
+                  rewardTarget={Math.max(
+                    Number(form.rewardTarget) ||
+                      (isBarbershop ? 3 : 8),
+                    1,
+                  )}
+                  rewardName={
+                    form.rewardName ||
+                    (isBarbershop
+                      ? "Free haircut"
+                      : "Free drink")
+                  }
+                  isBarbershop={isBarbershop}
                   onSelect={() => selectTheme(option.value)}
                 />
               );
@@ -714,14 +721,22 @@ router.refresh();
               theme={theme}
             icon={Gift}
             title="Loyalty program"
-            description="Control how customers earn stamps and what they receive after completing their card."
+            description={
+              isBarbershop
+                ? "Control how clients earn visits and what they receive after completing their card."
+                : "Control how customers earn stamps and what they receive after completing their card."
+            }
           />
 
           <div className="mt-7 grid gap-5 lg:grid-cols-2">
             <Field
               theme={theme}
               label="Reward target"
-              description="The number of stamps required to complete a loyalty card."
+              description={
+                isBarbershop
+                  ? "The number of paid visits required to earn the free haircut."
+                  : "The number of stamps required to complete a loyalty card."
+              }
             >
               <input
                 type="number"
@@ -755,7 +770,9 @@ router.refresh();
                     event.target.value
                   )
                 }
-                placeholder="Free Drink"
+                placeholder={
+                  isBarbershop ? "Free Haircut" : "Free Drink"
+                }
                 maxLength={80}
                 required
                 className="h-12 w-full border px-4 text-sm outline-none"
@@ -786,8 +803,16 @@ router.refresh();
 
             <Field
               theme={theme}
-              label="Eligible purchase"
-              description="Explain which purchases receive a stamp."
+              label={
+                isBarbershop
+                  ? "Eligible service"
+                  : "Eligible purchase"
+              }
+              description={
+                isBarbershop
+                  ? "Explain which services count as a loyalty visit."
+                  : "Explain which purchases receive a stamp."
+              }
             >
               <textarea
                 value={
@@ -799,7 +824,11 @@ router.refresh();
                     event.target.value
                   )
                 }
-                placeholder="One stamp for every coffee purchase."
+                placeholder={
+                  isBarbershop
+                    ? "One visit for every paid haircut."
+                    : "One stamp for every coffee purchase."
+                }
                 maxLength={300}
                 rows={4}
                 className="w-full resize-none border px-4 py-3 text-sm outline-none"
@@ -809,8 +838,16 @@ router.refresh();
 
             <Field
               theme={theme}
-              label="Minimum purchase amount"
-              description="Optional minimum order amount needed to earn a stamp."
+              label={
+                isBarbershop
+                  ? "Minimum service amount"
+                  : "Minimum purchase amount"
+              }
+              description={
+                isBarbershop
+                  ? "Optional minimum service amount needed to record a visit."
+                  : "Optional minimum order amount needed to earn a stamp."
+              }
             >
               <div className="relative">
                 <input
@@ -862,7 +899,7 @@ router.refresh();
                       theme.radiusMedium,
                   }}
                 >
-                  <Coffee size={19} />
+                  <PreviewIcon size={19} />
                 </div>
 
                 <div>
@@ -872,7 +909,9 @@ router.refresh();
                       color: theme.textPrimary,
                     }}
                   >
-                    Customer preview
+                    {isBarbershop
+                      ? "Client preview"
+                      : "Customer preview"}
                   </p>
 
                   <p
@@ -882,7 +921,8 @@ router.refresh();
                     }}
                   >
                     Collect{" "}
-                    {form.rewardTarget || "0"} stamps
+                    {form.rewardTarget || "0"}{" "}
+                    {isBarbershop ? "visits" : "stamps"}{" "}
                     and receive:
                   </p>
 
@@ -909,14 +949,18 @@ router.refresh();
             theme={theme}
             icon={Star}
             title="Google Reviews"
-            description="Add your café’s Google review link. Customers can choose to open it after joining."
+            description={`Add your ${
+              isBarbershop ? "barbershop’s" : "café’s"
+            } Google review link. Customers can choose to open it after joining.`}
           />
 
           <div className="mt-7">
             <Field
               theme={theme}
               label="Google review URL"
-              description="Paste the direct Google review link for this café. Leave it empty to disable the review prompt."
+              description={`Paste the direct Google review link for this ${
+                isBarbershop ? "barbershop" : "café"
+              }. Leave it empty to disable the review prompt.`}
             >
               <input
                 type="url"
@@ -1024,7 +1068,7 @@ router.refresh();
 
 }
 
-type ThemeOption = (typeof themeOptions)[number];
+type ThemeOption = BusinessThemeOption;
 
 type ThemedComponentProps = {
   theme: CafeThemeConfig;
@@ -1037,6 +1081,7 @@ function ThemePreviewOption({
   cafeName,
   rewardTarget,
   rewardName,
+  isBarbershop,
   onSelect,
 }: {
   option: ThemeOption;
@@ -1045,10 +1090,17 @@ function ThemePreviewOption({
   cafeName: string;
   rewardTarget: number;
   rewardName: string;
+  isBarbershop: boolean;
   onSelect: () => void;
 }) {
-  const previewStampCount = Math.min(5, rewardTarget);
-  const visibleStampTotal = Math.min(Math.max(rewardTarget, 6), 8);
+  const previewStampCount = Math.min(
+    isBarbershop ? 2 : 5,
+    rewardTarget,
+  );
+  const visibleStampTotal = isBarbershop
+    ? Math.min(Math.max(rewardTarget, 1), 6)
+    : Math.min(Math.max(rewardTarget, 6), 8);
+  const LoyaltyIcon = isBarbershop ? Scissors : Coffee;
 
   return (
     <button
@@ -1100,7 +1152,9 @@ function ThemePreviewOption({
               className="truncate text-[10px] font-semibold uppercase tracking-[0.22em]"
               style={{ color: previewTheme.textMuted }}
             >
-              Digital loyalty card
+              {isBarbershop
+                ? "Barber loyalty card"
+                : "Digital loyalty card"}
             </p>
 
             <p
@@ -1111,7 +1165,11 @@ function ThemePreviewOption({
             </p>
           </div>
 
-          <div className="mt-7 grid grid-cols-4 gap-2">
+          <div
+            className={`mt-7 grid gap-2 ${
+              isBarbershop ? "grid-cols-3" : "grid-cols-4"
+            }`}
+          >
             {Array.from({ length: visibleStampTotal }).map((_, index) => {
               const filled = index < previewStampCount;
 
@@ -1129,13 +1187,16 @@ function ThemePreviewOption({
                     borderRadius: previewTheme.radiusMedium,
                   }}
                 >
-                  <Coffee
+                  <LoyaltyIcon
                     size={15}
                     style={{
                       color: filled
                         ? previewTheme.accent
                         : previewTheme.textMuted,
-                      fill: filled ? previewTheme.accent : "transparent",
+                      fill:
+                        isBarbershop || !filled
+                          ? "transparent"
+                          : previewTheme.accent,
                     }}
                   />
                 </span>
@@ -1300,41 +1361,4 @@ function withAlpha(color: string, alpha: string) {
   return /^[0-9a-fA-F]{6}$/.test(cleanColor)
     ? `#${cleanColor}${alpha}`
     : color;
-}
-
-function getPreviewColors(
-  themeName: CafeThemeName
-): [string, string, string] {
-  const colors: Record<
-    CafeThemeName,
-    [string, string, string]
-  > = {
-    COFFEE_CLASSIC: [
-      "#7b4f35",
-      "#6f4a35",
-      "#f3ede5",
-    ],
-    MODERN_MINIMAL: [
-      "#20201e",
-      "#77756e",
-      "#fffefa",
-    ],
-    DARK_LUXURY: [
-      "#b98552",
-      "#cba477",
-      "#0b0908",
-    ],
-    MEDITERRANEAN_BLUE: [
-      "#5f8994",
-      "#426c77",
-      "#eaf3f5",
-    ],
-    ORGANIC: [
-      "#758b64",
-      "#556849",
-      "#edf0e5",
-    ],
-  };
-
-  return colors[themeName];
 }

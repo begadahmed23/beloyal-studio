@@ -33,7 +33,13 @@ type Customer = {
 };
 
 export default function MemberList() {
-  const { theme } = useCafeTheme();
+  const { theme, cafe } = useCafeTheme();
+  const isBarbershop = cafe.businessType === "BARBERSHOP";
+  const personSingular = isBarbershop ? "client" : "member";
+  const personPlural = isBarbershop ? "clients" : "members";
+  const activityLabel = isBarbershop
+    ? "recently visited"
+    : "recently stamped";
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
@@ -66,7 +72,7 @@ export default function MemberList() {
             data = JSON.parse(responseText);
           } catch {
             throw new Error(
-              "The members API returned an invalid response."
+              `The ${personPlural} API returned an invalid response.`
             );
           }
         }
@@ -75,12 +81,12 @@ export default function MemberList() {
           throw new Error(
             !Array.isArray(data) && data.message
               ? data.message
-              : "Failed to load members."
+              : `Failed to load ${personPlural}.`
           );
         }
 
         if (!Array.isArray(data)) {
-          throw new Error("Invalid member list response.");
+          throw new Error(`Invalid ${personSingular} list response.`);
         }
 
         setCustomers(data);
@@ -90,14 +96,14 @@ export default function MemberList() {
         setError(
           error instanceof Error
             ? error.message
-            : "Failed to load members."
+            : `Failed to load ${personPlural}.`
         );
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    []
+    [personPlural, personSingular]
   );
 
   useEffect(() => {
@@ -176,7 +182,7 @@ export default function MemberList() {
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search by name, phone, or member number"
+          placeholder={`Search by name, phone, or ${personSingular} number`}
           className="h-full w-full bg-transparent text-sm outline-none"
           style={{
             color: theme.textPrimary,
@@ -207,7 +213,9 @@ export default function MemberList() {
               color: theme.textSecondary,
             }}
           >
-            {search ? "Search results" : "Recent members"}
+            {search
+              ? "Search results"
+              : `Recent ${personPlural}`}
           </h3>
 
           <p
@@ -217,10 +225,10 @@ export default function MemberList() {
             }}
           >
             {search
-              ? "Showing members that match your search."
+              ? `Showing ${personPlural} that match your search.`
               : sortBy === "recently-stamped"
-                ? "The most recently stamped members appear first."
-                : "The newest loyalty members appear first."}
+                ? `The most ${activityLabel} ${personPlural} appear first.`
+                : `The newest loyalty ${personPlural} appear first.`}
           </p>
         </div>
 
@@ -252,8 +260,8 @@ export default function MemberList() {
               }
               aria-label={`Sort by ${
                 sortBy === "newest"
-                  ? "recently stamped"
-                  : "newest members"
+                  ? activityLabel
+                  : `newest ${personPlural}`
               }`}
               className="flex h-9 items-center gap-2 border px-3 text-xs font-medium transition hover:opacity-80"
               style={{
@@ -266,7 +274,9 @@ export default function MemberList() {
               <ArrowDownUp size={14} />
               {sortBy === "newest"
                 ? "Newest"
-                : "Recently stamped"}
+                : isBarbershop
+                  ? "Recent visits"
+                  : "Recently stamped"}
             </button>
           )}
 
@@ -284,8 +294,8 @@ export default function MemberList() {
 
               {filteredCustomers.length}{" "}
               {filteredCustomers.length === 1
-                ? "member"
-                : "members"}
+                ? personSingular
+                : personPlural}
             </div>
           )}
         </div>
@@ -316,7 +326,7 @@ export default function MemberList() {
                 color: theme.textMuted,
               }}
             >
-              Loading members...
+              Loading {personPlural}...
             </p>
           </div>
         </div>
@@ -345,7 +355,7 @@ export default function MemberList() {
               color: theme.textPrimary,
             }}
           >
-            Members could not load
+            {isBarbershop ? "Clients" : "Members"} could not load
           </p>
 
           <p
@@ -402,8 +412,8 @@ export default function MemberList() {
               }}
             >
               {search
-                ? "No matching members"
-                : "No members yet"}
+                ? `No matching ${personPlural}`
+                : `No ${personPlural} yet`}
             </p>
 
             <p
@@ -413,8 +423,8 @@ export default function MemberList() {
               }}
             >
               {search
-                ? "Try another name, phone number, or member number."
-                : "Create the first member to start the loyalty program."}
+                ? `Try another name, phone number, or ${personSingular} number.`
+                : `Create the first ${personSingular} to start the loyalty program.`}
             </p>
           </div>
         )}

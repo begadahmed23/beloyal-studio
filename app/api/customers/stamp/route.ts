@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
+import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 const MAX_REQUEST_BODY_BYTES = 500;
 const STAMP_COOLDOWN_MS = 5_000;
@@ -223,10 +224,13 @@ export async function POST(request: NextRequest) {
       1,
     );
 
-    const paidStampTarget = Math.max(
-      rewardTarget - 1,
-      1,
-    );
+    const paidStampTarget = getLoyaltyProgressTarget({
+      businessType: authData.cafe.businessType,
+      rewardTarget,
+    });
+    const isBarbershop =
+      authData.cafe.businessType === "BARBERSHOP";
+    const loyaltyUnit = isBarbershop ? "visit" : "stamp";
 
     for (
       let attempt = 0;
@@ -376,7 +380,9 @@ export async function POST(request: NextRequest) {
                   customerId: currentCustomer.id,
                   userId: authData.user.id,
                   type: "ADD",
-                  description: "Drink stamp added",
+                  description: isBarbershop
+                    ? "Barbershop visit recorded"
+                    : "Drink stamp added",
                 },
                 select: {
                   createdAt: true,
@@ -435,7 +441,7 @@ export async function POST(request: NextRequest) {
             {
               message: `Please wait ${retryAfterSeconds} second${
                 retryAfterSeconds === 1 ? "" : "s"
-              } before adding another stamp.`,
+              } before recording another ${loyaltyUnit}.`,
               cooldown: true,
               retryAfterMs: result.retryAfterMs,
             },
@@ -480,7 +486,9 @@ export async function POST(request: NextRequest) {
             ? `${
                 authData.cafe.rewardName || "Reward"
               } is now ready.`
-            : "Stamp added successfully.",
+            : isBarbershop
+              ? "Visit recorded successfully."
+              : "Stamp added successfully.",
         });
       } catch (error) {
         if (
@@ -499,7 +507,7 @@ export async function POST(request: NextRequest) {
     return jsonResponse(
       {
         message:
-          "The stamp could not be added safely. Please try again.",
+          `The ${loyaltyUnit} could not be recorded safely. Please try again.`,
       },
       409,
     );
@@ -508,7 +516,9 @@ export async function POST(request: NextRequest) {
 
     return jsonResponse(
       {
-        message: "Failed to add stamp.",
+        message: authData.cafe.businessType === "BARBERSHOP"
+          ? "Failed to record visit."
+          : "Failed to add stamp.",
       },
       500,
     );
