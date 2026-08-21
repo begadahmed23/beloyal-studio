@@ -68,7 +68,7 @@ export default function StudioPage() {
             </h1>
 
             <p className="mt-4 max-w-2xl text-sm leading-6 text-[#68686F] sm:text-base">
-              Manage café accounts, subscriptions, customer
+              Manage business accounts, subscriptions, customer
               activity, and platform performance from one place.
             </p>
           </div>

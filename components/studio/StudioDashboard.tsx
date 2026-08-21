@@ -23,70 +23,17 @@ import {
   Search,
   TriangleAlert,
   TrendingUp,
+  UserPlus,
   Users,
   X,
 } from "lucide-react";
 
 import CreateCafeDialog from "@/components/studio/CreateCafeDialog";
-
-type SubscriptionStatus =
-  | "TRIAL"
-  | "ACTIVE"
-  | "PAST_DUE"
-  | "SUSPENDED"
-  | "CANCELLED";
-
-type Cafe = {
-  id: string;
-  name: string;
-  slug: string;
-  logoUrl: string | null;
-  theme: string;
-  primaryColor: string;
-  secondaryColor: string;
-  backgroundColor: string;
-
-  rewardTarget: number;
-  rewardName: string;
-
-  subscriptionStatus: SubscriptionStatus;
-  trialStartedAt: string | null;
-  trialEndsAt: string | null;
-  subscriptionStartedAt: string | null;
-  subscriptionEndsAt: string | null;
-  lastPaymentAt: string | null;
-
-  monthlyPrice: number;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  } | null;
-
-  _count: {
-    customers: number;
-    transactions: number;
-  };
-};
-
-type Summary = {
-  totalCafes: number;
-  activeCafes: number;
-  trialCafes: number;
-  suspendedCafes: number;
-  pastDueCafes: number;
-  monthlyRevenue: number;
-  expectedRevenue: number;
-};
-
-type ApiResponse = {
-  cafes: Cafe[];
-  summary: Summary;
-};
+import type {
+  StudioApiResponse,
+  StudioBusiness,
+  SubscriptionStatus,
+} from "@/components/studio/studio-types";
 
 type StatusFilter =
   | "ALL"
@@ -167,7 +114,9 @@ function getStatusLabel(
   return status;
 }
 
-function getEffectiveStatus(cafe: Cafe): SubscriptionStatus {
+function getEffectiveStatus(
+  cafe: StudioBusiness,
+): SubscriptionStatus {
   if (!cafe.isActive || cafe.subscriptionStatus === "SUSPENDED") {
     return "SUSPENDED";
   }
@@ -198,7 +147,7 @@ function getStatusStyles(
   return "border-zinc-200 bg-zinc-100 text-zinc-600";
 }
 
-function getExpiryText(cafe: Cafe) {
+function getExpiryText(cafe: StudioBusiness) {
   const expiryDate =
     cafe.subscriptionStatus === "TRIAL"
       ? cafe.trialEndsAt
@@ -224,7 +173,8 @@ function getExpiryText(cafe: Cafe) {
 }
 
 export default function StudioDashboard() {
-  const [data, setData] = useState<ApiResponse | null>(null);
+  const [data, setData] =
+    useState<StudioApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -250,7 +200,7 @@ export default function StudioDashboard() {
 
         const responseText = await response.text();
 
-        let responseData: Partial<ApiResponse> & {
+        let responseData: Partial<StudioApiResponse> & {
           message?: string;
         } = {};
 
@@ -270,7 +220,7 @@ export default function StudioDashboard() {
           );
         }
 
-        setData(responseData as ApiResponse);
+        setData(responseData as StudioApiResponse);
       } catch (error) {
         console.error("Studio load error:", error);
 
@@ -295,7 +245,6 @@ export default function StudioDashboard() {
     if (!data) {
       return {
         totalMembers: 0,
-        totalTransactions: 0,
         conversionRate: 0,
         revenueGap: 0,
       };
@@ -303,11 +252,6 @@ export default function StudioDashboard() {
 
     const totalMembers = data.cafes.reduce(
       (total, cafe) => total + cafe._count.customers,
-      0,
-    );
-
-    const totalTransactions = data.cafes.reduce(
-      (total, cafe) => total + cafe._count.transactions,
       0,
     );
 
@@ -322,7 +266,6 @@ export default function StudioDashboard() {
 
     return {
       totalMembers,
-      totalTransactions,
       conversionRate,
       revenueGap: Math.max(
         data.summary.expectedRevenue -
@@ -339,8 +282,8 @@ export default function StudioDashboard() {
 
     return [
       {
-        label: "Total cafés",
-        helper: `${data.summary.trialCafes} currently on trial`,
+        label: "Total businesses",
+        helper: `${data.summary.cafeCount} cafés · ${data.summary.barbershopCount} barbershops`,
         value: formatCompactNumber(data.summary.totalCafes),
         icon: Building2,
         iconClass:
@@ -348,7 +291,7 @@ export default function StudioDashboard() {
       },
       {
         label: "Paid conversion",
-        helper: `${data.summary.activeCafes} active of ${data.summary.totalCafes} cafés`,
+        helper: `${data.summary.activeCafes} active of ${data.summary.totalCafes} businesses`,
         value: `${platformStats.conversionRate}%`,
         icon: TrendingUp,
         iconClass:
@@ -356,9 +299,9 @@ export default function StudioDashboard() {
       },
       {
         label: "Total members",
-        helper: `${formatCompactNumber(
-          platformStats.totalTransactions,
-        )} loyalty transactions recorded`,
+        helper: `+${formatCompactNumber(
+          data.summary.newMembersThisMonth,
+        )} new this month`,
         value: formatCompactNumber(platformStats.totalMembers),
         icon: Users,
         iconClass:
@@ -366,8 +309,8 @@ export default function StudioDashboard() {
       },
       {
         label: "Monthly revenue",
-        helper: `${data.summary.activeCafes} active paid café${
-          data.summary.activeCafes === 1 ? "" : "s"
+        helper: `${data.summary.activeCafes} active paid business${
+          data.summary.activeCafes === 1 ? "" : "es"
         }`,
         value: formatMoney(data.summary.monthlyRevenue),
         icon: CircleDollarSign,
@@ -396,6 +339,7 @@ export default function StudioDashboard() {
       const searchableContent = [
         cafe.name,
         cafe.slug,
+        cafe.businessType,
         cafe.user?.name,
         cafe.user?.email,
       ]
@@ -525,7 +469,7 @@ export default function StudioDashboard() {
             </h2>
 
             <p className="mt-3 max-w-xl text-sm leading-6 text-[#68686F]">
-              Monitor café accounts, subscriptions, members,
+              Monitor business accounts, subscriptions, members,
               activity, and platform revenue.
             </p>
           </div>
@@ -666,8 +610,10 @@ export default function StudioDashboard() {
             </span>
 
             <span className="text-sm font-semibold text-[#343438]">
-              {data.summary.activeCafes} café
-              {data.summary.activeCafes === 1 ? "" : "s"}
+              {data.summary.activeCafes}{" "}
+              {data.summary.activeCafes === 1
+                ? "business"
+                : "businesses"}
             </span>
           </div>
         </article>
@@ -728,7 +674,7 @@ export default function StudioDashboard() {
                   </p>
 
                   <p className="mt-0.5 text-xs text-red-200/50">
-                    Café access disabled
+                    Business access disabled
                   </p>
                 </div>
               </div>
@@ -768,15 +714,15 @@ export default function StudioDashboard() {
           <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.17em] text-[#8A8A91]">
-                Café directory
+                Business directory
               </p>
 
               <h2 className="mt-2 text-xl font-semibold tracking-tight text-[#171719]">
-                All café accounts
+                All business accounts
               </h2>
 
               <p className="mt-2 text-sm text-[#68686F]">
-                Search, inspect, and manage every café on
+                Search, inspect, and manage every business on
                 BeLoyal.
               </p>
             </div>
@@ -794,7 +740,7 @@ export default function StudioDashboard() {
                   onChange={(event) =>
                     setSearchQuery(event.target.value)
                   }
-                  placeholder="Search café, owner, or email"
+                  placeholder="Search business, owner, or email"
                   className="h-11 w-full rounded-xl border border-black/[0.09] bg-[#F7F7F8] pl-10 pr-10 text-sm text-[#171719] outline-none transition placeholder:text-[#A0A0A7] focus:border-slate-400 focus:ring-2 focus:ring-slate-300/40"
                 />
 
@@ -869,7 +815,7 @@ export default function StudioDashboard() {
               <span className="font-medium text-[#343438]">
                 {data.cafes.length}
               </span>{" "}
-              cafés
+              businesses
             </p>
 
             {hasFilters && (
@@ -892,11 +838,11 @@ export default function StudioDashboard() {
             </div>
 
             <p className="mt-5 font-medium text-[#343438]">
-              No cafés yet
+              No businesses yet
             </p>
 
             <p className="mt-2 text-sm text-[#8A8A91]">
-              Create your first café account to begin.
+              Create your first business account to begin.
             </p>
           </div>
         ) : filteredCafes.length === 0 ? (
@@ -907,7 +853,7 @@ export default function StudioDashboard() {
             />
 
             <p className="mt-4 font-medium text-[#343438]">
-              No matching cafés
+              No matching businesses
             </p>
 
             <p className="mt-2 text-sm text-[#8A8A91]">
@@ -958,6 +904,12 @@ export default function StudioDashboard() {
                           {cafe.name}
                         </h3>
 
+                        <span className="shrink-0 rounded-full border border-black/[0.07] bg-[#F3F4F6] px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#77777E]">
+                          {cafe.businessType === "BARBERSHOP"
+                            ? "Barber"
+                            : "Café"}
+                        </span>
+
                         <span
                           className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold tracking-wide ${getStatusStyles(
                             cafe.subscriptionStatus,
@@ -1000,16 +952,16 @@ export default function StudioDashboard() {
 
                     <div>
                       <p className="text-[11px] font-medium uppercase tracking-wide text-[#A0A0A7]">
-                        Activity
+                        New this month
                       </p>
 
                       <p className="mt-2 flex items-center gap-2 text-sm font-medium text-[#343438]">
-                        <Activity
+                        <UserPlus
                           size={14}
-                          className="text-[#8A8A91]"
+                          className="text-emerald-500"
                         />
-                        {formatCompactNumber(
-                          cafe._count.transactions,
+                        +{formatCompactNumber(
+                          cafe.newCustomersThisMonth,
                         )}
                       </p>
                     </div>

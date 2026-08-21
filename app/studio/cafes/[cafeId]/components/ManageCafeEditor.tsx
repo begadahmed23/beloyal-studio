@@ -13,7 +13,6 @@ import {
   LoaderCircle,
   Palette,
   Save,
-  ShieldCheck,
   Star,
   Trash2,
   TriangleAlert,
@@ -27,19 +26,17 @@ import {
 } from "react";
 
 import PasswordSection from "./PasswordSection";
+import SubscriptionControlPanel, {
+  type SubscriptionDraft,
+  type SubscriptionStatus,
+} from "./SubscriptionControlPanel";
+
 type CafeTheme =
   | "COFFEE_CLASSIC"
   | "MODERN_MINIMAL"
   | "DARK_LUXURY"
   | "MEDITERRANEAN_BLUE"
   | "ORGANIC";
-
-type SubscriptionStatus =
-  | "TRIAL"
-  | "ACTIVE"
-  | "PAST_DUE"
-  | "SUSPENDED"
-  | "CANCELLED";
 
 type Cafe = {
   id: string;
@@ -134,32 +131,6 @@ const themes: {
   {
     value: "ORGANIC",
     label: "Organic",
-  },
-];
-
-const subscriptionStatuses: {
-  value: SubscriptionStatus;
-  label: string;
-}[] = [
-  {
-    value: "TRIAL",
-    label: "Trial",
-  },
-  {
-    value: "ACTIVE",
-    label: "Active",
-  },
-  {
-    value: "PAST_DUE",
-    label: "Past due",
-  },
-  {
-    value: "SUSPENDED",
-    label: "Suspended",
-  },
-  {
-    value: "CANCELLED",
-    label: "Cancelled",
   },
 ];
 
@@ -307,6 +278,44 @@ export default function ManageCafeEditor() {
     useState("");
 
   const [isActive, setIsActive] = useState(true);
+
+  function updateSubscription(
+    patch: Partial<SubscriptionDraft>
+  ) {
+    if (patch.subscriptionStatus !== undefined) {
+      setSubscriptionStatus(patch.subscriptionStatus);
+    }
+
+    if (patch.monthlyPrice !== undefined) {
+      setMonthlyPrice(patch.monthlyPrice);
+    }
+
+    if (patch.isActive !== undefined) {
+      setIsActive(patch.isActive);
+    }
+
+    if (patch.trialStartedAt !== undefined) {
+      setTrialStartedAt(patch.trialStartedAt);
+    }
+
+    if (patch.trialEndsAt !== undefined) {
+      setTrialEndsAt(patch.trialEndsAt);
+    }
+
+    if (patch.subscriptionStartedAt !== undefined) {
+      setSubscriptionStartedAt(
+        patch.subscriptionStartedAt
+      );
+    }
+
+    if (patch.subscriptionEndsAt !== undefined) {
+      setSubscriptionEndsAt(patch.subscriptionEndsAt);
+    }
+
+    if (patch.lastPaymentAt !== undefined) {
+      setLastPaymentAt(patch.lastPaymentAt);
+    }
+  }
 
   function fillForm(nextCafe: Cafe) {
     setCafe(nextCafe);
@@ -906,109 +915,23 @@ export default function ManageCafeEditor() {
       <FormSection
         icon={CreditCard}
         title="Subscription"
-        description="Control the café subscription and dates."
+        description="Manage billing with simple actions. Dates are calculated automatically."
       >
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <SelectField
-            label="Subscription status"
-            value={subscriptionStatus}
-            onChange={(value) =>
-              setSubscriptionStatus(
-                value as SubscriptionStatus
-              )
-            }
-            options={subscriptionStatuses}
-          />
-
-          <Field
-            type="number"
-            label="Monthly price"
-            value={monthlyPrice}
-            onChange={setMonthlyPrice}
-            min={0}
-          />
-
-          <ToggleField
-            label="Café active"
-            description="Inactive cafés remain in the database."
-            checked={isActive}
-            onChange={setIsActive}
-          />
-
-          <DateField
-            label="Trial started"
-            value={trialStartedAt}
-            onChange={setTrialStartedAt}
-          />
-
-          <DateField
-            label="Trial ends"
-            value={trialEndsAt}
-            onChange={setTrialEndsAt}
-          />
-
-          <DateField
-            label="Last payment"
-            value={lastPaymentAt}
-            onChange={setLastPaymentAt}
-          />
-
-          <DateField
-            label="Subscription started"
-            value={subscriptionStartedAt}
-            onChange={setSubscriptionStartedAt}
-          />
-
-          <DateField
-            label="Subscription ends"
-            value={subscriptionEndsAt}
-            onChange={setSubscriptionEndsAt}
-          />
-        </div>
+        <SubscriptionControlPanel
+          value={{
+            subscriptionStatus,
+            monthlyPrice,
+            isActive,
+            trialStartedAt,
+            trialEndsAt,
+            subscriptionStartedAt,
+            subscriptionEndsAt,
+            lastPaymentAt,
+          }}
+          saving={saving}
+          onChange={updateSubscription}
+        />
       </FormSection>
-
-      <section className="rounded-[28px] border border-black/[0.07] bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.055)]">
-        <div className="flex items-start gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-black/[0.07] bg-gradient-to-br from-white to-[#E4E6EA] text-[#4E5055] shadow-sm">
-            <ShieldCheck size={20} />
-          </div>
-
-          <div>
-            <h2 className="text-lg font-semibold text-[#171719]">
-              Current account state
-            </h2>
-
-            <p className="mt-1 text-sm text-[#77777E]">
-              These values come directly from the
-              existing café database record.
-            </p>
-
-            <div className="mt-5 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
-              <InfoItem
-                label="Status"
-                value={cafe.subscriptionStatus}
-              />
-
-              <InfoItem
-                label="Trial expiry"
-                value={formatDate(cafe.trialEndsAt)}
-              />
-
-              <InfoItem
-                label="Subscription expiry"
-                value={formatDate(
-                  cafe.subscriptionEndsAt
-                )}
-              />
-
-              <InfoItem
-                label="Last updated"
-                value={formatDate(cafe.updatedAt)}
-              />
-            </div>
-          </div>
-        </div>
-      </section>
 
       <section className="rounded-[28px] border border-red-200 bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.055)]">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
@@ -1391,26 +1314,6 @@ function Field({
   );
 }
 
-function DateField({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <Field
-      type="date"
-      label={label}
-      value={value}
-      onChange={onChange}
-      required={false}
-    />
-  );
-}
-
 function TextAreaField({
   label,
   value,
@@ -1514,68 +1417,6 @@ function ColorField({
           className="min-w-0 flex-1 bg-transparent text-sm text-[#171719] outline-none"
         />
       </div>
-    </div>
-  );
-}
-
-function ToggleField({
-  label,
-  description,
-  checked,
-  onChange,
-}: {
-  label: string;
-  description: string;
-  checked: boolean;
-  onChange: (value: boolean) => void;
-}) {
-  return (
-    <div className="flex min-h-12 items-center justify-between gap-4 rounded-xl border border-black/[0.09] bg-[#FAFAFB] px-4 py-3">
-      <div>
-        <p className="text-sm font-medium text-[#171719]">
-          {label}
-        </p>
-
-        <p className="mt-1 text-xs text-[#77777E]">
-          {description}
-        </p>
-      </div>
-
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
-        className={`relative h-7 w-12 shrink-0 rounded-full transition ${
-          checked ? "bg-[#242426]" : "bg-[#C7C8CC]"
-        }`}
-      >
-        <span
-          className={`absolute top-1 h-5 w-5 rounded-full bg-white transition ${
-            checked ? "left-6" : "left-1"
-          }`}
-        />
-      </button>
-    </div>
-  );
-}
-
-function InfoItem({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div>
-      <p className="text-xs text-[#8A8A91]">
-        {label}
-      </p>
-
-      <p className="mt-1 font-medium text-[#45454A]">
-        {value}
-      </p>
     </div>
   );
 }
