@@ -42,7 +42,7 @@ type ScanResult = {
 
 const SCANNER_ELEMENT_ID = "phone-qr-reader";
 const SAME_CUSTOMER_COOLDOWN = 5000;
-const RESULT_DISPLAY_TIME = 7000; // 7 seconds
+const RESULT_DISPLAY_TIME = 7000;
 
 function playSuccessSound() {
   try {
@@ -83,7 +83,9 @@ function playSuccessSound() {
     gainNode.connect(audioContext.destination);
 
     oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.18);
+    oscillator.stop(
+      audioContext.currentTime + 0.18
+    );
 
     oscillator.onended = () => {
       audioContext.close();
@@ -95,8 +97,14 @@ function playSuccessSound() {
 
 export default function PhoneScannerPage() {
   const { cafe } = useCafeTheme();
-  const isBarbershop = cafe.businessType === "BARBERSHOP";
-  const personLabel = isBarbershop ? "client" : "customer";
+
+  const isBarbershop =
+    cafe.businessType === "BARBERSHOP";
+
+  const personLabel = isBarbershop
+    ? "client"
+    : "customer";
+
   const scannerRef = useRef<
     import("html5-qrcode").Html5Qrcode | null
   >(null);
@@ -109,7 +117,9 @@ export default function PhoneScannerPage() {
   } | null>(null);
 
   const resetTimeoutRef =
-    useRef<ReturnType<typeof setTimeout> | null>(null);
+    useRef<ReturnType<typeof setTimeout> | null>(
+      null
+    );
 
   const [status, setStatus] =
     useState<ScannerStatus>("starting");
@@ -137,7 +147,8 @@ export default function PhoneScannerPage() {
 
       if (
         lastScanRef.current &&
-        lastScanRef.current.token === cleanedValue &&
+        lastScanRef.current.token ===
+          cleanedValue &&
         now - lastScanRef.current.time <
           SAME_CUSTOMER_COOLDOWN
       ) {
@@ -170,11 +181,16 @@ export default function PhoneScannerPage() {
         if (!response.ok) {
           throw new Error(
             data.message ||
-              `The ${isBarbershop ? "visit" : "stamp"} could not be recorded.`
+              `The ${
+                isBarbershop
+                  ? "visit"
+                  : "stamp"
+              } could not be recorded.`
           );
         }
 
-        const scanResult = data as ScanResult;
+        const scanResult =
+          data as ScanResult;
 
         lastScanRef.current = {
           token: cleanedValue,
@@ -191,11 +207,12 @@ export default function PhoneScannerPage() {
 
         playSuccessSound();
 
-        resetTimeoutRef.current = setTimeout(
-          async () => {
+        resetTimeoutRef.current =
+          setTimeout(async () => {
             setResult(null);
             setError("");
             setStatus("scanning");
+
             processingRef.current = false;
 
             try {
@@ -206,9 +223,7 @@ export default function PhoneScannerPage() {
                 resumeError
               );
             }
-          },
-          RESULT_DISPLAY_TIME
-        );
+          }, RESULT_DISPLAY_TIME);
       } catch (scanError) {
         console.error(
           "Phone scanner processing error:",
@@ -220,13 +235,18 @@ export default function PhoneScannerPage() {
         setError(
           scanError instanceof Error
             ? scanError.message
-            : `The ${isBarbershop ? "visit" : "stamp"} could not be recorded.`
+            : `The ${
+                isBarbershop
+                  ? "visit"
+                  : "stamp"
+              } could not be recorded.`
         );
 
-        resetTimeoutRef.current = setTimeout(
-          () => {
+        resetTimeoutRef.current =
+          setTimeout(() => {
             setStatus("scanning");
             setError("");
+
             processingRef.current = false;
 
             try {
@@ -237,9 +257,7 @@ export default function PhoneScannerPage() {
                 resumeError
               );
             }
-          },
-          RESULT_DISPLAY_TIME
-        );
+          }, RESULT_DISPLAY_TIME);
       }
     },
     [isBarbershop]
@@ -259,43 +277,49 @@ export default function PhoneScannerPage() {
           return;
         }
 
-        const scanner = new Html5Qrcode(
-  SCANNER_ELEMENT_ID,
-  {
-    verbose: false,
-    formatsToSupport: [
-      Html5QrcodeSupportedFormats.QR_CODE,
-    ],
-    useBarCodeDetectorIfSupported: true,
-  }
-);
+        const scanner =
+          new Html5Qrcode(
+            SCANNER_ELEMENT_ID,
+            {
+              verbose: false,
+              formatsToSupport: [
+                Html5QrcodeSupportedFormats.QR_CODE,
+              ],
+              useBarCodeDetectorIfSupported:
+                true,
+            }
+          );
 
         scannerRef.current = scanner;
 
-       await scanner.start(
-  {
-    facingMode: "environment",
-  },
+        await scanner.start(
+          {
+            facingMode: "environment",
+          },
           {
             fps: 10,
+
             qrbox: (
               viewfinderWidth,
               viewfinderHeight
             ) => {
-              const smallestSide = Math.min(
-                viewfinderWidth,
-                viewfinderHeight
-              );
+              const smallestSide =
+                Math.min(
+                  viewfinderWidth,
+                  viewfinderHeight
+                );
 
-              const boxSize = Math.floor(
-                smallestSide * 0.72
-              );
+              const boxSize =
+                Math.floor(
+                  smallestSide * 0.72
+                );
 
               return {
                 width: boxSize,
                 height: boxSize,
               };
             },
+
             aspectRatio: 1,
           },
           (decodedText) => {
@@ -317,9 +341,33 @@ export default function PhoneScannerPage() {
 
         if (isMounted) {
           setStatus("error");
-          setError(
-            "Camera access failed. Allow camera permission and open this page using HTTPS."
-          );
+
+          let errorMessage =
+            "Camera could not start.";
+
+          if (
+            scannerError instanceof Error
+          ) {
+            errorMessage = `${scannerError.name}: ${scannerError.message}`;
+          } else if (
+            typeof scannerError ===
+            "string"
+          ) {
+            errorMessage =
+              scannerError;
+          } else {
+            try {
+              errorMessage =
+                JSON.stringify(
+                  scannerError
+                );
+            } catch {
+              errorMessage =
+                String(scannerError);
+            }
+          }
+
+          setError(errorMessage);
         }
       }
     }
@@ -329,11 +377,16 @@ export default function PhoneScannerPage() {
     return () => {
       isMounted = false;
 
-      if (resetTimeoutRef.current) {
-        clearTimeout(resetTimeoutRef.current);
+      if (
+        resetTimeoutRef.current
+      ) {
+        clearTimeout(
+          resetTimeoutRef.current
+        );
       }
 
-      const scanner = scannerRef.current;
+      const scanner =
+        scannerRef.current;
 
       if (scanner) {
         scanner
@@ -366,8 +419,9 @@ export default function PhoneScannerPage() {
         </h2>
 
         <p className="mt-2 text-sm leading-6 opacity-60">
-          Point the phone camera at the {personLabel}&apos;s
-          BeLoyal QR code.
+          Point the phone camera at the{" "}
+          {personLabel}&apos;s BeLoyal QR
+          code.
         </p>
       </div>
 
@@ -380,7 +434,8 @@ export default function PhoneScannerPage() {
 
           {status !== "scanning" && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/85 p-6 text-center text-white">
-              {status === "starting" && (
+              {status ===
+                "starting" && (
                 <div>
                   <LoaderCircle
                     size={42}
@@ -392,12 +447,15 @@ export default function PhoneScannerPage() {
                   </h3>
 
                   <p className="mt-2 text-sm text-white/60">
-                    Allow camera permission when asked.
+                    Allow camera
+                    permission when
+                    asked.
                   </p>
                 </div>
               )}
 
-              {status === "processing" && (
+              {status ===
+                "processing" && (
                 <div>
                   <LoaderCircle
                     size={42}
@@ -405,58 +463,80 @@ export default function PhoneScannerPage() {
                   />
 
                   <h3 className="mt-5 text-xl font-semibold">
-                    {isBarbershop ? "Recording visit" : "Adding stamp"}
+                    {isBarbershop
+                      ? "Recording visit"
+                      : "Adding stamp"}
                   </h3>
                 </div>
               )}
 
-              {status === "success" && result && (
-                <div>
-                  <CheckCircle2
-                    size={54}
-                    className="mx-auto text-emerald-400"
-                  />
+              {status ===
+                "success" &&
+                result && (
+                  <div>
+                    <CheckCircle2
+                      size={54}
+                      className="mx-auto text-emerald-400"
+                    />
 
-                  <p className="mt-5 text-sm font-medium text-emerald-400">
-                    {isBarbershop ? "Visit recorded" : "Stamp added"}
-                  </p>
+                    <p className="mt-5 text-sm font-medium text-emerald-400">
+                      {isBarbershop
+                        ? "Visit recorded"
+                        : "Stamp added"}
+                    </p>
 
-                  <h3 className="mt-2 text-3xl font-semibold">
-                    {result.customer.name}
-                  </h3>
+                    <h3 className="mt-2 text-3xl font-semibold">
+                      {
+                        result.customer
+                          .name
+                      }
+                    </h3>
 
-                  <p className="mt-3 text-lg text-white/70">
-                    {result.stamps ??
-                      result.customer.stamps}{" "}
-                    /{" "}
-                    {result.rewardTarget}{" "}
-                    {isBarbershop ? "visits" : "stamps"}
-                  </p>
-                </div>
-              )}
+                    <p className="mt-3 text-lg text-white/70">
+                      {result.stamps ??
+                        result.customer
+                          .stamps}{" "}
+                      /{" "}
+                      {
+                        result.rewardTarget
+                      }{" "}
+                      {isBarbershop
+                        ? "visits"
+                        : "stamps"}
+                    </p>
+                  </div>
+                )}
 
-              {status === "reward" && result && (
-                <div>
-                  <Gift
-                    size={54}
-                    className="mx-auto text-amber-400"
-                  />
+              {status ===
+                "reward" &&
+                result && (
+                  <div>
+                    <Gift
+                      size={54}
+                      className="mx-auto text-amber-400"
+                    />
 
-                  <p className="mt-5 text-sm font-medium text-amber-400">
-                    Reward earned
-                  </p>
+                    <p className="mt-5 text-sm font-medium text-amber-400">
+                      Reward earned
+                    </p>
 
-                  <h3 className="mt-2 text-3xl font-semibold">
-                    {result.customer.name}
-                  </h3>
+                    <h3 className="mt-2 text-3xl font-semibold">
+                      {
+                        result.customer
+                          .name
+                      }
+                    </h3>
 
-                  <p className="mt-3 text-lg text-white/70">
-                    {result.rewardName}
-                  </p>
-                </div>
-              )}
+                    <p className="mt-3 text-lg text-white/70">
+                      {
+                        result.rewardName
+                      }
+                    </p>
+                  </div>
+                )}
 
-              {status === "error" && (
+              {status ===
+                "error" && (
                 <div>
                   <TriangleAlert
                     size={50}
@@ -485,23 +565,30 @@ export default function PhoneScannerPage() {
             </div>
           )}
 
-          {status === "scanning" && (
-            <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center">
-              <div className="flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-xs font-medium text-white backdrop-blur">
-                <Camera size={14} />
-                Ready to scan
+          {status ===
+            "scanning" && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center">
+                <div className="flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-xs font-medium text-white backdrop-blur">
+                  <Camera size={14} />
+                  Ready to scan
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
       </section>
 
       <p className="mt-4 text-center text-xs leading-5 opacity-50">
-        The same {personLabel} cannot receive another {isBarbershop
+        The same {personLabel} cannot
+        receive another{" "}
+        {isBarbershop
           ? "visit"
           : "stamp"}{" "}
-        from this scanner for five seconds. Different
-        {" "}{isBarbershop ? "clients" : "customers"} can scan immediately.
+        from this scanner for five
+        seconds. Different{" "}
+        {isBarbershop
+          ? "clients"
+          : "customers"}{" "}
+        can scan immediately.
       </p>
     </div>
   );
