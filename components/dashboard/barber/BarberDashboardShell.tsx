@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Scissors, Settings } from "lucide-react";
 
 import LogoutButton from "@/components/auth/LogoutButton";
+import MobileLogoutButton from "@/components/dashboard/MobileLogoutButton";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 import BarberMobileNavigation from "./BarberMobileNavigation";
@@ -174,18 +175,21 @@ export default function BarberDashboardShell({
             </h1>
           </div>
 
-          <Link
-            href="/dashboard/settings"
-            aria-label="Open settings"
-            className="flex h-10 w-10 items-center justify-center rounded-xl border transition hover:opacity-80"
-            style={{
-              borderColor: theme.border,
-              backgroundColor: theme.surface,
-              color: theme.textSecondary,
-            }}
-          >
-            <Settings size={17} />
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/settings"
+              aria-label="Open settings"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border transition hover:opacity-80"
+              style={{
+                borderColor: theme.border,
+                backgroundColor: theme.surface,
+                color: theme.textSecondary,
+              }}
+            >
+              <Settings size={17} />
+            </Link>
+            <MobileLogoutButton />
+          </div>
         </header>
 
         <main className="mx-auto w-full max-w-[1500px] px-4 pb-28 pt-6 sm:px-7 lg:px-10 lg:pb-10 lg:pt-9">

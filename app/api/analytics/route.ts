@@ -171,6 +171,9 @@ export async function GET(request: NextRequest) {
     }
 
     const cafeId = authData.cafe.id;
+    const isBarberSummary =
+      authData.cafe.businessType === "BARBERSHOP" &&
+      request.nextUrl.searchParams.get("view") === "barber";
 
     const { startOfToday, startOfTomorrow } =
       getTodayRange(CAFE_TIME_ZONE);
@@ -258,7 +261,7 @@ export async function GET(request: NextRequest) {
         orderBy: {
           updatedAt: "desc",
         },
-        take: 35,
+        take: isBarberSummary ? 5 : 35,
         select: {
           id: true,
           rating: true,
@@ -281,7 +284,7 @@ export async function GET(request: NextRequest) {
         orderBy: {
           createdAt: "desc",
         },
-        take: 35,
+        take: isBarberSummary ? 0 : 35,
         select: {
           id: true,
           comment: true,

@@ -57,6 +57,13 @@ export default function Footer() {
                 Terms of Service
               </Link>
 
+              <Link
+                href="/data-deletion"
+                className="transition hover:text-black"
+              >
+                Data Deletion
+              </Link>
+
               <a
                 href="mailto:begad.ahmed124@gmail.com"
                 className="transition hover:text-black"

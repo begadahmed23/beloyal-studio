@@ -1,55 +1,23 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  BarChart3,
-  Gift,
-  Menu,
-  LayoutDashboard,
-  ReceiptText,
-  Settings,
-  Users,
-  X,
-  Monitor,
-Smartphone,
-} from "lucide-react";
+import { Settings } from "lucide-react";
 
 import LogoutButton from "@/components/auth/LogoutButton";
+import CafeMobileNavigation from "@/components/dashboard/CafeMobileNavigation";
+import MobileLogoutButton from "@/components/dashboard/MobileLogoutButton";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
+
+import {
+  cafeNavigation,
+  isCafeCurrentPage,
+} from "./cafe-navigation";
 
 type Props = {
   children: ReactNode;
 };
-
-const navigation = [
-  {
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    label: "Members",
-    href: "/dashboard/members",
-    icon: Users,
-  },
-  {
-    label: "USB Scanner",
-    href: "/dashboard/scanner",
-    icon: Monitor,
-  },
-  {
-    label: "Phone Scanner",
-    href: "/dashboard/scanner/phone",
-    icon: Smartphone,
-  },
-  {
-    label: "Settings",
-    href: "/dashboard/settings",
-    icon: Settings,
-  },
-];
 
 export default function DashboardShell({
   children,
@@ -57,20 +25,13 @@ export default function DashboardShell({
   const pathname = usePathname();
   const { theme, cafe } = useCafeTheme();
 
-  const [mobileMenuOpen, setMobileMenuOpen] =
-    useState(false);
-
   function isActive(href: string) {
-    if (href === "/dashboard") {
-      return pathname === "/dashboard";
-    }
-
-    return pathname.startsWith(href);
+    return isCafeCurrentPage(pathname, href);
   }
 
   const currentPage =
-    navigation.find((item) => isActive(item.href))
-      ?.label || "Dashboard";
+    cafeNavigation.find((item) => isActive(item.href))
+      ?.label || "Overview";
 
   return (
     <div
@@ -93,52 +54,46 @@ export default function DashboardShell({
             borderColor: theme.border,
           }}
         >
-         <div className="flex items-center gap-3 min-w-0">
-  {cafe.logoUrl ? (
-    <img
-      src={cafe.logoUrl}
-      alt={`${cafe.name} logo`}
-      className="h-12 w-12 rounded-xl object-cover border"
-      style={{
-        borderColor: theme.border,
-      }}
-    />
-  ) : (
-    <div
-      className="flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold"
-      style={{
-        backgroundColor: theme.accentSoft,
-        color: theme.accent,
-      }}
-    >
-      {cafe.name.charAt(0).toUpperCase()}
-    </div>
-  )}
+          <div className="flex min-w-0 items-center gap-3">
+            {cafe.logoUrl ? (
+              <img
+                src={cafe.logoUrl}
+                alt={`${cafe.name} logo`}
+                className="h-12 w-12 rounded-xl border object-cover"
+                style={{ borderColor: theme.border }}
+              />
+            ) : (
+              <div
+                className="flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold"
+                style={{
+                  backgroundColor: theme.accentSoft,
+                  color: theme.accent,
+                }}
+              >
+                {cafe.name.charAt(0).toUpperCase()}
+              </div>
+            )}
 
-  <div className="min-w-0">
-    <p
-      className="truncate text-lg font-semibold tracking-tight"
-      style={{
-        color: theme.textPrimary,
-      }}
-    >
-      {cafe.name}
-    </p>
+            <div className="min-w-0">
+              <p
+                className="truncate text-lg font-semibold tracking-tight"
+                style={{ color: theme.textPrimary }}
+              >
+                {cafe.name}
+              </p>
 
-    <p
-      className="mt-1 text-xs"
-      style={{
-        color: theme.textMuted,
-      }}
-    >
-      Loyalty Dashboard
-    </p>
-  </div>
-</div>
+              <p
+                className="mt-1 text-xs"
+                style={{ color: theme.textMuted }}
+              >
+                Loyalty Dashboard
+              </p>
+            </div>
+          </div>
         </div>
 
         <nav className="flex-1 space-y-1 p-4">
-          {navigation.map((item) => {
+          {cafeNavigation.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
 
@@ -204,107 +159,6 @@ export default function DashboardShell({
         </div>
       </aside>
 
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <button
-            type="button"
-            aria-label="Close navigation"
-            onClick={() => setMobileMenuOpen(false)}
-            className="absolute inset-0 bg-black/50"
-          />
-
-          <aside
-            className="relative flex h-full w-[min(82vw,320px)] flex-col border-r shadow-2xl"
-            style={{
-              borderColor: theme.border,
-              backgroundColor: theme.surface,
-            }}
-          >
-            <div
-              className="flex min-h-20 items-center justify-between border-b px-5"
-              style={{
-                borderColor: theme.border,
-              }}
-            >
-              <div className="min-w-0">
-                <p
-                  className="truncate font-semibold"
-                  style={{
-                    color: theme.textPrimary,
-                  }}
-                >
-                  {cafe.name}
-                </p>
-
-                <p
-                  className="mt-1 text-xs"
-                  style={{
-                    color: theme.textMuted,
-                  }}
-                >
-                  Loyalty dashboard
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setMobileMenuOpen(false)
-                }
-                className="flex h-10 w-10 items-center justify-center border"
-                style={{
-                  borderColor: theme.border,
-                  backgroundColor: theme.surfaceRaised,
-                  color: theme.textSecondary,
-                  borderRadius: theme.radiusMedium,
-                }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <nav className="flex-1 space-y-1 overflow-y-auto p-4">
-              {navigation.map((item) => {
-                const Icon = item.icon;
-                const active = isActive(item.href);
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() =>
-                      setMobileMenuOpen(false)
-                    }
-                    className="flex h-12 items-center gap-3 px-3 text-sm font-medium"
-                    style={{
-                      backgroundColor: active
-                        ? theme.accentSoft
-                        : "transparent",
-                      color: active
-                        ? theme.accent
-                        : theme.textSecondary,
-                      borderRadius: theme.radiusMedium,
-                    }}
-                  >
-                    <Icon size={18} />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <div
-              className="border-t p-4"
-              style={{
-                borderColor: theme.border,
-              }}
-            >
-              <LogoutButton />
-            </div>
-          </aside>
-        </div>
-      )}
-
       <div className="min-h-screen lg:pl-64">
         <header
           className="sticky top-0 z-30 flex h-20 items-center justify-between border-b px-5 backdrop-blur-xl sm:px-7 lg:px-10"
@@ -314,19 +168,24 @@ export default function DashboardShell({
           }}
         >
           <div className="flex min-w-0 items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen(true)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center border lg:hidden"
-              style={{
-                borderColor: theme.border,
-                backgroundColor: theme.surface,
-                color: theme.textPrimary,
-                borderRadius: theme.radiusMedium,
-              }}
-            >
-              <Menu size={19} />
-            </button>
+            {cafe.logoUrl ? (
+              <img
+                src={cafe.logoUrl}
+                alt={`${cafe.name} logo`}
+                className="h-10 w-10 shrink-0 rounded-xl border object-cover lg:hidden"
+                style={{ borderColor: theme.border }}
+              />
+            ) : (
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold lg:hidden"
+                style={{
+                  backgroundColor: theme.accentSoft,
+                  color: theme.accent,
+                }}
+              >
+                {cafe.name.charAt(0).toUpperCase()}
+              </div>
+            )}
 
             <div className="min-w-0">
               <p
@@ -349,28 +208,34 @@ export default function DashboardShell({
             </div>
           </div>
 
-          <Link
-            href="/dashboard/settings"
-            className="flex h-10 items-center justify-center gap-2 border px-3 text-sm font-medium transition hover:opacity-80"
-            style={{
-              borderColor: theme.border,
-              backgroundColor: theme.surface,
-              color: theme.textSecondary,
-              borderRadius: theme.radiusMedium,
-            }}
-          >
-            <Settings size={16} />
+          <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/settings"
+              aria-label="Open settings"
+              className="flex h-10 w-10 items-center justify-center border text-sm font-medium transition hover:opacity-80 sm:w-auto sm:gap-2 sm:px-3"
+              style={{
+                borderColor: theme.border,
+                backgroundColor: theme.surface,
+                color: theme.textSecondary,
+                borderRadius: theme.radiusMedium,
+              }}
+            >
+              <Settings size={16} />
 
-            <span className="hidden sm:inline">
-              Settings
-            </span>
-          </Link>
+              <span className="hidden sm:inline">
+                Settings
+              </span>
+            </Link>
+            <MobileLogoutButton />
+          </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1500px] px-5 py-7 sm:px-7 lg:px-10 lg:py-9">
+        <main className="mx-auto w-full max-w-[1500px] px-4 pb-28 pt-6 sm:px-7 lg:px-10 lg:pb-10 lg:pt-9">
           {children}
         </main>
       </div>
+
+      <CafeMobileNavigation />
     </div>
   );
 }

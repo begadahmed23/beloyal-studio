@@ -67,6 +67,9 @@ type CafeThemeContextValue = {
 const CafeThemeContext =
   createContext<CafeThemeContextValue | null>(null);
 
+const DASHBOARD_REFRESH_AFTER_HIDDEN_MS = 30_000;
+const DASHBOARD_REFRESH_THROTTLE_MS = 10_000;
+
 type Props = {
   themeName: CafeThemeName;
   cafe: CafeSettings;
@@ -105,7 +108,10 @@ export default function CafeThemeProvider({
     const refreshAppData = () => {
       const now = Date.now();
 
-      if (now - lastRefreshAtRef.current < 1000) {
+      if (
+        now - lastRefreshAtRef.current <
+        DASHBOARD_REFRESH_THROTTLE_MS
+      ) {
         return;
       }
 
@@ -124,7 +130,11 @@ export default function CafeThemeProvider({
 
         hiddenAtRef.current = null;
 
-        if (hiddenAt && Date.now() - hiddenAt >= 1000) {
+        if (
+          hiddenAt &&
+          Date.now() - hiddenAt >=
+            DASHBOARD_REFRESH_AFTER_HIDDEN_MS
+        ) {
           refreshAppData();
         }
       }

@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import {
@@ -48,6 +49,11 @@ type AnalyticsData = {
   };
 };
 
+let barberAnalyticsCache: {
+  businessId: string;
+  data: AnalyticsData;
+} | null = null;
+
 function formatRatingDate(value: string) {
   const date = new Date(value);
 
@@ -63,9 +69,16 @@ function formatRatingDate(value: string) {
 }
 
 export default function BarberAnalytics() {
-  const { theme } = useCafeTheme();
-  const [data, setData] = useState<AnalyticsData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { cafe, theme } = useCafeTheme();
+  const cachedData =
+    barberAnalyticsCache?.businessId === cafe.id
+      ? barberAnalyticsCache.data
+      : null;
+  const [data, setData] = useState<AnalyticsData | null>(
+    cachedData,
+  );
+  const [loading, setLoading] = useState(cachedData === null);
+  const hadCachedDataRef = useRef(cachedData !== null);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
@@ -78,9 +91,12 @@ export default function BarberAnalytics() {
 
         setError("");
 
-        const response = await fetch("/api/analytics", {
-          cache: "no-store",
-        });
+        const response = await fetch(
+          "/api/analytics?view=barber",
+          {
+            cache: "no-store",
+          },
+        );
         const responseText = await response.text();
         const result = responseText
           ? (JSON.parse(responseText) as Partial<AnalyticsData> & {
@@ -94,7 +110,13 @@ export default function BarberAnalytics() {
           );
         }
 
-        setData(result as AnalyticsData);
+        const analyticsData = result as AnalyticsData;
+
+        barberAnalyticsCache = {
+          businessId: cafe.id,
+          data: analyticsData,
+        };
+        setData(analyticsData);
       } catch (loadError) {
         console.error("Barber analytics error:", loadError);
         setError(
@@ -107,11 +129,11 @@ export default function BarberAnalytics() {
         setRefreshing(false);
       }
     },
-    []
+    [cafe.id]
   );
 
   useEffect(() => {
-    loadAnalytics();
+    loadAnalytics(hadCachedDataRef.current);
 
     const refresh = () => loadAnalytics(true);
     window.addEventListener("members-updated", refresh);

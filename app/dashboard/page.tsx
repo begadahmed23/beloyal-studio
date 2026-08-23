@@ -3,8 +3,10 @@
 import Link from "next/link";
 import {
   ArrowRight,
+  Coffee,
   Monitor,
-  Smartphone,
+  ScanLine,
+  UserPlus,
   Users,
 } from "lucide-react";
 
@@ -24,122 +26,167 @@ export default function DashboardPage() {
 }
 
 function CafeDashboardHome() {
+  const { cafe, theme } = useCafeTheme();
+
+  const actions = [
+    {
+      label: "Scan a card",
+      helper: "Use the phone camera",
+      href: "/dashboard/scanner/phone",
+      icon: ScanLine,
+      primary: true,
+    },
+    {
+      label: "Add a member",
+      helper: "Create a loyalty card",
+      href: "/dashboard/members",
+      icon: UserPlus,
+    },
+    {
+      label: "View members",
+      helper: "Search stamps and rewards",
+      href: "/dashboard/members",
+      icon: Users,
+    },
+    {
+      label: "Counter scanner",
+      helper: "Use the USB scanner",
+      href: "/dashboard/scanner",
+      icon: Monitor,
+    },
+  ];
+
   return (
-    <div>
-      <div>
-        <p className="text-sm opacity-60">
-          Business overview
-        </p>
+    <div className="space-y-7">
+      <section
+        className="relative overflow-hidden rounded-[30px] border p-6 sm:p-8"
+        style={{
+          borderColor: theme.border,
+          background: `linear-gradient(135deg, ${theme.surfaceRaised} 0%, ${theme.surface} 58%, ${theme.pageBackground} 100%)`,
+          boxShadow: theme.cardShadow,
+        }}
+      >
+        <div
+          className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full blur-3xl"
+          style={{ backgroundColor: theme.accentSoft }}
+        />
 
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-          Dashboard
-        </h2>
+        <div className="relative grid gap-7 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div>
+            <div
+              className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em]"
+              style={{ color: theme.accent }}
+            >
+              <Coffee size={14} />
+              Café command center
+            </div>
+            <h2 className="mt-4 max-w-2xl text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
+              Turn every coffee run into another visit.
+            </h2>
+            <p
+              className="mt-4 max-w-xl text-sm leading-6"
+              style={{ color: theme.textMuted }}
+            >
+              Record stamps, follow member activity, and manage rewards
+              from one focused workspace.
+            </p>
+          </div>
 
-        <p className="mt-2 max-w-2xl text-sm leading-6 opacity-60">
-          Review your café activity, customer ratings, and
-          loyalty performance.
-        </p>
-      </div>
+          <div
+            className="rounded-[22px] border p-5 lg:min-w-60"
+            style={{
+              borderColor: theme.border,
+              backgroundColor: theme.accentSoft,
+            }}
+          >
+            <p
+              className="text-[10px] font-semibold uppercase tracking-[0.18em]"
+              style={{ color: theme.accent }}
+            >
+              Loyalty rule
+            </p>
+            <p className="mt-3 text-2xl font-semibold">
+              {Math.max(cafe.rewardTarget - 1, 1)} stamps
+            </p>
+            <p
+              className="mt-1 text-sm"
+              style={{ color: theme.textMuted }}
+            >
+              then {cafe.rewardName || "Free Drink"}
+            </p>
+          </div>
+        </div>
+      </section>
 
-      <div className="mt-8">
-        <SimpleAnalytics />
-      </div>
+      <SimpleAnalytics />
 
-      <div className="mt-8">
+      <section>
         <div>
-          <p className="text-sm font-semibold">
-            Customer tools
-          </p>
-
-          <p className="mt-1 text-sm opacity-60">
-            Scan customer cards or manage loyalty members.
+          <p className="text-sm font-semibold">Counter tools</p>
+          <p
+            className="mt-1 text-xs"
+            style={{ color: theme.textMuted }}
+          >
+            Fast actions for the daily café workflow.
           </p>
         </div>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <Link
-            href="/dashboard/scanner"
-            className="group flex min-h-32 items-center justify-between rounded-2xl border p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
-          >
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border bg-current/[0.04]">
-                <Monitor size={22} />
-              </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {actions.map((action) => {
+            const Icon = action.icon;
 
-              <div>
-                <p className="font-semibold">
-                  USB scanner
-                </p>
-
-                <p className="mt-1 text-xs leading-5 opacity-55">
-                  Scan from the cashier computer
-                </p>
-              </div>
-            </div>
-
-            <ArrowRight
-              size={18}
-              className="transition group-hover:translate-x-1"
-            />
-          </Link>
-
-          <Link
-            href="/dashboard/scanner/phone"
-            className="group flex min-h-32 items-center justify-between rounded-2xl border p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
-          >
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border bg-current/[0.04]">
-                <Smartphone size={22} />
-              </div>
-
-              <div>
-                <p className="font-semibold">
-                  Phone scanner
-                </p>
-
-                <p className="mt-1 text-xs leading-5 opacity-55">
-                  Scan using a phone camera
-                </p>
-              </div>
-            </div>
-
-            <ArrowRight
-              size={18}
-              className="transition group-hover:translate-x-1"
-            />
-          </Link>
-
-          <Link
-            href="/dashboard/members"
-            className="group flex min-h-32 items-center justify-between rounded-2xl border p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
-          >
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border bg-current/[0.04]">
-                <Users size={22} />
-              </div>
-
-              <div>
-                <p className="font-semibold">
-                  Manage members
-                </p>
-
-                <p className="mt-1 text-xs leading-5 opacity-55">
-                  Search and review customer cards
-                </p>
-              </div>
-            </div>
-
-            <ArrowRight
-              size={18}
-              className="transition group-hover:translate-x-1"
-            />
-          </Link>
+            return (
+              <Link
+                key={action.label}
+                href={action.href}
+                className="group flex min-h-32 items-center justify-between rounded-[22px] border p-5 transition hover:-translate-y-0.5"
+                style={{
+                  borderColor: action.primary
+                    ? theme.accent
+                    : theme.border,
+                  backgroundColor: action.primary
+                    ? theme.accent
+                    : theme.surface,
+                  color: action.primary
+                    ? theme.buttonText
+                    : theme.textPrimary,
+                }}
+              >
+                <div>
+                  <Icon
+                    size={20}
+                    style={{
+                      color: action.primary
+                        ? theme.buttonText
+                        : theme.accent,
+                    }}
+                  />
+                  <p className="mt-5 text-sm font-semibold">
+                    {action.label}
+                  </p>
+                  <p
+                    className="mt-1 text-xs"
+                    style={{
+                      color: action.primary
+                        ? theme.buttonText
+                        : theme.textMuted,
+                      opacity: action.primary ? 0.68 : 1,
+                    }}
+                  >
+                    {action.helper}
+                  </p>
+                </div>
+                <ArrowRight
+                  size={17}
+                  className="transition group-hover:translate-x-1"
+                />
+              </Link>
+            );
+          })}
         </div>
-      </div>
+      </section>
 
-      <div className="mt-8">
-        <JoinQRCode />
-      </div>
+      <JoinQRCode />
     </div>
   );
 }

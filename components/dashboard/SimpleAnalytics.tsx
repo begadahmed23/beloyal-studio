@@ -362,9 +362,9 @@ export default function SimpleAnalytics() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 sm:space-y-6">
       <section
-        className="border p-5 sm:p-6"
+        className="border p-4 sm:p-6"
         style={{
           borderColor: theme.border,
           backgroundColor: theme.surface,
@@ -412,7 +412,8 @@ export default function SimpleAnalytics() {
               loadAnalytics(true)
             }
             disabled={refreshing}
-            className="flex h-10 items-center justify-center gap-2 border px-4 text-sm font-medium transition hover:opacity-90 disabled:opacity-50"
+            aria-label="Refresh analytics"
+            className="flex h-10 w-10 items-center justify-center gap-2 border text-sm font-medium transition hover:opacity-90 disabled:opacity-50 sm:w-auto sm:px-4"
             style={{
               borderColor: theme.border,
               backgroundColor:
@@ -431,18 +432,18 @@ export default function SimpleAnalytics() {
               }
             />
 
-            Refresh
+            <span className="hidden sm:inline">Refresh</span>
           </button>
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-4">
           {cards.map((card) => {
             const Icon = card.icon;
 
             return (
               <article
                 key={card.label}
-                className="border p-5 transition duration-200 hover:-translate-y-0.5"
+                className="border p-4 transition duration-200 hover:-translate-y-0.5 sm:p-5"
                 style={{
                   borderColor:
                     theme.border,
@@ -453,7 +454,7 @@ export default function SimpleAnalytics() {
                 }}
               >
                 <div
-                  className="flex h-11 w-11 items-center justify-center"
+                  className="flex h-9 w-9 items-center justify-center sm:h-11 sm:w-11"
                   style={{
                     backgroundColor:
                       theme.accentSoft,
@@ -462,11 +463,11 @@ export default function SimpleAnalytics() {
                       theme.radiusMedium,
                   }}
                 >
-                  <Icon size={20} />
+                  <Icon size={18} />
                 </div>
 
                 <p
-                  className="mt-5 text-3xl font-semibold tracking-tight"
+                  className="mt-4 text-2xl font-semibold tracking-tight sm:mt-5 sm:text-3xl"
                   style={{
                     color:
                       theme.textPrimary,
@@ -476,7 +477,7 @@ export default function SimpleAnalytics() {
                 </p>
 
                 <p
-                  className="mt-2 text-sm font-medium"
+                  className="mt-2 text-xs font-medium sm:text-sm"
                   style={{
                     color:
                       theme.textSecondary,
@@ -486,7 +487,7 @@ export default function SimpleAnalytics() {
                 </p>
 
                 <p
-                  className="mt-1 text-xs"
+                  className="mt-1 hidden text-xs sm:block"
                   style={{
                     color:
                       theme.textMuted,
@@ -534,7 +535,7 @@ export default function SimpleAnalytics() {
       </section>
 
       <section
-        className="border p-5 sm:p-6"
+        className="border p-4 sm:p-6"
         style={{
           borderColor: theme.border,
           backgroundColor: theme.surface,
@@ -577,7 +578,7 @@ export default function SimpleAnalytics() {
 
         <div className="mt-6 grid gap-4 lg:grid-cols-[0.8fr_1.2fr]">
           <div
-            className="flex min-h-60 flex-col items-center justify-center border p-6 text-center"
+            className="flex flex-col items-center justify-center border p-5 text-center sm:min-h-60 sm:p-6"
             style={{
               borderColor: theme.border,
               backgroundColor:

@@ -8,7 +8,6 @@ import {
   Download,
   ExternalLink,
 } from "lucide-react";
-import { toPng } from "html-to-image";
 
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
@@ -79,6 +78,7 @@ export default function JoinQRCode() {
 
     try {
       const poster = posterRef.current;
+      const { toPng } = await import("html-to-image");
 
       await waitForImages(poster);
 
