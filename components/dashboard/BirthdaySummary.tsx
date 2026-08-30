@@ -33,7 +33,7 @@ export default function BirthdaySummary() {
     cafe.birthdayRewardsEnabled,
   );
 
-  const loadSummary = useCallback(async () => {
+  const loadSummary = useCallback(async (showLoading = true) => {
     if (!cafe.birthdayRewardsEnabled) {
       setEnabled(false);
       setSummary(EMPTY_SUMMARY);
@@ -41,7 +41,9 @@ export default function BirthdaySummary() {
       return;
     }
 
-    setLoading(true);
+    if (showLoading) {
+      setLoading(true);
+    }
 
     try {
       const response = await fetch("/api/cafe/birthdays", {
@@ -61,12 +63,30 @@ export default function BirthdaySummary() {
     } catch (error) {
       console.error("Birthday summary load error:", error);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   }, [cafe.birthdayRewardsEnabled]);
 
   useEffect(() => {
     void loadSummary();
+
+    function handleBirthdayRewardsUpdated() {
+      void loadSummary(false);
+    }
+
+    window.addEventListener(
+      "birthday-rewards-updated",
+      handleBirthdayRewardsUpdated,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "birthday-rewards-updated",
+        handleBirthdayRewardsUpdated,
+      );
+    };
   }, [loadSummary]);
 
   if (!enabled && !loading) {
