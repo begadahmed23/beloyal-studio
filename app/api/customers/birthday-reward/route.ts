@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
 
 const MAX_REQUEST_BODY_BYTES = 500;
-const CAFE_TIME_ZONE = "Africa/Cairo";
+const MAX_VALIDITY_DAYS = 7;
 
 const customerLookupSchema = z
   .object({
@@ -19,6 +19,24 @@ const customerLookupSchema = z
   });
 
 const publicTokenSchema = z.string().regex(/^[a-f0-9]{48}$/i);
+
+type CalendarDate = {
+  year: number;
+  month: number;
+  day: number;
+};
+
+type BirthdayConfig = {
+  enabled: boolean;
+  rewardName: string;
+  rewardDescription: string | null;
+  purchaseRequirement: string | null;
+  validityDays: number;
+  friendDiscountEnabled: boolean;
+  oneFriendDiscount: number;
+  groupDiscount: number;
+  timezone: string;
+};
 
 function jsonResponse(
   body: Record<string, unknown>,
@@ -43,18 +61,35 @@ function extractPublicToken(value: string) {
 }
 
 function isLeapYear(year: number) {
-  return year % 4 === 0 &&
-    (year % 100 !== 0 || year % 400 === 0);
+  return (
+    year % 4 === 0 &&
+    (year % 100 !== 0 || year % 400 === 0)
+  );
 }
 
-function getCafeCalendarDate(date = new Date()) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: CAFE_TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
+function getCalendarDate(
+  timezone: string,
+  date = new Date(),
+): CalendarDate {
+  let formatter: Intl.DateTimeFormat;
 
+  try {
+    formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  } catch {
+    formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "UTC",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  }
+
+  const parts = formatter.formatToParts(date);
   const value = (type: "year" | "month" | "day") =>
     Number(parts.find((part) => part.type === type)?.value);
 
@@ -75,10 +110,10 @@ function getBirthdayMonthDay(birthday: Date) {
 function getBirthdayDateForYear(
   birthday: Date,
   year: number,
-) {
+): CalendarDate {
   const { month, day } = getBirthdayMonthDay(birthday);
 
-  // Feb 29 birthdays are treated as Feb 28 in non-leap years.
+  // Feb 29 birthdays are observed on Feb 28 in non-leap years.
   const normalizedDay =
     month === 2 && day === 29 && !isLeapYear(year)
       ? 28
@@ -91,41 +126,86 @@ function getBirthdayDateForYear(
   };
 }
 
-function toCalendarNumber(date: {
-  year: number;
-  month: number;
-  day: number;
-}) {
+function toCalendarNumber(date: CalendarDate) {
   return Date.UTC(date.year, date.month - 1, date.day);
 }
 
-function getBirthdayOfferStatus(birthday: Date) {
-  const today = getCafeCalendarDate();
-  const birthdayThisYear = getBirthdayDateForYear(
-    birthday,
-    today.year,
-  );
-
-  const dayDifference = Math.round(
-    (toCalendarNumber(today) -
-      toCalendarNumber(birthdayThisYear)) /
+function getDayDifference(
+  later: CalendarDate,
+  earlier: CalendarDate,
+) {
+  return Math.round(
+    (toCalendarNumber(later) - toCalendarNumber(earlier)) /
       86_400_000,
   );
+}
 
-  const isBirthday = dayDifference === 0;
-  const isDayAfterBirthday = dayDifference === 1;
-  const isActive = isBirthday || isDayAfterBirthday;
+function clampValidityDays(value: number) {
+  if (!Number.isFinite(value)) {
+    return 1;
+  }
+
+  return Math.min(
+    MAX_VALIDITY_DAYS,
+    Math.max(1, Math.trunc(value)),
+  );
+}
+
+function clampDiscount(value: number) {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.min(100, Math.max(0, Math.trunc(value)));
+}
+
+function getBirthdayOfferStatus(
+  birthday: Date,
+  config: BirthdayConfig,
+) {
+  const today = getCalendarDate(config.timezone);
+  const validityDays = clampValidityDays(config.validityDays);
+
+  const possibleOccurrences = [
+    getBirthdayDateForYear(birthday, today.year),
+    getBirthdayDateForYear(birthday, today.year - 1),
+  ];
+
+  const activeOccurrence = possibleOccurrences.find(
+    (occurrence) => {
+      const elapsedDays = getDayDifference(today, occurrence);
+      return elapsedDays >= 0 && elapsedDays < validityDays;
+    },
+  );
+
+  if (!activeOccurrence) {
+    return {
+      year: today.year,
+      enabled: config.enabled,
+      isActive: false,
+      isBirthday: false,
+      daysSinceBirthday: null,
+      validDay: null,
+      validityDays,
+    };
+  }
+
+  const daysSinceBirthday = getDayDifference(
+    today,
+    activeOccurrence,
+  );
 
   return {
-    year: birthdayThisYear.year,
-    isActive,
-    isBirthday,
-    isDayAfterBirthday,
-    validDay: isBirthday
-      ? "BIRTHDAY"
-      : isDayAfterBirthday
-        ? "DAY_AFTER"
-        : null,
+    year: activeOccurrence.year,
+    enabled: config.enabled,
+    isActive: config.enabled,
+    isBirthday: daysSinceBirthday === 0,
+    daysSinceBirthday,
+    validDay:
+      daysSinceBirthday === 0
+        ? "BIRTHDAY"
+        : `DAY_${daysSinceBirthday + 1}`,
+    validityDays,
   };
 }
 
@@ -213,8 +293,7 @@ async function findCafeCustomer(
   cafeId: string,
   lookup: { id?: string; token?: string },
 ) {
-  const { customerId, publicToken } =
-    normalizeLookup(lookup);
+  const { customerId, publicToken } = normalizeLookup(lookup);
 
   if (
     publicToken &&
@@ -226,9 +305,7 @@ async function findCafeCustomer(
   return prisma.customer.findFirst({
     where: {
       cafeId,
-      ...(publicToken
-        ? { publicToken }
-        : { id: customerId }),
+      ...(publicToken ? { publicToken } : { id: customerId }),
     },
     select: {
       id: true,
@@ -237,6 +314,58 @@ async function findCafeCustomer(
       birthday: true,
     },
   });
+}
+
+async function getBirthdayConfig(cafeId: string) {
+  const cafe = await prisma.cafe.findUnique({
+    where: { id: cafeId },
+    select: {
+      birthdayRewardsEnabled: true,
+      birthdayRewardName: true,
+      birthdayRewardDescription: true,
+      birthdayPurchaseRequirement: true,
+      birthdayValidityDays: true,
+      birthdayFriendDiscountEnabled: true,
+      birthdayOneFriendDiscount: true,
+      birthdayGroupDiscount: true,
+      timezone: true,
+    },
+  });
+
+  if (!cafe) {
+    return null;
+  }
+
+  return {
+    enabled: cafe.birthdayRewardsEnabled,
+    rewardName:
+      cafe.birthdayRewardName?.trim() || "Birthday Reward",
+    rewardDescription:
+      cafe.birthdayRewardDescription?.trim() || null,
+    purchaseRequirement:
+      cafe.birthdayPurchaseRequirement?.trim() || null,
+    validityDays: clampValidityDays(cafe.birthdayValidityDays),
+    friendDiscountEnabled:
+      cafe.birthdayFriendDiscountEnabled,
+    oneFriendDiscount: clampDiscount(
+      cafe.birthdayOneFriendDiscount,
+    ),
+    groupDiscount: clampDiscount(cafe.birthdayGroupDiscount),
+    timezone: cafe.timezone?.trim() || "UTC",
+  } satisfies BirthdayConfig;
+}
+
+function serializeConfig(config: BirthdayConfig) {
+  return {
+    enabled: config.enabled,
+    rewardName: config.rewardName,
+    rewardDescription: config.rewardDescription,
+    purchaseRequirement: config.purchaseRequirement,
+    validityDays: config.validityDays,
+    friendDiscountEnabled: config.friendDiscountEnabled,
+    oneFriendDiscount: config.oneFriendDiscount,
+    groupDiscount: config.groupDiscount,
+  };
 }
 
 export async function GET(request: NextRequest) {
@@ -275,10 +404,10 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const customer = await findCafeCustomer(
-    authData.cafeId,
-    validationResult.data,
-  );
+  const [customer, config] = await Promise.all([
+    findCafeCustomer(authData.cafeId, validationResult.data),
+    getBirthdayConfig(authData.cafeId),
+  ]);
 
   if (!customer) {
     return jsonResponse(
@@ -290,20 +419,31 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const offer = getBirthdayOfferStatus(customer.birthday);
+  if (!config) {
+    return jsonResponse(
+      { message: "Café account not found." },
+      404,
+    );
+  }
 
-  const redemption =
-    await prisma.birthdayRewardRedemption.findUnique({
-      where: {
-        customerId_year: {
-          customerId: customer.id,
-          year: offer.year,
+  const offer = getBirthdayOfferStatus(
+    customer.birthday,
+    config,
+  );
+
+  const redemption = config.enabled
+    ? await prisma.birthdayRewardRedemption.findUnique({
+        where: {
+          customerId_year: {
+            customerId: customer.id,
+            year: offer.year,
+          },
         },
-      },
-      select: {
-        redeemedAt: true,
-      },
-    });
+        select: {
+          redeemedAt: true,
+        },
+      })
+    : null;
 
   return jsonResponse({
     customer: {
@@ -311,11 +451,13 @@ export async function GET(request: NextRequest) {
       name: customer.name,
       memberNumber: customer.memberNumber,
     },
+    config: serializeConfig(config),
     birthdayOffer: {
       ...offer,
       redeemed: Boolean(redemption),
       redeemedAt: redemption?.redeemedAt ?? null,
-      canRedeem: offer.isActive && !redemption,
+      canRedeem:
+        config.enabled && offer.isActive && !redemption,
     },
   });
 }
@@ -360,10 +502,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const customer = await findCafeCustomer(
-      authData.cafeId,
-      validationResult.data,
-    );
+    const [customer, config] = await Promise.all([
+      findCafeCustomer(authData.cafeId, validationResult.data),
+      getBirthdayConfig(authData.cafeId),
+    ]);
 
     if (!customer) {
       return jsonResponse(
@@ -375,13 +517,34 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const offer = getBirthdayOfferStatus(customer.birthday);
+    if (!config) {
+      return jsonResponse(
+        { message: "Café account not found." },
+        404,
+      );
+    }
+
+    if (!config.enabled) {
+      return jsonResponse(
+        {
+          message: "Birthday rewards are disabled for this business.",
+          config: serializeConfig(config),
+        },
+        409,
+      );
+    }
+
+    const offer = getBirthdayOfferStatus(
+      customer.birthday,
+      config,
+    );
 
     if (!offer.isActive) {
       return jsonResponse(
         {
           message:
             "This customer's birthday offer is not active today.",
+          config: serializeConfig(config),
           birthdayOffer: {
             ...offer,
             redeemed: false,
@@ -406,12 +569,13 @@ export async function POST(request: NextRequest) {
         });
 
       return jsonResponse({
-        message: "Birthday gift redeemed successfully.",
+        message: `${config.rewardName} redeemed successfully.`,
         customer: {
           id: customer.id,
           name: customer.name,
           memberNumber: customer.memberNumber,
         },
+        config: serializeConfig(config),
         birthdayOffer: {
           ...offer,
           redeemed: true,
@@ -440,7 +604,8 @@ export async function POST(request: NextRequest) {
         return jsonResponse(
           {
             message:
-              "This birthday gift has already been redeemed this year.",
+              "This birthday reward has already been redeemed this year.",
+            config: serializeConfig(config),
             birthdayOffer: {
               ...offer,
               redeemed: true,
@@ -459,7 +624,7 @@ export async function POST(request: NextRequest) {
     console.error("Birthday reward redemption error:", error);
 
     return jsonResponse(
-      { message: "Failed to redeem birthday gift." },
+      { message: "Failed to redeem birthday reward." },
       500,
     );
   }
