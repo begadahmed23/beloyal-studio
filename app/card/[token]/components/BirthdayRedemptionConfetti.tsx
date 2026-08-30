@@ -23,7 +23,6 @@ export default function BirthdayRedemptionConfetti() {
         left: `${(index * 37) % 100}%`,
         delay: `${(index % 8) * 55}ms`,
         duration: `${1200 + (index % 6) * 140}ms`,
-        rotate: `${(index * 47) % 360}deg`,
       })),
     [],
   );
@@ -62,10 +61,7 @@ export default function BirthdayRedemptionConfetti() {
           return;
         }
 
-        if (
-          incoming &&
-          incoming !== previousRedemption.current
-        ) {
+        if (incoming && incoming !== previousRedemption.current) {
           previousRedemption.current = incoming;
           setVisible(true);
 
@@ -124,12 +120,10 @@ export default function BirthdayRedemptionConfetti() {
       {pieces.map((piece) => (
         <span
           key={piece.id}
-          className="absolute -top-5 h-3 w-2 rounded-[2px] bg-current animate-[birthday-confetti_fall_linear_forwards]"
+          className="absolute -top-5 h-3 w-2 rounded-[2px] bg-current"
           style={{
             left: piece.left,
-            animationDelay: piece.delay,
-            animationDuration: piece.duration,
-            transform: `rotate(${piece.rotate})`,
+            animation: `birthday-confetti-fall ${piece.duration} linear ${piece.delay} forwards`,
             color:
               piece.id % 4 === 0
                 ? "#F59E0B"
@@ -143,7 +137,7 @@ export default function BirthdayRedemptionConfetti() {
       ))}
 
       <style jsx global>{`
-        @keyframes birthday-confetti_fall {
+        @keyframes birthday-confetti-fall {
           0% {
             transform: translate3d(0, -24px, 0) rotate(0deg);
             opacity: 1;
