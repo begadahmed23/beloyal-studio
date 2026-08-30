@@ -10,6 +10,7 @@ import {
   Users,
 } from "lucide-react";
 
+import BirthdaySummary from "@/components/dashboard/BirthdaySummary";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 import BarberAnalytics from "./BarberAnalytics";
@@ -109,6 +110,8 @@ export default function BarberDashboardHome() {
       </section>
 
       <BarberAnalytics />
+
+      <BirthdaySummary />
 
       <section>
         <div>
