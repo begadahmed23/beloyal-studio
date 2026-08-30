@@ -10,6 +10,7 @@ import {
   Users,
 } from "lucide-react";
 
+import BirthdaySummary from "@/components/dashboard/BirthdaySummary";
 import JoinQRCode from "@/components/dashboard/JoinQRCode";
 import SimpleAnalytics from "@/components/dashboard/SimpleAnalytics";
 import BarberDashboardHome from "@/components/dashboard/barber/BarberDashboardHome";
@@ -119,6 +120,8 @@ function CafeDashboardHome() {
       </section>
 
       <SimpleAnalytics />
+
+      <BirthdaySummary />
 
       <section>
         <div>
