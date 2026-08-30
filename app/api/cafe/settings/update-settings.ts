@@ -31,6 +31,31 @@ export async function updateCafeSettings(
         settings.minimumPurchaseAmount,
 
       googleReviewUrl: settings.googleReviewUrl,
+
+      timezone: settings.timezone,
+
+      birthdayRewardsEnabled:
+        settings.birthdayRewardsEnabled,
+      birthdayRewardName:
+        settings.birthdayRewardName,
+      birthdayRewardDescription:
+        settings.birthdayRewardDescription,
+      birthdayPurchaseRequirement:
+        settings.birthdayPurchaseRequirement,
+      birthdayValidityDays:
+        settings.birthdayValidityDays,
+      birthdayReminderEnabled:
+        settings.birthdayReminderEnabled,
+      birthdayReminderDaysBefore:
+        settings.birthdayReminderDaysBefore,
+      birthdayDayMessageEnabled:
+        settings.birthdayDayMessageEnabled,
+      birthdayFriendDiscountEnabled:
+        settings.birthdayFriendDiscountEnabled,
+      birthdayOneFriendDiscount:
+        settings.birthdayOneFriendDiscount,
+      birthdayGroupDiscount:
+        settings.birthdayGroupDiscount,
     },
     select: {
       id: true,
@@ -51,6 +76,19 @@ export async function updateCafeSettings(
       minimumPurchaseAmount: true,
 
       googleReviewUrl: true,
+
+      timezone: true,
+      birthdayRewardsEnabled: true,
+      birthdayRewardName: true,
+      birthdayRewardDescription: true,
+      birthdayPurchaseRequirement: true,
+      birthdayValidityDays: true,
+      birthdayReminderEnabled: true,
+      birthdayReminderDaysBefore: true,
+      birthdayDayMessageEnabled: true,
+      birthdayFriendDiscountEnabled: true,
+      birthdayOneFriendDiscount: true,
+      birthdayGroupDiscount: true,
 
       subscriptionStatus: true,
       trialStartedAt: true,
