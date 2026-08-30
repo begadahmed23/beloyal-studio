@@ -62,7 +62,31 @@ export default async function DashboardLayout({
           cafe.minimumPurchaseAmount?.toString() ??
           null,
 
-       googleReviewUrl: cafe.googleReviewUrl,
+        googleReviewUrl: cafe.googleReviewUrl,
+
+        timezone: cafe.timezone,
+        birthdayRewardsEnabled:
+          cafe.birthdayRewardsEnabled,
+        birthdayRewardName:
+          cafe.birthdayRewardName,
+        birthdayRewardDescription:
+          cafe.birthdayRewardDescription,
+        birthdayPurchaseRequirement:
+          cafe.birthdayPurchaseRequirement,
+        birthdayValidityDays:
+          cafe.birthdayValidityDays,
+        birthdayReminderEnabled:
+          cafe.birthdayReminderEnabled,
+        birthdayReminderDaysBefore:
+          cafe.birthdayReminderDaysBefore,
+        birthdayDayMessageEnabled:
+          cafe.birthdayDayMessageEnabled,
+        birthdayFriendDiscountEnabled:
+          cafe.birthdayFriendDiscountEnabled,
+        birthdayOneFriendDiscount:
+          cafe.birthdayOneFriendDiscount,
+        birthdayGroupDiscount:
+          cafe.birthdayGroupDiscount,
 
         subscriptionStatus:
           cafe.subscriptionStatus,
