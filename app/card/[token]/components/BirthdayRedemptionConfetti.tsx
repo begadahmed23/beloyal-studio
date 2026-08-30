@@ -7,7 +7,7 @@ type CardSyncResponse = {
   birthdayRewardRedeemedAt?: string | null;
 };
 
-const POLL_MS = 2000;
+const POLL_MS = 5000;
 const CONFETTI_MS = 2200;
 
 export default function BirthdayRedemptionConfetti() {
