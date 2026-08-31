@@ -2,6 +2,7 @@
 
 import { Cake, CheckCircle2, ChevronRight, Gift, X } from "lucide-react";
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 
 import type { Customer } from "./LoyaltyCard";
 
@@ -187,6 +188,155 @@ export default function BirthdayCustomerDisplay({
 
   const interactive = enabled;
 
+  const modal = open ? (
+    <div
+      className="fixed inset-0 z-[999] flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-md"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Birthday offer"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          setOpen(false);
+        }
+      }}
+    >
+      <div
+        className="relative w-full max-w-sm rounded-[28px] border p-6 shadow-[0_30px_100px_rgba(0,0,0,0.5)]"
+        style={{
+          borderColor: primaryBorder,
+          backgroundColor: surfaceRaised,
+          color: textPrimary,
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          aria-label="Close birthday offer"
+          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border transition hover:opacity-75"
+          style={{
+            borderColor: cardBorder,
+            backgroundColor: surfaceColor,
+            color: textSecondary,
+          }}
+        >
+          <X size={17} />
+        </button>
+
+        <div
+          className="flex h-12 w-12 items-center justify-center rounded-2xl"
+          style={{
+            backgroundColor: primarySoft,
+            color: primaryColor,
+          }}
+        >
+          {redeemed ? <CheckCircle2 size={23} /> : <Gift size={23} />}
+        </div>
+
+        <p
+          className="mt-5 text-[10px] font-semibold uppercase tracking-[0.18em]"
+          style={{ color: primaryColor }}
+        >
+          Birthday offer
+        </p>
+
+        <h3 className="mt-2 pr-10 text-2xl font-semibold tracking-tight">
+          {redeemed && state?.isActive
+            ? "Birthday gift redeemed"
+            : rewardName}
+        </h3>
+
+        {customer.cafe.birthdayRewardDescription ? (
+          <p
+            className="mt-3 text-sm leading-6"
+            style={{ color: textSecondary }}
+          >
+            {customer.cafe.birthdayRewardDescription}
+          </p>
+        ) : null}
+
+        <div className="mt-5 space-y-3">
+          {customer.cafe.birthdayPurchaseRequirement ? (
+            <div
+              className="rounded-2xl border p-4"
+              style={{
+                borderColor: cardBorder,
+                backgroundColor: surfaceColor,
+              }}
+            >
+              <p
+                className="text-[10px] uppercase tracking-[0.14em]"
+                style={{ color: textMuted }}
+              >
+                Purchase requirement
+              </p>
+              <p className="mt-1 text-sm" style={{ color: textSecondary }}>
+                {customer.cafe.birthdayPurchaseRequirement}
+              </p>
+            </div>
+          ) : null}
+
+          {customer.cafe.birthdayFriendDiscountEnabled ? (
+            <div
+              className="rounded-2xl border p-4"
+              style={{
+                borderColor: cardBorder,
+                backgroundColor: surfaceColor,
+              }}
+            >
+              <p
+                className="text-[10px] uppercase tracking-[0.14em]"
+                style={{ color: textMuted }}
+              >
+                Celebrating together
+              </p>
+              <p className="mt-2 text-sm" style={{ color: textSecondary }}>
+                Birthday customer + 1 guest — {customer.cafe.birthdayOneFriendDiscount}% off the total bill.
+              </p>
+              <p className="mt-1 text-sm" style={{ color: textSecondary }}>
+                Birthday customer + 2 or more guests — {customer.cafe.birthdayGroupDiscount}% off the total bill.
+              </p>
+            </div>
+          ) : null}
+
+          <div
+            className="rounded-2xl border p-4"
+            style={{
+              borderColor: cardBorder,
+              backgroundColor: surfaceColor,
+            }}
+          >
+            <p
+              className="text-[10px] uppercase tracking-[0.14em]"
+              style={{ color: textMuted }}
+            >
+              Availability
+            </p>
+            <p className="mt-1 text-sm" style={{ color: textSecondary }}>
+              {validityText(
+                state?.validityDays ?? customer.cafe.birthdayValidityDays ?? 2,
+              )}
+            </p>
+            <p className="mt-2 text-xs" style={{ color: textMuted }}>
+              Present your B-LO card when ordering. Birthday gift available once per year.
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="mt-5 h-12 w-full rounded-2xl text-sm font-semibold transition hover:opacity-90"
+          style={{
+            backgroundColor: primaryColor,
+            color: "#ffffff",
+          }}
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <>
       <button
@@ -238,143 +388,9 @@ export default function BirthdayCustomerDisplay({
         ) : null}
       </button>
 
-      {open ? (
-        <div
-          className="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-md"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Birthday offer"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setOpen(false);
-            }
-          }}
-        >
-          <div
-            className="relative w-full max-w-sm rounded-[28px] border p-6 shadow-[0_30px_100px_rgba(0,0,0,0.5)]"
-            style={{
-              borderColor: primaryBorder,
-              backgroundColor: surfaceRaised,
-              color: textPrimary,
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              aria-label="Close birthday offer"
-              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border transition hover:opacity-75"
-              style={{
-                borderColor: cardBorder,
-                backgroundColor: surfaceColor,
-                color: textSecondary,
-              }}
-            >
-              <X size={17} />
-            </button>
-
-            <div
-              className="flex h-12 w-12 items-center justify-center rounded-2xl"
-              style={{
-                backgroundColor: primarySoft,
-                color: primaryColor,
-              }}
-            >
-              {redeemed ? <CheckCircle2 size={23} /> : <Gift size={23} />}
-            </div>
-
-            <p
-              className="mt-5 text-[10px] font-semibold uppercase tracking-[0.18em]"
-              style={{ color: primaryColor }}
-            >
-              Birthday offer
-            </p>
-
-            <h3 className="mt-2 pr-10 text-2xl font-semibold tracking-tight">
-              {redeemed && state?.isActive
-                ? "Birthday gift redeemed"
-                : rewardName}
-            </h3>
-
-            {customer.cafe.birthdayRewardDescription ? (
-              <p
-                className="mt-3 text-sm leading-6"
-                style={{ color: textSecondary }}
-              >
-                {customer.cafe.birthdayRewardDescription}
-              </p>
-            ) : null}
-
-            <div className="mt-5 space-y-3">
-              {customer.cafe.birthdayPurchaseRequirement ? (
-                <div
-                  className="rounded-2xl border p-4"
-                  style={{
-                    borderColor: cardBorder,
-                    backgroundColor: surfaceColor,
-                  }}
-                >
-                  <p className="text-[10px] uppercase tracking-[0.14em]" style={{ color: textMuted }}>
-                    Purchase
-                  </p>
-                  <p className="mt-1 text-sm" style={{ color: textSecondary }}>
-                    {customer.cafe.birthdayPurchaseRequirement}
-                  </p>
-                </div>
-              ) : null}
-
-              {customer.cafe.birthdayFriendDiscountEnabled ? (
-                <div
-                  className="rounded-2xl border p-4"
-                  style={{
-                    borderColor: cardBorder,
-                    backgroundColor: surfaceColor,
-                  }}
-                >
-                  <p className="text-[10px] uppercase tracking-[0.14em]" style={{ color: textMuted }}>
-                    Celebrating together
-                  </p>
-                  <p className="mt-2 text-sm" style={{ color: textSecondary }}>
-                    With 1 friend — {customer.cafe.birthdayOneFriendDiscount}% off your total bill.
-                  </p>
-                  <p className="mt-1 text-sm" style={{ color: textSecondary }}>
-                    With 2 or more — {customer.cafe.birthdayGroupDiscount}% off your total bill.
-                  </p>
-                </div>
-              ) : null}
-
-              <div
-                className="rounded-2xl border p-4"
-                style={{
-                  borderColor: cardBorder,
-                  backgroundColor: surfaceColor,
-                }}
-              >
-                <p className="text-[10px] uppercase tracking-[0.14em]" style={{ color: textMuted }}>
-                  Availability
-                </p>
-                <p className="mt-1 text-sm" style={{ color: textSecondary }}>
-                  {validityText(state?.validityDays ?? customer.cafe.birthdayValidityDays ?? 2)}
-                </p>
-                <p className="mt-2 text-xs" style={{ color: textMuted }}>
-                  Present your B-LO card when ordering. Birthday gift available once per year.
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              className="mt-5 h-12 w-full rounded-2xl text-sm font-semibold transition hover:opacity-90"
-              style={{
-                backgroundColor: primaryColor,
-                color: "#ffffff",
-              }}
-            >
-              Done
-            </button>
-          </div>
-        </div>
-      ) : null}
+      {modal && typeof document !== "undefined"
+        ? createPortal(modal, document.body)
+        : null}
     </>
   );
 }
