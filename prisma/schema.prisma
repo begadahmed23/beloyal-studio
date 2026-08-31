@@ -52,6 +52,7 @@ model Cafe {
   feedbacks                   CustomerFeedback[]
   transactions                StampTransaction[]
   birthdayRedemptions         BirthdayRewardRedemption[]
+  birthdayMessageSends        BirthdayMessageSend[]
   user                        User?
 
   @@index([subscriptionStatus])
@@ -68,23 +69,24 @@ model Employee {
 }
 
 model Customer {
-  id                  String                     @id @default(cuid())
-  memberNumber        String
-  name                String
-  phone               String
-  birthday            DateTime
-  stamps              Int                        @default(0)
-  createdAt           DateTime                   @default(now())
-  updatedAt           DateTime                   @updatedAt
-  publicToken         String                     @unique
-  cafeId              String
-  cafe                Cafe                       @relation(fields: [cafeId], references: [id], onDelete: Cascade)
-  review              CustomerReview?
-  feedbackRewardedAt  DateTime?
-  rewardEarnedAt      DateTime?
-  feedbacks           CustomerFeedback[]
-  transactions        StampTransaction[]
-  birthdayRedemptions BirthdayRewardRedemption[]
+  id                   String                     @id @default(cuid())
+  memberNumber         String
+  name                 String
+  phone                String
+  birthday             DateTime
+  stamps               Int                        @default(0)
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  publicToken          String                     @unique
+  cafeId               String
+  cafe                 Cafe                       @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  review               CustomerReview?
+  feedbackRewardedAt   DateTime?
+  rewardEarnedAt       DateTime?
+  feedbacks            CustomerFeedback[]
+  transactions         StampTransaction[]
+  birthdayRedemptions  BirthdayRewardRedemption[]
+  birthdayMessageSends BirthdayMessageSend[]
 
   @@unique([cafeId, phone])
   @@unique([cafeId, memberNumber])
@@ -105,6 +107,22 @@ model BirthdayRewardRedemption {
   @@unique([customerId, year])
   @@index([cafeId, year])
   @@index([cafeId, redeemedAt])
+}
+
+model BirthdayMessageSend {
+  id          String   @id @default(cuid())
+  customerId  String
+  cafeId      String
+  year        Int
+  messageType String
+  sentAt      DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  cafe     Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, year, messageType])
+  @@index([cafeId, year])
+  @@index([cafeId, sentAt])
 }
 
 model CustomerReview {
@@ -193,16 +211,16 @@ model Account {
   id                    String    @id
   accountId             String
   providerId             String
-  userId                String
+  userId                 String
   accessToken           String?
-  refreshToken          String?
-  idToken               String?
+  refreshToken           String?
+  idToken                String?
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
-  scope                 String?
+  scope                  String?
   password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
