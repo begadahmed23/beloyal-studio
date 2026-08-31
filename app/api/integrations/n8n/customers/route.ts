@@ -244,6 +244,7 @@ export async function GET(
             id: true,
             name: true,
             phone: true,
+            birthday: true,
             memberNumber: true,
             publicToken: true,
             createdAt: true,
@@ -286,6 +287,7 @@ export async function GET(
             id: customer.id,
             name: customer.name,
             phone,
+            birthday: customer.birthday,
             memberNumber:
               customer.memberNumber,
             cardUrl: new URL(
