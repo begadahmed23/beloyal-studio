@@ -434,7 +434,7 @@ export default function MemberList() {
               <div key={customer.id} className="relative min-w-0">
                 {birthdayProximity && (
                   <div
-                    className="pointer-events-none absolute right-4 top-4 z-10 flex h-7 items-center gap-1.5 border px-2.5 text-[11px] font-semibold shadow-sm"
+                    className="pointer-events-none absolute left-1/2 top-4 z-10 flex h-7 -translate-x-1/2 items-center gap-1.5 border px-2.5 text-[11px] font-semibold shadow-sm"
                     style={{
                       borderColor: `${theme.accent}45`,
                       backgroundColor: theme.accentSoft,
