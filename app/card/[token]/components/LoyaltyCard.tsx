@@ -304,7 +304,7 @@ export default function LoyaltyCard({
                     <img
                       src={logoUrl}
                       alt={`${customer.cafe.name} logo`}
-                      className="h-10 w-10 shrink-0 object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,0.14)] min-[380px]:h-12 min-[380px]:w-12 min-[380px]:rounded-2xl min-[380px]:text-base sm:h-14 sm:w-14"
+                      className="h-10 w-10 shrink-0 object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,0.14)] min-[380px]:h-12 min-[380px]:w-12 sm:h-14 sm:w-14"
                       referrerPolicy="no-referrer"
                       onError={() =>
                         onLogoError(logoUrl)
