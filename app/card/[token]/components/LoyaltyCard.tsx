@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  CalendarDays,
-  CheckCircle2,
   Coffee,
   Gift,
   Heart,
@@ -12,6 +10,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { withAlpha } from "../card-utils";
+import BirthdayCustomerDisplay from "./BirthdayCustomerDisplay";
 
 export type Cafe = {
   id: string;
@@ -28,6 +27,16 @@ export type Cafe = {
   rewardDescription: string | null;
   eligiblePurchaseDescription: string | null;
   googleReviewUrl: string | null;
+  timezone: string;
+  birthdayRewardsEnabled: boolean;
+  birthdayRewardName: string | null;
+  birthdayRewardDescription: string | null;
+  birthdayPurchaseRequirement: string | null;
+  birthdayValidityDays: number;
+  birthdayReminderDaysBefore: number;
+  birthdayFriendDiscountEnabled: boolean;
+  birthdayOneFriendDiscount: number;
+  birthdayGroupDiscount: number;
 };
 
 export type Customer = {
@@ -39,6 +48,8 @@ export type Customer = {
   stamps: number;
   feedbackRewardedAt: string | null;
   rewardEarnedAt: string | null;
+  birthdayRewardRedeemedAt: string | null;
+  birthdayRewardYear: number;
   createdAt: string;
   updatedAt: string;
   cafe: Cafe;
@@ -647,92 +658,20 @@ export default function LoyaltyCard({
             </section>
           ) : null}
 
-          <section className="grid gap-3">
-            <div
-              className="flex items-center gap-4 rounded-2xl border p-4"
-              style={{
-                borderColor: cardBorder,
-                backgroundColor: surfaceColor,
-              }}
-            >
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-xl"
-                style={{
-                  backgroundColor:
-                    primarySoft,
-                  color: primaryColor,
-                }}
-              >
-                <CalendarDays size={19} />
-              </div>
-
-              <div>
-                <p
-                  className="text-xs"
-                  style={{
-                    color: textMuted,
-                  }}
-                >
-                  Birthday
-                </p>
-
-                <p
-                  className="mt-1 text-sm font-medium"
-                  style={{
-                    color: textPrimary,
-                  }}
-                >
-                  {birthdayText}
-                </p>
-              </div>
-            </div>
-
-            <div
-              className="flex items-center gap-4 rounded-2xl border p-4"
-              style={{
-                borderColor: cardBorder,
-                backgroundColor: surfaceColor,
-              }}
-            >
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-xl"
-                style={{
-                  backgroundColor:
-                    primarySoft,
-                  color: primaryColor,
-                }}
-              >
-                <CheckCircle2 size={19} />
-              </div>
-
-              <div>
-                <p
-                  className="text-xs"
-                  style={{
-                    color: textMuted,
-                  }}
-                >
-                  Birthday countdown
-                </p>
-
-                <p
-                  className="mt-1 text-sm font-medium"
-                  style={{
-                    color: textPrimary,
-                  }}
-                >
-                  {daysUntilBirthday === 0
-                    ? "Happy birthday!"
-                    : `${daysUntilBirthday} ${
-                        daysUntilBirthday ===
-                        1
-                          ? "day"
-                          : "days"
-                      } to go`}
-                </p>
-              </div>
-            </div>
-          </section>
+          <BirthdayCustomerDisplay
+            customer={customer}
+            birthdayText={birthdayText}
+            daysUntilBirthday={daysUntilBirthday}
+            cardBorder={cardBorder}
+            surfaceColor={surfaceColor}
+            surfaceRaised={surfaceRaised}
+            primaryColor={primaryColor}
+            primarySoft={primarySoft}
+            primaryBorder={primaryBorder}
+            textPrimary={textPrimary}
+            textSecondary={textSecondary}
+            textMuted={textMuted}
+          />
 
           <section
             className="rounded-2xl border p-4"

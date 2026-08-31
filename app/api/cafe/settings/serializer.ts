@@ -25,6 +25,19 @@ export type CafeSettingsRecord = {
 
   googleReviewUrl: string | null;
 
+  timezone: string;
+  birthdayRewardsEnabled: boolean;
+  birthdayRewardName: string | null;
+  birthdayRewardDescription: string | null;
+  birthdayPurchaseRequirement: string | null;
+  birthdayValidityDays: number;
+  birthdayReminderEnabled: boolean;
+  birthdayReminderDaysBefore: number;
+  birthdayDayMessageEnabled: boolean;
+  birthdayFriendDiscountEnabled: boolean;
+  birthdayOneFriendDiscount: number;
+  birthdayGroupDiscount: number;
+
   subscriptionStatus: SubscriptionStatus;
   trialStartedAt: Date | null;
   trialEndsAt: Date | null;
@@ -58,6 +71,27 @@ export function serializeCafeSettings(cafe: CafeSettingsRecord) {
       cafe.minimumPurchaseAmount?.toString() ?? null,
 
     googleReviewUrl: cafe.googleReviewUrl,
+
+    timezone: cafe.timezone,
+    birthdayRewardsEnabled: cafe.birthdayRewardsEnabled,
+    birthdayRewardName: cafe.birthdayRewardName,
+    birthdayRewardDescription:
+      cafe.birthdayRewardDescription,
+    birthdayPurchaseRequirement:
+      cafe.birthdayPurchaseRequirement,
+    birthdayValidityDays: cafe.birthdayValidityDays,
+    birthdayReminderEnabled:
+      cafe.birthdayReminderEnabled,
+    birthdayReminderDaysBefore:
+      cafe.birthdayReminderDaysBefore,
+    birthdayDayMessageEnabled:
+      cafe.birthdayDayMessageEnabled,
+    birthdayFriendDiscountEnabled:
+      cafe.birthdayFriendDiscountEnabled,
+    birthdayOneFriendDiscount:
+      cafe.birthdayOneFriendDiscount,
+    birthdayGroupDiscount:
+      cafe.birthdayGroupDiscount,
 
     subscriptionStatus: cafe.subscriptionStatus,
 

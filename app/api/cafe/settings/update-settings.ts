@@ -52,6 +52,19 @@ export async function updateCafeSettings(
 
       googleReviewUrl: true,
 
+      timezone: true,
+      birthdayRewardsEnabled: true,
+      birthdayRewardName: true,
+      birthdayRewardDescription: true,
+      birthdayPurchaseRequirement: true,
+      birthdayValidityDays: true,
+      birthdayReminderEnabled: true,
+      birthdayReminderDaysBefore: true,
+      birthdayDayMessageEnabled: true,
+      birthdayFriendDiscountEnabled: true,
+      birthdayOneFriendDiscount: true,
+      birthdayGroupDiscount: true,
+
       subscriptionStatus: true,
       trialStartedAt: true,
       trialEndsAt: true,

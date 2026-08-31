@@ -43,6 +43,20 @@ export async function requireAuth(
           minimumPurchaseAmount: true,
 
           googleReviewUrl: true,
+
+          timezone: true,
+          birthdayRewardsEnabled: true,
+          birthdayRewardName: true,
+          birthdayRewardDescription: true,
+          birthdayPurchaseRequirement: true,
+          birthdayValidityDays: true,
+          birthdayReminderEnabled: true,
+          birthdayReminderDaysBefore: true,
+          birthdayDayMessageEnabled: true,
+          birthdayFriendDiscountEnabled: true,
+          birthdayOneFriendDiscount: true,
+          birthdayGroupDiscount: true,
+
           isActive: true,
 
           subscriptionStatus: true,

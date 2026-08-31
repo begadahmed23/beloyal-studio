@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import BirthdayRewardsSettings from "@/components/settings/BirthdayRewardsSettings";
 import CafeSettingsForm from "@/components/settings/CafeSettingsForm";
 import { requireAuth } from "@/lib/require-auth";
 
@@ -20,8 +21,11 @@ export default async function SettingsPage() {
   }
 
   return (
-    <CafeSettingsForm
-      accountEmail={authData.user.email}
-    />
+    <>
+      <BirthdayRewardsSettings />
+      <CafeSettingsForm
+        accountEmail={authData.user.email}
+      />
+    </>
   );
 }

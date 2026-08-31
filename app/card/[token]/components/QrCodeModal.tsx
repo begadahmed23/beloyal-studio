@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import QRCode from "react-qr-code";
 
@@ -25,6 +26,13 @@ type QrCodeModalProps = {
   onLogoError: (logoUrl: string) => void;
 };
 
+type CardSyncResponse = {
+  stamps?: number;
+  updatedAt?: string;
+};
+
+const QR_SYNC_INTERVAL_MS = 2000;
+
 export default function QrCodeModal({
   businessType,
   cafeName,
@@ -47,6 +55,100 @@ export default function QrCodeModal({
   onLogoError,
 }: QrCodeModalProps) {
   const isBarbershop = businessType === "BARBERSHOP";
+  const baselineRef = useRef<{
+    stamps: number;
+    updatedAt: string;
+  } | null>(null);
+
+  useEffect(() => {
+    let stopped = false;
+    let timeout: number | null = null;
+    let requestInFlight = false;
+
+    async function checkForStampUpdate() {
+      if (requestInFlight || stopped) {
+        return;
+      }
+
+      requestInFlight = true;
+
+      try {
+        const response = await fetch(
+          `/api/customers/card/${encodeURIComponent(publicToken)}?qrSync=${Date.now()}`,
+          {
+            cache: "no-store",
+            headers: {
+              "Cache-Control": "no-cache",
+              Pragma: "no-cache",
+            },
+          },
+        );
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = (await response.json()) as CardSyncResponse;
+
+        if (
+          typeof data.stamps !== "number" ||
+          typeof data.updatedAt !== "string"
+        ) {
+          return;
+        }
+
+        if (!baselineRef.current) {
+          baselineRef.current = {
+            stamps: data.stamps,
+            updatedAt: data.updatedAt,
+          };
+          return;
+        }
+
+        const stampChanged = data.stamps !== baselineRef.current.stamps;
+        const customerUpdated = data.updatedAt !== baselineRef.current.updatedAt;
+
+        if (stampChanged && customerUpdated) {
+          stopped = true;
+          onClose();
+
+          window.setTimeout(() => {
+            window.location.reload();
+          }, 80);
+        }
+      } catch {
+        // Keep the QR usable even if a background sync check fails.
+      } finally {
+        requestInFlight = false;
+      }
+    }
+
+    function scheduleNextCheck() {
+      if (stopped) {
+        return;
+      }
+
+      timeout = window.setTimeout(async () => {
+        if (document.visibilityState === "visible") {
+          await checkForStampUpdate();
+        }
+
+        scheduleNextCheck();
+      }, QR_SYNC_INTERVAL_MS);
+    }
+
+    void checkForStampUpdate();
+    scheduleNextCheck();
+
+    return () => {
+      stopped = true;
+
+      if (timeout !== null) {
+        window.clearTimeout(timeout);
+      }
+    };
+  }, [onClose, publicToken]);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 px-3 py-4 backdrop-blur-md min-[380px]:px-5 min-[380px]:py-8"
@@ -147,6 +249,10 @@ export default function QrCodeModal({
               }}
             />
           </div>
+
+          <p className="mt-3 text-xs" style={{ color: textMuted }}>
+            Your card updates automatically after the scan.
+          </p>
 
           <div
             className="mt-5 rounded-2xl border px-4 py-3"

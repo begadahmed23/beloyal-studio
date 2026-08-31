@@ -22,6 +22,18 @@ model Cafe {
   rewardDescription           String?
   minimumPurchaseAmount       Decimal?           @db.Decimal(10, 2)
   eligiblePurchaseDescription String?
+  timezone                    String             @default("Africa/Cairo")
+  birthdayRewardsEnabled      Boolean            @default(false)
+  birthdayRewardName          String?            @default("Birthday Reward")
+  birthdayRewardDescription   String?
+  birthdayPurchaseRequirement String?
+  birthdayValidityDays        Int                @default(2)
+  birthdayReminderEnabled     Boolean            @default(true)
+  birthdayReminderDaysBefore  Int                @default(2)
+  birthdayDayMessageEnabled   Boolean            @default(true)
+  birthdayFriendDiscountEnabled Boolean          @default(false)
+  birthdayOneFriendDiscount   Int                @default(10)
+  birthdayGroupDiscount       Int                @default(20)
   isActive                    Boolean            @default(true)
   createdAt                   DateTime           @default(now())
   updatedAt                   DateTime           @updatedAt
@@ -39,6 +51,7 @@ model Cafe {
   reviews                     CustomerReview[]
   feedbacks                   CustomerFeedback[]
   transactions                StampTransaction[]
+  birthdayRedemptions         BirthdayRewardRedemption[]
   user                        User?
 
   @@index([subscriptionStatus])
@@ -55,27 +68,43 @@ model Employee {
 }
 
 model Customer {
-  id                 String             @id @default(cuid())
-  memberNumber       String
-  name               String
-  phone              String
-  birthday           DateTime
-  stamps             Int                @default(0)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  publicToken        String             @unique
-  cafeId             String
-  cafe               Cafe               @relation(fields: [cafeId], references: [id], onDelete: Cascade)
-  review             CustomerReview?
-  feedbackRewardedAt DateTime?
-  rewardEarnedAt DateTime?
-  feedbacks          CustomerFeedback[]
-  transactions       StampTransaction[]
+  id                  String                     @id @default(cuid())
+  memberNumber        String
+  name                String
+  phone               String
+  birthday            DateTime
+  stamps              Int                        @default(0)
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+  publicToken         String                     @unique
+  cafeId              String
+  cafe                Cafe                       @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  review              CustomerReview?
+  feedbackRewardedAt  DateTime?
+  rewardEarnedAt      DateTime?
+  feedbacks           CustomerFeedback[]
+  transactions        StampTransaction[]
+  birthdayRedemptions BirthdayRewardRedemption[]
 
   @@unique([cafeId, phone])
   @@unique([cafeId, memberNumber])
   @@index([cafeId])
   @@index([cafeId, name])
+}
+
+model BirthdayRewardRedemption {
+  id         String   @id @default(cuid())
+  customerId String
+  cafeId     String
+  year       Int
+  redeemedAt DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  cafe     Cafe     @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, year])
+  @@index([cafeId, year])
+  @@index([cafeId, redeemedAt])
 }
 
 model CustomerReview {
@@ -163,7 +192,7 @@ model Session {
 model Account {
   id                    String    @id
   accountId             String
-  providerId            String
+  providerId             String
   userId                String
   accessToken           String?
   refreshToken          String?

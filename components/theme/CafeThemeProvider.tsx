@@ -33,6 +33,19 @@ export type CafeSettings = {
 
   googleReviewUrl: string | null;
 
+  timezone: string;
+  birthdayRewardsEnabled: boolean;
+  birthdayRewardName: string | null;
+  birthdayRewardDescription: string | null;
+  birthdayPurchaseRequirement: string | null;
+  birthdayValidityDays: number;
+  birthdayReminderEnabled: boolean;
+  birthdayReminderDaysBefore: number;
+  birthdayDayMessageEnabled: boolean;
+  birthdayFriendDiscountEnabled: boolean;
+  birthdayOneFriendDiscount: number;
+  birthdayGroupDiscount: number;
+
   subscriptionStatus:
     | "TRIAL"
     | "ACTIVE"
@@ -226,7 +239,7 @@ export function useCafeTheme() {
 
   if (!context) {
     throw new Error(
-      "useCafeTheme must be used inside CafeThemeProvider.",
+      "useCafeTheme must be used inside CafeThemeProvider",
     );
   }
 

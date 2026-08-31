@@ -37,6 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+import BirthdayRewardAction from "./BirthdayRewardAction";
 import EditMemberDialog from "./EditMemberDialog";
 
 type Customer = {
@@ -523,17 +524,13 @@ export default function MemberCard({
           borderColor: cardGlowsGreen
             ? `${theme.success}90`
             : theme.border,
-
           backgroundColor:
             cardGlowsGreen
               ? `${theme.success}12`
               : theme.surface,
-
           color: theme.textPrimary,
-
           borderRadius:
             theme.radiusMedium,
-
           boxShadow: cardGlowsGreen
             ? `0 0 0 1px ${theme.success}35, 0 0 24px ${theme.success}30`
             : theme.cardShadow,
@@ -549,7 +546,6 @@ export default function MemberCard({
               }}
             >
               <Hash size={13} />
-
               <span>
                 {customer.memberNumber}
               </span>
@@ -573,7 +569,6 @@ export default function MemberCard({
               }}
             >
               <Phone size={14} />
-
               <span>
                 {customer.phone}
               </span>
@@ -587,17 +582,14 @@ export default function MemberCard({
                 cardGlowsGreen
                   ? `${theme.success}65`
                   : theme.border,
-
               backgroundColor:
                 cardGlowsGreen
                   ? `${theme.success}18`
                   : theme.accentSoft,
-
               color:
                 cardGlowsGreen
                   ? theme.success
                   : theme.textSecondary,
-
               borderRadius: "999px",
             }}
           >
@@ -631,12 +623,10 @@ export default function MemberCard({
                     filled
                       ? `${theme.accent}70`
                       : theme.border,
-
                   backgroundColor:
                     filled
                       ? theme.accentSoft
                       : theme.surfaceRaised,
-
                   borderRadius:
                     "10px",
                 }}
@@ -647,7 +637,6 @@ export default function MemberCard({
                     color: filled
                       ? theme.accent
                       : theme.textMuted,
-
                     fill: filled
                       ? theme.accent
                       : "transparent",
@@ -732,7 +721,6 @@ export default function MemberCard({
               }}
             >
               <Hash size={13} />
-
               {customer.memberNumber}
             </div>
 
@@ -754,10 +742,8 @@ export default function MemberCard({
                 style={{
                   borderColor:
                     theme.border,
-
                   backgroundColor:
                     theme.surfaceRaised,
-
                   borderRadius:
                     theme.radiusMedium,
                 }}
@@ -789,10 +775,8 @@ export default function MemberCard({
                 style={{
                   borderColor:
                     theme.border,
-
                   backgroundColor:
                     theme.surfaceRaised,
-
                   borderRadius:
                     theme.radiusMedium,
                 }}
@@ -827,10 +811,8 @@ export default function MemberCard({
               style={{
                 borderColor:
                   theme.border,
-
                 backgroundColor:
                   theme.surfaceRaised,
-
                 borderRadius:
                   theme.radiusMedium,
               }}
@@ -914,12 +896,10 @@ export default function MemberCard({
                               filled
                                 ? `${theme.accent}70`
                                 : theme.border,
-
                             backgroundColor:
                               filled
                                 ? theme.accentSoft
                                 : theme.surface,
-
                             borderRadius:
                               "12px",
                           }}
@@ -931,7 +911,6 @@ export default function MemberCard({
                                 filled
                                   ? theme.accent
                                   : theme.textMuted,
-
                               fill:
                                 isBarbershop || !filled
                                   ? "transparent"
@@ -1028,13 +1007,10 @@ export default function MemberCard({
                   style={{
                     borderColor:
                       `${theme.accent}60`,
-
                     backgroundColor:
                       theme.accentSoft,
-
                     color:
                       theme.textSecondary,
-
                     borderRadius:
                       theme.radiusMedium,
                   }}
@@ -1050,13 +1026,10 @@ export default function MemberCard({
                   style={{
                     borderColor:
                       `${theme.warning}45`,
-
                     backgroundColor:
                       `${theme.warning}12`,
-
                     color:
                       theme.warning,
-
                     borderRadius:
                       theme.radiusMedium,
                   }}
@@ -1067,6 +1040,12 @@ export default function MemberCard({
                 </div>
               )}
             </div>
+
+            <BirthdayRewardAction
+              customerId={customer.id}
+              active={profileOpen}
+              onRedeemed={notifyDashboard}
+            />
 
             {rewardReady ? (
               <button
@@ -1097,10 +1076,8 @@ export default function MemberCard({
                 style={{
                   backgroundColor:
                     theme.accent,
-
                   color:
                     theme.buttonText,
-
                   borderRadius:
                     theme.radiusMedium,
                 }}
@@ -1333,7 +1310,6 @@ export default function MemberCard({
               style={{
                 backgroundColor:
                   theme.accent,
-
                 color:
                   theme.buttonText,
               }}
