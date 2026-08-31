@@ -29,18 +29,9 @@ export default function BirthdaySummary() {
   const { cafe, theme } = useCafeTheme();
   const [summary, setSummary] = useState<Summary>(EMPTY_SUMMARY);
   const [loading, setLoading] = useState(true);
-  const [enabled, setEnabled] = useState(
-    cafe.birthdayRewardsEnabled,
-  );
+  const [enabled, setEnabled] = useState(true);
 
   const loadSummary = useCallback(async (showLoading = true) => {
-    if (!cafe.birthdayRewardsEnabled) {
-      setEnabled(false);
-      setSummary(EMPTY_SUMMARY);
-      setLoading(false);
-      return;
-    }
-
     if (showLoading) {
       setLoading(true);
     }
@@ -67,7 +58,7 @@ export default function BirthdaySummary() {
         setLoading(false);
       }
     }
-  }, [cafe.birthdayRewardsEnabled]);
+  }, []);
 
   useEffect(() => {
     void loadSummary();
