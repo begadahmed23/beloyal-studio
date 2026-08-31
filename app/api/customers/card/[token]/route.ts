@@ -96,6 +96,7 @@ export async function GET(
             birthdayRewardDescription: true,
             birthdayPurchaseRequirement: true,
             birthdayValidityDays: true,
+            birthdayReminderDaysBefore: true,
             birthdayFriendDiscountEnabled: true,
             birthdayOneFriendDiscount: true,
             birthdayGroupDiscount: true,
