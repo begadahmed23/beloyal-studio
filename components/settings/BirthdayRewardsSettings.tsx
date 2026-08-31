@@ -502,12 +502,16 @@ function DiscountRule({
       <div className="mt-4 flex items-center gap-3">
         <div className="relative w-28">
           <input
-            type="number"
-            min={0}
-            max={100}
-            step={1}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={3}
             value={value}
-            onChange={(event) => onChange(Number(event.target.value))}
+            onChange={(event) => {
+              const digits = event.target.value.replace(/\D/g, "");
+              const nextValue = digits ? Math.min(100, Number(digits)) : 0;
+              onChange(nextValue);
+            }}
             disabled={disabled}
             className="h-11 w-full border px-4 pr-9 text-sm outline-none disabled:cursor-not-allowed"
             style={{
