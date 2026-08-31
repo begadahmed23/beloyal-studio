@@ -1,6 +1,6 @@
 "use client";
 
-import { Cake, Check, Loader2, Save } from "lucide-react";
+import { Cake, Check, ChevronDown, Loader2, Save } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -46,8 +46,7 @@ export default function BirthdayRewardsSettings() {
   const { cafe, theme } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
 
-  const [settings, setSettings] =
-    useState<BirthdaySettings>(EMPTY_SETTINGS);
+  const [settings, setSettings] = useState<BirthdaySettings>(EMPTY_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{
@@ -60,22 +59,16 @@ export default function BirthdayRewardsSettings() {
 
     async function loadSettings() {
       try {
-        const response = await fetch(
-          "/api/cafe/birthday-settings",
-          { cache: "no-store" },
-        );
-
+        const response = await fetch("/api/cafe/birthday-settings", {
+          cache: "no-store",
+        });
         const data = (await response.json()) as ApiResponse;
 
         if (!response.ok || !data.settings) {
-          throw new Error(
-            data.message ?? "Unable to load birthday settings.",
-          );
+          throw new Error(data.message ?? "Unable to load birthday settings.");
         }
 
-        if (active) {
-          setSettings(data.settings);
-        }
+        if (active) setSettings(data.settings);
       } catch (error) {
         if (active) {
           setMessage({
@@ -87,14 +80,11 @@ export default function BirthdayRewardsSettings() {
           });
         }
       } finally {
-        if (active) {
-          setLoading(false);
-        }
+        if (active) setLoading(false);
       }
     }
 
     void loadSettings();
-
     return () => {
       active = false;
     };
@@ -104,10 +94,7 @@ export default function BirthdayRewardsSettings() {
     key: K,
     value: BirthdaySettings[K],
   ) {
-    setSettings((current) => ({
-      ...current,
-      [key]: value,
-    }));
+    setSettings((current) => ({ ...current, [key]: value }));
     setMessage(null);
   }
 
@@ -117,23 +104,15 @@ export default function BirthdayRewardsSettings() {
     setMessage(null);
 
     try {
-      const response = await fetch(
-        "/api/cafe/birthday-settings",
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(settings),
-        },
-      );
-
+      const response = await fetch("/api/cafe/birthday-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      });
       const data = (await response.json()) as ApiResponse;
 
       if (!response.ok || !data.settings) {
-        throw new Error(
-          data.message ?? "Unable to save birthday settings.",
-        );
+        throw new Error(data.message ?? "Unable to save birthday settings.");
       }
 
       setSettings(data.settings);
@@ -187,55 +166,37 @@ export default function BirthdayRewardsSettings() {
             >
               <Cake size={20} />
             </div>
-
             <div>
-              <h3
-                className="text-lg font-semibold"
-                style={{ color: theme.textPrimary }}
-              >
+              <h3 className="text-lg font-semibold" style={{ color: theme.textPrimary }}>
                 Birthday Rewards
               </h3>
-              <p
-                className="mt-1 max-w-2xl text-sm leading-6"
-                style={{ color: theme.textMuted }}
-              >
-                Offer a birthday benefit to members. The same settings power
-                the customer card, staff redemption, dashboard counts, and
-                WhatsApp birthday messages.
+              <p className="mt-1 max-w-2xl text-sm leading-6" style={{ color: theme.textMuted }}>
+                Set the birthday offer members see on their card and staff can redeem at checkout.
               </p>
             </div>
           </div>
 
           <label className="flex cursor-pointer items-center gap-3">
-            <span
-              className="text-sm font-medium"
-              style={{ color: theme.textSecondary }}
-            >
+            <span className="text-sm font-medium" style={{ color: theme.textSecondary }}>
               {settings.enabled ? "Enabled" : "Disabled"}
             </span>
             <input
               type="checkbox"
               checked={settings.enabled}
-              onChange={(event) =>
-                update("enabled", event.target.checked)
-              }
+              onChange={(event) => update("enabled", event.target.checked)}
               disabled={loading || saving}
               className="sr-only"
             />
             <span
               className="relative h-7 w-12 rounded-full transition"
               style={{
-                backgroundColor: settings.enabled
-                  ? theme.accent
-                  : theme.inputBorder,
+                backgroundColor: settings.enabled ? theme.accent : theme.inputBorder,
                 opacity: loading || saving ? 0.6 : 1,
               }}
             >
               <span
                 className="absolute top-1 h-5 w-5 rounded-full bg-white transition-all"
-                style={{
-                  left: settings.enabled ? "24px" : "4px",
-                }}
+                style={{ left: settings.enabled ? "24px" : "4px" }}
               />
             </span>
           </label>
@@ -245,262 +206,147 @@ export default function BirthdayRewardsSettings() {
           <div
             className="mt-5 flex items-start gap-2 border px-4 py-3 text-sm"
             style={{
-              borderColor:
-                message.type === "success"
-                  ? theme.accent
-                  : theme.danger,
-              color:
-                message.type === "success"
-                  ? theme.textPrimary
-                  : theme.danger,
+              borderColor: message.type === "success" ? theme.accent : theme.danger,
+              color: message.type === "success" ? theme.textPrimary : theme.danger,
               backgroundColor: theme.surfaceRaised,
               borderRadius: theme.radiusMedium,
             }}
           >
-            {message.type === "success" && (
-              <Check size={17} className="mt-0.5 shrink-0" />
-            )}
+            {message.type === "success" && <Check size={17} className="mt-0.5 shrink-0" />}
             <span>{message.text}</span>
           </div>
         )}
 
-        <div
-          className="mt-6 grid gap-5 transition"
-          style={{ opacity: settings.enabled ? 1 : 0.48 }}
-        >
-          <div className="grid gap-5 lg:grid-cols-2">
-            <Field
-              label="Birthday reward"
-              description="The short reward name shown to members and staff."
-              theme={theme}
-            >
-              <input
-                type="text"
-                value={settings.rewardName}
-                onChange={(event) =>
-                  update("rewardName", event.target.value)
-                }
-                placeholder={
-                  isBarbershop
-                    ? "25% off a haircut"
-                    : "Complimentary Cookie"
-                }
-                maxLength={80}
-                disabled={disabled}
-                className="h-12 w-full border px-4 text-sm outline-none disabled:cursor-not-allowed"
-                style={inputStyle}
-              />
-            </Field>
-
-            <Field
-              label="Offer validity"
-              description="Total calendar days including the birthday itself."
-              theme={theme}
-            >
-              <select
-                value={settings.validityDays}
-                onChange={(event) =>
-                  update("validityDays", Number(event.target.value))
-                }
-                disabled={disabled}
-                className="h-12 w-full border px-4 text-sm outline-none disabled:cursor-not-allowed"
-                style={inputStyle}
-              >
-                <option value={1}>Birthday only</option>
-                <option value={2}>Birthday + following day</option>
-                <option value={3}>3 days total</option>
-                <option value={4}>4 days total</option>
-                <option value={5}>5 days total</option>
-                <option value={6}>6 days total</option>
-                <option value={7}>7 days total</option>
-              </select>
-            </Field>
-
-            <Field
-              label="Reward details"
-              description="Optional explanation shown in the birthday offer."
-              theme={theme}
-            >
-              <textarea
-                value={settings.rewardDescription}
-                onChange={(event) =>
-                  update("rewardDescription", event.target.value)
-                }
-                placeholder={
-                  isBarbershop
-                    ? "A birthday discount on your next haircut."
-                    : "A little something from us to celebrate your day."
-                }
-                maxLength={300}
-                rows={3}
-                disabled={disabled}
-                className="w-full resize-none border px-4 py-3 text-sm outline-none disabled:cursor-not-allowed"
-                style={inputStyle}
-              />
-            </Field>
-
-            <Field
-              label={
-                isBarbershop
-                  ? "Service requirement"
-                  : "Purchase requirement"
-              }
-              description="Optional condition required to receive the birthday reward."
-              theme={theme}
-            >
-              <textarea
-                value={settings.purchaseRequirement}
-                onChange={(event) =>
-                  update("purchaseRequirement", event.target.value)
-                }
-                placeholder={
-                  isBarbershop
-                    ? "Valid with a paid haircut."
-                    : "Available with any drink purchase."
-                }
-                maxLength={300}
-                rows={3}
-                disabled={disabled}
-                className="w-full resize-none border px-4 py-3 text-sm outline-none disabled:cursor-not-allowed"
-                style={inputStyle}
-              />
-            </Field>
-          </div>
-
-          <div
-            className="border p-5"
-            style={{
-              borderColor: theme.border,
-              backgroundColor: theme.surfaceRaised,
-              borderRadius: theme.radiusMedium,
-            }}
-          >
-            <ToggleRow
-              label="Friend discounts"
-              description="Apply a larger bill discount when the birthday member celebrates with friends."
-              checked={settings.friendDiscountEnabled}
-              disabled={disabled}
-              onChange={(checked) =>
-                update("friendDiscountEnabled", checked)
-              }
-              theme={theme}
-            />
-
-            <div
-              className="mt-5 grid gap-4 sm:grid-cols-2"
-              style={{
-                opacity: settings.friendDiscountEnabled ? 1 : 0.45,
-              }}
-            >
-              <PercentField
-                label="1 friend"
-                value={settings.oneFriendDiscount}
-                disabled={disabled || !settings.friendDiscountEnabled}
-                onChange={(value) =>
-                  update("oneFriendDiscount", value)
-                }
-                theme={theme}
-              />
-              <PercentField
-                label="2+ friends"
-                value={settings.groupDiscount}
-                disabled={disabled || !settings.friendDiscountEnabled}
-                onChange={(value) =>
-                  update("groupDiscount", value)
-                }
-                theme={theme}
-              />
-            </div>
-          </div>
-
-          <div
-            className="border p-5"
-            style={{
-              borderColor: theme.border,
-              backgroundColor: theme.surfaceRaised,
-              borderRadius: theme.radiusMedium,
-            }}
-          >
-            <p
-              className="text-sm font-semibold"
-              style={{ color: theme.textPrimary }}
-            >
-              WhatsApp birthday messages
-            </p>
-            <p
-              className="mt-1 text-xs leading-5"
-              style={{ color: theme.textMuted }}
-            >
-              These switches control birthday messaging only. Messages are sent
-              only when this business has a WhatsApp connection in BeLoyal.
-            </p>
-
-            <div className="mt-5 grid gap-5 lg:grid-cols-2">
-              <ToggleRow
-                label="Pre-birthday reminder"
-                description="Send a WhatsApp message before the member’s birthday."
-                checked={settings.reminderEnabled}
-                disabled={disabled}
-                onChange={(checked) =>
-                  update("reminderEnabled", checked)
-                }
-                theme={theme}
-              />
-
-              <Field
-                label="Days before"
-                description="How early the reminder should be sent."
-                theme={theme}
-              >
+        <div className="mt-6 grid gap-5 transition" style={{ opacity: settings.enabled ? 1 : 0.48 }}>
+          <SettingsGroup title="Reward" theme={theme}>
+            <div className="grid gap-5 lg:grid-cols-2">
+              <Field label="Birthday gift" description="The reward shown to the member and staff." theme={theme}>
                 <input
-                  type="number"
-                  min={1}
-                  max={30}
-                  step={1}
-                  value={settings.reminderDaysBefore}
-                  onChange={(event) =>
-                    update(
-                      "reminderDaysBefore",
-                      Number(event.target.value),
-                    )
-                  }
-                  disabled={disabled || !settings.reminderEnabled}
+                  type="text"
+                  value={settings.rewardName}
+                  onChange={(event) => update("rewardName", event.target.value)}
+                  placeholder={isBarbershop ? "25% off a haircut" : "Complimentary Cookie"}
+                  maxLength={80}
+                  disabled={disabled}
                   className="h-12 w-full border px-4 text-sm outline-none disabled:cursor-not-allowed"
                   style={inputStyle}
                 />
               </Field>
 
-              <ToggleRow
-                label="Birthday-day message"
-                description="Send another birthday message on the member’s actual birthday."
-                checked={settings.birthdayDayMessageEnabled}
-                disabled={disabled}
-                onChange={(checked) =>
-                  update("birthdayDayMessageEnabled", checked)
-                }
-                theme={theme}
-              />
-            </div>
-          </div>
+              <Field label="Valid for" description="How long the birthday offer can be redeemed." theme={theme}>
+                <select
+                  value={settings.validityDays}
+                  onChange={(event) => update("validityDays", Number(event.target.value))}
+                  disabled={disabled}
+                  className="h-12 w-full border px-4 text-sm outline-none disabled:cursor-not-allowed"
+                  style={inputStyle}
+                >
+                  <option value={1}>Birthday only</option>
+                  <option value={2}>Birthday + next day</option>
+                  <option value={3}>3 days total</option>
+                  <option value={4}>4 days total</option>
+                  <option value={5}>5 days total</option>
+                  <option value={6}>6 days total</option>
+                  <option value={7}>7 days total</option>
+                </select>
+              </Field>
 
-          <Field
-            label="Business timezone"
-            description="Used for birthday dates, offer validity, and scheduled messages."
-            theme={theme}
-          >
-            <input
-              type="text"
-              value={settings.timezone}
-              onChange={(event) =>
-                update("timezone", event.target.value)
-              }
-              placeholder="Africa/Cairo"
-              maxLength={100}
+              <Field
+                label={isBarbershop ? "Service requirement" : "Purchase requirement"}
+                description="What the member needs to buy to receive the gift."
+                theme={theme}
+              >
+                <input
+                  type="text"
+                  value={settings.purchaseRequirement}
+                  onChange={(event) => update("purchaseRequirement", event.target.value)}
+                  placeholder={isBarbershop ? "With a paid haircut" : "With any drink purchase"}
+                  maxLength={300}
+                  disabled={disabled}
+                  className="h-12 w-full border px-4 text-sm outline-none disabled:cursor-not-allowed"
+                  style={inputStyle}
+                />
+              </Field>
+
+              <Field label="Extra details" description="Optional short note shown inside the birthday offer." theme={theme}>
+                <input
+                  type="text"
+                  value={settings.rewardDescription}
+                  onChange={(event) => update("rewardDescription", event.target.value)}
+                  placeholder={isBarbershop ? "A birthday treat from us." : "A little something from us to celebrate your day."}
+                  maxLength={300}
+                  disabled={disabled}
+                  className="h-12 w-full border px-4 text-sm outline-none disabled:cursor-not-allowed"
+                  style={inputStyle}
+                />
+              </Field>
+            </div>
+          </SettingsGroup>
+
+          <SettingsGroup title="Friend discount" theme={theme}>
+            <ToggleRow
+              label="Offer a birthday group discount"
+              description="Turn this on if the member gets a larger bill discount when celebrating with friends."
+              checked={settings.friendDiscountEnabled}
               disabled={disabled}
-              className="h-12 w-full border px-4 text-sm outline-none disabled:cursor-not-allowed"
-              style={inputStyle}
+              onChange={(checked) => update("friendDiscountEnabled", checked)}
+              theme={theme}
             />
-          </Field>
+
+            {settings.friendDiscountEnabled && (
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <PercentField
+                  label="1 friend"
+                  value={settings.oneFriendDiscount}
+                  disabled={disabled}
+                  onChange={(value) => update("oneFriendDiscount", value)}
+                  theme={theme}
+                />
+                <PercentField
+                  label="2+ friends"
+                  value={settings.groupDiscount}
+                  disabled={disabled}
+                  onChange={(value) => update("groupDiscount", value)}
+                  theme={theme}
+                />
+              </div>
+            )}
+          </SettingsGroup>
+
+          <details
+            className="group border"
+            style={{
+              borderColor: theme.border,
+              backgroundColor: theme.surfaceRaised,
+              borderRadius: theme.radiusMedium,
+            }}
+          >
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5">
+              <span>
+                <span className="block text-sm font-semibold" style={{ color: theme.textPrimary }}>
+                  Advanced
+                </span>
+                <span className="mt-1 block text-xs leading-5" style={{ color: theme.textMuted }}>
+                  Date and timezone settings. Most businesses never need to change this.
+                </span>
+              </span>
+              <ChevronDown size={18} className="shrink-0 transition-transform group-open:rotate-180" style={{ color: theme.textMuted }} />
+            </summary>
+            <div className="border-t p-5" style={{ borderColor: theme.border }}>
+              <Field label="Business timezone" description="Used to calculate birthdays and offer expiry correctly." theme={theme}>
+                <input
+                  type="text"
+                  value={settings.timezone}
+                  onChange={(event) => update("timezone", event.target.value)}
+                  placeholder="Africa/Cairo"
+                  maxLength={100}
+                  disabled={disabled}
+                  className="h-12 w-full border px-4 text-sm outline-none disabled:cursor-not-allowed"
+                  style={inputStyle}
+                />
+              </Field>
+            </div>
+          </details>
         </div>
 
         <div className="mt-6 flex justify-end">
@@ -514,11 +360,7 @@ export default function BirthdayRewardsSettings() {
               borderRadius: theme.radiusMedium,
             }}
           >
-            {saving ? (
-              <Loader2 size={17} className="animate-spin" />
-            ) : (
-              <Save size={17} />
-            )}
+            {saving ? <Loader2 size={17} className="animate-spin" /> : <Save size={17} />}
             {saving ? "Saving..." : "Save Birthday Settings"}
           </button>
         </div>
@@ -527,12 +369,29 @@ export default function BirthdayRewardsSettings() {
   );
 }
 
-function Field({
-  label,
-  description,
-  theme,
-  children,
-}: {
+function SettingsGroup({ title, theme, children }: {
+  title: string;
+  theme: ReturnType<typeof useCafeTheme>["theme"];
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="border p-5"
+      style={{
+        borderColor: theme.border,
+        backgroundColor: theme.surfaceRaised,
+        borderRadius: theme.radiusMedium,
+      }}
+    >
+      <p className="mb-5 text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: theme.textMuted }}>
+        {title}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, description, theme, children }: {
   label: string;
   description: string;
   theme: ReturnType<typeof useCafeTheme>["theme"];
@@ -540,31 +399,14 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span
-        className="text-sm font-medium"
-        style={{ color: theme.textPrimary }}
-      >
-        {label}
-      </span>
-      <span
-        className="mt-1 block text-xs leading-5"
-        style={{ color: theme.textMuted }}
-      >
-        {description}
-      </span>
+      <span className="text-sm font-medium" style={{ color: theme.textPrimary }}>{label}</span>
+      <span className="mt-1 block text-xs leading-5" style={{ color: theme.textMuted }}>{description}</span>
       <span className="mt-3 block">{children}</span>
     </label>
   );
 }
 
-function ToggleRow({
-  label,
-  description,
-  checked,
-  disabled,
-  onChange,
-  theme,
-}: {
+function ToggleRow({ label, description, checked, disabled, onChange, theme }: {
   label: string;
   description: string;
   checked: boolean;
@@ -575,18 +417,8 @@ function ToggleRow({
   return (
     <label className="flex items-start justify-between gap-4">
       <span>
-        <span
-          className="block text-sm font-medium"
-          style={{ color: theme.textPrimary }}
-        >
-          {label}
-        </span>
-        <span
-          className="mt-1 block text-xs leading-5"
-          style={{ color: theme.textMuted }}
-        >
-          {description}
-        </span>
+        <span className="block text-sm font-medium" style={{ color: theme.textPrimary }}>{label}</span>
+        <span className="mt-1 block text-xs leading-5" style={{ color: theme.textMuted }}>{description}</span>
       </span>
       <input
         type="checkbox"
@@ -600,13 +432,7 @@ function ToggleRow({
   );
 }
 
-function PercentField({
-  label,
-  value,
-  disabled,
-  onChange,
-  theme,
-}: {
+function PercentField({ label, value, disabled, onChange, theme }: {
   label: string;
   value: number;
   disabled: boolean;
@@ -615,12 +441,7 @@ function PercentField({
 }) {
   return (
     <label>
-      <span
-        className="text-xs font-medium"
-        style={{ color: theme.textSecondary }}
-      >
-        {label}
-      </span>
+      <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>{label}</span>
       <div className="relative mt-2">
         <input
           type="number"
@@ -638,12 +459,7 @@ function PercentField({
             borderRadius: theme.radiusMedium,
           }}
         />
-        <span
-          className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs"
-          style={{ color: theme.textMuted }}
-        >
-          %
-        </span>
+        <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs" style={{ color: theme.textMuted }}>%</span>
       </div>
     </label>
   );
