@@ -144,7 +144,7 @@ export default function BirthdayRewardsSettings() {
   const disabled = loading || saving || !settings.enabled;
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6">
+    <form onSubmit={handleSubmit} className="mb-6">
       <section
         className="border p-5 sm:p-7"
         style={{
@@ -283,10 +283,10 @@ export default function BirthdayRewardsSettings() {
             </div>
           </SettingsGroup>
 
-          <SettingsGroup title="Friend discount" theme={theme}>
+          <SettingsGroup title="Group discount" theme={theme}>
             <ToggleRow
-              label="Offer a birthday group discount"
-              description="Turn this on if the member gets a larger bill discount when celebrating with friends."
+              label="Discount the total bill when they celebrate together"
+              description="Optional. Set the percentage the whole bill receives based on how many guests come with the birthday member."
               checked={settings.friendDiscountEnabled}
               disabled={disabled}
               onChange={(checked) => update("friendDiscountEnabled", checked)}
@@ -294,16 +294,18 @@ export default function BirthdayRewardsSettings() {
             />
 
             {settings.friendDiscountEnabled && (
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                <PercentField
-                  label="1 friend"
+              <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                <DiscountRule
+                  title="Birthday customer + 1 guest"
+                  description="Discount applied to the total bill."
                   value={settings.oneFriendDiscount}
                   disabled={disabled}
                   onChange={(value) => update("oneFriendDiscount", value)}
                   theme={theme}
                 />
-                <PercentField
-                  label="2+ friends"
+                <DiscountRule
+                  title="Birthday customer + 2 or more guests"
+                  description="Discount applied to the total bill."
                   value={settings.groupDiscount}
                   disabled={disabled}
                   onChange={(value) => update("groupDiscount", value)}
@@ -330,10 +332,18 @@ export default function BirthdayRewardsSettings() {
                   Date and timezone settings. Most businesses never need to change this.
                 </span>
               </span>
-              <ChevronDown size={18} className="shrink-0 transition-transform group-open:rotate-180" style={{ color: theme.textMuted }} />
+              <ChevronDown
+                size={18}
+                className="shrink-0 transition-transform group-open:rotate-180"
+                style={{ color: theme.textMuted }}
+              />
             </summary>
             <div className="border-t p-5" style={{ borderColor: theme.border }}>
-              <Field label="Business timezone" description="Used to calculate birthdays and offer expiry correctly." theme={theme}>
+              <Field
+                label="Business timezone"
+                description="Used to calculate birthdays and offer expiry correctly."
+                theme={theme}
+              >
                 <input
                   type="text"
                   value={settings.timezone}
@@ -369,7 +379,11 @@ export default function BirthdayRewardsSettings() {
   );
 }
 
-function SettingsGroup({ title, theme, children }: {
+function SettingsGroup({
+  title,
+  theme,
+  children,
+}: {
   title: string;
   theme: ReturnType<typeof useCafeTheme>["theme"];
   children: React.ReactNode;
@@ -383,7 +397,10 @@ function SettingsGroup({ title, theme, children }: {
         borderRadius: theme.radiusMedium,
       }}
     >
-      <p className="mb-5 text-xs font-semibold uppercase tracking-[0.16em]" style={{ color: theme.textMuted }}>
+      <p
+        className="mb-5 text-xs font-semibold uppercase tracking-[0.16em]"
+        style={{ color: theme.textMuted }}
+      >
         {title}
       </p>
       {children}
@@ -391,7 +408,12 @@ function SettingsGroup({ title, theme, children }: {
   );
 }
 
-function Field({ label, description, theme, children }: {
+function Field({
+  label,
+  description,
+  theme,
+  children,
+}: {
   label: string;
   description: string;
   theme: ReturnType<typeof useCafeTheme>["theme"];
@@ -399,14 +421,25 @@ function Field({ label, description, theme, children }: {
 }) {
   return (
     <label className="block">
-      <span className="text-sm font-medium" style={{ color: theme.textPrimary }}>{label}</span>
-      <span className="mt-1 block text-xs leading-5" style={{ color: theme.textMuted }}>{description}</span>
+      <span className="text-sm font-medium" style={{ color: theme.textPrimary }}>
+        {label}
+      </span>
+      <span className="mt-1 block text-xs leading-5" style={{ color: theme.textMuted }}>
+        {description}
+      </span>
       <span className="mt-3 block">{children}</span>
     </label>
   );
 }
 
-function ToggleRow({ label, description, checked, disabled, onChange, theme }: {
+function ToggleRow({
+  label,
+  description,
+  checked,
+  disabled,
+  onChange,
+  theme,
+}: {
   label: string;
   description: string;
   checked: boolean;
@@ -417,8 +450,12 @@ function ToggleRow({ label, description, checked, disabled, onChange, theme }: {
   return (
     <label className="flex items-start justify-between gap-4">
       <span>
-        <span className="block text-sm font-medium" style={{ color: theme.textPrimary }}>{label}</span>
-        <span className="mt-1 block text-xs leading-5" style={{ color: theme.textMuted }}>{description}</span>
+        <span className="block text-sm font-medium" style={{ color: theme.textPrimary }}>
+          {label}
+        </span>
+        <span className="mt-1 block text-xs leading-5" style={{ color: theme.textMuted }}>
+          {description}
+        </span>
       </span>
       <input
         type="checkbox"
@@ -432,34 +469,64 @@ function ToggleRow({ label, description, checked, disabled, onChange, theme }: {
   );
 }
 
-function PercentField({ label, value, disabled, onChange, theme }: {
-  label: string;
+function DiscountRule({
+  title,
+  description,
+  value,
+  disabled,
+  onChange,
+  theme,
+}: {
+  title: string;
+  description: string;
   value: number;
   disabled: boolean;
   onChange: (value: number) => void;
   theme: ReturnType<typeof useCafeTheme>["theme"];
 }) {
   return (
-    <label>
-      <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>{label}</span>
-      <div className="relative mt-2">
-        <input
-          type="number"
-          min={0}
-          max={100}
-          step={1}
-          value={value}
-          onChange={(event) => onChange(Number(event.target.value))}
-          disabled={disabled}
-          className="h-11 w-full border px-4 pr-10 text-sm outline-none disabled:cursor-not-allowed"
-          style={{
-            borderColor: theme.inputBorder,
-            backgroundColor: theme.inputBackground,
-            color: theme.textPrimary,
-            borderRadius: theme.radiusMedium,
-          }}
-        />
-        <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs" style={{ color: theme.textMuted }}>%</span>
+    <label
+      className="block border p-4"
+      style={{
+        borderColor: theme.border,
+        backgroundColor: theme.inputBackground,
+        borderRadius: theme.radiusMedium,
+      }}
+    >
+      <span className="block text-sm font-medium" style={{ color: theme.textPrimary }}>
+        {title}
+      </span>
+      <span className="mt-1 block text-xs" style={{ color: theme.textMuted }}>
+        {description}
+      </span>
+      <div className="mt-4 flex items-center gap-3">
+        <div className="relative w-28">
+          <input
+            type="number"
+            min={0}
+            max={100}
+            step={1}
+            value={value}
+            onChange={(event) => onChange(Number(event.target.value))}
+            disabled={disabled}
+            className="h-11 w-full border px-4 pr-9 text-sm outline-none disabled:cursor-not-allowed"
+            style={{
+              borderColor: theme.inputBorder,
+              backgroundColor: theme.surface,
+              color: theme.textPrimary,
+              borderRadius: theme.radiusMedium,
+            }}
+          />
+          <span
+            className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs"
+            style={{ color: theme.textMuted }}
+          >
+            %
+          </span>
+        </div>
+        <span className="text-xs font-medium" style={{ color: theme.textSecondary }}>
+          off total bill
+        </span>
       </div>
     </label>
   );
