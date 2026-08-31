@@ -12,6 +12,12 @@ import { prisma } from "@/lib/prisma";
 const DEFAULT_PAGE_SIZE = 100;
 const MAX_PAGE_SIZE = 500;
 
+const BIRTHDAY_MESSAGE_TYPES = new Set([
+  "PRE_BIRTHDAY",
+  "PRE_BIRTHDAY_CATCHUP",
+  "BIRTHDAY_TODAY",
+]);
+
 function jsonResponse(
   data: unknown,
   status = 200,
@@ -48,6 +54,56 @@ function secretsMatch(
       expectedBuffer,
     )
   );
+}
+
+function authorizeAutomation(
+  request: NextRequest,
+) {
+  const expectedSecret =
+    process.env.N8N_AUTOMATION_SECRET;
+
+  if (!expectedSecret) {
+    console.error(
+      "N8N_AUTOMATION_SECRET is not configured.",
+    );
+
+    return {
+      ok: false as const,
+      response: jsonResponse(
+        {
+          message:
+            "Automation integration is unavailable.",
+        },
+        503,
+      ),
+    };
+  }
+
+  const providedSecret =
+    request.headers.get(
+      "x-beloyal-automation-secret",
+    ) ?? "";
+
+  if (
+    !secretsMatch(
+      providedSecret,
+      expectedSecret,
+    )
+  ) {
+    return {
+      ok: false as const,
+      response: jsonResponse(
+        {
+          message: "Unauthorized.",
+        },
+        401,
+      ),
+    };
+  }
+
+  return {
+    ok: true as const,
+  };
 }
 
 function normalizeWhatsAppPhone(
@@ -126,40 +182,11 @@ export async function GET(
   request: NextRequest,
 ) {
   try {
-    const expectedSecret =
-      process.env.N8N_AUTOMATION_SECRET;
+    const authorization =
+      authorizeAutomation(request);
 
-    if (!expectedSecret) {
-      console.error(
-        "N8N_AUTOMATION_SECRET is not configured.",
-      );
-
-      return jsonResponse(
-        {
-          message:
-            "Automation integration is unavailable.",
-        },
-        503,
-      );
-    }
-
-    const providedSecret =
-      request.headers.get(
-        "x-beloyal-automation-secret",
-      ) ?? "";
-
-    if (
-      !secretsMatch(
-        providedSecret,
-        expectedSecret,
-      )
-    ) {
-      return jsonResponse(
-        {
-          message: "Unauthorized.",
-        },
-        401,
-      );
+    if (!authorization.ok) {
+      return authorization.response;
     }
 
     const slug = parseSlug(
@@ -248,6 +275,16 @@ export async function GET(
             memberNumber: true,
             publicToken: true,
             createdAt: true,
+            birthdayMessageSends: {
+              select: {
+                year: true,
+                messageType: true,
+                sentAt: true,
+              },
+              orderBy: {
+                sentAt: "desc",
+              },
+            },
           },
         }),
 
@@ -298,6 +335,8 @@ export async function GET(
             ).toString(),
             createdAt:
               customer.createdAt,
+            birthdayMessageSends:
+              customer.birthdayMessageSends,
           },
         ];
       },
@@ -331,6 +370,216 @@ export async function GET(
       {
         message:
           "Failed to load automation customers.",
+      },
+      500,
+    );
+  }
+}
+
+export async function POST(
+  request: NextRequest,
+) {
+  try {
+    const authorization =
+      authorizeAutomation(request);
+
+    if (!authorization.ok) {
+      return authorization.response;
+    }
+
+    let body: unknown;
+
+    try {
+      body = await request.json();
+    } catch {
+      return jsonResponse(
+        {
+          message: "Invalid JSON body.",
+        },
+        400,
+      );
+    }
+
+    if (
+      !body ||
+      typeof body !== "object"
+    ) {
+      return jsonResponse(
+        {
+          message: "Invalid request body.",
+        },
+        400,
+      );
+    }
+
+    const payload = body as Record<
+      string,
+      unknown
+    >;
+
+    const slug =
+      typeof payload.slug === "string"
+        ? parseSlug(payload.slug)
+        : null;
+
+    const customerId =
+      typeof payload.customerId === "string"
+        ? payload.customerId.trim()
+        : "";
+
+    const year = payload.year;
+
+    const messageType =
+      typeof payload.messageType === "string"
+        ? payload.messageType.trim()
+        : "";
+
+    if (!slug) {
+      return jsonResponse(
+        {
+          message:
+            "A valid business slug is required.",
+        },
+        400,
+      );
+    }
+
+    if (!customerId) {
+      return jsonResponse(
+        {
+          message:
+            "A customer ID is required.",
+        },
+        400,
+      );
+    }
+
+    if (
+      !Number.isInteger(year) ||
+      (year as number) < 2000 ||
+      (year as number) > 2200
+    ) {
+      return jsonResponse(
+        {
+          message:
+            "A valid birthday year is required.",
+        },
+        400,
+      );
+    }
+
+    if (
+      !BIRTHDAY_MESSAGE_TYPES.has(
+        messageType,
+      )
+    ) {
+      return jsonResponse(
+        {
+          message:
+            "A valid birthday message type is required.",
+        },
+        400,
+      );
+    }
+
+    const cafe =
+      await prisma.cafe.findUnique({
+        where: {
+          slug,
+        },
+        select: {
+          id: true,
+          isActive: true,
+        },
+      });
+
+    if (!cafe || !cafe.isActive) {
+      return jsonResponse(
+        {
+          message:
+            "Business not found or inactive.",
+        },
+        404,
+      );
+    }
+
+    const customer =
+      await prisma.customer.findFirst({
+        where: {
+          id: customerId,
+          cafeId: cafe.id,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+    if (!customer) {
+      return jsonResponse(
+        {
+          message:
+            "Customer not found for this business.",
+        },
+        404,
+      );
+    }
+
+    const birthdayYear = year as number;
+
+    const existing =
+      await prisma.birthdayMessageSend.findUnique({
+        where: {
+          customerId_year_messageType: {
+            customerId,
+            year: birthdayYear,
+            messageType,
+          },
+        },
+        select: {
+          id: true,
+          sentAt: true,
+        },
+      });
+
+    if (existing) {
+      return jsonResponse({
+        recorded: false,
+        alreadyRecorded: true,
+        sentAt: existing.sentAt,
+      });
+    }
+
+    const send =
+      await prisma.birthdayMessageSend.create({
+        data: {
+          customerId,
+          cafeId: cafe.id,
+          year: birthdayYear,
+          messageType,
+        },
+        select: {
+          sentAt: true,
+        },
+      });
+
+    return jsonResponse(
+      {
+        recorded: true,
+        alreadyRecorded: false,
+        sentAt: send.sentAt,
+      },
+      201,
+    );
+  } catch (error) {
+    console.error(
+      "POST n8n birthday message send error:",
+      error,
+    );
+
+    return jsonResponse(
+      {
+        message:
+          "Failed to record birthday message send.",
       },
       500,
     );
