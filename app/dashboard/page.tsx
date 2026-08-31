@@ -119,9 +119,9 @@ function CafeDashboardHome() {
         </div>
       </section>
 
-      <SimpleAnalytics />
-
       <BirthdaySummary />
+
+      <SimpleAnalytics />
 
       <section>
         <div>
