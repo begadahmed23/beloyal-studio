@@ -22,10 +22,10 @@ export default async function SettingsPage() {
 
   return (
     <>
+      <BirthdayRewardsSettings />
       <CafeSettingsForm
         accountEmail={authData.user.email}
       />
-      <BirthdayRewardsSettings />
     </>
   );
 }
