@@ -30,6 +30,7 @@ export async function updateCafeSettings(
       minimumPurchaseAmount:
         settings.minimumPurchaseAmount,
 
+      feedbackEnabled: settings.feedbackEnabled,
       googleReviewUrl: settings.googleReviewUrl,
     },
     select: {
@@ -50,6 +51,7 @@ export async function updateCafeSettings(
       eligiblePurchaseDescription: true,
       minimumPurchaseAmount: true,
 
+      feedbackEnabled: true,
       googleReviewUrl: true,
 
       timezone: true,

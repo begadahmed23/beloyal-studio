@@ -26,6 +26,7 @@ export type Cafe = {
   rewardName: string;
   rewardDescription: string | null;
   eligiblePurchaseDescription: string | null;
+  feedbackEnabled: boolean;
   googleReviewUrl: string | null;
   timezone: string;
   birthdayRewardsEnabled: boolean;
@@ -720,7 +721,7 @@ export default function LoyaltyCard({
               <span>Show QR Code</span>
             </button>
 
-            {!isBarbershop ? (
+            {customer.cafe.feedbackEnabled ? (
               <button
                 type="button"
                 onClick={onShowFeedback}
@@ -761,7 +762,9 @@ export default function LoyaltyCard({
 >
   {customer.feedbackRewardedAt
     ? "Thanks for helping us improve."
-    : "Your first note comes with a stamp, on us."}
+    : `Your first note comes with a ${
+        isBarbershop ? "visit" : "stamp"
+      }, on us.`}
 </p>
                 </div>
               </div>

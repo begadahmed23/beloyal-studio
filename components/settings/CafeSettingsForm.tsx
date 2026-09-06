@@ -6,6 +6,7 @@ import {
   Gift,
   ImagePlus,
   Loader2,
+  MessageCircle,
   Star,
   Palette,
   RotateCcw,
@@ -51,6 +52,7 @@ type FormState = {
   eligiblePurchaseDescription: string;
   minimumPurchaseAmount: string;
 
+  feedbackEnabled: boolean;
   googleReviewUrl: string;
 };
 
@@ -111,6 +113,7 @@ export default function CafeSettingsForm({
     minimumPurchaseAmount:
       cafe.minimumPurchaseAmount ?? "",
 
+    feedbackEnabled: cafe.feedbackEnabled,
     googleReviewUrl: cafe.googleReviewUrl ?? "",
   });
 
@@ -139,6 +142,7 @@ export default function CafeSettingsForm({
     cafe.rewardDescription,
     cafe.eligiblePurchaseDescription,
     cafe.minimumPurchaseAmount,
+    cafe.feedbackEnabled,
     cafe.googleReviewUrl,
     savedThemeName,
   ]);
@@ -309,6 +313,7 @@ backgroundColor: colors.backgroundColor,
             minimumPurchaseAmount:
               form.minimumPurchaseAmount,
 
+            feedbackEnabled: form.feedbackEnabled,
             googleReviewUrl: form.googleReviewUrl,
           }),
         }
@@ -938,6 +943,74 @@ router.refresh();
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        <section
+          className="border p-5 sm:p-7"
+          style={cardStyle}
+        >
+          <SectionHeader
+            theme={theme}
+            icon={MessageCircle}
+            title="Customer feedback"
+            description="Choose whether customers can privately share written feedback from their loyalty card."
+          />
+
+          <div
+            className="mt-7 flex items-center justify-between gap-5 border p-5"
+            style={{
+              borderColor: theme.border,
+              backgroundColor: theme.surfaceRaised,
+              borderRadius: theme.radiusMedium,
+            }}
+          >
+            <div>
+              <p
+                className="text-sm font-semibold"
+                style={{ color: theme.textPrimary }}
+              >
+                Share your thoughts
+              </p>
+
+              <p
+                className="mt-1 text-sm leading-6"
+                style={{ color: theme.textMuted }}
+              >
+                When enabled, the customer card shows the feedback button.
+                The first submitted note still earns one bonus{" "}
+                {isBarbershop ? "visit" : "stamp"}.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              role="switch"
+              aria-checked={form.feedbackEnabled}
+              aria-label="Enable Share your thoughts"
+              onClick={() =>
+                updateField(
+                  "feedbackEnabled",
+                  !form.feedbackEnabled,
+                )
+              }
+              className="relative h-7 w-12 shrink-0 rounded-full transition-colors"
+              style={{
+                backgroundColor: form.feedbackEnabled
+                  ? theme.accent
+                  : theme.inputBorder,
+              }}
+            >
+              <span
+                className="absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform"
+                style={{
+                  left: "4px",
+                  transform: form.feedbackEnabled
+                    ? "translateX(20px)"
+                    : "translateX(0)",
+                }}
+              />
+            </button>
           </div>
         </section>
 
