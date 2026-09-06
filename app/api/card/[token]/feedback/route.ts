@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
+import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 type RouteContext = {
   params: Promise<{
@@ -102,6 +103,8 @@ export async function POST(
                 cafe: {
                   select: {
                     isActive: true,
+                    businessType: true,
+                    feedbackEnabled: true,
                     googleReviewUrl: true,
                     rewardTarget: true,
                   },
@@ -115,6 +118,16 @@ export async function POST(
           ) {
             return {
               type: "not-found" as const,
+            };
+          }
+
+          const feedbackEnabled =
+            customer.cafe.feedbackEnabled ??
+            customer.cafe.businessType === "CAFE";
+
+          if (!feedbackEnabled) {
+            return {
+              type: "disabled" as const,
             };
           }
 
@@ -207,21 +220,13 @@ export async function POST(
             );
           }
 
-          /*
-           * The café rewardTarget includes the reward
-           * position.
-           *
-           * Example:
-           *
-           * rewardTarget = 7
-           * paid stamps needed = 6
-           */
           const paidStampTarget =
-            Math.max(
-              customer.cafe.rewardTarget -
-                1,
-              1,
-            );
+            getLoyaltyProgressTarget({
+              businessType:
+                customer.cafe.businessType,
+              rewardTarget:
+                customer.cafe.rewardTarget,
+            });
 
           /*
            * If this feedback stamp completed the
@@ -267,6 +272,10 @@ export async function POST(
               updatedCustomer.rewardEarnedAt,
             googleReviewUrl:
               customer.cafe.googleReviewUrl,
+            loyaltyUnit:
+              customer.cafe.businessType === "BARBERSHOP"
+                ? "visit"
+                : "stamp",
           };
         },
       );
@@ -281,11 +290,21 @@ export async function POST(
       );
     }
 
+    if (result.type === "disabled") {
+      return jsonResponse(
+        {
+          error:
+            "Feedback is not enabled for this business.",
+        },
+        403,
+      );
+    }
+
     return jsonResponse({
       success: true,
 
       message: result.rewardGranted
-        ? "Thanks for your feedback! 1 stamp has been added to your card."
+        ? `Thanks for your feedback! 1 ${result.loyaltyUnit} has been added to your card.`
         : "Thanks for your feedback!",
 
       rewardGranted:

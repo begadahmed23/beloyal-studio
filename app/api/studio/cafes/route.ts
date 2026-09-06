@@ -363,6 +363,8 @@ export async function POST(request: NextRequest) {
         name: cafeName,
         slug,
         businessType,
+        feedbackEnabled:
+          businessType !== BusinessType.BARBERSHOP,
         theme: savedTheme,
         primaryColor,
         secondaryColor,
