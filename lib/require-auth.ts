@@ -42,7 +42,6 @@ export async function requireAuth(
           eligiblePurchaseDescription: true,
           minimumPurchaseAmount: true,
 
-          feedbackEnabled: true,
           googleReviewUrl: true,
 
           timezone: true,

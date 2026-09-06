@@ -46,7 +46,6 @@ model Cafe {
   subscriptionStatus          SubscriptionStatus @default(TRIAL)
   trialEndsAt                 DateTime?
   trialStartedAt              DateTime?
-  feedbackEnabled             Boolean?
   googleReviewUrl             String?
   customers                   Customer[]
   reviews                     CustomerReview[]

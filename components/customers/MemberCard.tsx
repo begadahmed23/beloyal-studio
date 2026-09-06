@@ -882,42 +882,6 @@ export default function MemberCard({
                         index
                       ];
 
-                    const stampMoment =
-                      filled && stampDate
-                        ? new Date(stampDate)
-                        : null;
-
-                    const hasValidStampMoment =
-                      stampMoment !== null &&
-                      !Number.isNaN(
-                        stampMoment.getTime(),
-                      );
-
-                    const formattedStampDate =
-                      hasValidStampMoment
-                        ? new Intl.DateTimeFormat(
-                            "en-GB",
-                            {
-                              day: "2-digit",
-                              month: "2-digit",
-                              timeZone: cafe.timezone,
-                            },
-                          ).format(stampMoment!)
-                        : "—";
-
-                    const formattedStampTime =
-                      hasValidStampMoment
-                        ? new Intl.DateTimeFormat(
-                            "en-US",
-                            {
-                              hour: "numeric",
-                              minute: "2-digit",
-                              hour12: true,
-                              timeZone: cafe.timezone,
-                            },
-                          ).format(stampMoment!)
-                        : "—";
-
                     return (
                       <div
                         key={index}
@@ -955,8 +919,8 @@ export default function MemberCard({
                           />
                         </div>
 
-                        <div
-                          className="mt-1.5 min-h-8 text-[10px] font-medium leading-3.5"
+                        <p
+                          className="mt-1.5 min-h-4 truncate text-[10px] font-medium"
                           style={{
                             color:
                               filled
@@ -964,11 +928,22 @@ export default function MemberCard({
                                 : "transparent",
                           }}
                         >
-                          <p>{formattedStampDate}</p>
-                          <p className="mt-0.5 opacity-80">
-                            {formattedStampTime}
-                          </p>
-                        </div>
+                          {filled &&
+                          stampDate
+                            ? new Intl.DateTimeFormat(
+                                "en-GB",
+                                {
+                                  day: "numeric",
+                                  month:
+                                    "numeric",
+                                },
+                              ).format(
+                                new Date(
+                                  stampDate,
+                                ),
+                              )
+                            : "—"}
+                        </p>
                       </div>
                     );
                   },

@@ -89,7 +89,6 @@ export async function GET(
             rewardName: true,
             rewardDescription: true,
             eligiblePurchaseDescription: true,
-            feedbackEnabled: true,
             googleReviewUrl: true,
             timezone: true,
             birthdayRewardsEnabled: true,
@@ -110,18 +109,11 @@ export async function GET(
       return jsonResponse({ message: "Loyalty card not found." }, 404);
     }
 
-    const cafe = {
-      ...customer.cafe,
-      feedbackEnabled:
-        customer.cafe.feedbackEnabled ??
-        customer.cafe.businessType === "CAFE",
-    };
-
     const birthdayRewardYear = currentYearInTimezone(
-      cafe.timezone?.trim() || "Africa/Cairo",
+      customer.cafe.timezone?.trim() || "Africa/Cairo",
     );
 
-    const birthdayRedemption = cafe.birthdayRewardsEnabled
+    const birthdayRedemption = customer.cafe.birthdayRewardsEnabled
       ? await prisma.birthdayRewardRedemption.findUnique({
           where: {
             customerId_year: {
@@ -149,7 +141,7 @@ export async function GET(
       birthdayRewardYear: birthdayRedemption?.year ?? birthdayRewardYear,
       createdAt: customer.createdAt,
       updatedAt: customer.updatedAt,
-      cafe,
+      cafe: customer.cafe,
     });
   } catch (error) {
     console.error("Public card error:", error);

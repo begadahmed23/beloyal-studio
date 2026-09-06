@@ -62,9 +62,6 @@ export default async function DashboardLayout({
           cafe.minimumPurchaseAmount?.toString() ??
           null,
 
-        feedbackEnabled:
-          cafe.feedbackEnabled ??
-          cafe.businessType === "CAFE",
         googleReviewUrl: cafe.googleReviewUrl,
 
         timezone: cafe.timezone,

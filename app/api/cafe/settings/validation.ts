@@ -16,7 +16,6 @@ export type CafeSettingsInput = {
 
   minimumPurchaseAmount: number | null;
 
-  feedbackEnabled: boolean;
   googleReviewUrl: string | null;
 
   timezone: string;
@@ -322,11 +321,6 @@ export function validateCafeSettings(
     ),
 
     minimumPurchaseAmount,
-
-    feedbackEnabled: booleanValue(
-      body.feedbackEnabled,
-      true,
-    ),
 
     googleReviewUrl: validateGoogleReviewUrl(
       body.googleReviewUrl,

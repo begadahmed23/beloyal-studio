@@ -751,10 +751,6 @@ export default function DigitalCardPage() {
    * Open feedback modal fresh each time.
    */
   const openFeedbackModal = () => {
-    if (!customer?.cafe.feedbackEnabled) {
-      return;
-    }
-
     setFeedbackComment("");
 
     setFeedbackError("");
@@ -794,7 +790,6 @@ export default function DigitalCardPage() {
     async () => {
       if (
         !customer ||
-        !customer.cafe.feedbackEnabled ||
         feedbackSubmitting
       ) {
         return;
@@ -1415,7 +1410,7 @@ const progressPercentage = rewardReady
       ) : null}
 
       {/* Feedback modal */}
-      {customer.cafe.feedbackEnabled && showFeedbackModal ? (
+      {!isBarbershop && showFeedbackModal ? (
         <div
           className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-3 backdrop-blur-sm sm:items-center sm:p-6"
           onMouseDown={(event) => {
@@ -1635,7 +1630,7 @@ const progressPercentage = rewardReady
                   }}
                 >
                   Your first note
-                  comes with a {isBarbershop ? "visit" : "stamp"},
+                  comes with a stamp,
                   on us.
                 </p>
               </>
@@ -1670,9 +1665,7 @@ const progressPercentage = rewardReady
                   }}
                 >
                   {feedbackRewardGranted
-                    ? `We’ve added a ${
-                        isBarbershop ? "visit" : "stamp"
-                      } to your card.`
+                    ? "We’ve added a stamp to your card."
                     : "Your note has been sent to the team."}
                 </p>
 
@@ -1693,7 +1686,7 @@ const progressPercentage = rewardReady
                           textPrimary,
                       }}
                     >
-                      +1 {isBarbershop ? "visit" : "stamp"}
+                      +1 stamp
                     </p>
 
                     <p

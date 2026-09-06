@@ -7,7 +7,7 @@ import { requireActiveCafe } from "@/lib/require-active-cafe";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 const MAX_REQUEST_BODY_BYTES = 500;
-const STAMP_COOLDOWN_MS = 6 * 60 * 60 * 1_000;
+const STAMP_COOLDOWN_MS = 5_000;
 const MAX_TRANSACTION_ATTEMPTS = 3;
 
 const requestSchema = z
@@ -44,28 +44,6 @@ function jsonResponse(
       "X-Content-Type-Options": "nosniff",
     },
   });
-}
-
-function formatCooldownDuration(milliseconds: number) {
-  const totalMinutes = Math.max(
-    1,
-    Math.ceil(milliseconds / 60_000),
-  );
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  const parts: string[] = [];
-
-  if (hours > 0) {
-    parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
-  }
-
-  if (minutes > 0) {
-    parts.push(
-      `${minutes} minute${minutes === 1 ? "" : "s"}`,
-    );
-  }
-
-  return parts.join(" and ");
 }
 
 async function readRequestBody(request: NextRequest) {
@@ -316,21 +294,14 @@ export async function POST(request: NextRequest) {
             }
 
             /*
-             * Server-side duplicate protection for
-             * staff-recorded stamps and visits.
-             *
-             * Feedback rewards have no userId, so they
-             * remain exempt from this cooldown.
+             * Server-side duplicate protection.
              */
-            const lastStaffAdd =
+            const lastAdd =
               await transaction.stampTransaction.findFirst({
                 where: {
                   cafeId: authData.cafeId,
                   customerId: currentCustomer.id,
                   type: "ADD",
-                  userId: {
-                    not: null,
-                  },
                 },
                 orderBy: {
                   createdAt: "desc",
@@ -340,10 +311,9 @@ export async function POST(request: NextRequest) {
                 },
               });
 
-            if (lastStaffAdd) {
+            if (lastAdd) {
               const elapsedMs =
-                Date.now() -
-                lastStaffAdd.createdAt.getTime();
+                Date.now() - lastAdd.createdAt.getTime();
 
               if (elapsedMs < STAMP_COOLDOWN_MS) {
                 const remainingMs =
@@ -462,13 +432,16 @@ export async function POST(request: NextRequest) {
         }
 
         if (result.type === "cooldown") {
-          const remainingTime = formatCooldownDuration(
-            result.retryAfterMs,
+          const retryAfterSeconds = Math.max(
+            1,
+            Math.ceil(result.retryAfterMs / 1000),
           );
 
           return jsonResponse(
             {
-              message: `This member received a ${loyaltyUnit} recently. The next ${loyaltyUnit} can be recorded in ${remainingTime}.`,
+              message: `Please wait ${retryAfterSeconds} second${
+                retryAfterSeconds === 1 ? "" : "s"
+              } before recording another ${loyaltyUnit}.`,
               cooldown: true,
               retryAfterMs: result.retryAfterMs,
             },
