@@ -3,6 +3,10 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+import {
+  applyPublicRateLimit,
+  publicApiRateLimiters,
+} from "@/lib/public-api-security";
 
 type RouteContext = {
   params: Promise<{
@@ -37,6 +41,16 @@ export async function POST(
   context: RouteContext,
 ) {
   try {
+    const rateLimitResponse = await applyPublicRateLimit(
+      request,
+      publicApiRateLimiters.review,
+      "public-feedback",
+    );
+
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const { token } = await context.params;
 
     const cleanToken =
@@ -87,10 +101,17 @@ export async function POST(
     const result =
       await prisma.$transaction(
         async (tx) => {
-          const customer =
-            await tx.customer.findUnique({
+          // Lock the token's customer, then read only that locked row.
+          const [lockedCustomer] = await tx.$queryRaw<Array<{ id: string }>>`
+            SELECT c."id" FROM "Customer" AS c
+            WHERE c."publicToken" = ${cleanToken}
+            FOR UPDATE OF c
+          `;
+
+          const customer = lockedCustomer
+            ? await tx.customer.findUnique({
               where: {
-                publicToken: cleanToken,
+                id: lockedCustomer.id,
               },
 
               select: {
@@ -110,7 +131,8 @@ export async function POST(
                   },
                 },
               },
-            });
+            })
+            : null;
 
           if (
             !customer ||
@@ -145,8 +167,20 @@ export async function POST(
             },
           });
 
+          const paidStampTarget =
+            getLoyaltyProgressTarget({
+              businessType:
+                customer.cafe.businessType,
+              rewardTarget:
+                customer.cafe.rewardTarget,
+            });
+
+          const alreadyReady =
+            customer.rewardEarnedAt !== null ||
+            customer.stamps >= paidStampTarget;
+
           /*
-           * Claim the one-time feedback stamp.
+           * Claim the one-time feedback stamp, deferring it when a reward is ready.
            *
            * Only a customer whose feedbackRewardedAt
            * is still null can receive this reward.
@@ -161,10 +195,11 @@ export async function POST(
               data: {
                 feedbackRewardedAt:
                   new Date(),
+                pendingFeedbackBonus: alreadyReady,
 
-                stamps: {
-                  increment: 1,
-                },
+                ...(alreadyReady
+                  ? {}
+                  : { stamps: { increment: 1 } }),
               },
             });
 
@@ -179,8 +214,9 @@ export async function POST(
             await tx.stampTransaction.create({
               data: {
                 type: "ADD",
-                description:
-                  "Feedback reward",
+                description: alreadyReady
+                  ? "Feedback bonus saved for next cycle"
+                  : "Feedback reward",
 
                 customer: {
                   connect: {
@@ -220,14 +256,6 @@ export async function POST(
             );
           }
 
-          const paidStampTarget =
-            getLoyaltyProgressTarget({
-              businessType:
-                customer.cafe.businessType,
-              rewardTarget:
-                customer.cafe.rewardTarget,
-            });
-
           /*
            * If this feedback stamp completed the
            * customer's card, permanently lock in the
@@ -264,6 +292,7 @@ export async function POST(
           return {
             type: "success" as const,
             rewardGranted,
+            rewardPending: rewardGranted && alreadyReady,
             stamps:
               updatedCustomer.stamps,
             feedbackRewardedAt:
@@ -304,7 +333,9 @@ export async function POST(
       success: true,
 
       message: result.rewardGranted
-        ? `Thanks for your feedback! 1 ${result.loyaltyUnit} has been added to your card.`
+        ? result.rewardPending
+          ? `Thanks for your feedback! 1 ${result.loyaltyUnit} has been saved for your next cycle.`
+          : `Thanks for your feedback! 1 ${result.loyaltyUnit} has been added to your card.`
         : "Thanks for your feedback!",
 
       rewardGranted:

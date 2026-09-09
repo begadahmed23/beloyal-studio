@@ -2,42 +2,60 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { NextRequest, NextResponse } from "next/server";
 
-const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
-const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-if (!redisUrl || !redisToken) {
-  throw new Error(
-    "Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN."
-  );
-}
-
-const redis = new Redis({
-  url: redisUrl,
-  token: redisToken,
-});
-
 export const publicApiRateLimiters = {
-  join: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(45, "10 m"),
-    prefix: "beloyal:rate-limit:join",
-    analytics: true,
-  }),
+  join: "join",
+  card: "card",
+  review: "review",
+} as const;
 
-  card: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(60, "1 m"),
-    prefix: "beloyal:rate-limit:card",
-    analytics: true,
-  }),
+type PublicApiRateLimiter = keyof typeof publicApiRateLimiters;
 
-  review: new Ratelimit({
-    redis,
-    limiter: Ratelimit.slidingWindow(5, "1 h"),
-    prefix: "beloyal:rate-limit:review",
-    analytics: true,
-  }),
-};
+let cachedRateLimiters: Record<PublicApiRateLimiter, Ratelimit> | undefined;
+
+function getRateLimiters() {
+  if (cachedRateLimiters) {
+    return cachedRateLimiters;
+  }
+
+  const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!redisUrl || !redisToken) {
+    throw new Error(
+      "Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN."
+    );
+  }
+
+  const redis = new Redis({
+    url: redisUrl,
+    token: redisToken,
+  });
+
+  cachedRateLimiters = {
+    join: new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(45, "10 m"),
+      prefix: "beloyal:rate-limit:join",
+      analytics: true,
+    }),
+
+    card: new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(60, "1 m"),
+      prefix: "beloyal:rate-limit:card",
+      analytics: true,
+    }),
+
+    review: new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, "1 h"),
+      prefix: "beloyal:rate-limit:review",
+      analytics: true,
+    }),
+  };
+
+  return cachedRateLimiters;
+}
 
 export function getClientIp(request: NextRequest) {
   const forwardedFor = request.headers.get("x-forwarded-for");
@@ -58,11 +76,25 @@ export function getClientIp(request: NextRequest) {
 
 export async function applyPublicRateLimit(
   request: NextRequest,
-  limiter: Ratelimit,
+  limiter: PublicApiRateLimiter,
   scope: string
 ) {
+  let rateLimiter: Ratelimit;
+
+  try {
+    rateLimiter = getRateLimiters()[limiter];
+  } catch {
+    console.error(
+      "Public API rate limiting initialization failed. Check UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN."
+    );
+    return NextResponse.json(
+      { error: "Rate limiting is unavailable. Please try again later." },
+      { status: 503, headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
   const identifier = `${scope}:${getClientIp(request)}`;
-  const result = await limiter.limit(identifier);
+  const result = await rateLimiter.limit(identifier);
 
   if (!result.success) {
     const retryAfter = Math.max(

@@ -275,6 +275,26 @@ export async function POST(request: NextRequest) {
             return null;
           }
 
+          // The successful redemption holds the customer row lock until commit.
+          const currentCustomer = await transaction.customer.findUniqueOrThrow({
+            where: {
+              id: customer.id,
+              cafeId: authData.cafeId,
+            },
+            select: { pendingFeedbackBonus: true },
+          });
+
+          if (currentCustomer.pendingFeedbackBonus) {
+            await transaction.customer.update({
+              where: { id: customer.id },
+              data: {
+                stamps: 1,
+                pendingFeedbackBonus: false,
+                rewardEarnedAt: paidStampTarget <= 1 ? new Date() : null,
+              },
+            });
+          }
+
           const updated =
             await transaction.customer.findUniqueOrThrow({
               where: {
