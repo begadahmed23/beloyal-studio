@@ -12,6 +12,10 @@ export default async function SettingsPage() {
     redirect("/login");
   }
 
+  if (authData.isCashier) {
+    redirect("/dashboard");
+  }
+
   if (
     authData.isSuperAdmin ||
     !authData.cafe ||
