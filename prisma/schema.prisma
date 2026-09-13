@@ -292,6 +292,7 @@ enum CafeTheme {
 enum StampType {
   ADD
   REDEEM
+  BIRTHDAY_REDEEM
 }
 
 enum UserRole {
