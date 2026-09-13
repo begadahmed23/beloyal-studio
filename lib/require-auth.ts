@@ -22,8 +22,58 @@ export async function requireAuth(
       email: true,
       role: true,
       cafeId: true,
+      cashierCafeId: true,
 
       cafe: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          businessType: true,
+          logoUrl: true,
+
+          theme: true,
+          primaryColor: true,
+          secondaryColor: true,
+          backgroundColor: true,
+
+          rewardTarget: true,
+          rewardName: true,
+          rewardDescription: true,
+          eligiblePurchaseDescription: true,
+          minimumPurchaseAmount: true,
+
+          feedbackEnabled: true,
+          googleReviewUrl: true,
+
+          timezone: true,
+          birthdayRewardsEnabled: true,
+          birthdayRewardName: true,
+          birthdayRewardDescription: true,
+          birthdayPurchaseRequirement: true,
+          birthdayValidityDays: true,
+          birthdayReminderEnabled: true,
+          birthdayReminderDaysBefore: true,
+          birthdayDayMessageEnabled: true,
+          birthdayFriendDiscountEnabled: true,
+          birthdayOneFriendDiscount: true,
+          birthdayGroupDiscount: true,
+
+          isActive: true,
+
+          subscriptionStatus: true,
+          trialStartedAt: true,
+          trialEndsAt: true,
+          subscriptionStartedAt: true,
+          subscriptionEndsAt: true,
+          lastPaymentAt: true,
+          nextReminderAt: true,
+          reminderSentAt: true,
+          monthlyPrice: true,
+        },
+      },
+
+      cashierCafe: {
         select: {
           id: true,
           name: true,
@@ -88,6 +138,21 @@ export async function requireAuth(
     };
   }
 
+  if (user.role === "CASHIER") {
+    if (!user.cashierCafeId || !user.cashierCafe) {
+      return null;
+    }
+
+    return {
+      session,
+      user,
+      cafe: user.cashierCafe,
+      cafeId: user.cashierCafeId,
+      isSuperAdmin: false,
+      isCashier: true,
+    };
+  }
+
   if (!user.cafeId || !user.cafe) {
     return null;
   }
@@ -98,5 +163,6 @@ export async function requireAuth(
     cafe: user.cafe,
     cafeId: user.cafeId,
     isSuperAdmin: false,
+    isCashier: false,
   };
 }
