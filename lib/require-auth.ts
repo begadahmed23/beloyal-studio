@@ -135,6 +135,7 @@ export async function requireAuth(
       cafe: null,
       cafeId: null,
       isSuperAdmin: true,
+      isCashier: false,
     };
   }
 
