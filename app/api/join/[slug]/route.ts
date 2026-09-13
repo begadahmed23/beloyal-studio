@@ -38,11 +38,8 @@ const joinRequestSchema = z
       .max(80)
       .optional(),
 
-    phone: z
-      .string()
-      .trim()
-      .min(1)
-      .max(32),
+    phone: z.string().trim().max(32).optional(),
+    instagram: z.string().trim().max(40).optional(),
 
     birthday: z
       .string()
@@ -58,6 +55,13 @@ function normalizePhone(value: string) {
 
 function normalizeName(value: string) {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function normalizeInstagram(value: string) {
+  return value
+    .trim()
+    .replace(/^@+/, "")
+    .toLowerCase();
 }
 
 function createPublicToken() {
@@ -332,15 +336,35 @@ export async function POST(
     const { action } = validationResult.data;
 
     const phone = normalizePhone(
-      validationResult.data.phone
+      validationResult.data.phone ?? ""
+    );
+    const instagram = normalizeInstagram(
+      validationResult.data.instagram ?? ""
     );
 
-    if (!/^01\d{9}$/.test(phone)) {
+    const hasPhone = phone.length > 0;
+    const hasInstagram = instagram.length > 0;
+
+    if (!hasPhone && !hasInstagram) {
       return jsonResponse(
-        {
-          error:
-            "Please enter a valid Egyptian 11-digit phone number.",
-        },
+        { error: "Please enter a phone number or Instagram username." },
+        400
+      );
+    }
+
+    if (hasPhone && !/^01\d{9}$/.test(phone)) {
+      return jsonResponse(
+        { error: "Please enter a valid Egyptian 11-digit phone number." },
+        400
+      );
+    }
+
+    if (
+      hasInstagram &&
+      !/^[a-z0-9._]{1,30}$/.test(instagram)
+    ) {
+      return jsonResponse(
+        { error: "Please enter a valid Instagram username." },
         400
       );
     }
@@ -366,12 +390,13 @@ export async function POST(
     }
 
     const existingCustomer =
-      await prisma.customer.findUnique({
+      await prisma.customer.findFirst({
         where: {
-          cafeId_phone: {
-            cafeId: cafe.id,
-            phone,
-          },
+          cafeId: cafe.id,
+          OR: [
+            ...(hasPhone ? [{ phone }] : []),
+            ...(hasInstagram ? [{ instagram }] : []),
+          ],
         },
         select: {
           id: true,
@@ -387,7 +412,7 @@ export async function POST(
         return jsonResponse(
           {
             error:
-              "We could not find a loyalty card with this phone number.",
+              "We could not find a loyalty card with those details.",
           },
           404
         );
@@ -469,7 +494,8 @@ export async function POST(
             memberNumber: createMemberNumber(),
             publicToken: createPublicToken(),
             name,
-            phone,
+            phone: hasPhone ? phone : null,
+            instagram: hasInstagram ? instagram : null,
             birthday,
             stamps: 0,
           },
@@ -501,12 +527,13 @@ export async function POST(
           error.code === "P2002"
         ) {
           const customerCreatedByAnotherRequest =
-            await prisma.customer.findUnique({
+            await prisma.customer.findFirst({
               where: {
-                cafeId_phone: {
-                  cafeId: cafe.id,
-                  phone,
-                },
+                cafeId: cafe.id,
+                OR: [
+                  ...(hasPhone ? [{ phone }] : []),
+                  ...(hasInstagram ? [{ instagram }] : []),
+                ],
               },
               select: {
                 id: true,
