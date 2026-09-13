@@ -49,6 +49,7 @@ export default function JoinForm({
   const [mode, setMode] = useState<FormMode>("join");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [instagram, setInstagram] = useState("");
   const [birthday, setBirthday] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,20 +70,39 @@ export default function JoinForm({
     setError("");
 
     const cleanPhone = phone.replace(/\D/g, "");
+    const cleanInstagram = instagram
+      .trim()
+      .replace(/^@+/, "")
+      .toLowerCase();
 
-    if (cleanPhone.length !== 11) {
+    if (!cleanPhone && !cleanInstagram) {
+      setError("Please enter your phone number or Instagram username.");
+      return;
+    }
+
+    if (cleanPhone && cleanPhone.length !== 11) {
       setError("Please enter a valid 11-digit phone number.");
+      return;
+    }
+
+    if (
+      cleanInstagram &&
+      !/^[a-z0-9._]{1,30}$/.test(cleanInstagram)
+    ) {
+      setError("Please enter a valid Instagram username.");
       return;
     }
 
     const requestBody: {
       action: FormMode;
-      phone: string;
+      phone?: string;
+      instagram?: string;
       name?: string;
       birthday?: string;
     } = {
       action: mode,
-      phone: cleanPhone,
+      ...(cleanPhone ? { phone: cleanPhone } : {}),
+      ...(cleanInstagram ? { instagram: cleanInstagram } : {}),
     };
 
     if (mode === "join") {
@@ -218,7 +238,7 @@ export default function JoinForm({
             ? `Join ${cafeName} and start collecting ${
                 isBarbershop ? "visits" : "stamps"
               }.`
-            : "Enter the phone number used when you created your card."}
+            : "Enter the phone number or Instagram username used when you created your card."}
         </p>
       </div>
 
@@ -256,7 +276,7 @@ export default function JoinForm({
             className="mb-2 block text-sm font-medium"
             style={{ color: theme.textSecondary }}
           >
-            Phone number
+            Phone number <span style={{ color: theme.textMuted }}>(optional)</span>
           </label>
 
           <input
@@ -275,7 +295,6 @@ export default function JoinForm({
             placeholder="01XXXXXXXXX"
             minLength={11}
             maxLength={11}
-            required
             className={inputClassName}
             style={inputStyle}
           />
@@ -285,6 +304,40 @@ export default function JoinForm({
             style={{ color: theme.textMuted }}
           >
             Enter your 11-digit Egyptian phone number.
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor="customer-instagram"
+            className="mb-2 block text-sm font-medium"
+            style={{ color: theme.textSecondary }}
+          >
+            Instagram <span style={{ color: theme.textMuted }}>(optional)</span>
+          </label>
+
+          <input
+            id="customer-instagram"
+            name="instagram"
+            type="text"
+            value={instagram}
+            onChange={(event) =>
+              setInstagram(event.target.value.slice(0, 31))
+            }
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            enterKeyHint={mode === "recover" ? "go" : "next"}
+            placeholder="@username"
+            className={inputClassName}
+            style={inputStyle}
+          />
+
+          <p
+            className="mt-2 text-xs"
+            style={{ color: theme.textMuted }}
+          >
+            You only need one contact method: phone or Instagram.
           </p>
         </div>
 
@@ -391,7 +444,7 @@ export default function JoinForm({
             className="text-center text-xs leading-5"
             style={{ color: theme.textMuted }}
           >
-            Your phone number is only used to locate your
+            Your phone number or Instagram username is only used to locate your
             existing {` ${cafeName} `}loyalty card.
           </p>
         )}
