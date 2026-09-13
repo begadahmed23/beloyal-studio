@@ -10,7 +10,12 @@ export async function GET(request: NextRequest) {
   try {
     const authData = await requireAuth(request.headers);
 
-    if (!authData || authData.isSuperAdmin || !authData.cafeId) {
+    if (
+      !authData ||
+      authData.isSuperAdmin ||
+      authData.isCashier ||
+      !authData.cafeId
+    ) {
       return NextResponse.json(
         {
           error: "You are not authorized to access café settings.",
@@ -103,7 +108,12 @@ export async function PATCH(request: NextRequest) {
   try {
     const authData = await requireAuth(request.headers);
 
-    if (!authData || authData.isSuperAdmin || !authData.cafeId) {
+    if (
+      !authData ||
+      authData.isSuperAdmin ||
+      authData.isCashier ||
+      !authData.cafeId
+    ) {
       return NextResponse.json(
         {
           error: "You are not authorized to update café settings.",
