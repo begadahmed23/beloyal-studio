@@ -19,6 +19,7 @@ export default function CafeMobileNavigation() {
       ? cafeNavigation.filter(
           (item) =>
             item.href === "/dashboard" ||
+            item.href === "/dashboard/members" ||
             item.href === "/dashboard/scanner" ||
             item.href === "/dashboard/scanner/phone",
         )
