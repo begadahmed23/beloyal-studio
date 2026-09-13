@@ -45,6 +45,7 @@ export default async function DashboardLayout({
   return (
     <CafeThemeProvider
       themeName={cafe.theme}
+      userRole={authData.isCashier ? "CASHIER" : "CAFE_ADMIN"}
       cafe={{
         id: cafe.id,
         name: cafe.name,
