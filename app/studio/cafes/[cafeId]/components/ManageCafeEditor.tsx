@@ -25,6 +25,7 @@ import {
   useState,
 } from "react";
 
+import StaffManagementPanel from "@/components/staff/StaffManagementPanel";
 import PasswordSection from "./PasswordSection";
 import SubscriptionControlPanel, {
   type SubscriptionDraft,
@@ -812,6 +813,12 @@ export default function ManageCafeEditor() {
           </div>
         </div>
       </FormSection>
+
+      <StaffManagementPanel
+        endpoint={`/api/studio/cafes/${cafeId}/staff`}
+        canCreateAdmins
+        title="Accounts & staff activity"
+      />
 
       <PasswordSection
         cafeId={cafeId}
