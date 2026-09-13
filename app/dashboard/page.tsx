@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import BirthdaySummary from "@/components/dashboard/BirthdaySummary";
+import CashierDashboardHome from "@/components/dashboard/CashierDashboardHome";
 import JoinQRCode from "@/components/dashboard/JoinQRCode";
 import SimpleAnalytics from "@/components/dashboard/SimpleAnalytics";
 import BarberDashboardHome from "@/components/dashboard/barber/BarberDashboardHome";
@@ -28,131 +29,6 @@ export default function DashboardPage() {
   }
 
   return <CafeDashboardHome />;
-}
-
-function CashierDashboardHome() {
-  const { cafe, theme } = useCafeTheme();
-  const isBarbershop = cafe.businessType === "BARBERSHOP";
-
-  const actions = [
-    {
-      label: "Scan customer card",
-      helper: isBarbershop
-        ? "Record a visit from the customer QR code"
-        : "Add a stamp from the customer QR code",
-      href: "/dashboard/scanner/phone",
-      icon: ScanLine,
-      primary: true,
-    },
-    {
-      label: "Counter scanner",
-      helper: "Use the USB scanner at the counter",
-      href: "/dashboard/scanner",
-      icon: Monitor,
-    },
-  ];
-
-  return (
-    <div className="space-y-7">
-      <section
-        className="relative overflow-hidden rounded-[30px] border p-6 sm:p-8"
-        style={{
-          borderColor: theme.border,
-          background: `linear-gradient(135deg, ${theme.surfaceRaised} 0%, ${theme.surface} 58%, ${theme.pageBackground} 100%)`,
-          boxShadow: theme.cardShadow,
-        }}
-      >
-        <div>
-          <p
-            className="text-[10px] font-semibold uppercase tracking-[0.22em]"
-            style={{ color: theme.accent }}
-          >
-            Counter access
-          </p>
-
-          <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
-            Serve customers without exposing private data.
-          </h2>
-
-          <p
-            className="mt-4 max-w-2xl text-sm leading-6"
-            style={{ color: theme.textMuted }}
-          >
-            Scan a loyalty card to view the customer name, loyalty progress,
-            reward status, and birthday reward information only when it is
-            needed.
-          </p>
-        </div>
-      </section>
-
-      <section>
-        <p className="text-sm font-semibold">Counter tools</p>
-        <p
-          className="mt-1 text-xs"
-          style={{ color: theme.textMuted }}
-        >
-          Customer contact details and the customer database are restricted to administrators.
-        </p>
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {actions.map((action) => {
-            const Icon = action.icon;
-
-            return (
-              <Link
-                key={action.label}
-                href={action.href}
-                className="group flex min-h-36 items-center justify-between rounded-[22px] border p-5 transition hover:-translate-y-0.5"
-                style={{
-                  borderColor: action.primary
-                    ? theme.accent
-                    : theme.border,
-                  backgroundColor: action.primary
-                    ? theme.accent
-                    : theme.surface,
-                  color: action.primary
-                    ? theme.buttonText
-                    : theme.textPrimary,
-                }}
-              >
-                <div>
-                  <Icon
-                    size={22}
-                    style={{
-                      color: action.primary
-                        ? theme.buttonText
-                        : theme.accent,
-                    }}
-                  />
-
-                  <p className="mt-5 text-sm font-semibold">
-                    {action.label}
-                  </p>
-
-                  <p
-                    className="mt-1 max-w-xs text-xs leading-5"
-                    style={{
-                      color: action.primary
-                        ? theme.buttonText
-                        : theme.textMuted,
-                      opacity: action.primary ? 0.72 : 1,
-                    }}
-                  >
-                    {action.helper}
-                  </p>
-                </div>
-
-                <ArrowRight
-                  size={17}
-                  className="transition group-hover:translate-x-1"
-                />
-              </Link>
-            );
-          })}
-        </div>
-      </section>
-    </div>
-  );
 }
 
 function CafeDashboardHome() {
