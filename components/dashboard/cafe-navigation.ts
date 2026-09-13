@@ -1,4 +1,5 @@
 import {
+  Database,
   LayoutDashboard,
   Monitor,
   Settings,
@@ -18,6 +19,12 @@ export const cafeNavigation = [
     mobileLabel: "Members",
     href: "/dashboard/members",
     icon: Users,
+  },
+  {
+    label: "Customers",
+    mobileLabel: "Data",
+    href: "/dashboard/customers",
+    icon: Database,
   },
   {
     label: "USB Scanner",
