@@ -278,6 +278,16 @@ export async function GET(
       );
     }
 
+    if (access.authData.isCashier) {
+      return jsonResponse(
+        {
+          message:
+            "Customer data is only available to café administrators.",
+        },
+        403,
+      );
+    }
+
     const cafe =
       access.authData.cafe;
 
@@ -475,6 +485,16 @@ export async function POST(
           message: access.message,
         },
         access.status,
+      );
+    }
+
+    if (access.authData.isCashier) {
+      return jsonResponse(
+        {
+          message:
+            "Only café administrators can create customers manually.",
+        },
+        403,
       );
     }
 
