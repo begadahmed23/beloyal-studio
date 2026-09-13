@@ -33,7 +33,7 @@ type Staff = {
 
 type ActivityRow = {
   id: string;
-  type: "ADD" | "REDEEM";
+  type: "ADD" | "REDEEM" | "BIRTHDAY_REDEEM";
   description: string | null;
   createdAt: string;
   user: {
@@ -527,6 +527,9 @@ export default function StaffManagementPanel({
             <option value="REDEEM">
               Reward redemptions
             </option>
+            <option value="BIRTHDAY_REDEEM">
+              Birthday redemptions
+            </option>
           </select>
         </div>
 
@@ -548,7 +551,9 @@ export default function StaffManagementPanel({
                     {" · "}
                     {row.type === "ADD"
                       ? "Added stamp / visit"
-                      : "Redeemed reward"}
+                      : row.type === "BIRTHDAY_REDEEM"
+                        ? "Redeemed birthday reward"
+                        : "Redeemed reward"}
                   </p>
 
                   <p className="mt-1 text-xs text-[#77777E]">
