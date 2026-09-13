@@ -57,6 +57,7 @@ model Cafe {
   user                          User?
   payments                      Payment[]
   cashiers                      User[]                     @relation("CafeCashiers")
+  staff                         User[]                     @relation("CafeStaff")
 
   @@index([subscriptionStatus])
   @@index([trialEndsAt])
@@ -203,15 +204,19 @@ model User {
   updatedAt     DateTime           @updatedAt
   cafeId        String?            @unique
   cashierCafeId String?
+  staffCafeId   String?
+  isEnabled     Boolean            @default(true)
   role          UserRole           @default(CAFE_ADMIN)
   transactions  StampTransaction[]
   accounts      Account[]
   sessions      Session[]
   cafe          Cafe?              @relation(fields: [cafeId], references: [id])
   cashierCafe   Cafe?              @relation("CafeCashiers", fields: [cashierCafeId], references: [id], onDelete: SetNull)
+  staffCafe     Cafe?              @relation("CafeStaff", fields: [staffCafeId], references: [id], onDelete: SetNull)
 
   @@index([cafeId])
   @@index([cashierCafeId])
+  @@index([staffCafeId])
   @@map("user")
 }
 
