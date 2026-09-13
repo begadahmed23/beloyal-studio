@@ -1,12 +1,38 @@
 "use client";
 
+import CashierMemberList from "@/components/customers/CashierMemberList";
 import MemberList from "@/components/customers/MemberList";
 import NewCustomerDialog from "@/components/customers/NewCustomerDialog";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 export default function MembersPage() {
-  const { cafe } = useCafeTheme();
+  const { cafe, userRole } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
+
+  if (userRole === "CASHIER") {
+    return (
+      <div>
+        <div>
+          <p className="text-sm opacity-60">
+            Counter loyalty
+          </p>
+
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+            {isBarbershop ? "Clients" : "Members"}
+          </h2>
+
+          <p className="mt-2 max-w-2xl text-sm leading-6 opacity-60">
+            Search by name, add {isBarbershop ? "visits" : "stamps"},
+            and redeem earned rewards.
+          </p>
+        </div>
+
+        <div className="mt-8">
+          <CashierMemberList />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
