@@ -23,6 +23,8 @@ export async function requireAuth(
       role: true,
       cafeId: true,
       cashierCafeId: true,
+      staffCafeId: true,
+      isEnabled: true,
 
       cafe: {
         select: {
@@ -121,10 +123,59 @@ export async function requireAuth(
           monthlyPrice: true,
         },
       },
+
+      staffCafe: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          businessType: true,
+          logoUrl: true,
+
+          theme: true,
+          primaryColor: true,
+          secondaryColor: true,
+          backgroundColor: true,
+
+          rewardTarget: true,
+          rewardName: true,
+          rewardDescription: true,
+          eligiblePurchaseDescription: true,
+          minimumPurchaseAmount: true,
+
+          feedbackEnabled: true,
+          googleReviewUrl: true,
+
+          timezone: true,
+          birthdayRewardsEnabled: true,
+          birthdayRewardName: true,
+          birthdayRewardDescription: true,
+          birthdayPurchaseRequirement: true,
+          birthdayValidityDays: true,
+          birthdayReminderEnabled: true,
+          birthdayReminderDaysBefore: true,
+          birthdayDayMessageEnabled: true,
+          birthdayFriendDiscountEnabled: true,
+          birthdayOneFriendDiscount: true,
+          birthdayGroupDiscount: true,
+
+          isActive: true,
+
+          subscriptionStatus: true,
+          trialStartedAt: true,
+          trialEndsAt: true,
+          subscriptionStartedAt: true,
+          subscriptionEndsAt: true,
+          lastPaymentAt: true,
+          nextReminderAt: true,
+          reminderSentAt: true,
+          monthlyPrice: true,
+        },
+      },
     },
   });
 
-  if (!user) {
+  if (!user || !user.isEnabled) {
     return null;
   }
 
@@ -136,6 +187,17 @@ export async function requireAuth(
       cafeId: null,
       isSuperAdmin: true,
       isCashier: false,
+    };
+  }
+
+  if (user.staffCafeId && user.staffCafe) {
+    return {
+      session,
+      user,
+      cafe: user.staffCafe,
+      cafeId: user.staffCafeId,
+      isSuperAdmin: false,
+      isCashier: user.role === "CASHIER",
     };
   }
 
