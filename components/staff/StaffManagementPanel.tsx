@@ -103,6 +103,8 @@ export default function StaffManagementPanel({
   const [actionFilter, setActionFilter] =
     useState("ALL");
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] =
+    useState("7D");
 
   const load = useCallback(async () => {
     try {
@@ -160,6 +162,24 @@ export default function StaffManagementPanel({
         return false;
       }
 
+      if (dateFilter !== "ALL") {
+        const createdAt = new Date(row.createdAt).getTime();
+        const now = Date.now();
+        const maxAge =
+          dateFilter === "TODAY"
+            ? 24 * 60 * 60 * 1000
+            : dateFilter === "30D"
+              ? 30 * 24 * 60 * 60 * 1000
+              : 7 * 24 * 60 * 60 * 1000;
+
+        if (
+          Number.isNaN(createdAt) ||
+          now - createdAt > maxAge
+        ) {
+          return false;
+        }
+      }
+
       if (!query) return true;
 
       return [
@@ -173,7 +193,13 @@ export default function StaffManagementPanel({
         .toLowerCase()
         .includes(query);
     });
-  }, [data, staffFilter, actionFilter, search]);
+  }, [
+    data,
+    staffFilter,
+    actionFilter,
+    search,
+    dateFilter,
+  ]);
 
   async function createAccount() {
     if (saving) return;
@@ -477,7 +503,7 @@ export default function StaffManagementPanel({
           </p>
         </div>
 
-        <div className="grid gap-2 md:grid-cols-3">
+        <div className="grid gap-2 md:grid-cols-4">
           <div className="flex h-10 items-center rounded-xl border border-black/[0.08] bg-[#FAFAFB] px-3">
             <Search
               size={14}
@@ -509,6 +535,19 @@ export default function StaffManagementPanel({
                 {staff.name}
               </option>
             ))}
+          </select>
+
+          <select
+            value={dateFilter}
+            onChange={(event) =>
+              setDateFilter(event.target.value)
+            }
+            className="h-10 rounded-xl border border-black/[0.08] bg-[#FAFAFB] px-3 text-xs"
+          >
+            <option value="TODAY">Today</option>
+            <option value="7D">Last 7 days</option>
+            <option value="30D">Last 30 days</option>
+            <option value="ALL">All recent</option>
           </select>
 
           <select
