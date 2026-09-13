@@ -20,7 +20,6 @@ import {
 import QRCode from "react-qr-code";
 
 import BirthdayRewardAction from "@/components/customers/BirthdayRewardAction";
-
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type Member = {
@@ -315,7 +314,8 @@ export default function CashierMemberList() {
                 {Array.from({
                   length: data.reward.target,
                 }).map((_, index) => {
-                  const filled = index < member.stamps;
+                  const filled =
+                    index < member.stamps;
                   const stampDate =
                     member.stampDates[index];
 
@@ -458,7 +458,9 @@ export default function CashierMemberList() {
                 <button
                   type="button"
                   disabled={!member.publicToken}
-                  onClick={() => setQrMember(member)}
+                  onClick={() =>
+                    setQrMember(member)
+                  }
                   className="flex h-11 items-center justify-center gap-2 border text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
                   style={{
                     borderColor: theme.border,
@@ -471,60 +473,6 @@ export default function CashierMemberList() {
                   QR
                 </button>
               </div>
-                <button
-                  type="button"
-                  disabled={busy || member.rewardReady}
-                  onClick={() =>
-                    runAction(
-                      member.id,
-                      "/api/customers/stamp",
-                    )
-                  }
-                  className="flex h-11 items-center justify-center gap-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45"
-                  style={{
-                    backgroundColor: theme.accent,
-                    color: theme.buttonText,
-                    borderRadius: theme.radiusMedium,
-                  }}
-                >
-                  {busy ? (
-                    <LoaderCircle
-                      size={16}
-                      className="animate-spin"
-                    />
-                  ) : (
-                    <Stamp size={16} />
-                  )}
-                  Add {unit}
-                </button>
-
-                <button
-                  type="button"
-                  disabled={busy || !member.rewardReady}
-                  onClick={() =>
-                    runAction(
-                      member.id,
-                      "/api/customers/redeem",
-                    )
-                  }
-                  className="flex h-11 items-center justify-center gap-2 border text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
-                  style={{
-                    borderColor: member.rewardReady
-                      ? `${theme.success}70`
-                      : theme.border,
-                    backgroundColor: member.rewardReady
-                      ? `${theme.success}10`
-                      : theme.surfaceRaised,
-                    color: member.rewardReady
-                      ? theme.success
-                      : theme.textMuted,
-                    borderRadius: theme.radiusMedium,
-                  }}
-                >
-                  <CheckCircle2 size={16} />
-                  Redeem
-                </button>
-              </div>
             </div>
           );
         })}
@@ -534,7 +482,9 @@ export default function CashierMemberList() {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
+            if (
+              event.target === event.currentTarget
+            ) {
               setQrMember(null);
             }
           }}
@@ -549,7 +499,9 @@ export default function CashierMemberList() {
           >
             <button
               type="button"
-              onClick={() => setQrMember(null)}
+              onClick={() =>
+                setQrMember(null)
+              }
               className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border"
               style={{
                 borderColor: theme.border,
