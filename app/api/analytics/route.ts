@@ -163,6 +163,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (authData.isCashier) {
+      return NextResponse.json(
+        { message: "Analytics are only available to café administrators." },
+        { status: 403 }
+      );
+    }
+
     if (!authData.cafe) {
       return NextResponse.json(
         { message: "Café account not found." },
