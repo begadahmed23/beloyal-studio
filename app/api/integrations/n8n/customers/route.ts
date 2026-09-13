@@ -107,8 +107,11 @@ function authorizeAutomation(
 }
 
 function normalizeWhatsAppPhone(
-  value: string,
+  value: string | null,
 ) {
+  if (!value) {
+    return null;
+  }
   const digits = value.replace(
     /\D/g,
     "",
