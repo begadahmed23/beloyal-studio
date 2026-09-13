@@ -32,33 +32,64 @@ export async function GET(request: NextRequest) {
     return json({ message: "Admin access required." }, 403);
   }
 
-  const users = await prisma.user.findMany({
-    where: {
-      role: { in: ["CAFE_ADMIN", "CASHIER"] },
-      OR: [
-        { cafeId: authData.cafeId },
-        { cashierCafeId: authData.cafeId },
-        { staffCafeId: authData.cafeId },
-      ],
-    },
-    orderBy: [{ role: "asc" }, { createdAt: "asc" }],
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      isEnabled: true,
-      createdAt: true,
-      transactions: {
-        orderBy: { createdAt: "desc" },
-        take: 1,
-        select: { createdAt: true },
+  const [users, activity] = await Promise.all([
+    prisma.user.findMany({
+      where: {
+        role: { in: ["CAFE_ADMIN", "CASHIER"] },
+        OR: [
+          { cafeId: authData.cafeId },
+          { cashierCafeId: authData.cafeId },
+          { staffCafeId: authData.cafeId },
+        ],
       },
-      _count: {
-        select: { transactions: true },
+      orderBy: [{ role: "asc" }, { createdAt: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isEnabled: true,
+        createdAt: true,
+        transactions: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { createdAt: true },
+        },
+        _count: {
+          select: { transactions: true },
+        },
       },
-    },
-  });
+    }),
+    prisma.stampTransaction.findMany({
+      where: {
+        cafeId: authData.cafeId,
+        userId: { not: null },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      select: {
+        id: true,
+        type: true,
+        description: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+          },
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            memberNumber: true,
+          },
+        },
+      },
+    }),
+  ]);
 
   return json({
     staff: users.map((user) => ({
@@ -72,6 +103,7 @@ export async function GET(request: NextRequest) {
       activityCount: user._count.transactions,
       isCurrentUser: user.id === authData.user.id,
     })),
+    activity,
   });
 }
 
