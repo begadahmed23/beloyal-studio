@@ -14,6 +14,7 @@ import {
   useState,
 } from "react";
 
+import JoinQRCode from "@/components/dashboard/JoinQRCode";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type SummaryResponse = {
@@ -246,6 +247,8 @@ export default function CashierDashboardHome() {
           })}
         </div>
       </section>
+
+      <JoinQRCode />
     </div>
   );
 }
