@@ -5,21 +5,17 @@ import {
   CheckCircle2,
   Gift,
   LoaderCircle,
-  QrCode,
-  Search,
+   Search,
   Stamp,
   TriangleAlert,
-  X,
-} from "lucide-react";
+ } from "lucide-react";
 import {
   useCallback,
   useEffect,
   useMemo,
   useState,
 } from "react";
-import QRCode from "react-qr-code";
-
-import BirthdayRewardAction from "@/components/customers/BirthdayRewardAction";
+ import BirthdayRewardAction from "@/components/customers/BirthdayRewardAction";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type Member = {
@@ -59,8 +55,6 @@ export default function CashierMemberList() {
     useState<string | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
-  const [qrMember, setQrMember] =
-    useState<Member | null>(null);
 
   const loadMembers = useCallback(async () => {
     try {
@@ -400,7 +394,7 @@ export default function CashierMemberList() {
                 })}
               </div>
 
-              <div className="mt-5 grid grid-cols-3 gap-3">
+              <div className="mt-5 grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   disabled={busy || member.rewardReady}
@@ -455,93 +449,12 @@ export default function CashierMemberList() {
                   Redeem
                 </button>
 
-                <button
-                  type="button"
-                  disabled={!member.publicToken}
-                  onClick={() =>
-                    setQrMember(member)
-                  }
-                  className="flex h-11 items-center justify-center gap-2 border text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
-                  style={{
-                    borderColor: theme.border,
-                    backgroundColor: theme.surfaceRaised,
-                    color: theme.textSecondary,
-                    borderRadius: theme.radiusMedium,
-                  }}
-                >
-                  <QrCode size={16} />
-                  QR
-                </button>
+
               </div>
             </div>
           );
         })}
       </div>
-
-      {qrMember?.publicToken && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm"
-          onMouseDown={(event) => {
-            if (
-              event.target === event.currentTarget
-            ) {
-              setQrMember(null);
-            }
-          }}
-        >
-          <div
-            className="relative w-full max-w-sm rounded-[26px] border p-6 text-center shadow-2xl"
-            style={{
-              borderColor: theme.border,
-              backgroundColor: theme.surface,
-              color: theme.textPrimary,
-            }}
-          >
-            <button
-              type="button"
-              onClick={() =>
-                setQrMember(null)
-              }
-              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border"
-              style={{
-                borderColor: theme.border,
-                backgroundColor: theme.surfaceRaised,
-                color: theme.textSecondary,
-              }}
-            >
-              <X size={16} />
-            </button>
-
-            <p className="text-lg font-semibold">
-              {qrMember.name}
-            </p>
-
-            <p
-              className="mt-1 text-xs"
-              style={{ color: theme.textMuted }}
-            >
-              {qrMember.memberNumber}
-            </p>
-
-            <div className="mx-auto mt-6 w-fit rounded-[22px] bg-white p-4">
-              <QRCode
-                value={`BL:${qrMember.publicToken}`}
-                size={200}
-                bgColor="#FFFFFF"
-                fgColor="#000000"
-                level="M"
-              />
-            </div>
-
-            <p
-              className="mt-4 text-xs leading-5"
-              style={{ color: theme.textMuted }}
-            >
-              Scan this code with the BeLoyal counter scanner.
-            </p>
-          </div>
-        </div>
-      )}
 
       {filteredMembers.length === 0 && (
         <div
