@@ -9,11 +9,17 @@ export type SubscriptionDraft = {
   subscriptionStatus: SubscriptionStatus;
   monthlyPrice: string;
   isActive: boolean;
+
   trialStartedAt: string;
   trialEndsAt: string;
+
   subscriptionStartedAt: string;
   subscriptionEndsAt: string;
+
   lastPaymentAt: string;
+
+  paymentAmount: string;
+  recordPayment: boolean;
 };
 
 export type SubscriptionChangeHandler = (

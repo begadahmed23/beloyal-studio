@@ -234,6 +234,38 @@ export async function PATCH(
 
     const data: Prisma.CafeUpdateInput = {};
 
+    let paymentAmount: Prisma.Decimal | null = null;
+    const shouldRecordPayment = body.recordPayment === true;
+
+    if (
+      "recordPayment" in body &&
+      typeof body.recordPayment !== "boolean"
+    ) {
+      return NextResponse.json(
+        { message: "recordPayment must be true or false." },
+        { status: 400 }
+      );
+    }
+
+    if (shouldRecordPayment) {
+      const parsedAmount = Number(body.paymentAmount);
+
+      if (
+        !Number.isFinite(parsedAmount) ||
+        parsedAmount <= 0
+      ) {
+        return NextResponse.json(
+          {
+            message:
+              "Enter a valid payment amount greater than zero.",
+          },
+          { status: 400 }
+        );
+      }
+
+      paymentAmount = new Prisma.Decimal(parsedAmount);
+    }
+
     if ("name" in body) {
       const value = requiredText(body.name);
 
@@ -512,6 +544,25 @@ export async function PATCH(
         where: { id: cafeId },
         data,
       });
+
+      if (shouldRecordPayment && paymentAmount) {
+        const paidAt =
+          "lastPaymentAt" in body
+            ? nullableDate(body.lastPaymentAt)
+            : new Date();
+
+        await tx.payment.create({
+          data: {
+            cafeId,
+            amount: paymentAmount,
+            paidAt:
+              paidAt instanceof Date
+                ? paidAt
+                : new Date(),
+            note: "Monthly subscription payment",
+          },
+        });
+      }
 
       if (
         existing.user &&

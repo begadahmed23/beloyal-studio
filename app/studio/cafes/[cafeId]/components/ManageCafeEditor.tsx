@@ -277,6 +277,12 @@ export default function ManageCafeEditor() {
   const [lastPaymentAt, setLastPaymentAt] =
     useState("");
 
+  const [paymentAmount, setPaymentAmount] =
+    useState("");
+
+  const [recordPayment, setRecordPayment] =
+    useState(false);
+
   const [isActive, setIsActive] = useState(true);
 
   function updateSubscription(
@@ -314,6 +320,14 @@ export default function ManageCafeEditor() {
 
     if (patch.lastPaymentAt !== undefined) {
       setLastPaymentAt(patch.lastPaymentAt);
+    }
+
+    if (patch.paymentAmount !== undefined) {
+      setPaymentAmount(patch.paymentAmount);
+    }
+
+    if (patch.recordPayment !== undefined) {
+      setRecordPayment(patch.recordPayment);
     }
   }
 
@@ -360,6 +374,11 @@ export default function ManageCafeEditor() {
     setMonthlyPrice(
       String(nextCafe.monthlyPrice)
     );
+
+    setPaymentAmount(
+      String(nextCafe.monthlyPrice ?? 0)
+    );
+    setRecordPayment(false);
 
     setTrialStartedAt(
       dateToInputValue(nextCafe.trialStartedAt)
@@ -487,6 +506,9 @@ export default function ManageCafeEditor() {
             subscriptionStartedAt,
             subscriptionEndsAt,
             lastPaymentAt,
+
+            paymentAmount,
+            recordPayment,
 
             isActive,
           }),
@@ -927,6 +949,8 @@ export default function ManageCafeEditor() {
             subscriptionStartedAt,
             subscriptionEndsAt,
             lastPaymentAt,
+            paymentAmount,
+            recordPayment,
           }}
           saving={saving}
           onChange={updateSubscription}
