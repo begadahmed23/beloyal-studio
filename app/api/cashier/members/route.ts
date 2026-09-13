@@ -119,10 +119,21 @@ export async function GET(request: NextRequest) {
           take: 500,
           select: {
             id: true,
+            memberNumber: true,
+            publicToken: true,
             name: true,
             stamps: true,
             rewardEarnedAt: true,
             birthday: true,
+            transactions: {
+              orderBy: {
+                createdAt: "desc",
+              },
+              select: {
+                type: true,
+                createdAt: true,
+              },
+            },
           },
         }),
         prisma.customer.count({
@@ -151,6 +162,22 @@ export async function GET(request: NextRequest) {
         name: cafe.rewardName || "Free Drink",
       },
       members: customers.map((customer) => {
+        const activeStampDates: Date[] = [];
+
+        for (const transaction of customer.transactions) {
+          if (transaction.type === "REDEEM") {
+            break;
+          }
+
+          if (transaction.type === "ADD") {
+            activeStampDates.push(transaction.createdAt);
+          }
+        }
+
+        const stampDates = activeStampDates
+          .slice(0, customer.stamps)
+          .reverse();
+
         const birthdayOffer =
           cafe.birthdayRewardsEnabled
             ? isBirthdayRewardActive(
@@ -162,8 +189,11 @@ export async function GET(request: NextRequest) {
 
         return {
           id: customer.id,
+          memberNumber: customer.memberNumber,
+          publicToken: customer.publicToken,
           name: customer.name,
           stamps: customer.stamps,
+          stampDates,
           rewardReady:
             Boolean(customer.rewardEarnedAt) ||
             customer.stamps >= paidStampTarget,
