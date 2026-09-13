@@ -65,6 +65,7 @@ export type CafeSettings = {
 
 type CafeThemeContextValue = {
   themeName: CafeThemeName;
+  userRole: "CAFE_ADMIN" | "CASHIER";
   savedThemeName: CafeThemeName;
   theme: CafeThemeConfig;
   cafe: CafeSettings;
@@ -87,12 +88,14 @@ const DASHBOARD_REFRESH_THROTTLE_MS = 10_000;
 type Props = {
   themeName: CafeThemeName;
   cafe: CafeSettings;
+  userRole: "CAFE_ADMIN" | "CASHIER";
   children: ReactNode;
 };
 
 export default function CafeThemeProvider({
   themeName,
   cafe,
+  userRole,
   children,
 }: Props) {
   const router = useRouter();
@@ -210,6 +213,7 @@ export default function CafeThemeProvider({
   const contextValue = useMemo(
     () => ({
       themeName: previewThemeName,
+      userRole,
       savedThemeName,
       theme,
       cafe: currentCafe,
@@ -219,6 +223,7 @@ export default function CafeThemeProvider({
     }),
     [
       previewThemeName,
+      userRole,
       savedThemeName,
       theme,
       currentCafe,
