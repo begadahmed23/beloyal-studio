@@ -24,6 +24,13 @@ export async function PATCH(
       );
     }
 
+    if (authData.isCashier) {
+      return NextResponse.json(
+        { message: "Only café administrators can manage customer profiles." },
+        { status: 403 }
+      );
+    }
+
     if (!authData.cafe) {
       return NextResponse.json(
         { message: "Café account not found." },
@@ -186,6 +193,13 @@ export async function DELETE(
       return NextResponse.json(
         { message: "Unauthorized." },
         { status: 401 }
+      );
+    }
+
+    if (authData.isCashier) {
+      return NextResponse.json(
+        { message: "Only café administrators can manage customer profiles." },
+        { status: 403 }
       );
     }
 
