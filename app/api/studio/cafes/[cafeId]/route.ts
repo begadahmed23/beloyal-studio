@@ -697,7 +697,13 @@ export async function DELETE(
       });
 
       await tx.user.deleteMany({
-        where: { cafeId },
+        where: {
+          OR: [
+            { cafeId },
+            { cashierCafeId: cafeId },
+            { staffCafeId: cafeId },
+          ],
+        },
       });
 
       await tx.cafe.delete({
