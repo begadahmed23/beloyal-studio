@@ -56,6 +56,7 @@ model Cafe {
   birthdayMessageSends          BirthdayMessageSend[]
   user                          User?
   payments                      Payment[]
+  cashiers                      User[]                     @relation("CafeCashiers")
 
   @@index([subscriptionStatus])
   @@index([trialEndsAt])
@@ -88,7 +89,8 @@ model Customer {
   id                   String                     @id @default(cuid())
   memberNumber         String
   name                 String
-  phone                String
+  phone                String?
+  instagram            String?
   birthday             DateTime
   stamps               Int                        @default(0)
   createdAt            DateTime                   @default(now())
@@ -106,6 +108,7 @@ model Customer {
   birthdayMessageSends BirthdayMessageSend[]
 
   @@unique([cafeId, phone])
+  @@unique([cafeId, instagram])
   @@unique([cafeId, memberNumber])
   @@index([cafeId])
   @@index([cafeId, name])
@@ -199,13 +202,16 @@ model User {
   createdAt     DateTime           @default(now())
   updatedAt     DateTime           @updatedAt
   cafeId        String?            @unique
+  cashierCafeId String?
   role          UserRole           @default(CAFE_ADMIN)
   transactions  StampTransaction[]
   accounts      Account[]
   sessions      Session[]
   cafe          Cafe?              @relation(fields: [cafeId], references: [id])
+  cashierCafe   Cafe?              @relation("CafeCashiers", fields: [cashierCafeId], references: [id], onDelete: SetNull)
 
   @@index([cafeId])
+  @@index([cashierCafeId])
   @@map("user")
 }
 
@@ -286,6 +292,7 @@ enum StampType {
 enum UserRole {
   SUPER_ADMIN
   CAFE_ADMIN
+  CASHIER
 }
 
 enum SubscriptionStatus {
