@@ -23,14 +23,24 @@ export default function DashboardShell({
   children,
 }: Props) {
   const pathname = usePathname();
-  const { theme, cafe } = useCafeTheme();
+  const { theme, cafe, userRole } = useCafeTheme();
+
+  const navigationItems =
+    userRole === "CASHIER"
+      ? cafeNavigation.filter(
+          (item) =>
+            item.href === "/dashboard" ||
+            item.href === "/dashboard/scanner" ||
+            item.href === "/dashboard/scanner/phone",
+        )
+      : cafeNavigation;
 
   function isActive(href: string) {
     return isCafeCurrentPage(pathname, href);
   }
 
   const currentPage =
-    cafeNavigation.find((item) => isActive(item.href))
+    navigationItems.find((item) => isActive(item.href))
       ?.label || "Overview";
 
   return (
@@ -93,7 +103,7 @@ export default function DashboardShell({
         </div>
 
         <nav className="flex-1 space-y-1 p-4">
-          {cafeNavigation.map((item) => {
+          {navigationItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
 
@@ -209,6 +219,7 @@ export default function DashboardShell({
           </div>
 
           <div className="flex items-center gap-2">
+            {userRole !== "CASHIER" && (
             <Link
               href="/dashboard/settings"
               aria-label="Open settings"
@@ -226,6 +237,7 @@ export default function DashboardShell({
                 Settings
               </span>
             </Link>
+            )}
             <MobileLogoutButton />
           </div>
         </header>
