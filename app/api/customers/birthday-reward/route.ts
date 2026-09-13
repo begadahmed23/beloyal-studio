@@ -556,17 +556,33 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      const redemption =
-        await prisma.birthdayRewardRedemption.create({
-          data: {
-            customerId: customer.id,
-            cafeId: authData.cafeId,
-            year: offer.year,
-          },
-          select: {
-            redeemedAt: true,
-          },
-        });
+      const redemption = await prisma.$transaction(
+        async (transaction) => {
+          const created =
+            await transaction.birthdayRewardRedemption.create({
+              data: {
+                customerId: customer.id,
+                cafeId: authData.cafeId,
+                year: offer.year,
+              },
+              select: {
+                redeemedAt: true,
+              },
+            });
+
+          await transaction.stampTransaction.create({
+            data: {
+              customerId: customer.id,
+              cafeId: authData.cafeId,
+              userId: authData.user.id,
+              type: "BIRTHDAY_REDEEM",
+              description: `${config.rewardName} birthday reward redeemed`,
+            },
+          });
+
+          return created;
+        },
+      );
 
       return jsonResponse({
         message: `${config.rewardName} redeemed successfully.`,
