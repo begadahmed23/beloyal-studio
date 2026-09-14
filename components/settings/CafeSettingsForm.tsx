@@ -94,6 +94,14 @@ export default function CafeSettingsForm({
   applySavedSettings,
 } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
+  const normalizedCafeName = cafe.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const isKato =
+    cafe.slug.toLowerCase().includes("kato") ||
+    normalizedCafeName.includes("kato");
+
   const themeOptions = getBusinessThemeOptions(
     cafe.businessType,
   );
@@ -297,11 +305,15 @@ function getThemeColors(theme: CafeThemeName) {
           },
           body: JSON.stringify({
             name: form.name,
-            logoUrl: form.logoUrl,
-            theme: form.theme,
-            primaryColor: colors.primaryColor,
-secondaryColor: colors.secondaryColor,
-backgroundColor: colors.backgroundColor,
+            ...(!isKato
+              ? {
+                  logoUrl: form.logoUrl,
+                  theme: form.theme,
+                  primaryColor: colors.primaryColor,
+                  secondaryColor: colors.secondaryColor,
+                  backgroundColor: colors.backgroundColor,
+                }
+              : {}),
             rewardTarget: Number(
               form.rewardTarget
             ),
@@ -398,10 +410,9 @@ router.refresh();
               color: theme.textMuted,
             }}
           >
-            Customize the loyalty experience for your
-            business. Theme changes are previewed
-            immediately and saved only when you press
-            Save Changes.
+            {isKato
+              ? "Manage KATŌ’s loyalty program, customer experience, and business controls."
+              : "Customize the loyalty experience for your business. Theme changes are previewed immediately and saved only when you press Save Changes."}
           </p>
         </div>
 
@@ -532,6 +543,7 @@ router.refresh();
               />
             </Field>
 
+            {!isKato && (
             <div className="lg:col-span-2">
               <Field
               theme={theme}
@@ -650,9 +662,11 @@ router.refresh();
                 </div>
               )}
             </div>
+            )}
           </div>
         </section>
 
+        {!isKato && (
         <section
           className="border p-5 sm:p-7"
           style={cardStyle}
@@ -718,6 +732,7 @@ router.refresh();
           )}
         </section>
 
+        )}
         <section
           className="border p-5 sm:p-7"
           style={cardStyle}
