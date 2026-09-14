@@ -412,12 +412,14 @@ export default function KatoLoyaltyCard({
 
               <div>
                 <p className="text-sm font-semibold">
-                  Share your thoughts
+                  {customer.feedbackRewardedAt
+                    ? "Share your thoughts"
+                    : "Share & get 1 free stamp"}
                 </p>
                 <p className="mt-0.5 text-[11px]" style={{ color: muted }}>
                   {customer.feedbackRewardedAt
                     ? "We’d love to hear from you again."
-                    : "Your first feedback earns 1 free stamp."}
+                    : "Tell us what you think and we’ll add it to your card."}
                 </p>
               </div>
             </div>
