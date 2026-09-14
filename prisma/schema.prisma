@@ -47,6 +47,7 @@ model Cafe {
   trialEndsAt                   DateTime?
   trialStartedAt                DateTime?
   feedbackEnabled               Boolean?
+  feedbackRewardEnabled         Boolean                    @default(true)
   googleReviewUrl               String?
   customers                     Customer[]
   reviews                       CustomerReview[]
