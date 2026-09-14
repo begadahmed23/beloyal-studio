@@ -111,6 +111,12 @@ export default function StaffManagementPanel({
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] =
     useState("7D");
+  const [resetUserId, setResetUserId] =
+    useState<string | null>(null);
+  const [newPassword, setNewPassword] =
+    useState("");
+  const [confirmPassword, setConfirmPassword] =
+    useState("");
 
   const load = useCallback(async () => {
     try {
@@ -252,6 +258,56 @@ export default function StaffManagementPanel({
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function resetPassword(staff: Staff) {
+    if (!canCreateAdmins) return;
+
+    try {
+      setBusyId(staff.id);
+      setError("");
+      setSuccess("");
+
+      const response = await fetch(
+        `${endpoint}/${staff.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            newPassword,
+            confirmPassword,
+          }),
+        },
+      );
+
+      const body = (await response.json()) as {
+        message?: string;
+      };
+
+      if (!response.ok) {
+        throw new Error(
+          body.message || "Failed to reset password.",
+        );
+      }
+
+      setResetUserId(null);
+      setNewPassword("");
+      setConfirmPassword("");
+      setSuccess(
+        body.message ||
+          "Password changed and sessions revoked.",
+      );
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to reset password.",
+      );
+    } finally {
+      setBusyId(null);
     }
   }
 
@@ -647,38 +703,107 @@ export default function StaffManagementPanel({
               {!staff.isCurrentUser &&
                 (canCreateAdmins ||
                   staff.role === "CASHIER") && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      toggleAccount(staff)
-                    }
-                    disabled={busyId === staff.id}
-                    className={`mt-4 h-9 border px-3 text-xs font-semibold disabled:opacity-50 ${
-                      themed
-                        ? ""
-                        : "rounded-lg border-black/[0.10] bg-white text-[#44444A]"
-                    }`}
-                    style={
-                      themed
-                        ? {
-                            borderColor: theme!.border,
-                            backgroundColor:
-                              theme!.inputBackground,
-                            color: staff.isEnabled
-                              ? theme!.danger
-                              : theme!.success,
-                            borderRadius:
-                              theme!.radiusMedium,
-                          }
-                        : undefined
-                    }
-                  >
-                    {busyId === staff.id
-                      ? "Updating..."
-                      : staff.isEnabled
-                        ? "Disable account"
-                        : "Enable account"}
-                  </button>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        toggleAccount(staff)
+                      }
+                      disabled={busyId === staff.id}
+                      className={`h-9 border px-3 text-xs font-semibold disabled:opacity-50 ${
+                        themed
+                          ? ""
+                          : "rounded-lg border-black/[0.10] bg-white text-[#44444A]"
+                      }`}
+                      style={
+                        themed
+                          ? {
+                              borderColor: theme!.border,
+                              backgroundColor:
+                                theme!.inputBackground,
+                              color: staff.isEnabled
+                                ? theme!.danger
+                                : theme!.success,
+                              borderRadius:
+                                theme!.radiusMedium,
+                            }
+                          : undefined
+                      }
+                    >
+                      {busyId === staff.id
+                        ? "Updating..."
+                        : staff.isEnabled
+                          ? "Disable account"
+                          : "Enable account"}
+                    </button>
+
+                    {canCreateAdmins && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResetUserId(
+                            resetUserId === staff.id
+                              ? null
+                              : staff.id,
+                          );
+                          setNewPassword("");
+                          setConfirmPassword("");
+                          setError("");
+                          setSuccess("");
+                        }}
+                        className="h-9 rounded-lg border border-black/[0.10] bg-white px-3 text-xs font-semibold text-[#44444A]"
+                      >
+                        Reset password
+                      </button>
+                    )}
+                  </div>
+                )}
+
+              {canCreateAdmins &&
+                resetUserId === staff.id && (
+                  <div className="mt-3 rounded-xl border border-black/[0.08] bg-white p-3">
+                    <p className="text-xs font-semibold text-[#44444A]">
+                      Set a new password for {staff.name}
+                    </p>
+
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(event) =>
+                          setNewPassword(
+                            event.target.value,
+                          )
+                        }
+                        placeholder="New password"
+                        className="h-10 rounded-lg border border-black/[0.10] bg-white px-3 text-xs outline-none"
+                      />
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(event) =>
+                          setConfirmPassword(
+                            event.target.value,
+                          )
+                        }
+                        placeholder="Confirm password"
+                        className="h-10 rounded-lg border border-black/[0.10] bg-white px-3 text-xs outline-none"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        resetPassword(staff)
+                      }
+                      disabled={busyId === staff.id}
+                      className="mt-2 h-9 rounded-lg bg-[#1D1D1F] px-3 text-xs font-semibold text-white disabled:opacity-50"
+                    >
+                      {busyId === staff.id
+                        ? "Changing..."
+                        : "Change password"}
+                    </button>
+                  </div>
                 )}
             </div>
           ))}
