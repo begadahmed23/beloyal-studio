@@ -30,25 +30,33 @@ export function KatoMark({
   return (
     <svg
       aria-hidden="true"
-      viewBox="0 0 64 64"
+      viewBox="0 0 100 118"
       width={size}
-      height={size}
+      height={size * 1.18}
       fill="none"
       style={{
+        overflow: "visible",
         filter: active
-          ? "drop-shadow(0 0 10px rgba(255,255,255,0.95))"
+          ? "drop-shadow(0 0 11px rgba(255,255,255,0.95))"
           : "none",
       }}
     >
       <circle
-        cx="32"
-        cy="38"
-        r="18"
+        cx="50"
+        cy="72"
+        r="33"
         stroke="currentColor"
-        strokeWidth="7"
+        strokeWidth="10"
       />
+
       <path
-        d="M18 10C22.8 14.6 27.5 16.8 32 16.8S41.2 14.6 46 10V20C41.3 23.4 36.6 25 32 25s-9.3-1.6-14-5V10Z"
+        d="M24 13
+           C31 20 40 24 50 24
+           C60 24 69 20 76 13
+           L76 29
+           C68 35 59 38 50 38
+           C41 38 32 35 24 29
+           Z"
         fill="currentColor"
       />
     </svg>
@@ -92,12 +100,12 @@ export default function KatoLoyaltyCard({
 
   return (
     <div className="mx-auto w-full max-w-[430px]">
-      <div className="overflow-hidden rounded-[34px] bg-white px-5 pb-7 pt-6 shadow-[0_28px_90px_rgba(16,43,73,0.12)] min-[390px]:px-7 min-[390px]:pb-8 min-[390px]:pt-7">
+      <div className="overflow-hidden rounded-[30px] bg-white px-4 pb-6 pt-5 shadow-[0_28px_90px_rgba(16,43,73,0.12)] min-[375px]:px-5 min-[390px]:rounded-[34px] min-[390px]:px-7 min-[390px]:pb-8 min-[390px]:pt-7">
         <header>
-          <div className="flex items-start justify-between gap-5">
+          <div className="flex items-start justify-between gap-4 min-[390px]:gap-5">
             <div className="min-w-0">
               <div
-                className="text-[2.35rem] font-light leading-none tracking-[-0.08em] min-[390px]:text-[2.75rem]"
+                className="text-[2.15rem] font-light leading-none tracking-[-0.08em] min-[375px]:text-[2.35rem] min-[390px]:text-[2.75rem]"
                 style={{ color: navy }}
               >
                 KATŌ
@@ -112,10 +120,10 @@ export default function KatoLoyaltyCard({
             </div>
 
             <div
-              className="flex h-[70px] w-[70px] shrink-0 items-center justify-center rounded-full min-[390px]:h-[76px] min-[390px]:w-[76px]"
+              className="flex h-[64px] w-[64px] shrink-0 items-center justify-center rounded-full min-[375px]:h-[70px] min-[375px]:w-[70px] min-[390px]:h-[76px] min-[390px]:w-[76px]"
               style={{ backgroundColor: navy, color: "#E9E6D8" }}
             >
-              <KatoMark size={47} />
+              <KatoMark size={48} />
             </div>
           </div>
 
@@ -153,7 +161,7 @@ export default function KatoLoyaltyCard({
         </header>
 
         <section
-          className="relative mt-7 overflow-hidden rounded-[30px] px-5 pb-6 pt-6 min-[390px]:px-6 min-[390px]:pb-7"
+          className="relative mt-6 overflow-hidden rounded-[26px] px-4 pb-5 pt-5 min-[375px]:mt-7 min-[390px]:rounded-[30px] min-[390px]:px-6 min-[390px]:pb-7 min-[390px]:pt-6"
           style={{
             background:
               "linear-gradient(145deg, #16395C 0%, #102B49 56%, #0A223E 100%)",
@@ -174,7 +182,7 @@ export default function KatoLoyaltyCard({
           </div>
 
           <div
-            className="relative mt-8 grid items-center gap-1.5"
+            className="relative mt-8 grid items-center gap-0.5 min-[390px]:gap-1"
             style={{
               gridTemplateColumns:
                 "repeat(" + totalSlots + ", minmax(0, 1fr))",
@@ -190,7 +198,7 @@ export default function KatoLoyaltyCard({
                 <div
                   key={index}
                   className={
-                    "flex min-w-0 items-center justify-center transition-all duration-500 " +
+                    "flex min-w-0 items-center justify-center py-1 transition-all duration-500 " +
                     (isNew ? "scale-125" : "scale-100")
                   }
                   style={{
@@ -208,7 +216,7 @@ export default function KatoLoyaltyCard({
                 >
                   <KatoMark
                     active={active}
-                    size={44}
+                    size={39}
                   />
                 </div>
               );
