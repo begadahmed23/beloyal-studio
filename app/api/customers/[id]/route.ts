@@ -49,7 +49,15 @@ export async function PATCH(
 
     const phone =
       typeof body.phone === "string"
-        ? body.phone.trim()
+        ? body.phone.replace(/\D/g, "")
+        : "";
+
+    const instagram =
+      typeof body.instagram === "string"
+        ? body.instagram
+            .trim()
+            .replace(/^@+/, "")
+            .toLowerCase()
         : "";
 
     const birthday =
@@ -57,9 +65,16 @@ export async function PATCH(
         ? body.birthday
         : "";
 
-    if (!id || !name || !phone || !birthday) {
+    if (!id || !name || !birthday) {
       return NextResponse.json(
-        { message: "All fields are required." },
+        { message: "Name and birthday are required." },
+        { status: 400 }
+      );
+    }
+
+    if (!phone && !instagram) {
+      return NextResponse.json(
+        { message: "Enter a phone number or Instagram username." },
         { status: 400 }
       );
     }
@@ -73,12 +88,22 @@ export async function PATCH(
       );
     }
 
-    if (!/^\d{11}$/.test(phone)) {
+    if (phone && !/^\d{11}$/.test(phone)) {
       return NextResponse.json(
         {
           message:
             "Phone number must contain exactly 11 digits.",
         },
+        { status: 400 }
+      );
+    }
+
+    if (
+      instagram &&
+      !/^[a-z0-9._]{1,30}$/.test(instagram)
+    ) {
+      return NextResponse.json(
+        { message: "Enter a valid Instagram username." },
         { status: 400 }
       );
     }
@@ -110,25 +135,28 @@ export async function PATCH(
       );
     }
 
-    const existingPhone =
+    const existingContact =
       await prisma.customer.findFirst({
         where: {
           cafeId,
-          phone,
           NOT: {
             id,
           },
+          OR: [
+            ...(phone ? [{ phone }] : []),
+            ...(instagram ? [{ instagram }] : []),
+          ],
         },
         select: {
           id: true,
         },
       });
 
-    if (existingPhone) {
+    if (existingContact) {
       return NextResponse.json(
         {
           message:
-            "This phone number already belongs to another member in this café.",
+            "This phone number or Instagram username already belongs to another member in this café.",
         },
         { status: 409 }
       );
@@ -141,7 +169,8 @@ export async function PATCH(
         },
         data: {
           name,
-          phone,
+          phone: phone || null,
+          instagram: instagram || null,
           birthday: birthdayDate,
         },
         select: {
@@ -150,6 +179,7 @@ export async function PATCH(
           publicToken: true,
           name: true,
           phone: true,
+          instagram: true,
           birthday: true,
           stamps: true,
           createdAt: true,
@@ -169,7 +199,7 @@ export async function PATCH(
       return NextResponse.json(
         {
           message:
-            "This phone number already belongs to another member.",
+            "This phone number or Instagram username already belongs to another member.",
         },
         { status: 409 }
       );
