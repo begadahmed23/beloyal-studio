@@ -23,6 +23,7 @@ type QrCodeModalProps = {
   primarySoft: string;
   accentText: string;
   onClose: () => void;
+  onStampDetected: () => void;
   onLogoError: (logoUrl: string) => void;
 };
 
@@ -52,6 +53,7 @@ export default function QrCodeModal({
   primarySoft,
   accentText,
   onClose,
+  onStampDetected,
   onLogoError,
 }: QrCodeModalProps) {
   const isBarbershop = businessType === "BARBERSHOP";
@@ -111,10 +113,7 @@ export default function QrCodeModal({
         if (stampChanged && customerUpdated) {
           stopped = true;
           onClose();
-
-          window.setTimeout(() => {
-            window.location.reload();
-          }, 80);
+          onStampDetected();
         }
       } catch {
         // Keep the QR usable even if a background sync check fails.
@@ -147,7 +146,7 @@ export default function QrCodeModal({
         window.clearTimeout(timeout);
       }
     };
-  }, [onClose, publicToken]);
+  }, [onClose, onStampDetected, publicToken]);
 
   return (
     <div
