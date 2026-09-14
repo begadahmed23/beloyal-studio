@@ -66,6 +66,8 @@ export default async function DashboardLayout({
         feedbackEnabled:
           cafe.feedbackEnabled ??
           cafe.businessType === "CAFE",
+        feedbackRewardEnabled:
+          cafe.feedbackRewardEnabled,
         googleReviewUrl: cafe.googleReviewUrl,
 
         timezone: cafe.timezone,
