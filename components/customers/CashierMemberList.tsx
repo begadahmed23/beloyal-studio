@@ -99,6 +99,22 @@ export default function CashierMemberList() {
 
   useEffect(() => {
     loadMembers();
+
+    function handleMembersUpdated() {
+      void loadMembers();
+    }
+
+    window.addEventListener(
+      "members-updated",
+      handleMembersUpdated,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "members-updated",
+        handleMembersUpdated,
+      );
+    };
   }, [loadMembers]);
 
   const filteredMembers = useMemo(() => {
@@ -234,7 +250,7 @@ export default function CashierMemberList() {
             setSearch(event.target.value)
           }
           placeholder="Search by customer name"
-          className="w-full bg-transparent text-sm outline-none"
+          className="w-full bg-transparent text-base outline-none sm:text-sm"
           style={{ color: theme.textPrimary }}
         />
       </div>
