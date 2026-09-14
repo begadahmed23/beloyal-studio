@@ -30,9 +30,9 @@ export function KatoMark({
   return (
     <svg
       aria-hidden="true"
-      viewBox="0 0 100 118"
+      viewBox="0 0 500 500"
       width={size}
-      height={size * 1.18}
+      height={size}
       fill="none"
       style={{
         overflow: "visible",
@@ -41,23 +41,14 @@ export function KatoMark({
           : "none",
       }}
     >
-      <circle
-        cx="50"
-        cy="72"
-        r="33"
-        stroke="currentColor"
-        strokeWidth="10"
-      />
-
       <path
-        d="M24 13
-           C31 20 40 24 50 24
-           C60 24 69 20 76 13
-           L76 29
-           C68 35 59 38 50 38
-           C41 38 32 35 24 29
-           Z"
         fill="currentColor"
+        fillRule="evenodd"
+        d="M250 140 A150 150 0 1 0 250 440 A150 150 0 1 0 250 140 Z M250 174 A116 116 0 1 1 250 406 A116 116 0 1 1 250 174 Z"
+      />
+      <path
+        fill="currentColor"
+        d="M180 60 L180 98 C220 120 280 120 320 98 L320 60 C275 90 225 90 180 60 Z"
       />
     </svg>
   );
