@@ -14,6 +14,7 @@ import {
   useState,
 } from "react";
 
+import KatoMark from "@/components/brand/KatoMark";
 import JoinQRCode from "@/components/dashboard/JoinQRCode";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
@@ -28,6 +29,15 @@ export default function CashierDashboardHome() {
   const { cafe, theme } = useCafeTheme();
   const isBarbershop =
     cafe.businessType === "BARBERSHOP";
+
+  const normalizedCafeName = cafe.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  const isKato =
+    cafe.slug.toLowerCase().includes("kato") ||
+    normalizedCafeName.includes("kato");
 
   const [summary, setSummary] = useState({
     totalCustomers: 0,
@@ -95,25 +105,52 @@ export default function CashierDashboardHome() {
 
   return (
     <div className="space-y-7">
-      <section>
-        <p
-          className="text-sm font-medium"
-          style={{ color: theme.textMuted }}
-        >
-          Counter overview
-        </p>
+      {isKato ? (
+        <section className="overflow-hidden rounded-[28px] border border-[#DCE3EA] bg-white p-5 shadow-[0_20px_55px_rgba(16,43,73,0.08)] sm:p-6">
+          <div className="flex items-start justify-between gap-5">
+            <div>
+              <p className="text-[2rem] font-light leading-none tracking-[-0.07em] text-[#102B49]">
+                KATŌ
+              </p>
+              <p className="mt-2 text-[9px] font-semibold uppercase tracking-[0.32em] text-[#7F8DA0]">
+                Counter
+              </p>
 
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-          {cafe.name}
-        </h2>
+              <h2 className="mt-7 text-2xl font-semibold tracking-[-0.035em] text-[#0A223E]">
+                Ready for the next customer.
+              </h2>
 
-        <p
-          className="mt-2 text-sm"
-          style={{ color: theme.textMuted }}
-        >
-          Manage today&apos;s loyalty activity from the counter.
-        </p>
-      </section>
+              <p className="mt-2 text-sm text-[#7F8DA0]">
+                Search members, add stamps, and redeem rewards.
+              </p>
+            </div>
+
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#102B49] text-[#E9E6D8]">
+              <KatoMark size={40} />
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section>
+          <p
+            className="text-sm font-medium"
+            style={{ color: theme.textMuted }}
+          >
+            Counter overview
+          </p>
+
+          <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+            {cafe.name}
+          </h2>
+
+          <p
+            className="mt-2 text-sm"
+            style={{ color: theme.textMuted }}
+          >
+            Manage today&apos;s loyalty activity from the counter.
+          </p>
+        </section>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-2">
         <div
