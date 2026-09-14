@@ -1653,16 +1653,18 @@ const progressPercentage = rewardReady
                   )}
                 </button>
 
-                <p
-                  className="mt-4 text-center text-[11px] leading-5"
-                  style={{
-                    color: textMuted,
-                  }}
-                >
-                  Your first note
-                  comes with a {isBarbershop ? "visit" : "stamp"},
-                  on us.
-                </p>
+                {customer.cafe.feedbackRewardEnabled &&
+                  !customer.feedbackRewardedAt && (
+                    <p
+                      className="mt-4 text-center text-[11px] leading-5"
+                      style={{
+                        color: textMuted,
+                      }}
+                    >
+                      Your first note comes with a{" "}
+                      {isBarbershop ? "visit" : "stamp"}, on us.
+                    </p>
+                  )}
               </>
             ) : (
               <>
