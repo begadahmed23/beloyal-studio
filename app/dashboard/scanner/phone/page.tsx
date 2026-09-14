@@ -272,39 +272,73 @@ export default function PhoneScannerPage() {
 
         scannerRef.current = scanner;
 
-       await scanner.start(
-  {
-    facingMode: "environment",
-  },
-          {
-            fps: 10,
-            qrbox: (
+        const scannerConfig = {
+          fps: 10,
+          qrbox: (
+            viewfinderWidth: number,
+            viewfinderHeight: number
+          ) => {
+            const smallestSide = Math.min(
               viewfinderWidth,
               viewfinderHeight
-            ) => {
-              const smallestSide = Math.min(
-                viewfinderWidth,
-                viewfinderHeight
-              );
+            );
 
-              const boxSize = Math.floor(
-                smallestSide * 0.72
-              );
+            const boxSize = Math.floor(
+              smallestSide * 0.72
+            );
 
-              return {
-                width: boxSize,
-                height: boxSize,
-              };
+            return {
+              width: boxSize,
+              height: boxSize,
+            };
+          },
+          aspectRatio: 1,
+        };
+
+        const onScanSuccess = (decodedText: string) => {
+          void processScan(decodedText);
+        };
+
+        const onScanFailure = () => {
+          // Normal scan misses are ignored.
+        };
+
+        try {
+          await scanner.start(
+            {
+              facingMode: "environment",
             },
-            aspectRatio: 1,
-          },
-          (decodedText) => {
-            void processScan(decodedText);
-          },
-          () => {
-            // Normal scan misses are ignored.
+            scannerConfig,
+            onScanSuccess,
+            onScanFailure
+          );
+        } catch (preferredCameraError) {
+          console.warn(
+            "Preferred rear camera could not start. Falling back to available cameras.",
+            preferredCameraError
+          );
+
+          const cameras =
+            await Html5Qrcode.getCameras();
+
+          if (!cameras.length) {
+            throw preferredCameraError;
           }
-        );
+
+          const preferredCamera =
+            cameras.find((camera) =>
+              /back|rear|environment|world/i.test(
+                camera.label
+              )
+            ) ?? cameras[0];
+
+          await scanner.start(
+            preferredCamera.id,
+            scannerConfig,
+            onScanSuccess,
+            onScanFailure
+          );
+        }
 
         if (isMounted) {
           setStatus("scanning");
@@ -317,9 +351,26 @@ export default function PhoneScannerPage() {
 
         if (isMounted) {
           setStatus("error");
-          setError(
-            "Camera access failed. Allow camera permission and open this page using HTTPS."
-          );
+
+          if (
+            typeof window !== "undefined" &&
+            !window.isSecureContext
+          ) {
+            setError(
+              "Camera scanning requires a secure HTTPS page."
+            );
+          } else if (
+            typeof navigator !== "undefined" &&
+            !navigator.mediaDevices?.getUserMedia
+          ) {
+            setError(
+              "This browser does not provide camera access. Try the latest Chrome, Safari, or Samsung Internet."
+            );
+          } else {
+            setError(
+              "Camera access failed. Allow camera permission, then try again. If your browser blocks the camera, open this page in Chrome, Safari, or Samsung Internet."
+            );
+          }
         }
       }
     }
