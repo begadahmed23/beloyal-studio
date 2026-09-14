@@ -26,6 +26,7 @@ export default function NewCustomerDialog() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [instagram, setInstagram] = useState("");
   const [birthday, setBirthday] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -33,6 +34,7 @@ export default function NewCustomerDialog() {
   function resetForm() {
     setName("");
     setPhone("");
+    setInstagram("");
     setBirthday("");
     setError("");
   }
@@ -40,17 +42,38 @@ export default function NewCustomerDialog() {
   async function createMember() {
     const cleanName = name.trim();
     const cleanPhone = phone.trim();
+    const cleanInstagram = instagram
+      .trim()
+      .replace(/^@+/, "")
+      .toLowerCase();
 
     setError("");
 
-    if (!cleanName || !cleanPhone || !birthday) {
-      setError("Please fill in all fields.");
+    if (!cleanName || !birthday) {
+      setError("Please enter the name and birthday.");
       return;
     }
 
-    if (!/^\d{11}$/.test(cleanPhone)) {
+    if (!cleanPhone && !cleanInstagram) {
+      setError(
+        "Please enter a phone number or Instagram username."
+      );
+      return;
+    }
+
+    if (cleanPhone && !/^\d{11}$/.test(cleanPhone)) {
       setError(
         "Phone number must contain exactly 11 digits."
+      );
+      return;
+    }
+
+    if (
+      cleanInstagram &&
+      !/^[a-z0-9._]{1,30}$/.test(cleanInstagram)
+    ) {
+      setError(
+        "Please enter a valid Instagram username."
       );
       return;
     }
@@ -65,7 +88,10 @@ export default function NewCustomerDialog() {
         },
         body: JSON.stringify({
           name: cleanName,
-          phone: cleanPhone,
+          ...(cleanPhone ? { phone: cleanPhone } : {}),
+          ...(cleanInstagram
+            ? { instagram: cleanInstagram }
+            : {}),
           birthday,
         }),
       });
@@ -238,7 +264,7 @@ export default function NewCustomerDialog() {
                 placeholder="Ahmed Mohamed"
                 autoComplete="name"
                 disabled={loading}
-                className="h-12 border outline-none placeholder:opacity-50 focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="h-12 border text-base outline-none placeholder:opacity-50 focus-visible:ring-0 focus-visible:ring-offset-0"
                 style={inputStyle}
               />
             </div>
@@ -250,7 +276,10 @@ export default function NewCustomerDialog() {
                   color: theme.textSecondary,
                 }}
               >
-                Phone number
+                Phone number{" "}
+                <span style={{ color: theme.textMuted }}>
+                  (optional)
+                </span>
               </label>
 
               <Input
@@ -271,7 +300,7 @@ export default function NewCustomerDialog() {
                 placeholder="01012345678"
                 autoComplete="tel"
                 disabled={loading}
-                className="h-12 border outline-none placeholder:opacity-50 focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="h-12 border text-base outline-none placeholder:opacity-50 focus-visible:ring-0 focus-visible:ring-offset-0"
                 style={inputStyle}
               />
 
@@ -282,7 +311,7 @@ export default function NewCustomerDialog() {
                     color: theme.textMuted,
                   }}
                 >
-                  Must contain exactly 11 digits.
+                  Use phone or Instagram. Phone must contain exactly 11 digits.
                 </p>
 
                 <p
@@ -306,6 +335,51 @@ export default function NewCustomerDialog() {
                   color: theme.textSecondary,
                 }}
               >
+                Instagram{" "}
+                <span style={{ color: theme.textMuted }}>
+                  (optional)
+                </span>
+              </label>
+
+              <Input
+                value={instagram}
+                onChange={(event) => {
+                  setInstagram(
+                    event.target.value
+                      .replace(/^@+/, "")
+                      .slice(0, 30),
+                  );
+
+                  if (error) {
+                    setError("");
+                  }
+                }}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                placeholder="@username"
+                disabled={loading}
+                className="h-12 border text-base outline-none placeholder:opacity-50 focus-visible:ring-0 focus-visible:ring-offset-0"
+                style={inputStyle}
+              />
+
+              <p
+                className="mt-2 text-xs"
+                style={{
+                  color: theme.textMuted,
+                }}
+              >
+                You only need one contact method: phone or Instagram.
+              </p>
+            </div>
+
+            <div>
+              <label
+                className="mb-2 block text-sm font-medium"
+                style={{
+                  color: theme.textSecondary,
+                }}
+              >
                 Birthday
               </label>
 
@@ -320,7 +394,7 @@ export default function NewCustomerDialog() {
                   }
                 }}
                 disabled={loading}
-                className="h-12 border outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="h-12 border text-base outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
                 style={inputStyle}
               />
             </div>
