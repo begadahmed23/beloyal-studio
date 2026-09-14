@@ -53,6 +53,7 @@ type FormState = {
   minimumPurchaseAmount: string;
 
   feedbackEnabled: boolean;
+  feedbackRewardEnabled: boolean;
   googleReviewUrl: string;
 };
 
@@ -122,6 +123,7 @@ export default function CafeSettingsForm({
       cafe.minimumPurchaseAmount ?? "",
 
     feedbackEnabled: cafe.feedbackEnabled,
+    feedbackRewardEnabled: cafe.feedbackRewardEnabled,
     googleReviewUrl: cafe.googleReviewUrl ?? "",
   });
 
@@ -151,6 +153,7 @@ export default function CafeSettingsForm({
     cafe.eligiblePurchaseDescription,
     cafe.minimumPurchaseAmount,
     cafe.feedbackEnabled,
+    cafe.feedbackRewardEnabled,
     cafe.googleReviewUrl,
     savedThemeName,
   ]);
@@ -328,6 +331,7 @@ function getThemeColors(theme: CafeThemeName) {
               form.minimumPurchaseAmount,
 
             feedbackEnabled: form.feedbackEnabled,
+            feedbackRewardEnabled: form.feedbackRewardEnabled,
             googleReviewUrl: form.googleReviewUrl,
           }),
         }
@@ -1158,6 +1162,63 @@ router.refresh();
               />
             </button>
           </div>
+
+          {form.feedbackEnabled && (
+            <div
+              className="mt-4 flex items-center justify-between gap-5 border p-5"
+              style={{
+                borderColor: theme.border,
+                backgroundColor: theme.surfaceRaised,
+                borderRadius: theme.radiusMedium,
+              }}
+            >
+              <div>
+                <p
+                  className="text-sm font-semibold"
+                  style={{ color: theme.textPrimary }}
+                >
+                  Give 1 bonus stamp for first feedback
+                </p>
+
+                <p
+                  className="mt-1 text-sm leading-6"
+                  style={{ color: theme.textMuted }}
+                >
+                  Turn this off if you want to collect feedback without giving a free{" "}
+                  {isBarbershop ? "visit" : "stamp"}.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                aria-checked={form.feedbackRewardEnabled}
+                aria-label="Give one bonus stamp for first feedback"
+                onClick={() =>
+                  updateField(
+                    "feedbackRewardEnabled",
+                    !form.feedbackRewardEnabled,
+                  )
+                }
+                className="relative h-7 w-12 shrink-0 rounded-full transition-colors"
+                style={{
+                  backgroundColor: form.feedbackRewardEnabled
+                    ? theme.accent
+                    : theme.inputBorder,
+                }}
+              >
+                <span
+                  className="absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform"
+                  style={{
+                    left: "4px",
+                    transform: form.feedbackRewardEnabled
+                      ? "translateX(20px)"
+                      : "translateX(0)",
+                  }}
+                />
+              </button>
+            </div>
+          )}
         </section>
 
         <section
