@@ -44,13 +44,22 @@ export default function KatoLoyaltyCard({
   onRefresh,
   onShowQrCode,
 }: Props) {
+  const isDark = customer.cafe.theme === "DARK_LUXURY";
   const navy = "#102B49";
   const navyDeep = "#0A223E";
+  const cream = "#E9E6D8";
   const white = "#FFFFFF";
-  const pageText = "#102B49";
-  const muted = "#7F8DA0";
-  const border = "#E5EAF0";
-  const soft = "#F7F9FB";
+  const pageText = isDark ? "#F5F3EC" : "#102B49";
+  const muted = isDark ? "#A7B0BA" : "#7F8DA0";
+  const border = isDark
+    ? "rgba(233,230,216,0.14)"
+    : "#E5EAF0";
+  const soft = isDark ? "#0D2744" : "#F7F9FB";
+  const shellBackground = isDark ? "#071A33" : "#FFFFFF";
+  const birthdayIconBackground = isDark ? "#16395C" : "#EEF3F7";
+  const birthdayTextColor = isDark ? "#F5F3EC" : navyDeep;
+  const qrBackground = isDark ? cream : navy;
+  const qrText = isDark ? navyDeep : white;
 
   const totalSlots = Math.max(customer.cafe.rewardTarget, rewardTarget + 1, 2);
   const paidTarget = Math.max(totalSlots - 1, 1);
@@ -74,20 +83,28 @@ export default function KatoLoyaltyCard({
 
   return (
     <div className="mx-auto w-full max-w-[430px]">
-      <div className="overflow-hidden rounded-[30px] bg-white px-4 pb-6 pt-5 shadow-[0_28px_90px_rgba(16,43,73,0.12)] min-[375px]:px-5 min-[390px]:rounded-[34px] min-[390px]:px-7 min-[390px]:pb-8 min-[390px]:pt-7">
+      <div
+        className="overflow-hidden rounded-[30px] px-4 pb-6 pt-5 min-[375px]:px-5 min-[390px]:rounded-[34px] min-[390px]:px-7 min-[390px]:pb-8 min-[390px]:pt-7"
+        style={{
+          backgroundColor: shellBackground,
+          boxShadow: isDark
+            ? "0 28px 90px rgba(0,0,0,0.34)"
+            : "0 28px 90px rgba(16,43,73,0.12)",
+        }}
+      >
         <header>
           <div className="flex items-start justify-between gap-4 min-[390px]:gap-5">
             <div className="min-w-0">
               <div
                 className="text-[2.15rem] font-light leading-none tracking-[-0.08em] min-[375px]:text-[2.35rem] min-[390px]:text-[2.75rem]"
-                style={{ color: navy }}
+                style={{ color: isDark ? cream : navy }}
               >
                 KATŌ
               </div>
 
               <p
                 className="mt-2 text-[9px] font-semibold uppercase tracking-[0.38em]"
-                style={{ color: navy }}
+                style={{ color: isDark ? "#BFC6CB" : navy }}
               >
                 Specialty Coffee
               </p>
@@ -95,7 +112,10 @@ export default function KatoLoyaltyCard({
 
             <div
               className="flex h-[64px] w-[64px] shrink-0 items-center justify-center rounded-full min-[375px]:h-[70px] min-[375px]:w-[70px] min-[390px]:h-[76px] min-[390px]:w-[76px]"
-              style={{ backgroundColor: navy, color: "#E9E6D8" }}
+              style={{
+                backgroundColor: isDark ? cream : navy,
+                color: isDark ? navyDeep : cream,
+              }}
             >
               <KatoMark size={48} />
             </div>
@@ -123,8 +143,13 @@ export default function KatoLoyaltyCard({
               onClick={onRefresh}
               disabled={refreshing}
               aria-label="Refresh loyalty card"
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition hover:bg-[#F4F6F8] disabled:opacity-50"
-              style={{ color: muted }}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition disabled:opacity-50"
+              style={{
+                color: muted,
+                backgroundColor: isDark
+                  ? "rgba(255,255,255,0.04)"
+                  : "transparent",
+              }}
             >
               <RefreshCw
                 size={17}
@@ -239,8 +264,8 @@ export default function KatoLoyaltyCard({
           <div
             className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[15px]"
             style={{
-              backgroundColor: "#EEF3F7",
-              color: navy,
+              backgroundColor: birthdayIconBackground,
+              color: isDark ? cream : navy,
             }}
           >
             <Cake size={21} />
@@ -256,7 +281,7 @@ export default function KatoLoyaltyCard({
 
             <p
               className="mt-0.5 text-[16px] font-semibold"
-              style={{ color: navyDeep }}
+              style={{ color: birthdayTextColor }}
             >
               {birthdayText}
             </p>
@@ -288,14 +313,23 @@ export default function KatoLoyaltyCard({
           type="button"
           onClick={onShowQrCode}
           className="mt-4 flex h-14 w-full items-center justify-center gap-2.5 rounded-[22px] text-[15px] font-semibold text-white shadow-[0_14px_34px_rgba(16,43,73,0.22)] transition hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
-          style={{ backgroundColor: navy }}
+          style={{
+            backgroundColor: qrBackground,
+            color: qrText,
+            boxShadow: isDark
+              ? "0 14px 34px rgba(0,0,0,0.28)"
+              : "0 14px 34px rgba(16,43,73,0.22)",
+          }}
         >
           <QrCode size={19} />
           Show QR Code
         </button>
       </div>
 
-      <p className="mt-4 text-center text-[9px] font-semibold uppercase tracking-[0.28em] text-[#A0AAB6]">
+      <p
+        className="mt-4 text-center text-[9px] font-semibold uppercase tracking-[0.28em]"
+        style={{ color: isDark ? "#7F8A97" : "#A0AAB6" }}
+      >
         Powered by BeLoyal
       </p>
     </div>
