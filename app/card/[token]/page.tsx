@@ -243,6 +243,11 @@ export default function DigitalCardPage() {
           incomingCustomer.stamps >
             previousStampCount.current
         ) {
+          // Keep the card mounted and reveal the new-stamp animation.
+          // If the member QR is open while the cashier scans it,
+          // close only that modal instead of reloading the card UI.
+          setShowQrCode(false);
+
           setNewStampIndex(
             incomingCustomer.stamps - 1,
           );
