@@ -305,15 +305,17 @@ function getThemeColors(theme: CafeThemeName) {
           },
           body: JSON.stringify({
             name: form.name,
-            ...(!isKato
+            ...(isKato
               ? {
+                  theme: form.theme,
+                }
+              : {
                   logoUrl: form.logoUrl,
                   theme: form.theme,
                   primaryColor: colors.primaryColor,
                   secondaryColor: colors.secondaryColor,
                   backgroundColor: colors.backgroundColor,
-                }
-              : {}),
+                }),
             rewardTarget: Number(
               form.rewardTarget
             ),
@@ -390,9 +392,11 @@ router.refresh();
               color: theme.textMuted,
             }}
           >
-            {isBarbershop
-              ? "Barbershop configuration"
-              : "Café configuration"}
+            {isKato
+              ? "KATŌ configuration"
+              : isBarbershop
+                ? "Barbershop configuration"
+                : "Café configuration"}
           </p>
 
           <h2
@@ -490,6 +494,7 @@ router.refresh();
       )}
 
       <div className="mt-8 grid gap-6">
+        {!isKato && (
         <section
           className="border p-5 sm:p-7"
           style={cardStyle}
@@ -543,7 +548,9 @@ router.refresh();
               />
             </Field>
 
-            {!isKato && (
+            )}
+
+        {!isKato && (
             <div className="lg:col-span-2">
               <Field
               theme={theme}
@@ -733,6 +740,116 @@ router.refresh();
         </section>
 
         )}
+        {isKato && (
+          <section
+            className="border p-5 sm:p-7"
+            style={cardStyle}
+          >
+            <SectionHeader
+              theme={theme}
+              icon={Palette}
+              title="Customer card appearance"
+              description="Choose the KATŌ loyalty card style customers see on their phones."
+            />
+
+            <div className="mt-7 grid gap-4 sm:grid-cols-2">
+              {[
+                {
+                  value: "MODERN_MINIMAL" as CafeThemeName,
+                  label: "Light",
+                  description: "White, navy, and soft stone.",
+                  background: "#F4F7FA",
+                  card: "#FFFFFF",
+                  accent: "#102B49",
+                },
+                {
+                  value: "DARK_LUXURY" as CafeThemeName,
+                  label: "Dark",
+                  description: "Deep navy, cream, and soft white.",
+                  background: "#071A33",
+                  card: "#0D2744",
+                  accent: "#E9E6D8",
+                },
+              ].map((option) => {
+                const selected = form.theme === option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => selectTheme(option.value)}
+                    className="overflow-hidden border p-4 text-left transition hover:-translate-y-0.5"
+                    style={{
+                      borderColor: selected
+                        ? "#102B49"
+                        : theme.border,
+                      backgroundColor: theme.surface,
+                      borderRadius: theme.radiusMedium,
+                      boxShadow: selected
+                        ? "0 0 0 1px #102B49"
+                        : "none",
+                    }}
+                  >
+                    <div
+                      className="rounded-[18px] p-3"
+                      style={{
+                        backgroundColor: option.background,
+                      }}
+                    >
+                      <div
+                        className="h-20 rounded-[15px] p-3"
+                        style={{
+                          backgroundColor: option.card,
+                        }}
+                      >
+                        <div
+                          className="h-2 w-16 rounded-full"
+                          style={{
+                            backgroundColor: option.accent,
+                          }}
+                        />
+                        <div
+                          className="mt-3 h-8 rounded-lg"
+                          style={{
+                            backgroundColor:
+                              option.value === "DARK_LUXURY"
+                                ? "#102B49"
+                                : "#EEF3F7",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <div>
+                        <p
+                          className="text-sm font-semibold"
+                          style={{ color: theme.textPrimary }}
+                        >
+                          {option.label}
+                        </p>
+                        <p
+                          className="mt-1 text-xs"
+                          style={{ color: theme.textMuted }}
+                        >
+                          {option.description}
+                        </p>
+                      </div>
+
+                      {selected && (
+                        <Check
+                          size={18}
+                          style={{ color: theme.accent }}
+                        />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         <section
           className="border p-5 sm:p-7"
           style={cardStyle}
