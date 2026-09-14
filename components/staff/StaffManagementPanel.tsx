@@ -1010,7 +1010,6 @@ export default function StaffManagementPanel({
           </div>
         )}
       </div>
-      </div>
     </section>
   );
 }
