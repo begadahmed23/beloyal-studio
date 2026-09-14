@@ -176,7 +176,7 @@ export default function NewCustomerDialog() {
         }}
       >
         <DialogContent
-          className="border p-0 shadow-2xl sm:max-w-md"
+          className="max-h-[90vh] overflow-y-auto overscroll-contain border p-0 shadow-2xl sm:max-w-md"
           style={{
             borderColor: theme.border,
             backgroundColor: theme.surface,
