@@ -26,7 +26,6 @@ import {
 } from "react";
 
 import StaffManagementPanel from "@/components/staff/StaffManagementPanel";
-import PasswordSection from "./PasswordSection";
 import SubscriptionControlPanel, {
   type SubscriptionDraft,
   type SubscriptionStatus,
@@ -818,11 +817,6 @@ export default function ManageCafeEditor() {
         endpoint={`/api/studio/cafes/${cafeId}/staff`}
         canCreateAdmins
         title="Accounts & staff activity"
-      />
-
-      <PasswordSection
-        cafeId={cafeId}
-        ownerEmail={cafe.user?.email ?? null}
       />
 
       <FormSection
