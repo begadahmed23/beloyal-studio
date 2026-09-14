@@ -94,6 +94,23 @@ export async function GET(request: NextRequest) {
 
     const cafe = authData.cafe;
     const timeZone = cafe.timezone?.trim() || "Africa/Cairo";
+
+    const search =
+      request.nextUrl.searchParams
+        .get("search")
+        ?.trim() ?? "";
+
+    if (search.length > 100) {
+      return jsonResponse(
+        { message: "Search must be 100 characters or fewer." },
+        400,
+      );
+    }
+
+    const cleanedPhone = search.replace(/\D/g, "");
+    const cleanedInstagram = search
+      .replace(/^@+/, "")
+      .toLowerCase();
     const paidStampTarget = getLoyaltyProgressTarget({
       businessType: cafe.businessType,
       rewardTarget: cafe.rewardTarget,
@@ -112,16 +129,56 @@ export async function GET(request: NextRequest) {
         prisma.customer.findMany({
           where: {
             cafeId: authData.cafeId,
+
+            ...(search
+              ? {
+                  OR: [
+                    {
+                      name: {
+                        contains: search,
+                        mode: "insensitive" as const,
+                      },
+                    },
+                    ...(cleanedPhone
+                      ? [
+                          {
+                            phone: {
+                              contains: cleanedPhone,
+                            },
+                          },
+                        ]
+                      : []),
+                    ...(cleanedInstagram
+                      ? [
+                          {
+                            instagram: {
+                              contains: cleanedInstagram,
+                              mode: "insensitive" as const,
+                            },
+                          },
+                        ]
+                      : []),
+                    {
+                      memberNumber: {
+                        contains: search,
+                        mode: "insensitive" as const,
+                      },
+                    },
+                  ],
+                }
+              : {}),
           },
           orderBy: {
             createdAt: "desc",
           },
-          take: 500,
+          take: search ? 100 : 100,
           select: {
             id: true,
             memberNumber: true,
             publicToken: true,
             name: true,
+            phone: true,
+            instagram: true,
             stamps: true,
             rewardEarnedAt: true,
             birthday: true,
@@ -192,6 +249,8 @@ export async function GET(request: NextRequest) {
           memberNumber: customer.memberNumber,
           publicToken: customer.publicToken,
           name: customer.name,
+          phone: customer.phone,
+          instagram: customer.instagram,
           stamps: customer.stamps,
           stampDates,
           rewardReady:
