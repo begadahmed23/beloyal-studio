@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import KatoMark from "@/components/brand/KatoMark";
+import AdminFeedbackPanel from "@/components/dashboard/AdminFeedbackPanel";
 import BirthdaySummary from "@/components/dashboard/BirthdaySummary";
 import CashierDashboardHome from "@/components/dashboard/CashierDashboardHome";
 import JoinQRCode from "@/components/dashboard/JoinQRCode";
@@ -194,6 +195,8 @@ function CafeDashboardHome() {
       )}
 
       <BirthdaySummary />
+
+      <AdminFeedbackPanel />
 
       <SimpleAnalytics />
 
