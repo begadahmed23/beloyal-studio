@@ -196,9 +196,9 @@ function CafeDashboardHome() {
 
       <BirthdaySummary />
 
-      <AdminFeedbackPanel />
-
       <SimpleAnalytics />
+
+      <AdminFeedbackPanel />
 
       <section>
         <div>
