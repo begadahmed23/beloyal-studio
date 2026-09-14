@@ -3,8 +3,6 @@
 import { Cake, ChevronRight, MessageCircle, QrCode, RefreshCw } from "lucide-react";
 
 import { useState } from "react";
-import { BorderBeam } from "border-beam";
-
 import KatoMark from "@/components/brand/KatoMark";
 import type { Customer } from "./LoyaltyCard";
 
@@ -190,27 +188,13 @@ export default function KatoLoyaltyCard({
           </div>
         )}
 
-        <BorderBeam
-          active={newStampIndex !== null}
-          size="md"
-          colorVariant="mono"
-          theme="dark"
-          strength={1}
-          duration={0.68}
-          borderRadius={30}
-          brightness={3.2}
-          className="mt-6 min-[375px]:mt-7"
-        >
-          <section
-          className="relative overflow-hidden rounded-[26px] px-4 pb-5 pt-5 transition-[box-shadow,transform] duration-500 ease-out min-[390px]:rounded-[30px] min-[390px]:px-6 min-[390px]:pb-7 min-[390px]:pt-6"
+        <section
+          className="relative mt-6 overflow-hidden rounded-[26px] px-4 pb-5 pt-5 min-[375px]:mt-7 min-[390px]:rounded-[30px] min-[390px]:px-6 min-[390px]:pb-7 min-[390px]:pt-6"
           style={{
             background:
               "linear-gradient(145deg, #16395C 0%, #102B49 56%, #0A223E 100%)",
             boxShadow:
-              newStampIndex !== null
-                ? "0 0 0 1px rgba(255,255,255,0.92), 0 0 22px rgba(255,255,255,0.52), 0 0 52px rgba(118,175,255,0.34), 0 18px 42px rgba(16,43,73,0.26), inset 0 1px 0 rgba(255,255,255,0.18)"
-                : "0 18px 42px rgba(16,43,73,0.22), inset 0 1px 0 rgba(255,255,255,0.06)",
-            transform: newStampIndex !== null ? "translateY(-1px)" : "translateY(0)",
+              "0 18px 42px rgba(16,43,73,0.22), inset 0 1px 0 rgba(255,255,255,0.06)",
           }}
         >
           <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-white/[0.05] blur-3xl" />
@@ -242,7 +226,7 @@ export default function KatoLoyaltyCard({
                 <div
                   key={index}
                   className={
-                    "flex min-w-0 items-center justify-center py-1 transition-[transform,opacity] duration-500 ease-out " +
+                    "relative flex min-w-0 items-center justify-center py-1 transition-[transform,opacity] duration-500 ease-out " +
                     (isNew ? "scale-[1.24]" : "scale-100")
                   }
                   style={{
@@ -254,6 +238,29 @@ export default function KatoLoyaltyCard({
                     opacity: active || rewardSlotReady ? 1 : 0.72,
                   }}
                 >
+                  {isNew && (
+                    <>
+                      <span
+                        aria-hidden="true"
+                        className="kato-stamp-ripple pointer-events-none absolute h-11 w-11 rounded-full border"
+                        style={{
+                          borderColor: isDark
+                            ? "rgba(233,230,216,0.85)"
+                            : "rgba(255,255,255,0.95)",
+                        }}
+                      />
+                      <span
+                        aria-hidden="true"
+                        className="kato-stamp-flash pointer-events-none absolute h-8 w-8 rounded-full"
+                        style={{
+                          background: isDark
+                            ? "rgba(233,230,216,0.28)"
+                            : "rgba(255,255,255,0.34)",
+                        }}
+                      />
+                    </>
+                  )}
+
                   <KatoMark
                     active={active}
                     size={39}
@@ -266,12 +273,22 @@ export default function KatoLoyaltyCard({
           <div className="relative mt-7">
             <div className="h-[3px] overflow-hidden rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-[#F7F5EC] transition-[width,opacity] duration-700 ease-out"
+                className={
+                  "relative h-full rounded-full bg-[#F7F5EC] transition-[width,opacity] duration-700 ease-out " +
+                  (newStampIndex !== null ? "kato-progress-pulse" : "")
+                }
                 style={{
                   width: progressPercent + "%",
                   opacity: displayStamps > 0 ? 1 : 0.72,
                 }}
-              />
+              >
+                {newStampIndex !== null && (
+                  <span
+                    aria-hidden="true"
+                    className="kato-progress-spark pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white"
+                  />
+                )}
+              </div>
             </div>
 
             <p className="mt-3 text-center text-[11px] font-medium tracking-[0.04em] text-white/70">
@@ -279,8 +296,7 @@ export default function KatoLoyaltyCard({
             </p>
           </div>
 
-          </section>
-        </BorderBeam>
+        </section>
 
         <button
           type="button"
@@ -446,6 +462,90 @@ export default function KatoLoyaltyCard({
       >
         Powered by BeLoyal
       </p>
+
+      <style jsx global>{`
+        @keyframes kato-stamp-ripple {
+          0% {
+            opacity: 0.95;
+            transform: scale(0.55);
+          }
+          100% {
+            opacity: 0;
+            transform: scale(1.8);
+          }
+        }
+
+        @keyframes kato-stamp-flash {
+          0% {
+            opacity: 0;
+            transform: scale(0.65);
+          }
+          25% {
+            opacity: 1;
+          }
+          100% {
+            opacity: 0;
+            transform: scale(1.45);
+          }
+        }
+
+        @keyframes kato-progress-pulse {
+          0% {
+            box-shadow: 0 0 0 rgba(255,255,255,0);
+            filter: brightness(1);
+          }
+          45% {
+            box-shadow:
+              0 0 10px rgba(255,255,255,0.9),
+              0 0 24px rgba(132,184,255,0.58);
+            filter: brightness(1.35);
+          }
+          100% {
+            box-shadow: 0 0 0 rgba(255,255,255,0);
+            filter: brightness(1);
+          }
+        }
+
+        @keyframes kato-progress-spark {
+          0% {
+            opacity: 0;
+            transform: translateY(-50%) scale(0.4);
+          }
+          35% {
+            opacity: 1;
+            transform: translateY(-50%) scale(1.25);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-50%) scale(2.1);
+          }
+        }
+
+        .kato-stamp-ripple {
+          animation: kato-stamp-ripple 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .kato-stamp-flash {
+          animation: kato-stamp-flash 520ms ease-out both;
+        }
+
+        .kato-progress-pulse {
+          animation: kato-progress-pulse 820ms ease-out both;
+        }
+
+        .kato-progress-spark {
+          animation: kato-progress-spark 720ms ease-out both;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .kato-stamp-ripple,
+          .kato-stamp-flash,
+          .kato-progress-pulse,
+          .kato-progress-spark {
+            animation: none;
+          }
+        }
+      `}</style>
     </div>
   );
 }
