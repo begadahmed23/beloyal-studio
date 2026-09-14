@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
         minimumPurchaseAmount: true,
 
         feedbackEnabled: true,
+        feedbackRewardEnabled: true,
         googleReviewUrl: true,
 
         timezone: true,
