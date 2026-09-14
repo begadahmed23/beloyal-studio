@@ -232,12 +232,20 @@ export default function KatoLoyaltyCard({
           <div className="relative mt-7">
             <div className="h-[3px] overflow-hidden rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-[#E9E6D8] transition-[width] duration-700 ease-out"
+                className="h-full rounded-full bg-[#F7F5EC] transition-[width,box-shadow,filter] duration-700 ease-out"
                 style={{
                   width: progressPercent + "%",
                   boxShadow:
                     displayStamps > 0
-                      ? "0 0 10px rgba(233,230,216,0.28)"
+                      ? newStampIndex !== null
+                        ? "0 0 8px rgba(255,255,255,0.9), 0 0 18px rgba(255,255,255,0.68), 0 0 30px rgba(247,245,236,0.38)"
+                        : "0 0 7px rgba(255,255,255,0.48), 0 0 16px rgba(247,245,236,0.28)"
+                      : "none",
+                  filter:
+                    displayStamps > 0
+                      ? newStampIndex !== null
+                        ? "brightness(1.22)"
+                        : "brightness(1.08)"
                       : "none",
                 }}
               />
