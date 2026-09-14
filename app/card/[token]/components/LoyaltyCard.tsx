@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { withAlpha } from "../card-utils";
 import BirthdayCustomerDisplay from "./BirthdayCustomerDisplay";
+import KatoLoyaltyCard from "./KatoLoyaltyCard";
 
 export type Cafe = {
   id: string;
@@ -204,6 +205,34 @@ export default function LoyaltyCard({
     customer.cafe.businessType === "BARBERSHOP";
   const isBrickBarber =
     isBarbershop && customer.cafe.theme === "COFFEE_CLASSIC";
+  const normalizedCafeName = customer.cafe.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const isKato =
+    customer.cafe.slug.toLowerCase().includes("kato") ||
+    normalizedCafeName.includes("kato");
+
+  if (isKato) {
+    return (
+      <KatoLoyaltyCard
+        customer={customer}
+        refreshing={refreshing}
+        newStampIndex={newStampIndex}
+        birthdayText={birthdayText}
+        daysUntilBirthday={daysUntilBirthday}
+        rewardTarget={rewardTarget}
+        visibleStamps={visibleStamps}
+        rewardReady={rewardReady}
+        remainingStamps={remainingStamps}
+        logoUrl={logoUrl}
+        showLogo={showLogo}
+        onRefresh={onRefresh}
+        onLogoError={onLogoError}
+        onShowQrCode={onShowQrCode}
+      />
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-md">
