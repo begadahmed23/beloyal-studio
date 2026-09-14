@@ -2,6 +2,8 @@
 
 import { Cake, ChevronRight, MessageCircle, QrCode, RefreshCw } from "lucide-react";
 
+import { useState } from "react";
+
 import KatoMark from "@/components/brand/KatoMark";
 import type { Customer } from "./LoyaltyCard";
 
@@ -46,6 +48,7 @@ export default function KatoLoyaltyCard({
   onShowQrCode,
   onShowFeedback,
 }: Props) {
+  const [birthdayOpen, setBirthdayOpen] = useState(false);
   const isDark = customer.cafe.theme === "DARK_LUXURY";
   const navy = "#102B49";
   const navyDeep = "#0A223E";
@@ -260,8 +263,10 @@ export default function KatoLoyaltyCard({
           </p>
         </section>
 
-        <section
-          className="mt-5 flex items-center gap-4 rounded-[24px] border px-4 py-4 min-[390px]:px-5"
+        <button
+          type="button"
+          onClick={() => setBirthdayOpen((current) => !current)}
+          className="mt-5 flex w-full items-center gap-4 rounded-[24px] border px-4 py-4 text-left transition hover:-translate-y-0.5 active:translate-y-0 min-[390px]:px-5"
           style={{
             borderColor: border,
             backgroundColor: soft,
@@ -278,13 +283,9 @@ export default function KatoLoyaltyCard({
           </div>
 
           <div className="min-w-0 flex-1">
-            <p
-              className="text-[12px] font-medium"
-              style={{ color: muted }}
-            >
+            <p className="text-[12px] font-medium" style={{ color: muted }}>
               Your Birthday
             </p>
-
             <p
               className="mt-0.5 text-[16px] font-semibold"
               style={{ color: birthdayTextColor }}
@@ -293,16 +294,10 @@ export default function KatoLoyaltyCard({
             </p>
           </div>
 
-          <div
-            className="h-12 w-px shrink-0"
-            style={{ backgroundColor: border }}
-          />
+          <div className="h-12 w-px shrink-0" style={{ backgroundColor: border }} />
 
           <div className="shrink-0 text-right">
-            <p
-              className="text-[13px] font-medium"
-              style={{ color: muted }}
-            >
+            <p className="text-[13px] font-medium" style={{ color: muted }}>
               {daysUntilBirthday === 0
                 ? "Today"
                 : "In " +
@@ -312,8 +307,62 @@ export default function KatoLoyaltyCard({
             </p>
           </div>
 
-          <ChevronRight size={18} style={{ color: "#9AA6B5" }} />
-        </section>
+          <ChevronRight
+            size={18}
+            style={{
+              color: "#9AA6B5",
+              transform: birthdayOpen ? "rotate(90deg)" : "rotate(0deg)",
+              transition: "transform 180ms ease",
+            }}
+          />
+        </button>
+
+        {birthdayOpen && (
+          <div
+            className="mt-2 rounded-[20px] border px-4 py-4"
+            style={{
+              borderColor: border,
+              backgroundColor: isDark ? "#0B223C" : "#FBFCFD",
+              color: pageText,
+            }}
+          >
+            {customer.cafe.birthdayRewardsEnabled ? (
+              <>
+                <p className="text-sm font-semibold">
+                  {customer.cafe.birthdayRewardName || "Birthday Reward"}
+                </p>
+
+                {customer.cafe.birthdayRewardDescription && (
+                  <p className="mt-2 text-xs leading-5" style={{ color: muted }}>
+                    {customer.cafe.birthdayRewardDescription}
+                  </p>
+                )}
+
+                {customer.cafe.birthdayPurchaseRequirement && (
+                  <p className="mt-2 text-xs leading-5" style={{ color: muted }}>
+                    {customer.cafe.birthdayPurchaseRequirement}
+                  </p>
+                )}
+
+                <p className="mt-2 text-xs leading-5" style={{ color: muted }}>
+                  Valid for {customer.cafe.birthdayValidityDays}{" "}
+                  {customer.cafe.birthdayValidityDays === 1 ? "day" : "days"} from your birthday.
+                </p>
+
+                {customer.cafe.birthdayFriendDiscountEnabled && (
+                  <p className="mt-2 text-xs leading-5" style={{ color: muted }}>
+                    Bring 1 friend for {customer.cafe.birthdayOneFriendDiscount}% off ·
+                    2+ friends for {customer.cafe.birthdayGroupDiscount}% off.
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-xs leading-5" style={{ color: muted }}>
+                Birthday rewards are not currently active.
+              </p>
+            )}
+          </div>
+        )}
 
         <button
           type="button"
