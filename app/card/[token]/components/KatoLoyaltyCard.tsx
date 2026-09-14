@@ -194,20 +194,23 @@ export default function KatoLoyaltyCard({
           active={newStampIndex !== null}
           size="md"
           colorVariant="mono"
-          theme={isDark ? "dark" : "light"}
+          theme="dark"
           strength={1}
-          duration={0.72}
+          duration={0.68}
           borderRadius={30}
-          brightness={1.9}
+          brightness={3.2}
           className="mt-6 min-[375px]:mt-7"
         >
           <section
-          className="relative overflow-hidden rounded-[26px] px-4 pb-5 pt-5 min-[390px]:rounded-[30px] min-[390px]:px-6 min-[390px]:pb-7 min-[390px]:pt-6"
+          className="relative overflow-hidden rounded-[26px] px-4 pb-5 pt-5 transition-[box-shadow,transform] duration-500 ease-out min-[390px]:rounded-[30px] min-[390px]:px-6 min-[390px]:pb-7 min-[390px]:pt-6"
           style={{
             background:
               "linear-gradient(145deg, #16395C 0%, #102B49 56%, #0A223E 100%)",
             boxShadow:
-              "0 18px 42px rgba(16,43,73,0.22), inset 0 1px 0 rgba(255,255,255,0.06)",
+              newStampIndex !== null
+                ? "0 0 0 1px rgba(255,255,255,0.92), 0 0 22px rgba(255,255,255,0.52), 0 0 52px rgba(118,175,255,0.34), 0 18px 42px rgba(16,43,73,0.26), inset 0 1px 0 rgba(255,255,255,0.18)"
+                : "0 18px 42px rgba(16,43,73,0.22), inset 0 1px 0 rgba(255,255,255,0.06)",
+            transform: newStampIndex !== null ? "translateY(-1px)" : "translateY(0)",
           }}
         >
           <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-white/[0.05] blur-3xl" />
@@ -240,7 +243,7 @@ export default function KatoLoyaltyCard({
                   key={index}
                   className={
                     "flex min-w-0 items-center justify-center py-1 transition-[transform,opacity] duration-500 ease-out " +
-                    (isNew ? "scale-[1.18]" : "scale-100")
+                    (isNew ? "scale-[1.24]" : "scale-100")
                   }
                   style={{
                     color: rewardSlotReady
