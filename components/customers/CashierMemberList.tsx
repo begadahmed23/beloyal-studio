@@ -16,6 +16,7 @@ import {
   useState,
 } from "react";
  import BirthdayRewardAction from "@/components/customers/BirthdayRewardAction";
+import KatoMark from "@/components/brand/KatoMark";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type Member = {
@@ -45,6 +46,13 @@ export default function CashierMemberList() {
   const { theme, cafe } = useCafeTheme();
   const isBarbershop =
     cafe.businessType === "BARBERSHOP";
+  const normalizedCafeName = cafe.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const isKato =
+    cafe.slug.toLowerCase().includes("kato") ||
+    normalizedCafeName.includes("kato");
   const unit = isBarbershop ? "visit" : "stamp";
 
   const [data, setData] =
@@ -250,7 +258,10 @@ export default function CashierMemberList() {
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <p className="truncate text-lg font-semibold">
-                    {member.name}
+                    {isKato
+                      ? member.name.trim().charAt(0).toUpperCase() +
+                        member.name.trim().slice(1)
+                      : member.name}
                   </p>
 
                   <p
@@ -299,7 +310,11 @@ export default function CashierMemberList() {
               )}
 
               <div
-                className="mt-5 grid gap-2"
+                className={
+                  isKato
+                    ? "mt-5 grid gap-1"
+                    : "mt-5 grid gap-2"
+                }
                 style={{
                   gridTemplateColumns:
                     `repeat(${data.reward.target}, minmax(0, 1fr))`,
@@ -355,25 +370,44 @@ export default function CashierMemberList() {
                       className="min-w-0 text-center"
                     >
                       <div
-                        className="flex aspect-square items-center justify-center border"
-                        style={{
-                          borderColor: filled
-                            ? `${theme.accent}70`
-                            : theme.border,
-                          backgroundColor: filled
-                            ? theme.accentSoft
-                            : theme.surfaceRaised,
-                          borderRadius: "12px",
-                        }}
+                        className={
+                          isKato
+                            ? "flex aspect-square items-center justify-center"
+                            : "flex aspect-square items-center justify-center border"
+                        }
+                        style={
+                          isKato
+                            ? {
+                                color: filled
+                                  ? "#102B49"
+                                  : "rgba(16,43,73,0.24)",
+                                filter: "none",
+                              }
+                            : {
+                                borderColor: filled
+                                  ? `${theme.accent}70`
+                                  : theme.border,
+                                backgroundColor: filled
+                                  ? theme.accentSoft
+                                  : theme.surfaceRaised,
+                                borderRadius: "12px",
+                              }
+                        }
                       >
-                        <Stamp
-                          size={17}
-                          style={{
-                            color: filled
-                              ? theme.accent
-                              : theme.textMuted,
-                          }}
-                        />
+                        {isKato ? (
+                          <KatoMark
+                            size={29}
+                          />
+                        ) : (
+                          <Stamp
+                            size={17}
+                            style={{
+                              color: filled
+                                ? theme.accent
+                                : theme.textMuted,
+                            }}
+                          />
+                        )}
                       </div>
 
                       <div
