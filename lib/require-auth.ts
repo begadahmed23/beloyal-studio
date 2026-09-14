@@ -46,6 +46,7 @@ export async function requireAuth(
           minimumPurchaseAmount: true,
 
           feedbackEnabled: true,
+          feedbackRewardEnabled: true,
           googleReviewUrl: true,
 
           timezone: true,
@@ -95,6 +96,7 @@ export async function requireAuth(
           minimumPurchaseAmount: true,
 
           feedbackEnabled: true,
+          feedbackRewardEnabled: true,
           googleReviewUrl: true,
 
           timezone: true,
@@ -144,6 +146,7 @@ export async function requireAuth(
           minimumPurchaseAmount: true,
 
           feedbackEnabled: true,
+          feedbackRewardEnabled: true,
           googleReviewUrl: true,
 
           timezone: true,
