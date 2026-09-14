@@ -362,6 +362,17 @@ export async function GET(
                     : []),
 
                   {
+                    instagram: {
+                      contains:
+                        search
+                          .replace(/^@+/, "")
+                          .toLowerCase(),
+                      mode:
+                        "insensitive" as const,
+                    },
+                  },
+
+                  {
                     memberNumber: {
                       contains:
                         search,
@@ -384,6 +395,7 @@ export async function GET(
           memberNumber: true,
           name: true,
           phone: true,
+          instagram: true,
           birthday: true,
           stamps: true,
           publicToken: true,
@@ -457,6 +469,8 @@ export async function GET(
 
         return {
           ...customer,
+          phone: customer.phone ?? "",
+          instagram: customer.instagram ?? null,
           lastStampedAt,
           stampDates,
         };
