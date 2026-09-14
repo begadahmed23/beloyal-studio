@@ -192,6 +192,9 @@ model StampTransaction {
   @@index([customerId])
   @@index([userId])
   @@index([createdAt])
+  @@index([cafeId, createdAt])
+  @@index([userId, createdAt])
+  @@index([cafeId, type, createdAt])
 }
 
 model User {
