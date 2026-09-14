@@ -28,6 +28,7 @@ export type Cafe = {
   rewardDescription: string | null;
   eligiblePurchaseDescription: string | null;
   feedbackEnabled: boolean;
+  feedbackRewardEnabled: boolean;
   googleReviewUrl: string | null;
   timezone: string;
   birthdayRewardsEnabled: boolean;
