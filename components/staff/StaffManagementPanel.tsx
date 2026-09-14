@@ -17,6 +17,8 @@ import {
   useState,
 } from "react";
 
+import { useOptionalCafeTheme } from "@/components/theme/CafeThemeProvider";
+
 type Role = "CAFE_ADMIN" | "CASHIER";
 
 type Staff = {
@@ -83,6 +85,10 @@ export default function StaffManagementPanel({
   canCreateAdmins = false,
   title = "Staff & activity",
 }: Props) {
+  const cafeTheme = useOptionalCafeTheme();
+  const themed = Boolean(cafeTheme);
+  const theme = cafeTheme?.theme;
+
   const [data, setData] =
     useState<ResponseData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -303,13 +309,57 @@ export default function StaffManagementPanel({
         <LoaderCircle
           size={25}
           className="animate-spin"
+          style={{
+            color: themed ? theme?.accent : undefined,
+          }}
         />
       </div>
     );
   }
 
+  const sectionStyle = themed
+    ? {
+        borderColor: theme!.border,
+        backgroundColor: theme!.surface,
+        color: theme!.textPrimary,
+        boxShadow: theme!.cardShadow,
+      }
+    : undefined;
+
+  const raisedStyle = themed
+    ? {
+        borderColor: theme!.border,
+        backgroundColor: theme!.surfaceRaised,
+        color: theme!.textPrimary,
+      }
+    : undefined;
+
+  const inputStyle = themed
+    ? {
+        borderColor: theme!.inputBorder,
+        backgroundColor: theme!.inputBackground,
+        color: theme!.textPrimary,
+      }
+    : undefined;
+
+  const mutedStyle = themed
+    ? { color: theme!.textMuted }
+    : undefined;
+
   return (
-    <section className="space-y-5 rounded-[26px] border border-black/[0.08] bg-white p-5 shadow-[0_12px_40px_rgba(15,23,42,0.05)] sm:p-6">
+    <section
+      className={`space-y-5 border p-5 sm:p-6 ${
+        themed
+          ? ""
+          : "rounded-[26px] border-black/[0.08] bg-white shadow-[0_12px_40px_rgba(15,23,42,0.05)]"
+      }`}
+      style={{
+        ...sectionStyle,
+        borderRadius: themed
+          ? theme!.radiusLarge
+          : undefined,
+      }}
+    >
       <div>
         <div className="flex items-center gap-2">
           <ShieldCheck size={18} />
@@ -318,7 +368,12 @@ export default function StaffManagementPanel({
           </h2>
         </div>
 
-        <p className="mt-1 text-sm text-[#77777E]">
+        <p
+          className={`mt-1 text-sm ${
+            themed ? "" : "text-[#77777E]"
+          }`}
+          style={mutedStyle}
+        >
           Manage staff access without deleting their historical activity.
         </p>
       </div>
@@ -335,7 +390,19 @@ export default function StaffManagementPanel({
         </div>
       )}
 
-      <div className="rounded-2xl border border-black/[0.07] bg-[#F8F8F9] p-4">
+      <div
+        className={`border p-4 ${
+          themed
+            ? ""
+            : "rounded-2xl border-black/[0.07] bg-[#F8F8F9]"
+        }`}
+        style={{
+          ...raisedStyle,
+          borderRadius: themed
+            ? theme!.radiusMedium
+            : undefined,
+        }}
+      >
         <div className="flex items-center gap-2">
           <Plus size={16} />
           <p className="text-sm font-semibold">
@@ -350,7 +417,17 @@ export default function StaffManagementPanel({
               setName(event.target.value)
             }
             placeholder="Name"
-            className="h-11 rounded-xl border border-black/[0.10] bg-white px-3 text-sm outline-none"
+            className={`h-11 border px-3 text-sm outline-none ${
+              themed
+                ? ""
+                : "rounded-xl border-black/[0.10] bg-white"
+            }`}
+            style={{
+              ...inputStyle,
+              borderRadius: themed
+                ? theme!.radiusMedium
+                : undefined,
+            }}
           />
 
           <input
@@ -360,7 +437,17 @@ export default function StaffManagementPanel({
               setEmail(event.target.value)
             }
             placeholder="Email"
-            className="h-11 rounded-xl border border-black/[0.10] bg-white px-3 text-sm outline-none"
+            className={`h-11 border px-3 text-sm outline-none ${
+              themed
+                ? ""
+                : "rounded-xl border-black/[0.10] bg-white"
+            }`}
+            style={{
+              ...inputStyle,
+              borderRadius: themed
+                ? theme!.radiusMedium
+                : undefined,
+            }}
           />
 
           <input
@@ -370,7 +457,17 @@ export default function StaffManagementPanel({
               setPassword(event.target.value)
             }
             placeholder="Temporary password"
-            className="h-11 rounded-xl border border-black/[0.10] bg-white px-3 text-sm outline-none"
+            className={`h-11 border px-3 text-sm outline-none ${
+              themed
+                ? ""
+                : "rounded-xl border-black/[0.10] bg-white"
+            }`}
+            style={{
+              ...inputStyle,
+              borderRadius: themed
+                ? theme!.radiusMedium
+                : undefined,
+            }}
           />
 
           {canCreateAdmins ? (
@@ -379,7 +476,17 @@ export default function StaffManagementPanel({
               onChange={(event) =>
                 setRole(event.target.value as Role)
               }
-              className="h-11 rounded-xl border border-black/[0.10] bg-white px-3 text-sm outline-none"
+              className={`h-11 border px-3 text-sm outline-none ${
+              themed
+                ? ""
+                : "rounded-xl border-black/[0.10] bg-white"
+            }`}
+            style={{
+              ...inputStyle,
+              borderRadius: themed
+                ? theme!.radiusMedium
+                : undefined,
+            }}
             >
               <option value="CASHIER">
                 Cashier
@@ -389,7 +496,22 @@ export default function StaffManagementPanel({
               </option>
             </select>
           ) : (
-            <div className="flex h-11 items-center rounded-xl border border-black/[0.08] bg-white px-3 text-sm text-[#66666D]">
+            <div
+              className={`flex h-11 items-center border px-3 text-sm ${
+                themed
+                  ? ""
+                  : "rounded-xl border-black/[0.08] bg-white text-[#66666D]"
+              }`}
+              style={{
+                ...inputStyle,
+                color: themed
+                  ? theme!.textSecondary
+                  : undefined,
+                borderRadius: themed
+                  ? theme!.radiusMedium
+                  : undefined,
+              }}
+            >
               Cashier access
             </div>
           )}
@@ -399,7 +521,20 @@ export default function StaffManagementPanel({
           type="button"
           onClick={createAccount}
           disabled={saving}
-          className="mt-3 flex h-11 items-center justify-center gap-2 rounded-xl bg-[#1D1D1F] px-4 text-sm font-semibold text-white disabled:opacity-50"
+          className={`mt-3 flex h-11 items-center justify-center gap-2 px-4 text-sm font-semibold disabled:opacity-50 ${
+            themed
+              ? ""
+              : "rounded-xl bg-[#1D1D1F] text-white"
+          }`}
+          style={
+            themed
+              ? {
+                  backgroundColor: theme!.accent,
+                  color: theme!.buttonText,
+                  borderRadius: theme!.radiusMedium,
+                }
+              : undefined
+          }
         >
           {saving ? (
             <LoaderCircle
@@ -412,7 +547,12 @@ export default function StaffManagementPanel({
           Create {canCreateAdmins ? "account" : "cashier"}
         </button>
 
-        <p className="mt-2 text-xs text-[#8E8E94]">
+        <p
+          className={`mt-2 text-xs ${
+            themed ? "" : "text-[#8E8E94]"
+          }`}
+          style={mutedStyle}
+        >
           Passwords require 12+ characters with uppercase, lowercase, and a number.
         </p>
       </div>
@@ -429,7 +569,17 @@ export default function StaffManagementPanel({
           {(data?.staff ?? []).map((staff) => (
             <div
               key={staff.id}
-              className="rounded-2xl border border-black/[0.07] bg-[#FAFAFB] p-4"
+              className={`border p-4 ${
+                themed
+                  ? ""
+                  : "rounded-2xl border-black/[0.07] bg-[#FAFAFB]"
+              }`}
+              style={{
+                ...raisedStyle,
+                borderRadius: themed
+                  ? theme!.radiusMedium
+                  : undefined,
+              }}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
@@ -444,11 +594,19 @@ export default function StaffManagementPanel({
                     </p>
                   </div>
 
-                  <p className="mt-1 truncate text-xs text-[#77777E]">
+                  <p className={`mt-1 truncate text-xs ${
+                    themed ? "" : "text-[#77777E]"
+                  }`}
+                  style={mutedStyle}>
                     {staff.email}
                   </p>
 
-                  <p className="mt-2 text-xs text-[#9999A0]">
+                  <p
+                    className={`mt-2 text-xs ${
+                      themed ? "" : "text-[#9999A0]"
+                    }`}
+                    style={mutedStyle}
+                  >
                     {staff.role === "CAFE_ADMIN"
                       ? "Admin"
                       : "Cashier"}{" "}
@@ -461,10 +619,24 @@ export default function StaffManagementPanel({
 
                 <span
                   className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                    staff.isEnabled
-                      ? "bg-emerald-50 text-emerald-700"
-                      : "bg-red-50 text-red-700"
+                    themed
+                      ? ""
+                      : staff.isEnabled
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-red-50 text-red-700"
                   }`}
+                  style={
+                    themed
+                      ? {
+                          backgroundColor: staff.isEnabled
+                            ? `${theme!.success}18`
+                            : `${theme!.danger}18`,
+                          color: staff.isEnabled
+                            ? theme!.success
+                            : theme!.danger,
+                        }
+                      : undefined
+                  }
                 >
                   {staff.isEnabled
                     ? "Enabled"
@@ -481,7 +653,25 @@ export default function StaffManagementPanel({
                       toggleAccount(staff)
                     }
                     disabled={busyId === staff.id}
-                    className="mt-4 h-9 rounded-lg border border-black/[0.10] bg-white px-3 text-xs font-semibold text-[#44444A] disabled:opacity-50"
+                    className={`mt-4 h-9 border px-3 text-xs font-semibold disabled:opacity-50 ${
+                      themed
+                        ? ""
+                        : "rounded-lg border-black/[0.10] bg-white text-[#44444A]"
+                    }`}
+                    style={
+                      themed
+                        ? {
+                            borderColor: theme!.border,
+                            backgroundColor:
+                              theme!.inputBackground,
+                            color: staff.isEnabled
+                              ? theme!.danger
+                              : theme!.success,
+                            borderRadius:
+                              theme!.radiusMedium,
+                          }
+                        : undefined
+                    }
                   >
                     {busyId === staff.id
                       ? "Updating..."
@@ -504,10 +694,27 @@ export default function StaffManagementPanel({
         </div>
 
         <div className="grid gap-2 md:grid-cols-4">
-          <div className="flex h-10 items-center rounded-xl border border-black/[0.08] bg-[#FAFAFB] px-3">
+          <div
+            className={`flex h-10 items-center border px-3 ${
+              themed
+                ? ""
+                : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"
+            }`}
+            style={{
+              ...inputStyle,
+              borderRadius: themed
+                ? theme!.radiusMedium
+                : undefined,
+            }}
+          >
             <Search
               size={14}
-              className="mr-2 text-[#9999A0]"
+              className={themed ? "mr-2" : "mr-2 text-[#9999A0]"}
+              style={
+                themed
+                  ? { color: theme!.textMuted }
+                  : undefined
+              }
             />
             <input
               value={search}
@@ -516,6 +723,11 @@ export default function StaffManagementPanel({
               }
               placeholder="Search staff or customer"
               className="w-full bg-transparent text-xs outline-none"
+              style={{
+                color: themed
+                  ? theme!.textPrimary
+                  : undefined,
+              }}
             />
           </div>
 
@@ -524,7 +736,17 @@ export default function StaffManagementPanel({
             onChange={(event) =>
               setStaffFilter(event.target.value)
             }
-            className="h-10 rounded-xl border border-black/[0.08] bg-[#FAFAFB] px-3 text-xs"
+            className={`h-10 border px-3 text-xs ${
+              themed
+                ? ""
+                : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"
+            }`}
+            style={{
+              ...inputStyle,
+              borderRadius: themed
+                ? theme!.radiusMedium
+                : undefined,
+            }}
           >
             <option value="ALL">All staff</option>
             {(data?.staff ?? []).map((staff) => (
@@ -542,7 +764,17 @@ export default function StaffManagementPanel({
             onChange={(event) =>
               setDateFilter(event.target.value)
             }
-            className="h-10 rounded-xl border border-black/[0.08] bg-[#FAFAFB] px-3 text-xs"
+            className={`h-10 border px-3 text-xs ${
+              themed
+                ? ""
+                : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"
+            }`}
+            style={{
+              ...inputStyle,
+              borderRadius: themed
+                ? theme!.radiusMedium
+                : undefined,
+            }}
           >
             <option value="TODAY">Today</option>
             <option value="7D">Last 7 days</option>
@@ -555,7 +787,17 @@ export default function StaffManagementPanel({
             onChange={(event) =>
               setActionFilter(event.target.value)
             }
-            className="h-10 rounded-xl border border-black/[0.08] bg-[#FAFAFB] px-3 text-xs"
+            className={`h-10 border px-3 text-xs ${
+              themed
+                ? ""
+                : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"
+            }`}
+            style={{
+              ...inputStyle,
+              borderRadius: themed
+                ? theme!.radiusMedium
+                : undefined,
+            }}
           >
             <option value="ALL">
               All actions
@@ -572,16 +814,42 @@ export default function StaffManagementPanel({
           </select>
         </div>
 
-        <div className="mt-3 max-h-[520px] overflow-y-auto rounded-2xl border border-black/[0.07]">
+        <div
+          className={`mt-3 max-h-[520px] overflow-y-auto border ${
+            themed
+              ? ""
+              : "rounded-2xl border-black/[0.07]"
+          }`}
+          style={{
+            borderColor: themed
+              ? theme!.border
+              : undefined,
+            borderRadius: themed
+              ? theme!.radiusMedium
+              : undefined,
+          }}
+        >
           {filteredActivity.length === 0 ? (
-            <div className="p-8 text-center text-sm text-[#88888F]">
+            <div
+              className={`p-8 text-center text-sm ${
+                themed ? "" : "text-[#88888F]"
+              }`}
+              style={mutedStyle}
+            >
               No matching staff activity.
             </div>
           ) : (
             filteredActivity.map((row) => (
               <div
                 key={row.id}
-                className="flex flex-col gap-2 border-b border-black/[0.06] px-4 py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between"
+                className={`flex flex-col gap-2 border-b px-4 py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between ${
+                  themed ? "" : "border-black/[0.06]"
+                }`}
+                style={{
+                  borderColor: themed
+                    ? theme!.border
+                    : undefined,
+                }}
               >
                 <div>
                   <p className="text-sm font-medium">
@@ -595,13 +863,23 @@ export default function StaffManagementPanel({
                         : "Redeemed reward"}
                   </p>
 
-                  <p className="mt-1 text-xs text-[#77777E]">
+                  <p
+                    className={`mt-1 text-xs ${
+                      themed ? "" : "text-[#77777E]"
+                    }`}
+                    style={mutedStyle}
+                  >
                     {row.customer.name} ·{" "}
                     {row.customer.memberNumber}
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 text-xs text-[#8E8E94]">
+                <div
+                  className={`flex items-center gap-2 text-xs ${
+                    themed ? "" : "text-[#8E8E94]"
+                  }`}
+                  style={mutedStyle}
+                >
                   <CheckCircle2 size={13} />
                   {formatDateTime(row.createdAt)}
                 </div>
