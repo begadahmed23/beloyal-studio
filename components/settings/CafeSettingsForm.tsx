@@ -1054,10 +1054,9 @@ router.refresh();
                       color: theme.textSecondary,
                     }}
                   >
-                    Collect{" "}
-                    {form.rewardTarget || "0"}{" "}
-                    {isBarbershop ? "visits" : "stamps"}{" "}
-                    and receive:
+                    {isBarbershop
+                      ? `Complete ${Math.max(Number(form.rewardTarget) || 1, 1)} paid visits and receive:`
+                      : `Buy ${Math.max((Number(form.rewardTarget) || 1) - 1, 1)} and get 1 free:`}
                   </p>
 
                   <p
@@ -1069,6 +1068,24 @@ router.refresh();
                     {form.rewardName ||
                       "Your reward"}
                   </p>
+
+                  {form.eligiblePurchaseDescription.trim() && (
+                    <p
+                      className="mt-2 text-xs leading-5"
+                      style={{ color: theme.textMuted }}
+                    >
+                      Eligible: {form.eligiblePurchaseDescription.trim()}
+                    </p>
+                  )}
+
+                  {form.rewardDescription.trim() && (
+                    <p
+                      className="mt-1 text-xs leading-5"
+                      style={{ color: theme.textMuted }}
+                    >
+                      Reward: {form.rewardDescription.trim()}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
