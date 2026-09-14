@@ -1,6 +1,6 @@
 "use client";
 
-import { Cake, ChevronRight, QrCode, RefreshCw } from "lucide-react";
+import { Cake, ChevronRight, MessageCircle, QrCode, RefreshCw } from "lucide-react";
 
 import KatoMark from "@/components/brand/KatoMark";
 import type { Customer } from "./LoyaltyCard";
@@ -20,6 +20,7 @@ type Props = {
   onRefresh: () => void;
   onLogoError: (logoUrl: string) => void;
   onShowQrCode: () => void;
+  onShowFeedback: () => void;
 };
 
 function capitalizeFirstLetter(value: string) {
@@ -43,6 +44,7 @@ export default function KatoLoyaltyCard({
   rewardReady,
   onRefresh,
   onShowQrCode,
+  onShowFeedback,
 }: Props) {
   const isDark = customer.cafe.theme === "DARK_LUXURY";
   const navy = "#102B49";
@@ -328,6 +330,44 @@ export default function KatoLoyaltyCard({
           <QrCode size={19} />
           Show QR Code
         </button>
+
+        {customer.cafe.feedbackEnabled && (
+          <button
+            type="button"
+            onClick={onShowFeedback}
+            className="mt-3 flex w-full items-center justify-between rounded-[22px] border px-4 py-3.5 text-left transition hover:-translate-y-0.5 active:translate-y-0"
+            style={{
+              borderColor: border,
+              backgroundColor: isDark ? "#0D2744" : "#F7F9FB",
+              color: pageText,
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="flex h-10 w-10 items-center justify-center rounded-[14px]"
+                style={{
+                  backgroundColor: isDark ? "#16395C" : "#EEF3F7",
+                  color: isDark ? cream : navy,
+                }}
+              >
+                <MessageCircle size={18} />
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold">
+                  Share your thoughts
+                </p>
+                <p className="mt-0.5 text-[11px]" style={{ color: muted }}>
+                  {customer.feedbackRewardedAt
+                    ? "We’d love to hear from you again."
+                    : "Your first feedback earns 1 free stamp."}
+                </p>
+              </div>
+            </div>
+
+            <ChevronRight size={18} style={{ color: muted }} />
+          </button>
+        )}
       </div>
 
       <p
