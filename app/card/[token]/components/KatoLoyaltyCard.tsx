@@ -249,8 +249,12 @@ export default function KatoLoyaltyCard({
             </p>
           </div>
 
-          <p className="relative mt-5 text-center text-[9px] font-medium uppercase tracking-[0.42em] text-white/42">
-            Good coffee leads to good days
+          <p className="relative mt-5 text-center text-[11px] font-medium leading-5 text-white/58">
+            {rewardReady
+              ? customer.cafe.rewardDescription?.trim() ||
+                "Good coffee leads to good days"
+              : customer.cafe.eligiblePurchaseDescription?.trim() ||
+                "Good coffee leads to good days"}
           </p>
         </section>
 
