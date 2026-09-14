@@ -710,9 +710,11 @@ export default function DigitalCardPage() {
 
       setShowRatingModal(false);
 
-      window.setTimeout(() => {
-        setShowGooglePrompt(true);
-      }, 250);
+      if (customer.cafe.googleReviewUrl?.trim()) {
+        window.setTimeout(() => {
+          setShowGooglePrompt(true);
+        }, 250);
+      }
     } catch (caughtError) {
       console.error(
         "Customer review submission failed:",
