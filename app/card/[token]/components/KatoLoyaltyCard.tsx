@@ -195,8 +195,8 @@ export default function KatoLoyaltyCard({
           size="md"
           colorVariant="mono"
           theme="dark"
-          strength={0.58}
-          duration={1.6}
+          strength={0.9}
+          duration={0.82}
           borderRadius={30}
           className="mt-6 min-[375px]:mt-7"
         >
@@ -239,7 +239,7 @@ export default function KatoLoyaltyCard({
                   key={index}
                   className={
                     "flex min-w-0 items-center justify-center py-1 transition-[transform,opacity] duration-500 ease-out " +
-                    (isNew ? "scale-110" : "scale-100")
+                    (isNew ? "scale-[1.18]" : "scale-100")
                   }
                   style={{
                     color: rewardSlotReady
