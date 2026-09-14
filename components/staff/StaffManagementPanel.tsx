@@ -13,7 +13,6 @@ import {
 import {
   useCallback,
   useEffect,
-  useMemo,
   useState,
 } from "react";
 
@@ -54,6 +53,8 @@ type ActivityRow = {
 type ResponseData = {
   staff: Staff[];
   activity: ActivityRow[];
+  activityLoaded?: boolean;
+  activityLimit?: number;
 };
 
 type Props = {
@@ -111,6 +112,12 @@ export default function StaffManagementPanel({
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] =
     useState("7D");
+  const [activityOpen, setActivityOpen] =
+    useState(false);
+  const [activityLoading, setActivityLoading] =
+    useState(false);
+  const [activityLimit, setActivityLimit] =
+    useState(50);
   const [resetUserId, setResetUserId] =
     useState<string | null>(null);
   const [newPassword, setNewPassword] =
@@ -138,7 +145,15 @@ export default function StaffManagementPanel({
         );
       }
 
-      setData(body as ResponseData);
+      const next = body as ResponseData;
+
+      setData((current) => ({
+        ...next,
+        activity:
+          next.activityLoaded === false
+            ? current?.activity ?? []
+            : next.activity,
+      }));
     } catch (error) {
       setError(
         error instanceof Error
@@ -154,64 +169,85 @@ export default function StaffManagementPanel({
     load();
   }, [load]);
 
-  const filteredActivity = useMemo(() => {
-    if (!data) return [];
+  const loadActivity = useCallback(async () => {
+    try {
+      setActivityLoading(true);
+      setError("");
 
-    const query = search.trim().toLowerCase();
+      const url = new URL(endpoint, window.location.origin);
+      url.searchParams.set("activity", "1");
+      url.searchParams.set("limit", String(activityLimit));
+      url.searchParams.set("dateRange", dateFilter);
 
-    return data.activity.filter((row) => {
-      if (
-        staffFilter !== "ALL" &&
-        row.user?.id !== staffFilter
-      ) {
-        return false;
+      if (staffFilter !== "ALL") {
+        url.searchParams.set("staffId", staffFilter);
       }
 
-      if (
-        actionFilter !== "ALL" &&
-        row.type !== actionFilter
-      ) {
-        return false;
+      if (actionFilter !== "ALL") {
+        url.searchParams.set("action", actionFilter);
       }
 
-      if (dateFilter !== "ALL") {
-        const createdAt = new Date(row.createdAt).getTime();
-        const now = Date.now();
-        const maxAge =
-          dateFilter === "TODAY"
-            ? 24 * 60 * 60 * 1000
-            : dateFilter === "30D"
-              ? 30 * 24 * 60 * 60 * 1000
-              : 7 * 24 * 60 * 60 * 1000;
+      const cleanSearch = search.trim();
 
-        if (
-          Number.isNaN(createdAt) ||
-          now - createdAt > maxAge
-        ) {
-          return false;
-        }
+      if (cleanSearch) {
+        url.searchParams.set("search", cleanSearch);
       }
 
-      if (!query) return true;
+      const response = await fetch(url.toString(), {
+        cache: "no-store",
+      });
 
-      return [
-        row.user?.name,
-        row.user?.email,
-        row.customer.name,
-        row.customer.memberNumber,
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase()
-        .includes(query);
-    });
+      const body = (await response.json()) as
+        | ResponseData
+        | { message?: string };
+
+      if (!response.ok) {
+        throw new Error(
+          "message" in body && body.message
+            ? body.message
+            : "Failed to load staff activity.",
+        );
+      }
+
+      const next = body as ResponseData;
+
+      setData((current) => ({
+        ...next,
+        staff: next.staff ?? current?.staff ?? [],
+        activity: next.activity ?? [],
+      }));
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to load staff activity.",
+      );
+    } finally {
+      setActivityLoading(false);
+    }
   }, [
-    data,
+    endpoint,
+    activityLimit,
+    dateFilter,
     staffFilter,
     actionFilter,
     search,
-    dateFilter,
   ]);
+
+  useEffect(() => {
+    if (!activityOpen) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      void loadActivity();
+    }, search.trim() ? 300 : 0);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [activityOpen, loadActivity, search]);
+
 
   async function createAccount() {
     if (saving) return;
@@ -811,207 +847,169 @@ export default function StaffManagementPanel({
       </div>
 
       <div>
-        <div className="mb-3 flex items-center gap-2">
-          <Activity size={17} />
-          <p className="text-sm font-semibold">
-            Staff activity
-          </p>
-        </div>
-
-        <div className="grid gap-2 md:grid-cols-4">
-          <div
-            className={`flex h-10 items-center border px-3 ${
-              themed
-                ? ""
-                : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"
-            }`}
-            style={{
-              ...inputStyle,
-              borderRadius: themed
-                ? theme!.radiusMedium
-                : undefined,
-            }}
-          >
-            <Search
-              size={14}
-              className={themed ? "mr-2" : "mr-2 text-[#9999A0]"}
-              style={
-                themed
-                  ? { color: theme!.textMuted }
-                  : undefined
-              }
-            />
-            <input
-              value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
-              placeholder="Search staff or customer"
-              className="w-full bg-transparent text-xs outline-none"
-              style={{
-                color: themed
-                  ? theme!.textPrimary
-                  : undefined,
-              }}
-            />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <Activity size={17} />
+            <div>
+              <p className="text-sm font-semibold">Staff activity</p>
+              <p className="mt-0.5 text-xs" style={mutedStyle}>
+                Audit history only loads when you open it.
+              </p>
+            </div>
           </div>
 
-          <select
-            value={staffFilter}
-            onChange={(event) =>
-              setStaffFilter(event.target.value)
-            }
-            className={`h-10 border px-3 text-xs ${
+          <button
+            type="button"
+            onClick={() => setActivityOpen((current) => !current)}
+            className={`h-10 border px-4 text-xs font-semibold transition ${themed ? "" : "rounded-xl border-black/[0.08] bg-white text-[#44444A]"}`}
+            style={
               themed
-                ? ""
-                : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"
-            }`}
-            style={{
-              ...inputStyle,
-              borderRadius: themed
-                ? theme!.radiusMedium
-                : undefined,
-            }}
-          >
-            <option value="ALL">All staff</option>
-            {(data?.staff ?? []).map((staff) => (
-              <option
-                key={staff.id}
-                value={staff.id}
-              >
-                {staff.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={dateFilter}
-            onChange={(event) =>
-              setDateFilter(event.target.value)
+                ? {
+                    borderColor: theme!.border,
+                    backgroundColor: theme!.inputBackground,
+                    color: theme!.textSecondary,
+                    borderRadius: theme!.radiusMedium,
+                  }
+                : undefined
             }
-            className={`h-10 border px-3 text-xs ${
-              themed
-                ? ""
-                : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"
-            }`}
-            style={{
-              ...inputStyle,
-              borderRadius: themed
-                ? theme!.radiusMedium
-                : undefined,
-            }}
           >
-            <option value="TODAY">Today</option>
-            <option value="7D">Last 7 days</option>
-            <option value="30D">Last 30 days</option>
-            <option value="ALL">All recent</option>
-          </select>
-
-          <select
-            value={actionFilter}
-            onChange={(event) =>
-              setActionFilter(event.target.value)
-            }
-            className={`h-10 border px-3 text-xs ${
-              themed
-                ? ""
-                : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"
-            }`}
-            style={{
-              ...inputStyle,
-              borderRadius: themed
-                ? theme!.radiusMedium
-                : undefined,
-            }}
-          >
-            <option value="ALL">
-              All actions
-            </option>
-            <option value="ADD">
-              Stamps / visits
-            </option>
-            <option value="REDEEM">
-              Reward redemptions
-            </option>
-            <option value="BIRTHDAY_REDEEM">
-              Birthday redemptions
-            </option>
-          </select>
+            {activityOpen ? "Hide activity" : "View activity"}
+          </button>
         </div>
 
-        <div
-          className={`mt-3 max-h-[520px] overflow-y-auto border ${
-            themed
-              ? ""
-              : "rounded-2xl border-black/[0.07]"
-          }`}
-          style={{
-            borderColor: themed
-              ? theme!.border
-              : undefined,
-            borderRadius: themed
-              ? theme!.radiusMedium
-              : undefined,
-          }}
-        >
-          {filteredActivity.length === 0 ? (
-            <div
-              className={`p-8 text-center text-sm ${
-                themed ? "" : "text-[#88888F]"
-              }`}
-              style={mutedStyle}
-            >
-              No matching staff activity.
-            </div>
-          ) : (
-            filteredActivity.map((row) => (
+        {activityOpen && (
+          <div className="mt-4">
+            <div className="grid gap-2 md:grid-cols-5">
               <div
-                key={row.id}
-                className={`flex flex-col gap-2 border-b px-4 py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between ${
-                  themed ? "" : "border-black/[0.06]"
-                }`}
+                className={`flex h-10 items-center border px-3 ${themed ? "" : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"}`}
                 style={{
-                  borderColor: themed
-                    ? theme!.border
-                    : undefined,
+                  ...inputStyle,
+                  borderRadius: themed ? theme!.radiusMedium : undefined,
                 }}
               >
-                <div>
-                  <p className="text-sm font-medium">
-                    {row.user?.name ||
-                      "Former staff member"}
-                    {" · "}
-                    {row.type === "ADD"
-                      ? "Added stamp / visit"
-                      : row.type === "BIRTHDAY_REDEEM"
-                        ? "Redeemed birthday reward"
-                        : "Redeemed reward"}
-                  </p>
+                <Search
+                  size={14}
+                  className={themed ? "mr-2" : "mr-2 text-[#9999A0]"}
+                  style={themed ? { color: theme!.textMuted } : undefined}
+                />
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search staff or customer"
+                  className="w-full bg-transparent text-xs outline-none"
+                  style={{ color: themed ? theme!.textPrimary : undefined }}
+                />
+              </div>
 
-                  <p
-                    className={`mt-1 text-xs ${
-                      themed ? "" : "text-[#77777E]"
-                    }`}
-                    style={mutedStyle}
-                  >
-                    {row.customer.name} ·{" "}
-                    {row.customer.memberNumber}
-                  </p>
+              <select
+                value={staffFilter}
+                onChange={(event) => setStaffFilter(event.target.value)}
+                className={`h-10 border px-3 text-xs ${themed ? "" : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"}`}
+                style={{ ...inputStyle, borderRadius: themed ? theme!.radiusMedium : undefined }}
+              >
+                <option value="ALL">All staff</option>
+                {(data?.staff ?? []).map((staff) => (
+                  <option key={staff.id} value={staff.id}>{staff.name}</option>
+                ))}
+              </select>
+
+              <select
+                value={dateFilter}
+                onChange={(event) => setDateFilter(event.target.value)}
+                className={`h-10 border px-3 text-xs ${themed ? "" : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"}`}
+                style={{ ...inputStyle, borderRadius: themed ? theme!.radiusMedium : undefined }}
+              >
+                <option value="TODAY">Today</option>
+                <option value="7D">Last 7 days</option>
+                <option value="30D">Last 30 days</option>
+                <option value="ALL">All time</option>
+              </select>
+
+              <select
+                value={actionFilter}
+                onChange={(event) => setActionFilter(event.target.value)}
+                className={`h-10 border px-3 text-xs ${themed ? "" : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"}`}
+                style={{ ...inputStyle, borderRadius: themed ? theme!.radiusMedium : undefined }}
+              >
+                <option value="ALL">All actions</option>
+                <option value="ADD">Stamps / visits</option>
+                <option value="REDEEM">Reward redemptions</option>
+                <option value="BIRTHDAY_REDEEM">Birthday redemptions</option>
+              </select>
+
+              <select
+                value={activityLimit}
+                onChange={(event) => setActivityLimit(Number(event.target.value))}
+                className={`h-10 border px-3 text-xs ${themed ? "" : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"}`}
+                style={{ ...inputStyle, borderRadius: themed ? theme!.radiusMedium : undefined }}
+              >
+                {[25, 50, 100, 250, 500, 1000].map((limit) => (
+                  <option key={limit} value={limit}>Show {limit}</option>
+                ))}
+              </select>
+            </div>
+
+            <div
+              className={`mt-3 max-h-[520px] overflow-y-auto border ${themed ? "" : "rounded-2xl border-black/[0.07]"}`}
+              style={{
+                borderColor: themed ? theme!.border : undefined,
+                borderRadius: themed ? theme!.radiusMedium : undefined,
+              }}
+            >
+              {activityLoading ? (
+                <div className="flex min-h-32 items-center justify-center">
+                  <LoaderCircle
+                    size={22}
+                    className="animate-spin"
+                    style={{ color: themed ? theme!.accent : undefined }}
+                  />
                 </div>
-
+              ) : (data?.activity ?? []).length === 0 ? (
                 <div
-                  className={`flex items-center gap-2 text-xs ${
-                    themed ? "" : "text-[#8E8E94]"
-                  }`}
+                  className={`p-8 text-center text-sm ${themed ? "" : "text-[#88888F]"}`}
                   style={mutedStyle}
                 >
-                  <CheckCircle2 size={13} />
-                  {formatDateTime(row.createdAt)}
+                  No matching staff activity.
                 </div>
-              </div>
-            ))
-          )}
-        </div>
+              ) : (
+                (data?.activity ?? []).map((row) => (
+                  <div
+                    key={row.id}
+                    className={`flex flex-col gap-2 border-b px-4 py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between ${themed ? "" : "border-black/[0.06]"}`}
+                    style={{ borderColor: themed ? theme!.border : undefined }}
+                  >
+                    <div>
+                      <p className="text-sm font-medium">
+                        {row.user?.name || "Former staff member"}{" · "}
+                        {row.type === "ADD"
+                          ? "Added stamp / visit"
+                          : row.type === "BIRTHDAY_REDEEM"
+                            ? "Redeemed birthday reward"
+                            : "Redeemed reward"}
+                      </p>
+
+                      <p
+                        className={`mt-1 text-xs ${themed ? "" : "text-[#77777E]"}`}
+                        style={mutedStyle}
+                      >
+                        {row.customer.name} · {row.customer.memberNumber}
+                      </p>
+                    </div>
+
+                    <div
+                      className={`flex items-center gap-2 text-xs ${themed ? "" : "text-[#8E8E94]"}`}
+                      style={mutedStyle}
+                    >
+                      <CheckCircle2 size={13} />
+                      {formatDateTime(row.createdAt)}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+      </div>
       </div>
     </section>
   );
