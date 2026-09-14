@@ -90,6 +90,7 @@ export async function GET(
             rewardDescription: true,
             eligiblePurchaseDescription: true,
             feedbackEnabled: true,
+            feedbackRewardEnabled: true,
             googleReviewUrl: true,
             timezone: true,
             birthdayRewardsEnabled: true,
