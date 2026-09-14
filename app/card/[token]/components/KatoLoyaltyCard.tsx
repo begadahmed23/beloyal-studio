@@ -3,6 +3,7 @@
 import { Cake, ChevronRight, MessageCircle, QrCode, RefreshCw } from "lucide-react";
 
 import { useState } from "react";
+import { BorderBeam } from "border-beam";
 
 import KatoMark from "@/components/brand/KatoMark";
 import type { Customer } from "./LoyaltyCard";
@@ -189,8 +190,18 @@ export default function KatoLoyaltyCard({
           </div>
         )}
 
-        <section
-          className="relative mt-6 overflow-hidden rounded-[26px] px-4 pb-5 pt-5 min-[375px]:mt-7 min-[390px]:rounded-[30px] min-[390px]:px-6 min-[390px]:pb-7 min-[390px]:pt-6"
+        <BorderBeam
+          active={newStampIndex !== null}
+          size="md"
+          colorVariant="mono"
+          theme="dark"
+          strength={0.58}
+          duration={1.6}
+          borderRadius={30}
+          className="mt-6 min-[375px]:mt-7"
+        >
+          <section
+          className="relative overflow-hidden rounded-[26px] px-4 pb-5 pt-5 min-[390px]:rounded-[30px] min-[390px]:px-6 min-[390px]:pb-7 min-[390px]:pt-6"
           style={{
             background:
               "linear-gradient(145deg, #16395C 0%, #102B49 56%, #0A223E 100%)",
@@ -227,8 +238,8 @@ export default function KatoLoyaltyCard({
                 <div
                   key={index}
                   className={
-                    "flex min-w-0 items-center justify-center py-1 transition-all duration-500 " +
-                    (isNew ? "scale-125" : "scale-100")
+                    "flex min-w-0 items-center justify-center py-1 transition-[transform,opacity] duration-500 ease-out " +
+                    (isNew ? "scale-110" : "scale-100")
                   }
                   style={{
                     color: rewardSlotReady
@@ -236,11 +247,7 @@ export default function KatoLoyaltyCard({
                       : active
                         ? "#FFFFFF"
                         : "rgba(255,255,255,0.30)",
-                    filter: active
-                      ? isNew
-                        ? "drop-shadow(0 0 18px rgba(255,255,255,1))"
-                        : "drop-shadow(0 0 10px rgba(255,255,255,0.72))"
-                      : "none",
+                    opacity: active || rewardSlotReady ? 1 : 0.72,
                   }}
                 >
                   <KatoMark
@@ -255,21 +262,10 @@ export default function KatoLoyaltyCard({
           <div className="relative mt-7">
             <div className="h-[3px] overflow-hidden rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-[#F7F5EC] transition-[width,box-shadow,filter] duration-700 ease-out"
+                className="h-full rounded-full bg-[#F7F5EC] transition-[width,opacity] duration-700 ease-out"
                 style={{
                   width: progressPercent + "%",
-                  boxShadow:
-                    displayStamps > 0
-                      ? newStampIndex !== null
-                        ? "0 0 8px rgba(255,255,255,0.9), 0 0 18px rgba(255,255,255,0.68), 0 0 30px rgba(247,245,236,0.38)"
-                        : "0 0 7px rgba(255,255,255,0.48), 0 0 16px rgba(247,245,236,0.28)"
-                      : "none",
-                  filter:
-                    displayStamps > 0
-                      ? newStampIndex !== null
-                        ? "brightness(1.22)"
-                        : "brightness(1.08)"
-                      : "none",
+                  opacity: displayStamps > 0 ? 1 : 0.72,
                 }}
               />
             </div>
@@ -279,7 +275,8 @@ export default function KatoLoyaltyCard({
             </p>
           </div>
 
-        </section>
+          </section>
+        </BorderBeam>
 
         <button
           type="button"
