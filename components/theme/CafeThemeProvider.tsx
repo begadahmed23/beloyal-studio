@@ -32,6 +32,7 @@ export type CafeSettings = {
   minimumPurchaseAmount: string | null;
 
   feedbackEnabled: boolean;
+  feedbackRewardEnabled: boolean;
   googleReviewUrl: string | null;
 
   timezone: string;
