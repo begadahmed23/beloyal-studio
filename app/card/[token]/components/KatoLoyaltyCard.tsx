@@ -217,7 +217,24 @@ export default function KatoLoyaltyCard(props: Props) {
                         : "none",
                     }}
                   >
-                    <KatoMark active={active} size={31} />
+                    {showLogo && logoUrl ? (
+                      <img
+                        src={logoUrl}
+                        alt=""
+                        aria-hidden="true"
+                        className={
+                          "h-8 w-8 object-contain brightness-0 invert transition-all duration-500 " +
+                          (active ? "opacity-100" : "opacity-25")
+                        }
+                        style={{
+                          filter: active
+                            ? "brightness(0) invert(1) drop-shadow(0 0 9px rgba(255,255,255,0.88))"
+                            : "brightness(0) invert(1)",
+                        }}
+                      />
+                    ) : (
+                      <KatoMark active={active} size={31} />
+                    )}
                   </div>
                 );
               })}
