@@ -45,77 +45,169 @@ export async function GET(
     return json({ message: "Business not found." }, 404);
   }
 
-  const [users, activity] = await Promise.all([
-    prisma.user.findMany({
-      where: {
-        role: { in: ["CAFE_ADMIN", "CASHIER"] },
-        OR: [
-          { cafeId },
-          { cashierCafeId: cafeId },
-          { staffCafeId: cafeId },
-        ],
+  const query = request.nextUrl.searchParams;
+  const includeActivity = query.get("activity") === "1";
+
+  const users = await prisma.user.findMany({
+    where: {
+      role: { in: ["CAFE_ADMIN", "CASHIER"] },
+      OR: [
+        { cafeId },
+        { cashierCafeId: cafeId },
+        { staffCafeId: cafeId },
+      ],
+    },
+    orderBy: [{ role: "asc" }, { createdAt: "asc" }],
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      isEnabled: true,
+      createdAt: true,
+      transactions: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { createdAt: true },
       },
-      orderBy: [{ role: "asc" }, { createdAt: "asc" }],
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isEnabled: true,
-        createdAt: true,
-        transactions: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-          select: { createdAt: true },
+      _count: { select: { transactions: true } },
+    },
+  });
+
+  const staff = users.map((user) => ({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    isEnabled: user.isEnabled,
+    createdAt: user.createdAt,
+    lastActivityAt: user.transactions[0]?.createdAt ?? null,
+    activityCount: user._count.transactions,
+    isCurrentUser: false,
+  }));
+
+  if (!includeActivity) {
+    return json({
+      business: cafe,
+      staff,
+      activity: [],
+      activityLoaded: false,
+    });
+  }
+
+  const allowedLimits = new Set([25, 50, 100, 250, 500, 1000]);
+  const requestedLimit = Number(query.get("limit") || "50");
+  const limit = allowedLimits.has(requestedLimit)
+    ? requestedLimit
+    : 50;
+
+  const staffId = query.get("staffId")?.trim() || "";
+  const action = query.get("action")?.trim() || "";
+  const dateRange = query.get("dateRange")?.trim() || "7D";
+  const search = query.get("search")?.trim() || "";
+
+  const createdAt =
+    dateRange === "TODAY"
+      ? { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+      : dateRange === "30D"
+        ? { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+        : dateRange === "ALL"
+          ? undefined
+          : { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) };
+
+  const validAction =
+    action === "ADD" ||
+    action === "REDEEM" ||
+    action === "BIRTHDAY_REDEEM"
+      ? action
+      : undefined;
+
+  const activity = await prisma.stampTransaction.findMany({
+    where: {
+      cafeId,
+      userId: staffId && staffId !== "ALL"
+        ? staffId
+        : { not: null },
+      ...(validAction ? { type: validAction } : {}),
+      ...(createdAt ? { createdAt } : {}),
+      ...(search
+        ? {
+            OR: [
+              {
+                user: {
+                  is: {
+                    name: {
+                      contains: search,
+                      mode: "insensitive",
+                    },
+                  },
+                },
+              },
+              {
+                user: {
+                  is: {
+                    email: {
+                      contains: search,
+                      mode: "insensitive",
+                    },
+                  },
+                },
+              },
+              {
+                customer: {
+                  is: {
+                    name: {
+                      contains: search,
+                      mode: "insensitive",
+                    },
+                  },
+                },
+              },
+              {
+                customer: {
+                  is: {
+                    memberNumber: {
+                      contains: search,
+                      mode: "insensitive",
+                    },
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    select: {
+      id: true,
+      type: true,
+      description: true,
+      createdAt: true,
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
         },
-        _count: { select: { transactions: true } },
       },
-    }),
-    prisma.stampTransaction.findMany({
-      where: {
-        cafeId,
-        userId: { not: null },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 200,
-      select: {
-        id: true,
-        type: true,
-        description: true,
-        createdAt: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true,
-          },
-        },
-        customer: {
-          select: {
-            id: true,
-            name: true,
-            memberNumber: true,
-          },
+      customer: {
+        select: {
+          id: true,
+          name: true,
+          memberNumber: true,
         },
       },
-    }),
-  ]);
+    },
+  });
 
   return json({
     business: cafe,
-    staff: users.map((user) => ({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      isEnabled: user.isEnabled,
-      createdAt: user.createdAt,
-      lastActivityAt: user.transactions[0]?.createdAt ?? null,
-      activityCount: user._count.transactions,
-      isCurrentUser: false,
-    })),
+    staff,
     activity,
+    activityLoaded: true,
+    activityLimit: limit,
   });
 }
 
