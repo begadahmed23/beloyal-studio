@@ -92,16 +92,16 @@ export default function KatoLoyaltyCard({
     : Math.min((displayStamps / paidTarget) * 100, 100);
   const progressRatio = displayStamps / paidTarget;
   const progressMessage = rewardReady
-    ? "A little something, on us."
+    ? "This one’s on us."
     : displayStamps === 0
-      ? "Your next ritual starts here."
+      ? "Your first stamp is waiting."
       : displayStamps >= paidTarget - 1
-        ? "Just one more."
+        ? "Just one more coffee."
         : progressRatio >= 0.65
-          ? "Nearly yours."
+          ? "Not far now."
           : progressRatio >= 0.35
-            ? "Nicely on your way."
-            : "A good start.";
+            ? "You’re getting there."
+            : "Off to a good start.";
   const customerName = capitalizeFirstLetter(customer.name);
 
   return (
