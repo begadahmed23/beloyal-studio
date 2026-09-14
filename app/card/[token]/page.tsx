@@ -1176,7 +1176,9 @@ const progressPercentage = rewardReady
         textSizeAdjust: "100%",
         color: textPrimary,
         background: isKato
-          ? "linear-gradient(180deg,#F7F9FB 0%,#EEF3F7 100%)"
+          ? customer.cafe.theme === "DARK_LUXURY"
+            ? "linear-gradient(180deg,#06172B 0%,#0A223E 100%)"
+            : "linear-gradient(180deg,#F7F9FB 0%,#EEF3F7 100%)"
           : `
               radial-gradient(
                 circle at 50% -10%,
