@@ -1,8 +1,6 @@
 "use client";
 
 import { Cake, ChevronRight, QrCode, RefreshCw } from "lucide-react";
-import QRCode from "react-qr-code";
-
 import type { Customer } from "./LoyaltyCard";
 
 type Props = {
@@ -44,15 +42,14 @@ export function KatoMark({
     >
       <circle
         cx="32"
-        cy="37"
+        cy="38"
         r="18"
         stroke="currentColor"
-        strokeWidth="6"
+        strokeWidth="7"
       />
       <path
-        d="M20 13c3.8 3 7.8 4.5 12 4.5S40.2 16 44 13"
-        stroke="currentColor"
-        strokeWidth="6"
+        d="M18 10C22.8 14.6 27.5 16.8 32 16.8S41.2 14.6 46 10V20C41.3 23.4 36.6 25 32 25s-9.3-1.6-14-5V10Z"
+        fill="currentColor"
       />
     </svg>
   );
@@ -116,9 +113,9 @@ export default function KatoLoyaltyCard({
 
             <div
               className="flex h-[70px] w-[70px] shrink-0 items-center justify-center rounded-full min-[390px]:h-[76px] min-[390px]:w-[76px]"
-              style={{ backgroundColor: navy, color: white }}
+              style={{ backgroundColor: navy, color: "#E9E6D8" }}
             >
-              <KatoMark active size={47} />
+              <KatoMark size={47} />
             </div>
           </div>
 
@@ -198,20 +195,19 @@ export default function KatoLoyaltyCard({
                   }
                   style={{
                     color: rewardSlotReady
-                      ? "#FFFFFF"
+                      ? "rgba(255,255,255,0.82)"
                       : active
                         ? "#FFFFFF"
                         : "rgba(255,255,255,0.30)",
-                    filter:
-                      active || rewardSlotReady
-                        ? isNew
-                          ? "drop-shadow(0 0 18px rgba(255,255,255,1))"
-                          : "drop-shadow(0 0 10px rgba(255,255,255,0.68))"
-                        : "none",
+                    filter: active
+                      ? isNew
+                        ? "drop-shadow(0 0 18px rgba(255,255,255,1))"
+                        : "drop-shadow(0 0 10px rgba(255,255,255,0.72))"
+                      : "none",
                   }}
                 >
                   <KatoMark
-                    active={active || rewardSlotReady}
+                    active={active}
                     size={44}
                   />
                 </div>
@@ -278,49 +274,6 @@ export default function KatoLoyaltyCard({
 
           <ChevronRight size={18} style={{ color: "#9AA6B5" }} />
         </section>
-
-        <button
-          type="button"
-          onClick={onShowQrCode}
-          className="mt-4 flex w-full items-center gap-4 rounded-[24px] border px-4 py-4 text-left transition hover:-translate-y-0.5 hover:bg-[#FAFBFC] active:translate-y-0 min-[390px]:px-5"
-          style={{
-            borderColor: border,
-            backgroundColor: white,
-          }}
-        >
-          <div className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-[12px] bg-white p-1.5 shadow-[0_6px_20px_rgba(16,43,73,0.08)]">
-            <QRCode
-              value={"BL:" + customer.publicToken}
-              size={52}
-              bgColor="#FFFFFF"
-              fgColor={navy}
-              level="M"
-              style={{
-                display: "block",
-                width: "100%",
-                height: "100%",
-              }}
-            />
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <p
-              className="text-[15px] font-semibold"
-              style={{ color: navyDeep }}
-            >
-              Your Member QR
-            </p>
-
-            <p
-              className="mt-1 text-[12px]"
-              style={{ color: muted }}
-            >
-              Show this at the counter
-            </p>
-          </div>
-
-          <ChevronRight size={18} style={{ color: "#9AA6B5" }} />
-        </button>
 
         <button
           type="button"
