@@ -27,13 +27,13 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-7">
+      <CafeSettingsForm
+        accountEmail={authData.user.email}
+      />
+      <BirthdayRewardsSettings />
       <StaffManagementPanel
         endpoint="/api/cafe/staff"
         title="Staff & cashier activity"
-      />
-      <BirthdayRewardsSettings />
-      <CafeSettingsForm
-        accountEmail={authData.user.email}
       />
     </div>
   );
