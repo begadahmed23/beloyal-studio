@@ -548,9 +548,6 @@ router.refresh();
               />
             </Field>
 
-            )}
-
-        {!isKato && (
             <div className="lg:col-span-2">
               <Field
               theme={theme}
@@ -669,9 +666,9 @@ router.refresh();
                 </div>
               )}
             </div>
-            )}
           </div>
         </section>
+        )}
 
         {!isKato && (
         <section
