@@ -18,6 +18,7 @@ type Customer = {
   publicToken: string | null;
   name: string;
   phone: string;
+  instagram?: string | null;
   birthday: string;
   stamps: number;
 };
@@ -47,6 +48,7 @@ export default function EditMemberDialog({
 }: Props) {
   const [name, setName] = useState(customer.name);
   const [phone, setPhone] = useState(customer.phone);
+  const [instagram, setInstagram] = useState(customer.instagram ?? "");
   const [birthday, setBirthday] = useState(
     birthdayToInputValue(customer.birthday)
   );
@@ -59,6 +61,7 @@ export default function EditMemberDialog({
 
     setName(customer.name);
     setPhone(customer.phone);
+    setInstagram(customer.instagram ?? "");
     setBirthday(birthdayToInputValue(customer.birthday));
     setError("");
   }, [open, customer]);
@@ -66,14 +69,25 @@ export default function EditMemberDialog({
   async function updateMember() {
     const cleanName = name.trim();
     const cleanPhone = phone.trim();
+    const cleanInstagram = instagram.trim().replace(/^@+/, "").toLowerCase();
 
-    if (!cleanName || !cleanPhone || !birthday) {
-      setError("Please fill in all fields.");
+    if (!cleanName || !birthday) {
+      setError("Please enter the name and birthday.");
       return;
     }
 
-    if (!/^\d{11}$/.test(cleanPhone)) {
+    if (!cleanPhone && !cleanInstagram) {
+      setError("Please enter a phone number or Instagram username.");
+      return;
+    }
+
+    if (cleanPhone && !/^\d{11}$/.test(cleanPhone)) {
       setError("Phone number must contain exactly 11 digits.");
+      return;
+    }
+
+    if (cleanInstagram && !/^[a-z0-9._]{1,30}$/.test(cleanInstagram)) {
+      setError("Please enter a valid Instagram username.");
       return;
     }
 
@@ -89,6 +103,7 @@ export default function EditMemberDialog({
         body: JSON.stringify({
           name: cleanName,
           phone: cleanPhone,
+          instagram: cleanInstagram,
           birthday,
         }),
       });
@@ -127,7 +142,9 @@ export default function EditMemberDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="
-          overflow-hidden
+          max-h-[90vh]
+          overflow-y-auto
+          overscroll-contain
           border
           border-white/[0.08]
           bg-[#0d0d0d]
@@ -229,7 +246,7 @@ export default function EditMemberDialog({
               htmlFor="edit-member-phone"
               className="mb-2 block text-sm font-medium text-[#d6d6d6]"
             >
-              Phone number
+              Phone number <span className="text-[#6f6f6f]">(optional)</span>
             </label>
 
             <Input
@@ -268,7 +285,34 @@ export default function EditMemberDialog({
             />
 
             <p className="mt-2 text-xs text-[#6f6f6f]">
-              Enter exactly 11 digits.
+              Use phone or Instagram. Phone must contain exactly 11 digits.
+            </p>
+          </div>
+
+          <div>
+            <label
+              htmlFor="edit-member-instagram"
+              className="mb-2 block text-sm font-medium text-[#d6d6d6]"
+            >
+              Instagram <span className="text-[#6f6f6f]">(optional)</span>
+            </label>
+
+            <Input
+              id="edit-member-instagram"
+              value={instagram}
+              onChange={(event) =>
+                setInstagram(event.target.value.replace(/^@+/, "").slice(0, 30))
+              }
+              placeholder="@username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              disabled={loading}
+              className="h-12 rounded-xl border-white/[0.09] bg-white/[0.045] px-4 text-base text-white shadow-none outline-none transition placeholder:text-[#5f5f5f] hover:border-white/[0.15] focus-visible:border-white/30 focus-visible:ring-2 focus-visible:ring-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+            />
+
+            <p className="mt-2 text-xs text-[#6f6f6f]">
+              You only need one contact method: phone or Instagram.
             </p>
           </div>
 
