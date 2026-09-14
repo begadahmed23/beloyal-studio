@@ -194,10 +194,11 @@ export default function KatoLoyaltyCard({
           active={newStampIndex !== null}
           size="md"
           colorVariant="mono"
-          theme="dark"
-          strength={0.9}
-          duration={0.82}
+          theme={isDark ? "dark" : "light"}
+          strength={1}
+          duration={0.72}
           borderRadius={30}
+          brightness={1.9}
           className="mt-6 min-[375px]:mt-7"
         >
           <section
