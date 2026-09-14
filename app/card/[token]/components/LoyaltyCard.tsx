@@ -230,6 +230,7 @@ export default function LoyaltyCard({
         onRefresh={onRefresh}
         onLogoError={onLogoError}
         onShowQrCode={onShowQrCode}
+        onShowFeedback={onShowFeedback}
       />
     );
   }
