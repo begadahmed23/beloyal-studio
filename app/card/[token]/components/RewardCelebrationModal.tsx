@@ -2,6 +2,8 @@
 
 import { Gift, Sparkles, X } from "lucide-react";
 
+import KatoMark from "@/components/brand/KatoMark";
+
 type RewardCelebrationModalProps = {
   rewardName: string;
   rewardDescription: string | null;
@@ -28,58 +30,155 @@ export default function RewardCelebrationModal({
   if (isKato) {
     return (
       <div
-        className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-[#071A33]/94 px-5 py-8 backdrop-blur-xl"
+        className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-[#06172B]/96 px-5 py-8 backdrop-blur-2xl"
         role="dialog"
         aria-modal="true"
-        aria-label="Kato reward redeemed"
+        aria-label="Kato reward unlocked"
         onMouseDown={(event) => {
           if (event.target === event.currentTarget) {
             onClose();
           }
         }}
       >
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.12),transparent_42%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_24%,rgba(255,255,255,0.18),transparent_24%),radial-gradient(circle_at_50%_70%,rgba(68,139,255,0.18),transparent_36%)]" />
 
-        <div className="relative w-full max-w-sm overflow-hidden rounded-[34px] border border-white/15 bg-white p-7 text-center shadow-[0_35px_120px_rgba(0,0,0,0.45)]">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 overflow-hidden"
+        >
+          {Array.from({ length: 24 }).map((_, index) => (
+            <span
+              key={index}
+              className="kato-confetti absolute -top-8 block rounded-full bg-white"
+              style={{
+                left: `${(index * 41) % 100}%`,
+                width: `${4 + (index % 3) * 2}px`,
+                height: `${4 + (index % 3) * 2}px`,
+                animationDelay: `${(index % 8) * 0.08}s`,
+                animationDuration: `${2.1 + (index % 5) * 0.18}s`,
+                opacity: 0.85,
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="kato-reward relative w-full max-w-sm overflow-hidden rounded-[36px] border border-white/20 bg-gradient-to-b from-[#16395C] via-[#102B49] to-[#081D36] p-7 text-center text-white shadow-[0_40px_140px_rgba(0,0,0,0.62)]">
+          <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent" />
+          <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-[#5F9CFF]/20 blur-3xl" />
+
           <button
             type="button"
             onClick={onClose}
             aria-label="Close reward celebration"
-            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#DCE3EA] bg-[#F5F7FA] text-[#0B2343] transition hover:bg-[#EEF2F6]"
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-white/70 transition hover:bg-white/10 hover:text-white"
           >
             <X size={18} />
           </button>
 
-          <div className="mx-auto mt-3 flex h-20 w-20 items-center justify-center rounded-[26px] bg-[#0B2343] text-white shadow-[0_16px_45px_rgba(7,26,51,0.24)]">
-            <Sparkles size={34} strokeWidth={1.7} />
+          <div className="kato-reward-mark mx-auto mt-3 flex h-24 w-24 items-center justify-center rounded-[30px] border border-white/15 bg-white text-[#0B2343] shadow-[0_18px_60px_rgba(255,255,255,0.18)]">
+            <KatoMark size={58} />
           </div>
 
-          <p className="mt-7 text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8290A0]">
+          <p className="mt-7 text-[10px] font-semibold uppercase tracking-[0.34em] text-white/60">
             KATŌ reward unlocked
           </p>
 
-          <h2 className="mt-3 text-3xl font-semibold tracking-[-0.045em] text-[#071A33]">
-            Enjoy your {rewardName || "reward"}
+          <h2 className="mt-3 text-[2.25rem] font-semibold leading-none tracking-[-0.055em] text-white">
+            FREE DRINK
           </h2>
 
-          <p className="mx-auto mt-3 max-w-[17rem] text-sm leading-6 text-[#657384]">
-            Your loyalty card is complete. Show this screen to the cashier and enjoy your reward.
+          <p className="mx-auto mt-3 max-w-[18rem] text-sm leading-6 text-white/70">
+            You completed your loyalty card. Your {rewardName || "reward"} is ready.
           </p>
 
           {rewardDescription ? (
-            <div className="mt-6 rounded-2xl border border-[#DCE3EA] bg-[#F5F7FA] px-4 py-3 text-sm leading-6 text-[#43536A]">
+            <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm leading-6 text-white/75">
               {rewardDescription}
             </div>
           ) : null}
 
+          <div className="mt-7 flex items-center justify-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/55">
+            <Sparkles size={15} />
+            Show this screen to the cashier
+          </div>
+
           <button
             type="button"
             onClick={onClose}
-            className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#0B2343] text-sm font-semibold text-white shadow-[0_12px_32px_rgba(7,26,51,0.2)] transition hover:bg-[#102E55] active:scale-[0.99]"
+            className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-white text-sm font-semibold text-[#0B2343] shadow-[0_14px_40px_rgba(255,255,255,0.16)] transition hover:brightness-95 active:scale-[0.99]"
           >
             Continue
           </button>
         </div>
+
+        <style jsx global>{`
+          @keyframes kato-reward-in {
+            0% {
+              opacity: 0;
+              transform: translateY(24px) scale(0.9);
+            }
+            65% {
+              opacity: 1;
+              transform: translateY(-3px) scale(1.02);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0) scale(1);
+            }
+          }
+
+          @keyframes kato-reward-mark {
+            0% {
+              transform: scale(0.68) rotate(-10deg);
+              opacity: 0;
+            }
+            60% {
+              transform: scale(1.08) rotate(3deg);
+              opacity: 1;
+            }
+            100% {
+              transform: scale(1) rotate(0deg);
+              opacity: 1;
+            }
+          }
+
+          @keyframes kato-confetti-fall {
+            0% {
+              transform: translate3d(0, -8vh, 0) scale(0.7);
+              opacity: 0;
+            }
+            12% {
+              opacity: 1;
+            }
+            100% {
+              transform: translate3d(28px, 108vh, 0) scale(1);
+              opacity: 0;
+            }
+          }
+
+          .kato-reward {
+            animation: kato-reward-in 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+          }
+
+          .kato-reward-mark {
+            animation: kato-reward-mark 760ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
+          }
+
+          .kato-confetti {
+            animation-name: kato-confetti-fall;
+            animation-timing-function: cubic-bezier(0.18, 0.7, 0.3, 1);
+            animation-fill-mode: both;
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .kato-reward,
+            .kato-reward-mark,
+            .kato-confetti {
+              animation: none;
+            }
+          }
+        `}</style>
       </div>
     );
   }
