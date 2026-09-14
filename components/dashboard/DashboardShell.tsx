@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Settings } from "lucide-react";
 
 import LogoutButton from "@/components/auth/LogoutButton";
+import KatoMark from "@/components/brand/KatoMark";
 import CafeMobileNavigation from "@/components/dashboard/CafeMobileNavigation";
 import MobileLogoutButton from "@/components/dashboard/MobileLogoutButton";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
@@ -24,6 +25,15 @@ export default function DashboardShell({
 }: Props) {
   const pathname = usePathname();
   const { theme, cafe, userRole } = useCafeTheme();
+
+  const normalizedCafeName = cafe.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  const isKato =
+    cafe.slug.toLowerCase().includes("kato") ||
+    normalizedCafeName.includes("kato");
 
   const navigationItems =
     userRole === "CASHIER"
@@ -66,7 +76,17 @@ export default function DashboardShell({
           }}
         >
           <div className="flex min-w-0 items-center gap-3">
-            {cafe.logoUrl ? (
+            {isKato ? (
+              <div
+                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
+                style={{
+                  backgroundColor: "#102B49",
+                  color: "#E9E6D8",
+                }}
+              >
+                <KatoMark size={31} />
+              </div>
+            ) : cafe.logoUrl ? (
               <img
                 src={cafe.logoUrl}
                 alt={`${cafe.name} logo`}
@@ -87,17 +107,25 @@ export default function DashboardShell({
 
             <div className="min-w-0">
               <p
-                className="truncate text-lg font-semibold tracking-tight"
+                className={
+                  isKato
+                    ? "truncate text-xl font-medium tracking-[0.08em]"
+                    : "truncate text-lg font-semibold tracking-tight"
+                }
                 style={{ color: theme.textPrimary }}
               >
-                {cafe.name}
+                {isKato ? "KATŌ" : cafe.name}
               </p>
 
               <p
-                className="mt-1 text-xs"
+                className={
+                  isKato
+                    ? "mt-1 text-[9px] font-semibold uppercase tracking-[0.22em]"
+                    : "mt-1 text-xs"
+                }
                 style={{ color: theme.textMuted }}
               >
-                Loyalty Dashboard
+                {isKato ? "Specialty Coffee" : "Loyalty Dashboard"}
               </p>
             </div>
           </div>
@@ -179,7 +207,17 @@ export default function DashboardShell({
           }}
         >
           <div className="flex min-w-0 items-center gap-3">
-            {cafe.logoUrl ? (
+            {isKato ? (
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full lg:hidden"
+                style={{
+                  backgroundColor: "#102B49",
+                  color: "#E9E6D8",
+                }}
+              >
+                <KatoMark size={25} />
+              </div>
+            ) : cafe.logoUrl ? (
               <img
                 src={cafe.logoUrl}
                 alt={`${cafe.name} logo`}
@@ -205,7 +243,7 @@ export default function DashboardShell({
                   color: theme.textMuted,
                 }}
               >
-                {cafe.name}
+                {isKato ? "KATŌ" : cafe.name}
               </p>
 
               <h1
