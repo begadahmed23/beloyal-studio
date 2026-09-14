@@ -24,6 +24,7 @@ export type CafeSettingsRecord = {
   minimumPurchaseAmount: Prisma.Decimal | null;
 
   feedbackEnabled: boolean | null;
+  feedbackRewardEnabled: boolean;
   googleReviewUrl: string | null;
 
   timezone: string;
@@ -74,6 +75,7 @@ export function serializeCafeSettings(cafe: CafeSettingsRecord) {
     feedbackEnabled:
       cafe.feedbackEnabled ??
       cafe.businessType === BusinessType.CAFE,
+    feedbackRewardEnabled: cafe.feedbackRewardEnabled,
     googleReviewUrl: cafe.googleReviewUrl,
 
     timezone: cafe.timezone,
