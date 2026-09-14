@@ -25,6 +25,7 @@ type Customer = {
   publicToken: string | null;
   name: string;
   phone: string;
+  instagram: string | null;
   birthday: string;
   stamps: number;
   stampDates: string[];
@@ -184,6 +185,9 @@ export default function MemberList() {
           (customer) =>
             customer.name.toLowerCase().includes(value) ||
             customer.phone.includes(value) ||
+            (customer.instagram?.toLowerCase().includes(
+              value.replace(/^@+/, ""),
+            ) ?? false) ||
             customer.memberNumber.toLowerCase().includes(value),
         )
       : [...customers];
@@ -236,8 +240,8 @@ export default function MemberList() {
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder={`Search by name, phone, or ${personSingular} number`}
-          className="h-full w-full bg-transparent text-sm outline-none"
+          placeholder={`Search by name, phone, Instagram, or ${personSingular} number`}
+          className="h-full w-full bg-transparent text-base outline-none sm:text-sm"
           style={{ color: theme.textPrimary }}
         />
         {search && (
@@ -419,7 +423,7 @@ export default function MemberList() {
           </p>
           <p className="mt-2 text-sm" style={{ color: theme.textMuted }}>
             {search
-              ? `Try another name, phone number, or ${personSingular} number.`
+              ? `Try another name, phone, Instagram, or ${personSingular} number.`
               : `Create the first ${personSingular} to start the loyalty program.`}
           </p>
         </div>
