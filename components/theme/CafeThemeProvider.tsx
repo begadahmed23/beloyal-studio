@@ -82,6 +82,47 @@ type CafeThemeContextValue = {
 const CafeThemeContext =
   createContext<CafeThemeContextValue | null>(null);
 
+const KATO_DASHBOARD_THEME: CafeThemeConfig = {
+  pageBackground: "#F4F7FA",
+  surface: "#FFFFFF",
+  surfaceRaised: "#EEF3F7",
+  border: "rgba(16, 43, 73, 0.12)",
+
+  textPrimary: "#0A223E",
+  textSecondary: "#43536A",
+  textMuted: "#7F8DA0",
+
+  accent: "#102B49",
+  accentHover: "#16395C",
+  accentSoft: "rgba(16, 43, 73, 0.08)",
+  accentText: "#FFFFFF",
+
+  success: "#497563",
+  warning: "#B48749",
+  danger: "#B95E58",
+
+  inputBackground: "#FFFFFF",
+  inputBorder: "rgba(16, 43, 73, 0.14)",
+
+  buttonText: "#FFFFFF",
+  cardShadow: "0 22px 60px rgba(16, 43, 73, 0.10)",
+
+  radiusLarge: "30px",
+  radiusMedium: "18px",
+};
+
+function isKatoCafe(cafe: CafeSettings) {
+  const normalizedName = cafe.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  return (
+    cafe.slug.toLowerCase().includes("kato") ||
+    normalizedName.includes("kato")
+  );
+}
+
 const DASHBOARD_REFRESH_AFTER_HIDDEN_MS = 30_000;
 const DASHBOARD_REFRESH_THROTTLE_MS = 10_000;
 
@@ -203,11 +244,16 @@ export default function CafeThemeProvider({
 
   const theme = useMemo(
     () =>
-      getBusinessTheme(
-        previewThemeName,
-        currentCafe.businessType,
-      ),
-    [previewThemeName, currentCafe.businessType],
+      isKatoCafe(currentCafe)
+        ? KATO_DASHBOARD_THEME
+        : getBusinessTheme(
+            previewThemeName,
+            currentCafe.businessType,
+          ),
+    [
+      previewThemeName,
+      currentCafe,
+    ],
   );
 
   const contextValue = useMemo(
