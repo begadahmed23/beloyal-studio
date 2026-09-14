@@ -5,14 +5,84 @@ import { Gift, Sparkles, X } from "lucide-react";
 type RewardCelebrationModalProps = {
   rewardName: string;
   rewardDescription: string | null;
+  cafeName?: string;
+  cafeSlug?: string;
   onClose: () => void;
 };
 
 export default function RewardCelebrationModal({
   rewardName,
   rewardDescription,
+  cafeName = "",
+  cafeSlug = "",
   onClose,
 }: RewardCelebrationModalProps) {
+  const normalizedName = cafeName
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const isKato =
+    cafeSlug.toLowerCase().includes("kato") ||
+    normalizedName.includes("kato");
+
+  if (isKato) {
+    return (
+      <div
+        className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-[#071A33]/94 px-5 py-8 backdrop-blur-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Kato reward redeemed"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) {
+            onClose();
+          }
+        }}
+      >
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(255,255,255,0.12),transparent_42%)]" />
+
+        <div className="relative w-full max-w-sm overflow-hidden rounded-[34px] border border-white/15 bg-white p-7 text-center shadow-[0_35px_120px_rgba(0,0,0,0.45)]">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close reward celebration"
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#DCE3EA] bg-[#F5F7FA] text-[#0B2343] transition hover:bg-[#EEF2F6]"
+          >
+            <X size={18} />
+          </button>
+
+          <div className="mx-auto mt-3 flex h-20 w-20 items-center justify-center rounded-[26px] bg-[#0B2343] text-white shadow-[0_16px_45px_rgba(7,26,51,0.24)]">
+            <Sparkles size={34} strokeWidth={1.7} />
+          </div>
+
+          <p className="mt-7 text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8290A0]">
+            KATŌ reward unlocked
+          </p>
+
+          <h2 className="mt-3 text-3xl font-semibold tracking-[-0.045em] text-[#071A33]">
+            Enjoy your {rewardName || "reward"}
+          </h2>
+
+          <p className="mx-auto mt-3 max-w-[17rem] text-sm leading-6 text-[#657384]">
+            Your loyalty card is complete. Show this screen to the cashier and enjoy your reward.
+          </p>
+
+          {rewardDescription ? (
+            <div className="mt-6 rounded-2xl border border-[#DCE3EA] bg-[#F5F7FA] px-4 py-3 text-sm leading-6 text-[#43536A]">
+              {rewardDescription}
+            </div>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#0B2343] text-sm font-semibold text-white shadow-[0_12px_32px_rgba(7,26,51,0.2)] transition hover:bg-[#102E55] active:scale-[0.99]"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    );
+  }
   const rewardEmeraldLight = "#2D6A5A";
   const rewardChampagne = "#D8BE82";
   const rewardIvory = "#F7EFD9";
