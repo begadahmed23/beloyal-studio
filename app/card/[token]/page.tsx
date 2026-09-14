@@ -1438,6 +1438,9 @@ const progressPercentage = rewardReady
           onClose={() =>
             setShowQrCode(false)
           }
+          onStampDetected={() =>
+            void loadCard(false, true)
+          }
           onLogoError={
             setFailedLogoUrl
           }
