@@ -7,7 +7,6 @@ import { requireActiveCafe } from "@/lib/require-active-cafe";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 const MAX_REQUEST_BODY_BYTES = 500;
-const STAMP_COOLDOWN_MS = 6 * 60 * 60 * 1_000;
 const MAX_TRANSACTION_ATTEMPTS = 3;
 
 const requestSchema = z
@@ -44,28 +43,6 @@ function jsonResponse(
       "X-Content-Type-Options": "nosniff",
     },
   });
-}
-
-function formatCooldownDuration(milliseconds: number) {
-  const totalMinutes = Math.max(
-    1,
-    Math.ceil(milliseconds / 60_000),
-  );
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  const parts: string[] = [];
-
-  if (hours > 0) {
-    parts.push(`${hours} hour${hours === 1 ? "" : "s"}`);
-  }
-
-  if (minutes > 0) {
-    parts.push(
-      `${minutes} minute${minutes === 1 ? "" : "s"}`,
-    );
-  }
-
-  return parts.join(" and ");
 }
 
 async function readRequestBody(request: NextRequest) {
@@ -315,47 +292,6 @@ export async function POST(request: NextRequest) {
               };
             }
 
-            /*
-             * Server-side duplicate protection for
-             * staff-recorded stamps and visits.
-             *
-             * Feedback rewards have no userId, so they
-             * remain exempt from this cooldown.
-             */
-            const lastStaffAdd =
-              await transaction.stampTransaction.findFirst({
-                where: {
-                  cafeId: authData.cafeId,
-                  customerId: currentCustomer.id,
-                  type: "ADD",
-                  userId: {
-                    not: null,
-                  },
-                },
-                orderBy: {
-                  createdAt: "desc",
-                },
-                select: {
-                  createdAt: true,
-                },
-              });
-
-            if (lastStaffAdd) {
-              const elapsedMs =
-                Date.now() -
-                lastStaffAdd.createdAt.getTime();
-
-              if (elapsedMs < STAMP_COOLDOWN_MS) {
-                const remainingMs =
-                  STAMP_COOLDOWN_MS - elapsedMs;
-
-                return {
-                  type: "cooldown" as const,
-                  retryAfterMs: remainingMs,
-                };
-              }
-            }
-
             const newStampCount =
               currentCustomer.stamps + 1;
 
@@ -458,21 +394,6 @@ export async function POST(request: NextRequest) {
                 "This member does not belong to this café.",
             },
             404,
-          );
-        }
-
-        if (result.type === "cooldown") {
-          const remainingTime = formatCooldownDuration(
-            result.retryAfterMs,
-          );
-
-          return jsonResponse(
-            {
-              message: `This member received a ${loyaltyUnit} recently. The next ${loyaltyUnit} can be recorded in ${remainingTime}.`,
-              cooldown: true,
-              retryAfterMs: result.retryAfterMs,
-            },
-            409,
           );
         }
 
