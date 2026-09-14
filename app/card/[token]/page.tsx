@@ -955,6 +955,15 @@ const isBarbershop =
 const isBrickBarber =
   isBarbershop && customer.cafe.theme === "COFFEE_CLASSIC";
 
+const normalizedCafeName = customer.cafe.name
+  .normalize("NFD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .toLowerCase();
+
+const isKato =
+  customer.cafe.slug.toLowerCase().includes("kato") ||
+  normalizedCafeName.includes("kato");
+
 const unlockAt = getLoyaltyProgressTarget({
   businessType: customer.cafe.businessType,
   rewardTarget,
@@ -1027,34 +1036,42 @@ const progressPercentage = rewardReady
   );
 
   const primaryColor = normalizeHex(
-    isBarbershop
-      ? barberPrimaryColor
-      : customer.cafe.primaryColor,
+    isKato
+      ? "#0B2343"
+      : isBarbershop
+        ? barberPrimaryColor
+        : customer.cafe.primaryColor,
     "#2563EB",
   );
 
   const secondaryColor =
     normalizeHex(
-      isBarbershop
-        ? barberSecondaryColor
-        : customer.cafe.secondaryColor,
+      isKato
+        ? "#5E7188"
+        : isBarbershop
+          ? barberSecondaryColor
+          : customer.cafe.secondaryColor,
       "#60A5FA",
     );
 
   const backgroundColor =
     normalizeHex(
-      isBarbershop
-        ? barberBackgroundColor
-        : customer.cafe.backgroundColor,
+      isKato
+        ? "#F4F7FA"
+        : isBarbershop
+          ? barberBackgroundColor
+          : customer.cafe.backgroundColor,
       "#0B1220",
     );
 
   const pageIsLight =
     isLightColor(backgroundColor);
 
-  const cardBackground = isBrickBarber
-    ? "#211D1A"
-    : mixColors(
+  const cardBackground = isKato
+    ? "#FFFFFF"
+    : isBrickBarber
+      ? "#211D1A"
+      : mixColors(
         backgroundColor,
         primaryColor,
         pageIsLight ? 0.78 : 0.7,
@@ -1158,25 +1175,27 @@ const progressPercentage = rewardReady
         WebkitTextSizeAdjust: "100%",
         textSizeAdjust: "100%",
         color: textPrimary,
-        background: `
-          radial-gradient(
-            circle at 50% -10%,
-            ${withAlpha(
-              primaryColor,
-              isBrickBarber ? 0.2 : 0.42,
-            )} 0%,
-            transparent 38%
-          ),
-          radial-gradient(
-            circle at 100% 55%,
-            ${withAlpha(
-              secondaryColor,
-              isBrickBarber ? 0.12 : 0.22,
-            )} 0%,
-            transparent 42%
-          ),
-          ${backgroundColor}
-        `,
+        background: isKato
+          ? "linear-gradient(180deg,#F7F9FB 0%,#EEF3F7 100%)"
+          : `
+              radial-gradient(
+                circle at 50% -10%,
+                ${withAlpha(
+                  primaryColor,
+                  isBrickBarber ? 0.2 : 0.42,
+                )} 0%,
+                transparent 38%
+              ),
+              radial-gradient(
+                circle at 100% 55%,
+                ${withAlpha(
+                  secondaryColor,
+                  isBrickBarber ? 0.12 : 0.22,
+                )} 0%,
+                transparent 42%
+              ),
+              ${backgroundColor}
+            `,
       }}
     >
       <LoyaltyCard
@@ -1267,6 +1286,8 @@ const progressPercentage = rewardReady
             customer.cafe
               .rewardDescription
           }
+          cafeName={customer.cafe.name}
+          cafeSlug={customer.cafe.slug}
           onClose={() =>
             setShowRewardCelebration(
               false,
