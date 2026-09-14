@@ -73,10 +73,6 @@ export default function KatoLoyaltyCard({
     ? 100
     : Math.min((displayStamps / paidTarget) * 100, 100);
   const progressRatio = displayStamps / paidTarget;
-  const configuredDescription = rewardReady
-    ? customer.cafe.rewardDescription?.trim()
-    : customer.cafe.eligiblePurchaseDescription?.trim();
-
   const progressMessage = rewardReady
     ? "This one’s on us."
     : displayStamps === 0
@@ -258,11 +254,36 @@ export default function KatoLoyaltyCard({
             </p>
           </div>
 
-          {configuredDescription ? (
-            <div className="relative mt-5 rounded-[16px] border border-white/10 bg-white/[0.05] px-4 py-3">
-              <p className="text-center text-[12px] font-medium leading-5 text-white/75">
-                {configuredDescription}
-              </p>
+          {(customer.cafe.eligiblePurchaseDescription?.trim() ||
+            customer.cafe.rewardDescription?.trim()) ? (
+            <div className="relative mt-5 space-y-2 rounded-[16px] border border-white/10 bg-white/[0.05] px-4 py-3">
+              {customer.cafe.eligiblePurchaseDescription?.trim() && (
+                <div>
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/40">
+                    Eligible purchase
+                  </p>
+                  <p className="mt-1 text-[12px] font-medium leading-5 text-white/76">
+                    {customer.cafe.eligiblePurchaseDescription.trim()}
+                  </p>
+                </div>
+              )}
+
+              {customer.cafe.rewardDescription?.trim() && (
+                <div
+                  className={
+                    customer.cafe.eligiblePurchaseDescription?.trim()
+                      ? "border-t border-white/10 pt-2"
+                      : ""
+                  }
+                >
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.18em] text-white/40">
+                    Reward
+                  </p>
+                  <p className="mt-1 text-[12px] font-medium leading-5 text-white/76">
+                    {customer.cafe.rewardDescription.trim()}
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <p className="relative mt-5 text-center text-[9px] font-medium uppercase tracking-[0.42em] text-white/42">
@@ -389,43 +410,60 @@ export default function KatoLoyaltyCard({
         </button>
 
         {customer.cafe.feedbackEnabled && (
-          <button
-            type="button"
-            onClick={onShowFeedback}
-            className="mt-3 flex w-full items-center justify-between rounded-[22px] border px-4 py-3.5 text-left transition hover:-translate-y-0.5 active:translate-y-0"
-            style={{
-              borderColor: border,
-              backgroundColor: isDark ? "#0D2744" : "#F7F9FB",
-              color: pageText,
-            }}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-[14px]"
+          <div className="mt-3 grid gap-2">
+            <button
+              type="button"
+              onClick={onShowFeedback}
+              className="flex w-full items-center justify-between rounded-[22px] border px-4 py-3.5 text-left transition hover:-translate-y-0.5 active:translate-y-0"
+              style={{
+                borderColor: border,
+                backgroundColor: isDark ? "#0D2744" : "#F7F9FB",
+                color: pageText,
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex h-10 w-10 items-center justify-center rounded-[14px]"
+                  style={{
+                    backgroundColor: isDark ? "#16395C" : "#EEF3F7",
+                    color: isDark ? cream : navy,
+                  }}
+                >
+                  <MessageCircle size={18} />
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold">
+                    Share your thoughts
+                  </p>
+                  <p className="mt-0.5 text-[11px]" style={{ color: muted }}>
+                    Tell us about your visit.
+                  </p>
+                </div>
+              </div>
+
+              <ChevronRight size={18} style={{ color: muted }} />
+            </button>
+
+            {!customer.feedbackRewardedAt && (
+              <button
+                type="button"
+                onClick={onShowFeedback}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-[20px] border text-sm font-semibold transition hover:-translate-y-0.5 active:translate-y-0"
                 style={{
-                  backgroundColor: isDark ? "#16395C" : "#EEF3F7",
-                  color: isDark ? cream : navy,
+                  borderColor: isDark ? cream : navy,
+                  backgroundColor: isDark ? cream : navy,
+                  color: isDark ? navyDeep : white,
+                  boxShadow: isDark
+                    ? "0 10px 24px rgba(0,0,0,0.22)"
+                    : "0 10px 24px rgba(16,43,73,0.16)",
                 }}
               >
-                <MessageCircle size={18} />
-              </div>
-
-              <div>
-                <p className="text-sm font-semibold">
-                  {customer.feedbackRewardedAt
-                    ? "Share your thoughts"
-                    : "Share & get 1 free stamp"}
-                </p>
-                <p className="mt-0.5 text-[11px]" style={{ color: muted }}>
-                  {customer.feedbackRewardedAt
-                    ? "We’d love to hear from you again."
-                    : "Tell us what you think and we’ll add it to your card."}
-                </p>
-              </div>
-            </div>
-
-            <ChevronRight size={18} style={{ color: muted }} />
-          </button>
+                <MessageCircle size={16} />
+                Get 1 free stamp
+              </button>
+            )}
+          </div>
         )}
       </div>
 
