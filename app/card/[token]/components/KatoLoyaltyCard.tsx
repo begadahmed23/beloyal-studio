@@ -87,6 +87,21 @@ export default function KatoLoyaltyCard({
   const totalSlots = Math.max(customer.cafe.rewardTarget, rewardTarget + 1, 2);
   const paidTarget = Math.max(totalSlots - 1, 1);
   const displayStamps = Math.min(visibleStamps, paidTarget);
+  const progressPercent = rewardReady
+    ? 100
+    : Math.min((displayStamps / paidTarget) * 100, 100);
+  const progressRatio = displayStamps / paidTarget;
+  const progressMessage = rewardReady
+    ? "A little something, on us."
+    : displayStamps === 0
+      ? "Your next ritual starts here."
+      : displayStamps >= paidTarget - 1
+        ? "Just one more."
+        : progressRatio >= 0.65
+          ? "Nearly yours."
+          : progressRatio >= 0.35
+            ? "Nicely on your way."
+            : "A good start.";
   const customerName = capitalizeFirstLetter(customer.name);
 
   return (
@@ -214,7 +229,26 @@ export default function KatoLoyaltyCard({
             })}
           </div>
 
-          <p className="relative mt-8 text-center text-[9px] font-medium uppercase tracking-[0.42em] text-white/48">
+          <div className="relative mt-7">
+            <div className="h-[3px] overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-[#E9E6D8] transition-[width] duration-700 ease-out"
+                style={{
+                  width: progressPercent + "%",
+                  boxShadow:
+                    displayStamps > 0
+                      ? "0 0 10px rgba(233,230,216,0.28)"
+                      : "none",
+                }}
+              />
+            </div>
+
+            <p className="mt-3 text-center text-[11px] font-medium tracking-[0.04em] text-white/70">
+              {progressMessage}
+            </p>
+          </div>
+
+          <p className="relative mt-5 text-center text-[9px] font-medium uppercase tracking-[0.42em] text-white/42">
             Good coffee leads to good days
           </p>
         </section>
