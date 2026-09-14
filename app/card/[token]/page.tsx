@@ -32,7 +32,6 @@ import {
 import {
   ArrowUpRight,
   Check,
-  LoaderCircle,
   MessageCircle,
   X,
 } from "lucide-react";
@@ -909,18 +908,70 @@ export default function DigitalCardPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#080808] text-white">
-        <div className="text-center">
-          <LoaderCircle
-            size={30}
-            className="mx-auto animate-spin"
-          />
+      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#071A33] px-6 text-white">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.12),transparent_26%),radial-gradient(circle_at_50%_70%,rgba(90,147,255,0.14),transparent_34%)]" />
 
-          <p className="mt-4 text-sm text-white/60">
-            Loading your loyalty
-            card...
+        <div className="relative text-center">
+          <div className="beloyal-loader-mark mx-auto flex h-24 w-24 items-center justify-center rounded-[30px] border border-white/15 bg-white text-[#0B2343] shadow-[0_20px_70px_rgba(255,255,255,0.16)]">
+            <span className="text-[2rem] font-semibold tracking-[-0.08em]">
+              B
+            </span>
+          </div>
+
+          <p className="mt-7 text-[11px] font-semibold uppercase tracking-[0.32em] text-white/55">
+            BeLoyal
           </p>
+
+          <p className="mt-2 text-sm font-medium text-white/80">
+            Getting your card ready
+          </p>
+
+          <div className="mx-auto mt-6 h-[3px] w-32 overflow-hidden rounded-full bg-white/10">
+            <div className="beloyal-loader-bar h-full w-1/2 rounded-full bg-white" />
+          </div>
         </div>
+
+        <style jsx global>{`
+          @keyframes beloyal-loader-mark {
+            0%, 100% {
+              transform: translateY(0) scale(1);
+              box-shadow: 0 20px 70px rgba(255,255,255,0.12);
+            }
+            50% {
+              transform: translateY(-6px) scale(1.04);
+              box-shadow: 0 24px 90px rgba(255,255,255,0.24);
+            }
+          }
+
+          @keyframes beloyal-loader-bar {
+            0% {
+              transform: translateX(-110%);
+              opacity: 0.55;
+            }
+            50% {
+              opacity: 1;
+            }
+            100% {
+              transform: translateX(220%);
+              opacity: 0.55;
+            }
+          }
+
+          .beloyal-loader-mark {
+            animation: beloyal-loader-mark 1.6s ease-in-out infinite;
+          }
+
+          .beloyal-loader-bar {
+            animation: beloyal-loader-bar 1.15s ease-in-out infinite;
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .beloyal-loader-mark,
+            .beloyal-loader-bar {
+              animation: none;
+            }
+          }
+        `}</style>
       </main>
     );
   }
