@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
@@ -13,6 +14,48 @@ import {
 export default function CafeMobileNavigation() {
   const pathname = usePathname();
   const { theme, userRole } = useCafeTheme();
+  const [formControlFocused, setFormControlFocused] =
+    useState(false);
+
+  useEffect(() => {
+    function isFormControl(target: EventTarget | null) {
+      return (
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target instanceof HTMLSelectElement
+      );
+    }
+
+    function handleFocusIn(event: FocusEvent) {
+      if (isFormControl(event.target)) {
+        setFormControlFocused(true);
+      }
+    }
+
+    function handleFocusOut(event: FocusEvent) {
+      if (!isFormControl(event.target)) {
+        return;
+      }
+
+      window.setTimeout(() => {
+        const active = document.activeElement;
+
+        setFormControlFocused(
+          active instanceof HTMLInputElement ||
+            active instanceof HTMLTextAreaElement ||
+            active instanceof HTMLSelectElement,
+        );
+      }, 0);
+    }
+
+    document.addEventListener("focusin", handleFocusIn);
+    document.addEventListener("focusout", handleFocusOut);
+
+    return () => {
+      document.removeEventListener("focusin", handleFocusIn);
+      document.removeEventListener("focusout", handleFocusOut);
+    };
+  }, []);
 
   const navigationItems =
     userRole === "CASHIER"
@@ -24,6 +67,10 @@ export default function CafeMobileNavigation() {
             item.href === "/dashboard/scanner/phone",
         )
       : cafeNavigation;
+
+  if (formControlFocused) {
+    return null;
+  }
 
   return (
     <nav
