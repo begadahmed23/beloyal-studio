@@ -12,7 +12,6 @@ import {
 import {
   useCallback,
   useEffect,
-  useMemo,
   useState,
 } from "react";
  import BirthdayRewardAction from "@/components/customers/BirthdayRewardAction";
@@ -24,6 +23,8 @@ type Member = {
   memberNumber: string;
   publicToken: string | null;
   name: string;
+  phone: string | null;
+  instagram: string | null;
   stamps: number;
   stampDates: string[];
   rewardReady: boolean;
@@ -64,12 +65,15 @@ export default function CashierMemberList() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  const loadMembers = useCallback(async () => {
+  const loadMembers = useCallback(async (searchValue = "") => {
     try {
       setError("");
 
+      const query = searchValue.trim();
       const response = await fetch(
-        "/api/cashier/members",
+        query
+          ? `/api/cashier/members?search=${encodeURIComponent(query)}`
+          : "/api/cashier/members",
         { cache: "no-store" },
       );
 
@@ -98,10 +102,12 @@ export default function CashierMemberList() {
   }, []);
 
   useEffect(() => {
-    loadMembers();
+    const timer = window.setTimeout(() => {
+      void loadMembers(search);
+    }, search.trim() ? 250 : 0);
 
     function handleMembersUpdated() {
-      void loadMembers();
+      void loadMembers(search);
     }
 
     window.addEventListener(
@@ -110,26 +116,15 @@ export default function CashierMemberList() {
     );
 
     return () => {
+      window.clearTimeout(timer);
       window.removeEventListener(
         "members-updated",
         handleMembersUpdated,
       );
     };
-  }, [loadMembers]);
+  }, [loadMembers, search]);
 
-  const filteredMembers = useMemo(() => {
-    if (!data) return [];
-
-    const value = search.trim().toLowerCase();
-
-    if (!value) {
-      return data.members;
-    }
-
-    return data.members.filter((member) =>
-      member.name.toLowerCase().includes(value),
-    );
-  }, [data, search]);
+  const filteredMembers = data?.members ?? [];
 
   async function runAction(
     memberId: string,
@@ -164,7 +159,7 @@ export default function CashierMemberList() {
         body.message || "Updated successfully.",
       );
 
-      await loadMembers();
+      await loadMembers(search);
     } catch (error) {
       setError(
         error instanceof Error
@@ -249,7 +244,7 @@ export default function CashierMemberList() {
           onChange={(event) =>
             setSearch(event.target.value)
           }
-          placeholder="Search by customer name"
+          placeholder="Search name, phone, Instagram, or member number"
           className="w-full bg-transparent text-base outline-none sm:text-sm"
           style={{ color: theme.textPrimary }}
         />
@@ -320,7 +315,7 @@ export default function CashierMemberList() {
                   <BirthdayRewardAction
                     customerId={member.id}
                     active
-                    onRedeemed={loadMembers}
+                    onRedeemed={() => void loadMembers(search)}
                   />
                 </div>
               )}
