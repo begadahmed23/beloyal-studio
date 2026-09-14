@@ -240,8 +240,12 @@ export default function CafeThemeProvider({
   );
 }
 
+export function useOptionalCafeTheme() {
+  return useContext(CafeThemeContext);
+}
+
 export function useCafeTheme() {
-  const context = useContext(CafeThemeContext);
+  const context = useOptionalCafeTheme();
 
   if (!context) {
     throw new Error(
