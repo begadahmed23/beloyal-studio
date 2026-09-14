@@ -23,7 +23,7 @@ type Props = {
 
 export function KatoMark({
   active = false,
-  size = 34,
+  size = 38,
 }: {
   active?: boolean;
   size?: number;
@@ -37,17 +37,22 @@ export function KatoMark({
       fill="none"
       style={{
         filter: active
-          ? "drop-shadow(0 0 9px rgba(255,255,255,0.88))"
+          ? "drop-shadow(0 0 10px rgba(255,255,255,0.92))"
           : "none",
       }}
     >
-      <path
-        d="M12 14H24V26H12zM40 14H52V26H40zM18 32H30V44H18zM34 32H46V44H34zM26 48H38V60H26z"
-        fill="currentColor"
+      <circle
+        cx="32"
+        cy="36"
+        r="18"
+        stroke="currentColor"
+        strokeWidth="6"
       />
       <path
-        d="M24 14H40V20H24zM18 26H46V32H18zM30 44H34V48H30z"
-        fill="currentColor"
+        d="M20 13c3.8 3 7.8 4.5 12 4.5S40.2 16 44 13"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="butt"
       />
     </svg>
   );
@@ -84,38 +89,26 @@ export default function KatoLoyaltyCard(props: Props) {
         <header className="px-5 pb-5 pt-6 min-[380px]:px-6 min-[380px]:pt-7">
           <div className="flex items-start justify-between gap-4">
             <div className="flex min-w-0 items-center gap-3">
-              {showLogo && logoUrl ? (
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#0B2343] p-2.5">
-                  <img
-                    src={logoUrl}
-                    alt={customer.cafe.name + " logo"}
-                    className="h-full w-full object-contain brightness-0 invert"
-                    referrerPolicy="no-referrer"
-                    onError={() => onLogoError(logoUrl)}
-                  />
-                </div>
-              ) : (
-                <div
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl"
-                  style={{ backgroundColor: navy, color: white }}
-                >
-                  <KatoMark active size={27} />
-                </div>
-              )}
+              <div
+                className="flex h-12 w-12 shrink-0 items-center justify-center"
+                style={{ color: navy }}
+              >
+                <KatoMark size={42} />
+              </div>
 
               <div className="min-w-0">
-                <p
-                  className="text-[10px] font-semibold uppercase tracking-[0.22em]"
-                  style={{ color: muted }}
-                >
-                  Loyalty card
-                </p>
                 <h2
-                  className="mt-0.5 truncate text-[1.6rem] font-semibold tracking-[0.18em]"
+                  className="truncate text-[1.7rem] font-medium tracking-[0.08em]"
                   style={{ color: navy }}
                 >
                   KATŌ
                 </h2>
+                <p
+                  className="mt-0.5 text-[9px] font-medium uppercase tracking-[0.24em]"
+                  style={{ color: muted }}
+                >
+                  Specialty Coffee
+                </p>
               </div>
             </div>
 
@@ -150,7 +143,7 @@ export default function KatoLoyaltyCard(props: Props) {
 
         <div className="px-4 pb-5 min-[380px]:px-5 min-[380px]:pb-6">
           <section
-            className="relative overflow-hidden rounded-[28px] px-5 py-6 shadow-[0_18px_44px_rgba(7,26,51,0.18)]"
+            className="relative overflow-hidden rounded-[30px] px-5 py-6 shadow-[0_18px_44px_rgba(7,26,51,0.16)]"
             style={{
               background: rewardReady
                 ? "linear-gradient(145deg,#102E55 0%,#071A33 100%)"
@@ -180,15 +173,7 @@ export default function KatoLoyaltyCard(props: Props) {
               </span>
             </div>
 
-            <div
-              className="relative mt-6 grid gap-2.5"
-              style={{
-                gridTemplateColumns:
-                  "repeat(" +
-                  Math.min(rewardTarget, 4) +
-                  ", minmax(0,1fr))",
-              }}
-            >
+            <div className="relative mt-7 flex flex-wrap items-center justify-center gap-x-5 gap-y-5 px-1">
               {Array.from({ length: rewardTarget }).map((_, index) => {
                 const active = index < visibleStamps;
                 const isNew = newStampIndex === index;
@@ -197,44 +182,21 @@ export default function KatoLoyaltyCard(props: Props) {
                   <div
                     key={index}
                     className={
-                      "flex aspect-square items-center justify-center rounded-2xl border transition-all duration-500 " +
-                      (isNew ? "scale-110" : "")
+                      "flex h-12 w-12 items-center justify-center transition-all duration-500 " +
+                      (isNew ? "scale-125" : "scale-100")
                     }
                     style={{
-                      borderColor: active
-                        ? "rgba(255,255,255,0.38)"
-                        : "rgba(255,255,255,0.12)",
-                      backgroundColor: active
-                        ? "rgba(255,255,255,0.13)"
-                        : "rgba(255,255,255,0.035)",
                       color: active
                         ? "#FFFFFF"
-                        : "rgba(255,255,255,0.26)",
-                      boxShadow: active
+                        : "rgba(255,255,255,0.24)",
+                      filter: active
                         ? isNew
-                          ? "0 0 0 1px rgba(255,255,255,0.24), 0 0 32px rgba(255,255,255,0.5), inset 0 0 24px rgba(255,255,255,0.08)"
-                          : "0 0 18px rgba(255,255,255,0.13)"
+                          ? "drop-shadow(0 0 16px rgba(255,255,255,0.95))"
+                          : "drop-shadow(0 0 7px rgba(255,255,255,0.34))"
                         : "none",
                     }}
                   >
-                    {showLogo && logoUrl ? (
-                      <img
-                        src={logoUrl}
-                        alt=""
-                        aria-hidden="true"
-                        className={
-                          "h-8 w-8 object-contain brightness-0 invert transition-all duration-500 " +
-                          (active ? "opacity-100" : "opacity-25")
-                        }
-                        style={{
-                          filter: active
-                            ? "brightness(0) invert(1) drop-shadow(0 0 9px rgba(255,255,255,0.88))"
-                            : "brightness(0) invert(1)",
-                        }}
-                      />
-                    ) : (
-                      <KatoMark active={active} size={31} />
-                    )}
+                    <KatoMark active={active} size={43} />
                   </div>
                 );
               })}
