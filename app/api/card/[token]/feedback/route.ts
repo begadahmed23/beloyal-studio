@@ -126,6 +126,7 @@ export async function POST(
                     isActive: true,
                     businessType: true,
                     feedbackEnabled: true,
+                    feedbackRewardEnabled: true,
                     googleReviewUrl: true,
                     rewardTarget: true,
                   },
@@ -186,22 +187,24 @@ export async function POST(
            * is still null can receive this reward.
            */
           const rewardClaim =
-            await tx.customer.updateMany({
-              where: {
-                id: customer.id,
-                feedbackRewardedAt: null,
-              },
+            customer.cafe.feedbackRewardEnabled
+              ? await tx.customer.updateMany({
+                  where: {
+                    id: customer.id,
+                    feedbackRewardedAt: null,
+                  },
 
-              data: {
-                feedbackRewardedAt:
-                  new Date(),
-                pendingFeedbackBonus: alreadyReady,
+                  data: {
+                    feedbackRewardedAt:
+                      new Date(),
+                    pendingFeedbackBonus: alreadyReady,
 
-                ...(alreadyReady
-                  ? {}
-                  : { stamps: { increment: 1 } }),
-              },
-            });
+                    ...(alreadyReady
+                      ? {}
+                      : { stamps: { increment: 1 } }),
+                  },
+                })
+              : { count: 0 };
 
           const rewardGranted =
             rewardClaim.count === 1;
