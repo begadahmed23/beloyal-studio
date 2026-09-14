@@ -227,7 +227,7 @@ export default function KatoLoyaltyCard({
                   key={index}
                   className={
                     "relative flex min-w-0 items-center justify-center py-1 transition-[transform,opacity] duration-500 ease-out " +
-                    (isNew ? "scale-[1.24]" : "scale-100")
+                    (isNew ? "scale-[1.16]" : "scale-100")
                   }
                   style={{
                     color: rewardSlotReady
@@ -239,26 +239,15 @@ export default function KatoLoyaltyCard({
                   }}
                 >
                   {isNew && (
-                    <>
-                      <span
-                        aria-hidden="true"
-                        className="kato-stamp-ripple pointer-events-none absolute h-11 w-11 rounded-full border"
-                        style={{
-                          borderColor: isDark
-                            ? "rgba(233,230,216,0.85)"
-                            : "rgba(255,255,255,0.95)",
-                        }}
-                      />
-                      <span
-                        aria-hidden="true"
-                        className="kato-stamp-flash pointer-events-none absolute h-8 w-8 rounded-full"
-                        style={{
-                          background: isDark
-                            ? "rgba(233,230,216,0.28)"
-                            : "rgba(255,255,255,0.34)",
-                        }}
-                      />
-                    </>
+                    <span
+                      aria-hidden="true"
+                      className="kato-stamp-ripple pointer-events-none absolute h-11 w-11 rounded-full border"
+                      style={{
+                        borderColor: isDark
+                          ? "rgba(233,230,216,0.9)"
+                          : "rgba(255,255,255,0.98)",
+                      }}
+                    />
                   )}
 
                   <KatoMark
@@ -475,34 +464,18 @@ export default function KatoLoyaltyCard({
           }
         }
 
-        @keyframes kato-stamp-flash {
-          0% {
-            opacity: 0;
-            transform: scale(0.65);
-          }
-          25% {
-            opacity: 1;
-          }
-          100% {
-            opacity: 0;
-            transform: scale(1.45);
-          }
-        }
-
         @keyframes kato-progress-pulse {
           0% {
-            box-shadow: 0 0 0 rgba(255,255,255,0);
-            filter: brightness(1);
+            opacity: 0.72;
+            transform: scaleY(1);
           }
           45% {
-            box-shadow:
-              0 0 10px rgba(255,255,255,0.9),
-              0 0 24px rgba(132,184,255,0.58);
-            filter: brightness(1.35);
+            opacity: 1;
+            transform: scaleY(1.65);
           }
           100% {
-            box-shadow: 0 0 0 rgba(255,255,255,0);
-            filter: brightness(1);
+            opacity: 1;
+            transform: scaleY(1);
           }
         }
 
@@ -525,10 +498,6 @@ export default function KatoLoyaltyCard({
           animation: kato-stamp-ripple 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
-        .kato-stamp-flash {
-          animation: kato-stamp-flash 520ms ease-out both;
-        }
-
         .kato-progress-pulse {
           animation: kato-progress-pulse 820ms ease-out both;
         }
@@ -539,7 +508,6 @@ export default function KatoLoyaltyCard({
 
         @media (prefers-reduced-motion: reduce) {
           .kato-stamp-ripple,
-          .kato-stamp-flash,
           .kato-progress-pulse,
           .kato-progress-spark {
             animation: none;
