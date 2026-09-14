@@ -73,6 +73,10 @@ export default function KatoLoyaltyCard({
     ? 100
     : Math.min((displayStamps / paidTarget) * 100, 100);
   const progressRatio = displayStamps / paidTarget;
+  const configuredDescription = rewardReady
+    ? customer.cafe.rewardDescription?.trim()
+    : customer.cafe.eligiblePurchaseDescription?.trim();
+
   const progressMessage = rewardReady
     ? "This one’s on us."
     : displayStamps === 0
@@ -254,13 +258,17 @@ export default function KatoLoyaltyCard({
             </p>
           </div>
 
-          <p className="relative mt-5 text-center text-[11px] font-medium leading-5 text-white/58">
-            {rewardReady
-              ? customer.cafe.rewardDescription?.trim() ||
-                "Good coffee leads to good days"
-              : customer.cafe.eligiblePurchaseDescription?.trim() ||
-                "Good coffee leads to good days"}
-          </p>
+          {configuredDescription ? (
+            <div className="relative mt-5 rounded-[16px] border border-white/10 bg-white/[0.05] px-4 py-3">
+              <p className="text-center text-[12px] font-medium leading-5 text-white/75">
+                {configuredDescription}
+              </p>
+            </div>
+          ) : (
+            <p className="relative mt-5 text-center text-[9px] font-medium uppercase tracking-[0.42em] text-white/42">
+              Good coffee leads to good days
+            </p>
+          )}
         </section>
 
         <button
