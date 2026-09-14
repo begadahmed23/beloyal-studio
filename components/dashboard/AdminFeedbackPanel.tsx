@@ -65,6 +65,8 @@ export default function AdminFeedbackPanel() {
   const [data, setData] = useState<FeedbackData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] =
+    useState<"RATINGS" | "COMMENTS">("RATINGS");
 
   const load = useCallback(async () => {
     try {
@@ -205,136 +207,163 @@ export default function AdminFeedbackPanel() {
           {error}
         </p>
       ) : data ? (
-        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        <div className="mt-5">
           <div
-            className="overflow-hidden rounded-[20px] border"
-            style={{ borderColor: theme.border }}
+            className="inline-flex rounded-[16px] border p-1"
+            style={{
+              borderColor: theme.border,
+              backgroundColor: theme.surfaceRaised,
+            }}
           >
-            <div
-              className="border-b px-4 py-3"
-              style={{ borderColor: theme.border }}
+            <button
+              type="button"
+              onClick={() => setActiveTab("RATINGS")}
+              className="rounded-[12px] px-4 py-2 text-xs font-semibold transition"
+              style={{
+                backgroundColor:
+                  activeTab === "RATINGS"
+                    ? theme.accent
+                    : "transparent",
+                color:
+                  activeTab === "RATINGS"
+                    ? theme.buttonText
+                    : theme.textSecondary,
+              }}
             >
-              <p className="text-sm font-semibold">Latest ratings</p>
-            </div>
+              Ratings ({data.summary.ratingCount})
+            </button>
 
-            <div className="max-h-[320px] overflow-y-auto">
-              {data.ratings.length === 0 ? (
-                <p
-                  className="p-5 text-sm"
-                  style={{ color: theme.textMuted }}
-                >
-                  No ratings yet.
-                </p>
-              ) : (
-                data.ratings.map((row) => (
-                  <div
-                    key={row.id}
-                    className="border-b px-4 py-3 last:border-b-0"
-                    style={{ borderColor: theme.border }}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-medium">
-                          {row.customer.name}
-                        </p>
-                        <p
-                          className="mt-0.5 text-[10px]"
-                          style={{ color: theme.textMuted }}
-                        >
-                          {row.customer.memberNumber}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: 5 }).map((_, index) => (
-                          <Star
-                            key={index}
-                            size={13}
-                            fill={
-                              index < row.rating
-                                ? "currentColor"
-                                : "none"
-                            }
-                            style={{
-                              color:
-                                index < row.rating
-                                  ? theme.accent
-                                  : theme.textMuted,
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <p
-                      className="mt-2 text-[10px]"
-                      style={{ color: theme.textMuted }}
-                    >
-                      {formatDate(row.updatedAt)}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab("COMMENTS")}
+              className="rounded-[12px] px-4 py-2 text-xs font-semibold transition"
+              style={{
+                backgroundColor:
+                  activeTab === "COMMENTS"
+                    ? theme.accent
+                    : "transparent",
+                color:
+                  activeTab === "COMMENTS"
+                    ? theme.buttonText
+                    : theme.textSecondary,
+              }}
+            >
+              Comments ({data.summary.commentCount})
+            </button>
           </div>
 
           <div
-            className="overflow-hidden rounded-[20px] border"
+            className="mt-4 overflow-hidden rounded-[20px] border"
             style={{ borderColor: theme.border }}
           >
-            <div
-              className="border-b px-4 py-3"
-              style={{ borderColor: theme.border }}
-            >
-              <p className="text-sm font-semibold">Latest comments</p>
-            </div>
-
-            <div className="max-h-[320px] overflow-y-auto">
-              {data.comments.length === 0 ? (
-                <p
-                  className="p-5 text-sm"
-                  style={{ color: theme.textMuted }}
-                >
-                  No written feedback yet.
-                </p>
-              ) : (
-                data.comments.map((row) => (
-                  <div
-                    key={row.id}
-                    className="border-b px-4 py-3 last:border-b-0"
-                    style={{ borderColor: theme.border }}
+            {activeTab === "RATINGS" ? (
+              <div className="max-h-[360px] overflow-y-auto">
+                {data.ratings.length === 0 ? (
+                  <p
+                    className="p-5 text-sm"
+                    style={{ color: theme.textMuted }}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-medium">
-                          {row.customer.name}
-                        </p>
-                        <p
-                          className="mt-0.5 text-[10px]"
-                          style={{ color: theme.textMuted }}
-                        >
-                          {row.customer.memberNumber}
-                        </p>
+                    No ratings yet.
+                  </p>
+                ) : (
+                  data.ratings.map((row) => (
+                    <div
+                      key={row.id}
+                      className="border-b px-4 py-3 last:border-b-0"
+                      style={{ borderColor: theme.border }}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-medium">
+                            {row.customer.name}
+                          </p>
+                          <p
+                            className="mt-0.5 text-[10px]"
+                            style={{ color: theme.textMuted }}
+                          >
+                            {row.customer.memberNumber}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: 5 }).map((_, index) => (
+                            <Star
+                              key={index}
+                              size={13}
+                              fill={
+                                index < row.rating
+                                  ? "currentColor"
+                                  : "none"
+                              }
+                              style={{
+                                color:
+                                  index < row.rating
+                                    ? theme.accent
+                                    : theme.textMuted,
+                              }}
+                            />
+                          ))}
+                        </div>
                       </div>
 
-                      <span
-                        className="text-[10px]"
+                      <p
+                        className="mt-2 text-[10px]"
                         style={{ color: theme.textMuted }}
                       >
-                        {formatDate(row.createdAt)}
-                      </span>
+                        {formatDate(row.updatedAt)}
+                      </p>
                     </div>
-
-                    <p
-                      className="mt-2 text-sm leading-6"
-                      style={{ color: theme.textSecondary }}
+                  ))
+                )}
+              </div>
+            ) : (
+              <div className="max-h-[360px] overflow-y-auto">
+                {data.comments.length === 0 ? (
+                  <p
+                    className="p-5 text-sm"
+                    style={{ color: theme.textMuted }}
+                  >
+                    No written feedback yet.
+                  </p>
+                ) : (
+                  data.comments.map((row) => (
+                    <div
+                      key={row.id}
+                      className="border-b px-4 py-3 last:border-b-0"
+                      style={{ borderColor: theme.border }}
                     >
-                      {row.comment}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-medium">
+                            {row.customer.name}
+                          </p>
+                          <p
+                            className="mt-0.5 text-[10px]"
+                            style={{ color: theme.textMuted }}
+                          >
+                            {row.customer.memberNumber}
+                          </p>
+                        </div>
+
+                        <span
+                          className="text-[10px]"
+                          style={{ color: theme.textMuted }}
+                        >
+                          {formatDate(row.createdAt)}
+                        </span>
+                      </div>
+
+                      <p
+                        className="mt-2 text-sm leading-6"
+                        style={{ color: theme.textSecondary }}
+                      >
+                        {row.comment}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </div>
       ) : null}
