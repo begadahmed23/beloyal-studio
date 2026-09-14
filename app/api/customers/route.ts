@@ -20,7 +20,8 @@ const createCustomerSchema = z
         100,
         "Customer name must be 100 characters or fewer.",
       ),
-    phone: z.string(),
+    phone: z.string().optional(),
+    instagram: z.string().optional(),
     birthday: z.string(),
   })
   .strict();
@@ -43,6 +44,15 @@ function jsonResponse(
 function cleanPhone(value: unknown) {
   return typeof value === "string"
     ? value.replace(/\D/g, "")
+    : "";
+}
+
+function cleanInstagram(value: unknown) {
+  return typeof value === "string"
+    ? value
+        .trim()
+        .replace(/^@+/, "")
+        .toLowerCase()
     : "";
 }
 
@@ -488,16 +498,6 @@ export async function POST(
       );
     }
 
-    if (access.authData.isCashier) {
-      return jsonResponse(
-        {
-          message:
-            "Only café administrators can create customers manually.",
-        },
-        403,
-      );
-    }
-
     if (
       !access.authData.cafeId
     ) {
@@ -545,17 +545,44 @@ export async function POST(
       validationResult.data.phone,
     );
 
+    const instagram = cleanInstagram(
+      validationResult.data.instagram,
+    );
+
     const birthday =
       parseBirthday(
         validationResult.data
           .birthday,
       );
 
-    if (phone.length !== 11) {
+    if (!phone && !instagram) {
+      return jsonResponse(
+        {
+          message:
+            "Enter a phone number or Instagram username.",
+        },
+        400,
+      );
+    }
+
+    if (phone && phone.length !== 11) {
       return jsonResponse(
         {
           message:
             "Phone number must contain exactly 11 digits.",
+        },
+        400,
+      );
+    }
+
+    if (
+      instagram &&
+      !/^[a-z0-9._]{1,30}$/.test(instagram)
+    ) {
+      return jsonResponse(
+        {
+          message:
+            "Enter a valid Instagram username.",
         },
         400,
       );
@@ -578,18 +605,30 @@ export async function POST(
       await prisma.customer.findFirst({
         where: {
           cafeId,
-          phone,
+          OR: [
+            ...(phone ? [{ phone }] : []),
+            ...(instagram ? [{ instagram }] : []),
+          ],
         },
         select: {
           id: true,
+          phone: true,
+          instagram: true,
         },
       });
 
     if (existingCustomer) {
+      const duplicateInstagram =
+        Boolean(
+          instagram &&
+            existingCustomer.instagram === instagram,
+        );
+
       return jsonResponse(
         {
-          message:
-            "A member with this phone number already exists.",
+          message: duplicateInstagram
+            ? "A member with this Instagram username already exists."
+            : "A member with this phone number already exists.",
         },
         409,
       );
@@ -622,7 +661,8 @@ export async function POST(
                 ).toString("hex"),
 
               name,
-              phone,
+              phone: phone || null,
+              instagram: instagram || null,
               birthday,
             },
 
@@ -632,6 +672,7 @@ export async function POST(
               publicToken: true,
               name: true,
               phone: true,
+              instagram: true,
               birthday: true,
               stamps: true,
 
@@ -676,6 +717,22 @@ export async function POST(
             {
               message:
                 "A member with this phone number already exists.",
+            },
+            409,
+          );
+        }
+
+        if (
+          fields.some((field) =>
+            field
+              .toLowerCase()
+              .includes("instagram"),
+          )
+        ) {
+          return jsonResponse(
+            {
+              message:
+                "A member with this Instagram username already exists.",
             },
             409,
           );
