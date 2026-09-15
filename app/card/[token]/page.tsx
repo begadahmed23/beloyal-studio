@@ -909,30 +909,30 @@ export default function DigitalCardPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#071A33] px-6 text-white">
+      <main className="flex min-h-screen items-center justify-center bg-[#F7F7F5] px-6 text-[#111111]">
         <div className="w-full max-w-[250px] text-center">
           <div className="relative mx-auto h-20 w-20">
-            <div className="beloyal-loader-ring absolute inset-0 rounded-full border border-white/15" />
-            <div className="beloyal-loader-ring beloyal-loader-ring-delayed absolute inset-[7px] rounded-full border border-white/20" />
-            <div className="absolute inset-[14px] flex items-center justify-center rounded-full bg-white text-[#0B2343]">
+            <div className="beloyal-loader-ring absolute inset-0 rounded-full border border-black/15" />
+            <div className="beloyal-loader-ring beloyal-loader-ring-delayed absolute inset-[7px] rounded-full border border-black/20" />
+            <div className="absolute inset-[14px] flex items-center justify-center rounded-full bg-[#111111] text-white shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
               <span className="text-[20px] font-semibold tracking-[-0.07em]">
                 B
               </span>
             </div>
           </div>
 
-          <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.32em] text-white/50">
+          <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.32em] text-black/45">
             BeLoyal
           </p>
 
-          <p className="mt-2 text-sm font-medium text-white/85">
+          <p className="mt-2 text-sm font-medium text-black/80">
             Your loyalty card
           </p>
 
           <div className="mt-5 flex items-center justify-center gap-1.5">
-            <span className="beloyal-loader-dot h-1.5 w-1.5 rounded-full bg-white/75" />
-            <span className="beloyal-loader-dot h-1.5 w-1.5 rounded-full bg-white/75 [animation-delay:140ms]" />
-            <span className="beloyal-loader-dot h-1.5 w-1.5 rounded-full bg-white/75 [animation-delay:280ms]" />
+            <span className="beloyal-loader-dot h-1.5 w-1.5 rounded-full bg-black/65" />
+            <span className="beloyal-loader-dot h-1.5 w-1.5 rounded-full bg-black/65 [animation-delay:140ms]" />
+            <span className="beloyal-loader-dot h-1.5 w-1.5 rounded-full bg-black/65 [animation-delay:280ms]" />
           </div>
         </div>
 
