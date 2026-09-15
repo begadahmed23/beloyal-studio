@@ -15,6 +15,7 @@ import {
   Scissors,
   Share2,
   Trash2,
+  X,
 } from "lucide-react";
 
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
@@ -655,87 +656,127 @@ export default function MemberCard({
         }
       >
         <DialogContent
-          className="fixed left-1/2 top-1/2 z-50 max-h-[90vh] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto border p-0 shadow-2xl"
+          showCloseButton={false}
+          className="fixed bottom-0 left-0 top-auto z-50 flex max-h-[calc(100dvh-0.5rem)] w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-b-none rounded-t-[28px] border p-0 shadow-2xl sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[90vh] sm:w-[calc(100%-2rem)] sm:max-w-xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[28px]"
           style={{
             borderColor: theme.border,
             backgroundColor:
               theme.surface,
             color: theme.textPrimary,
-            borderRadius:
-              theme.radiusLarge,
           }}
         >
-          <div className="absolute right-14 top-4 z-50 flex gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                setDeleteOpen(true)
-              }
-              className="flex h-9 items-center gap-2 border px-3 text-sm font-semibold transition hover:opacity-80"
-              style={{
-                borderColor:
-                  `${theme.danger}55`,
-                backgroundColor:
-                  `${theme.danger}18`,
-                color: theme.danger,
-                borderRadius:
-                  "10px",
-              }}
-            >
-              <Trash2 size={15} />
-              Delete
-            </button>
-
-            <button
-              type="button"
-              onClick={
-                openEditDialog
-              }
-              className="flex h-9 items-center gap-2 px-4 text-sm font-semibold transition hover:opacity-90"
-              style={{
-                backgroundColor:
-                  theme.accent,
-                color:
-                  theme.buttonText,
-                borderRadius:
-                  "10px",
-              }}
-            >
-              <Pencil size={15} />
-              Edit
-            </button>
-          </div>
-
           <div
-            className="border-b px-6 py-5 pr-64"
+            className="shrink-0 border-b px-4 pb-4 pt-3 sm:px-6 sm:py-5"
             style={{
               borderColor:
                 theme.border,
             }}
           >
             <div
-              className="flex items-center gap-2 text-xs font-medium"
+              className="mx-auto mb-3 h-1 w-10 rounded-full sm:hidden"
               style={{
-                color:
-                  theme.textSecondary,
+                backgroundColor:
+                  theme.border,
               }}
-            >
-              <Hash size={13} />
-              {customer.memberNumber}
-            </div>
+            />
 
-            <DialogTitle
-              className="mt-2 text-2xl font-semibold"
-              style={{
-                color:
-                  theme.textPrimary,
-              }}
-            >
-              {customer.name}
-            </DialogTitle>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 pt-0.5">
+                <div
+                  className="flex items-center gap-2 text-xs font-medium"
+                  style={{
+                    color:
+                      theme.textSecondary,
+                  }}
+                >
+                  <Hash size={13} />
+                  <span className="truncate">
+                    {customer.memberNumber}
+                  </span>
+                </div>
+
+                <DialogTitle
+                  className="mt-2 break-words text-xl font-semibold leading-tight tracking-tight sm:text-2xl"
+                  style={{
+                    color:
+                      theme.textPrimary,
+                  }}
+                >
+                  {customer.name}
+                </DialogTitle>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setDeleteOpen(true)
+                  }
+                  aria-label={`Delete ${personLabel}`}
+                  className="flex h-10 w-10 items-center justify-center gap-2 border text-sm font-semibold transition active:scale-[0.97] hover:opacity-80 sm:w-auto sm:px-3"
+                  style={{
+                    borderColor:
+                      `${theme.danger}55`,
+                    backgroundColor:
+                      `${theme.danger}18`,
+                    color: theme.danger,
+                    borderRadius:
+                      "12px",
+                  }}
+                >
+                  <Trash2 size={16} />
+                  <span className="sr-only sm:not-sr-only">
+                    Delete
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={
+                    openEditDialog
+                  }
+                  aria-label={`Edit ${personLabel}`}
+                  className="flex h-10 w-10 items-center justify-center gap-2 text-sm font-semibold transition active:scale-[0.97] hover:opacity-90 sm:w-auto sm:px-4"
+                  style={{
+                    backgroundColor:
+                      theme.accent,
+                    color:
+                      theme.buttonText,
+                    borderRadius:
+                      "12px",
+                  }}
+                >
+                  <Pencil size={16} />
+                  <span className="sr-only sm:not-sr-only">
+                    Edit
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setProfileOpen(false)
+                  }
+                  aria-label="Close customer details"
+                  className="flex h-10 w-10 items-center justify-center border transition active:scale-[0.97] hover:opacity-80"
+                  style={{
+                    borderColor:
+                      theme.border,
+                    backgroundColor:
+                      theme.surfaceRaised,
+                    color:
+                      theme.textSecondary,
+                    borderRadius:
+                      "12px",
+                  }}
+                >
+                  <X size={17} />
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-5 px-6 pb-6 pt-5">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pb-6">
             <div className="grid gap-3 sm:grid-cols-2">
               <div
                 className="border p-4"
@@ -760,7 +801,7 @@ export default function MemberCard({
                 </div>
 
                 <p
-                  className="mt-2 text-sm font-medium"
+                  className="mt-2 break-all text-sm font-medium"
                   style={{
                     color:
                       theme.textPrimary,
@@ -861,10 +902,10 @@ export default function MemberCard({
               </div>
 
               <div
-                className="mt-5 grid gap-2"
+                className="mt-5 grid gap-2 overflow-x-auto pb-1"
                 style={{
                   gridTemplateColumns:
-                    `repeat(${paidStampTarget}, minmax(0, 1fr))`,
+                    `repeat(${paidStampTarget}, minmax(44px, 1fr))`,
                 }}
               >
                 {Array.from({
