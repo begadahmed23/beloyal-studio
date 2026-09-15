@@ -21,9 +21,6 @@ export default function KatoMark({
       className={className}
       style={{
         overflow: "visible",
-        filter: active
-          ? "drop-shadow(0 0 11px rgba(255,255,255,0.95))"
-          : "none",
       }}
     >
       <path
