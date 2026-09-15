@@ -1,34 +1,34 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 import BirthdayRewardsSettings from "@/components/settings/BirthdayRewardsSettings";
 import CafeSettingsForm from "@/components/settings/CafeSettingsForm";
 import StaffManagementPanel from "@/components/staff/StaffManagementPanel";
-import { requireAuth } from "@/lib/require-auth";
+import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
-export default async function SettingsPage() {
-  const authData = await requireAuth(await headers());
+export default function SettingsPage() {
+  const router = useRouter();
+  const {
+    accountEmail,
+    userRole,
+  } = useCafeTheme();
 
-  if (!authData) {
-    redirect("/login");
-  }
+  useEffect(() => {
+    if (userRole === "CASHIER") {
+      router.replace("/dashboard");
+    }
+  }, [router, userRole]);
 
-  if (authData.isCashier) {
-    redirect("/dashboard");
-  }
-
-  if (
-    authData.isSuperAdmin ||
-    !authData.cafe ||
-    !authData.cafeId
-  ) {
-    redirect("/studio");
+  if (userRole === "CASHIER") {
+    return null;
   }
 
   return (
     <div className="space-y-7">
       <CafeSettingsForm
-        accountEmail={authData.user.email}
+        accountEmail={accountEmail}
       />
       <BirthdayRewardsSettings />
       <StaffManagementPanel
