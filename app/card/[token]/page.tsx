@@ -909,47 +909,75 @@ export default function DigitalCardPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F7F9FB] px-6 text-[#102B49]">
-        <div className="w-full max-w-[220px] text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[16px] border border-[#E3E8EE] bg-white">
-            <span className="text-[17px] font-semibold tracking-[-0.06em]">
-              B
-            </span>
+      <main className="flex min-h-screen items-center justify-center bg-[#071A33] px-6 text-white">
+        <div className="w-full max-w-[250px] text-center">
+          <div className="relative mx-auto h-20 w-20">
+            <div className="beloyal-loader-ring absolute inset-0 rounded-full border border-white/15" />
+            <div className="beloyal-loader-ring beloyal-loader-ring-delayed absolute inset-[7px] rounded-full border border-white/20" />
+            <div className="absolute inset-[14px] flex items-center justify-center rounded-full bg-white text-[#0B2343]">
+              <span className="text-[20px] font-semibold tracking-[-0.07em]">
+                B
+              </span>
+            </div>
           </div>
 
-          <p className="mt-4 text-sm font-medium">
-            Getting your card ready
+          <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.32em] text-white/50">
+            BeLoyal
           </p>
 
-          <div className="mx-auto mt-4 h-[2px] w-20 overflow-hidden rounded-full bg-[#DDE4EB]">
-            <div className="beloyal-loader-line h-full w-1/3 rounded-full bg-[#102B49]" />
+          <p className="mt-2 text-sm font-medium text-white/85">
+            Your loyalty card
+          </p>
+
+          <div className="mt-5 flex items-center justify-center gap-1.5">
+            <span className="beloyal-loader-dot h-1.5 w-1.5 rounded-full bg-white/75" />
+            <span className="beloyal-loader-dot h-1.5 w-1.5 rounded-full bg-white/75 [animation-delay:140ms]" />
+            <span className="beloyal-loader-dot h-1.5 w-1.5 rounded-full bg-white/75 [animation-delay:280ms]" />
           </div>
         </div>
 
         <style jsx global>{`
-          @keyframes beloyal-loader-line {
+          @keyframes beloyal-loader-ring {
             0% {
-              transform: translateX(-120%);
+              opacity: 0.15;
+              transform: scale(0.82);
+            }
+            55% {
+              opacity: 0.7;
             }
             100% {
-              transform: translateX(320%);
+              opacity: 0;
+              transform: scale(1.2);
             }
           }
 
-          .beloyal-loader-line {
-            animation: beloyal-loader-line 1.15s ease-in-out infinite;
+          @keyframes beloyal-loader-dot {
+            0%, 100% {
+              opacity: 0.3;
+              transform: translateY(0);
+            }
+            50% {
+              opacity: 1;
+              transform: translateY(-3px);
+            }
           }
 
-          @media (prefers-color-scheme: dark) {
-            main {
-              color-scheme: light;
-            }
+          .beloyal-loader-ring {
+            animation: beloyal-loader-ring 1.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+          }
+
+          .beloyal-loader-ring-delayed {
+            animation-delay: 300ms;
+          }
+
+          .beloyal-loader-dot {
+            animation: beloyal-loader-dot 900ms ease-in-out infinite;
           }
 
           @media (prefers-reduced-motion: reduce) {
-            .beloyal-loader-line {
+            .beloyal-loader-ring,
+            .beloyal-loader-dot {
               animation: none;
-              transform: translateX(100%);
             }
           }
         `}</style>
