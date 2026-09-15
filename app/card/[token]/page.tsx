@@ -54,6 +54,106 @@ type FeedbackResponse = {
   error?: string;
 };
 
+type LoaderTheme = {
+  background: string;
+  foreground: string;
+};
+
+const DEFAULT_LOADER_THEME: LoaderTheme = {
+  background: "#ECECEA",
+  foreground: "#111111",
+};
+
+function getLoaderTheme(
+  customer: Customer,
+): LoaderTheme {
+  const cafe = customer.cafe;
+
+  const normalizedCafeName = cafe.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  const isKato =
+    cafe.slug.toLowerCase().includes("kato") ||
+    normalizedCafeName.includes("kato");
+
+  const isBarbershop =
+    cafe.businessType === "BARBERSHOP";
+
+  const isBrickBarber =
+    isBarbershop &&
+    cafe.theme === "COFFEE_CLASSIC";
+
+  const [
+    barberPrimaryColor,
+    barberSecondaryColor,
+    barberBackgroundColor,
+  ] = getBusinessThemeColors(
+    cafe.theme,
+    cafe.businessType,
+  );
+
+  const primaryColor = normalizeHex(
+    isKato
+      ? "#0B2343"
+      : isBarbershop
+        ? barberPrimaryColor
+        : cafe.primaryColor,
+    "#2563EB",
+  );
+
+  const secondaryColor = normalizeHex(
+    isKato
+      ? "#5E7188"
+      : isBarbershop
+        ? barberSecondaryColor
+        : cafe.secondaryColor,
+    "#60A5FA",
+  );
+
+  const backgroundColor = normalizeHex(
+    isKato
+      ? "#F4F7FA"
+      : isBarbershop
+        ? barberBackgroundColor
+        : cafe.backgroundColor,
+    "#0B1220",
+  );
+
+  const foreground =
+    getReadableText(backgroundColor);
+
+  const background = isKato
+    ? cafe.theme === "DARK_LUXURY"
+      ? "linear-gradient(180deg,#06172B 0%,#0A223E 100%)"
+      : "linear-gradient(180deg,#F7F9FB 0%,#EEF3F7 100%)"
+    : `
+        radial-gradient(
+          circle at 50% -10%,
+          ${withAlpha(
+            primaryColor,
+            isBrickBarber ? 0.2 : 0.42,
+          )} 0%,
+          transparent 38%
+        ),
+        radial-gradient(
+          circle at 100% 55%,
+          ${withAlpha(
+            secondaryColor,
+            isBrickBarber ? 0.12 : 0.22,
+          )} 0%,
+          transparent 42%
+        ),
+        ${backgroundColor}
+      `;
+
+  return {
+    background,
+    foreground,
+  };
+}
+
 export default function DigitalCardPage() {
   const params = useParams<{ token: string }>();
   const searchParams = useSearchParams();
@@ -78,6 +178,11 @@ export default function DigitalCardPage() {
 
   const [customer, setCustomer] =
     useState<Customer | null>(null);
+
+  const [loaderTheme, setLoaderTheme] =
+    useState<LoaderTheme>(
+      DEFAULT_LOADER_THEME,
+    );
 
   const [loading, setLoading] =
     useState(true);
@@ -216,6 +321,26 @@ export default function DigitalCardPage() {
         const incomingCustomer =
           data as Customer;
 
+        const incomingLoaderTheme =
+          getLoaderTheme(
+            incomingCustomer,
+          );
+
+        setLoaderTheme(
+          incomingLoaderTheme,
+        );
+
+        try {
+          window.localStorage.setItem(
+            `beloyal-card-loader-theme-v1:${token}`,
+            JSON.stringify(
+              incomingLoaderTheme,
+            ),
+          );
+        } catch {
+          // The card still works when storage is unavailable.
+        }
+
         const incomingRewardTarget =
           Math.max(
             incomingCustomer.cafe
@@ -341,6 +466,65 @@ export default function DigitalCardPage() {
     },
     [token],
   );
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+
+    try {
+      const cachedTheme =
+        window.localStorage.getItem(
+          `beloyal-card-loader-theme-v1:${token}`,
+        );
+
+      if (!cachedTheme) {
+        return;
+      }
+
+      const parsedTheme =
+        JSON.parse(cachedTheme) as
+          Partial<LoaderTheme>;
+
+      const background =
+        parsedTheme.background?.trim();
+
+      const foreground =
+        normalizeHex(
+          parsedTheme.foreground,
+          "",
+        );
+
+      const backgroundIsSafe =
+        Boolean(background) &&
+        !background?.toLowerCase().includes(
+          "url(",
+        ) &&
+        (
+          /^#[0-9a-f]{6}$/i.test(
+            background ?? "",
+          ) ||
+          background?.includes(
+            "gradient(",
+          )
+        );
+
+      if (
+        backgroundIsSafe &&
+        foreground
+      ) {
+        setLoaderTheme({
+          background:
+            background as string,
+          foreground,
+        });
+      }
+    } catch {
+      window.localStorage.removeItem(
+        `beloyal-card-loader-theme-v1:${token}`,
+      );
+    }
+  }, [token]);
 
   useEffect(() => {
     let pollingTimeout:
@@ -909,30 +1093,93 @@ export default function DigitalCardPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#ECECEA] px-6 text-[#111111]">
+      <main
+        className="flex min-h-screen items-center justify-center px-6 transition-colors duration-500"
+        style={{
+          background:
+            loaderTheme.background,
+          color:
+            loaderTheme.foreground,
+        }}
+      >
         <div className="w-full max-w-[250px] text-center">
           <div className="relative mx-auto h-20 w-20">
-            <div className="beloyal-loader-ring absolute inset-0 rounded-full border border-black/15" />
-            <div className="beloyal-loader-ring beloyal-loader-ring-delayed absolute inset-[7px] rounded-full border border-black/20" />
-            <div className="absolute inset-[14px] flex items-center justify-center rounded-full bg-[#111111] text-white shadow-[0_10px_30px_rgba(0,0,0,0.12)]">
+            <div
+              className="beloyal-loader-ring absolute inset-0 rounded-full border"
+              style={{
+                borderColor: withAlpha(
+                  loaderTheme.foreground,
+                  0.15,
+                ),
+              }}
+            />
+            <div
+              className="beloyal-loader-ring beloyal-loader-ring-delayed absolute inset-[7px] rounded-full border"
+              style={{
+                borderColor: withAlpha(
+                  loaderTheme.foreground,
+                  0.2,
+                ),
+              }}
+            />
+            <div
+              className="absolute inset-[14px] flex items-center justify-center rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.12)]"
+              style={{
+                backgroundColor:
+                  loaderTheme.foreground,
+                color: getReadableText(
+                  loaderTheme.foreground,
+                ),
+              }}
+            >
               <span className="text-[20px] font-semibold tracking-[-0.07em]">
                 B
               </span>
             </div>
           </div>
 
-          <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.32em] text-black/45">
+          <p
+            className="mt-6 text-[11px] font-semibold uppercase tracking-[0.32em]"
+            style={{
+              color: withAlpha(
+                loaderTheme.foreground,
+                0.5,
+              ),
+            }}
+          >
             BeLoyal
           </p>
 
-          <p className="mt-2 text-sm font-medium text-black/80">
+          <p
+            className="mt-2 text-sm font-medium"
+            style={{
+              color: withAlpha(
+                loaderTheme.foreground,
+                0.82,
+              ),
+            }}
+          >
             Your loyalty card
           </p>
 
           <div className="mt-5 flex items-center justify-center gap-1.5">
-            <span className="beloyal-loader-dot h-1.5 w-1.5 rounded-full bg-black/65" />
-            <span className="beloyal-loader-dot h-1.5 w-1.5 rounded-full bg-black/65 [animation-delay:140ms]" />
-            <span className="beloyal-loader-dot h-1.5 w-1.5 rounded-full bg-black/65 [animation-delay:280ms]" />
+            {[0, 140, 280].map(
+              (delay) => (
+                <span
+                  key={delay}
+                  className="beloyal-loader-dot h-1.5 w-1.5 rounded-full"
+                  style={{
+                    animationDelay:
+                      `${delay}ms`,
+                    backgroundColor:
+                      withAlpha(
+                        loaderTheme.foreground,
+                        0.68,
+                      ),
+                  }}
+                />
+              ),
+            )}
           </div>
         </div>
 
