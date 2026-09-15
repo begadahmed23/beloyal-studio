@@ -323,12 +323,12 @@ export default function CashierMemberList() {
               <div
                 className={
                   isKato
-                    ? "mt-5 grid gap-1"
-                    : "mt-5 grid gap-2"
+                    ? "mt-5 grid gap-1 overflow-x-auto pb-1"
+                    : "mt-5 grid gap-2 overflow-x-auto pb-1"
                 }
                 style={{
                   gridTemplateColumns:
-                    `repeat(${data.reward.target}, minmax(0, 1fr))`,
+                    `repeat(${data.reward.target}, minmax(44px, 1fr))`,
                 }}
               >
                 {Array.from({
@@ -449,7 +449,7 @@ export default function CashierMemberList() {
                       "/api/customers/stamp",
                     )
                   }
-                  className="flex h-11 items-center justify-center gap-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45"
+                  className="flex h-11 touch-manipulation items-center justify-center gap-2 text-sm font-semibold transition duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100"
                   style={{
                     backgroundColor: theme.accent,
                     color: theme.buttonText,
@@ -476,7 +476,7 @@ export default function CashierMemberList() {
                       "/api/customers/redeem",
                     )
                   }
-                  className="flex h-11 items-center justify-center gap-2 border text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex h-11 touch-manipulation items-center justify-center gap-2 border text-sm font-semibold transition duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
                   style={{
                     borderColor: member.rewardReady
                       ? `${theme.success}70`
