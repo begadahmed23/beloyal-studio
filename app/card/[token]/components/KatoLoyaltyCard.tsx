@@ -227,7 +227,7 @@ export default function KatoLoyaltyCard({
                   key={index}
                   className={
                     "relative flex min-w-0 items-center justify-center py-1 transition-[transform,opacity] duration-500 ease-out " +
-                    (isNew ? "kato-stamp-pop" : "scale-100")
+                    (isNew ? "kato-stamp-glow" : "scale-100")
                   }
                   style={{
                     color: rewardSlotReady
@@ -432,28 +432,27 @@ export default function KatoLoyaltyCard({
       </p>
 
       <style jsx global>{`
-        @keyframes kato-stamp-pop {
+        @keyframes kato-stamp-glow {
           0% {
-            opacity: 0.35;
-            transform: scale(0.72);
+            filter: drop-shadow(0 0 0 rgba(255,255,255,0));
           }
-          58% {
-            opacity: 1;
-            transform: scale(1.18);
+          45% {
+            filter:
+              drop-shadow(0 0 7px rgba(255,255,255,0.92))
+              drop-shadow(0 0 16px rgba(233,230,216,0.72));
           }
           100% {
-            opacity: 1;
-            transform: scale(1);
+            filter: drop-shadow(0 0 0 rgba(255,255,255,0));
           }
         }
 
-        .kato-stamp-pop {
-          animation: kato-stamp-pop 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
-          will-change: transform, opacity;
+        .kato-stamp-glow {
+          animation: kato-stamp-glow 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
+          will-change: filter;
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .kato-stamp-pop {
+          .kato-stamp-glow {
             animation: none;
           }
         }
