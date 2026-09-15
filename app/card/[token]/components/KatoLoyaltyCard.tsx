@@ -227,7 +227,7 @@ export default function KatoLoyaltyCard({
                   key={index}
                   className={
                     "relative flex min-w-0 items-center justify-center py-1 transition-[transform,opacity] duration-500 ease-out " +
-                    (isNew ? "scale-[1.16]" : "scale-100")
+                    (isNew ? "kato-stamp-pop" : "scale-100")
                   }
                   style={{
                     color: rewardSlotReady
@@ -238,18 +238,6 @@ export default function KatoLoyaltyCard({
                     opacity: active || rewardSlotReady ? 1 : 0.72,
                   }}
                 >
-                  {isNew && (
-                    <span
-                      aria-hidden="true"
-                      className="kato-stamp-ripple pointer-events-none absolute h-11 w-11 rounded-full border"
-                      style={{
-                        borderColor: isDark
-                          ? "rgba(233,230,216,0.9)"
-                          : "rgba(255,255,255,0.98)",
-                      }}
-                    />
-                  )}
-
                   <KatoMark
                     active={active}
                     size={39}
@@ -444,32 +432,28 @@ export default function KatoLoyaltyCard({
       </p>
 
       <style jsx global>{`
-        @keyframes kato-stamp-ripple {
+        @keyframes kato-stamp-pop {
           0% {
-            opacity: 0.95;
-            transform: scale(0.55);
+            opacity: 0.35;
+            transform: scale(0.72);
           }
-          100% {
-            opacity: 0;
-            transform: scale(1.8);
-          }
-        }
-          35% {
+          58% {
             opacity: 1;
-            transform: translateY(-50%) scale(1.25);
+            transform: scale(1.18);
           }
           100% {
-            opacity: 0;
-            transform: translateY(-50%) scale(2.1);
+            opacity: 1;
+            transform: scale(1);
           }
         }
 
-        .kato-stamp-ripple {
-          animation: kato-stamp-ripple 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
+        .kato-stamp-pop {
+          animation: kato-stamp-pop 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+          will-change: transform, opacity;
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .kato-stamp-ripple {
+          .kato-stamp-pop {
             animation: none;
           }
         }
