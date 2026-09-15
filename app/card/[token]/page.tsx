@@ -908,67 +908,47 @@ export default function DigitalCardPage() {
 
   if (loading) {
     return (
-      <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#071A33] px-6 text-white">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.12),transparent_26%),radial-gradient(circle_at_50%_70%,rgba(90,147,255,0.14),transparent_34%)]" />
-
-        <div className="relative text-center">
-          <div className="beloyal-loader-mark mx-auto flex h-24 w-24 items-center justify-center rounded-[30px] border border-white/15 bg-white text-[#0B2343] shadow-[0_20px_70px_rgba(255,255,255,0.16)]">
-            <span className="text-[2rem] font-semibold tracking-[-0.08em]">
+      <main className="flex min-h-screen items-center justify-center bg-[#F7F9FB] px-6 text-[#102B49]">
+        <div className="w-full max-w-[220px] text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-[16px] border border-[#E3E8EE] bg-white">
+            <span className="text-[17px] font-semibold tracking-[-0.06em]">
               B
             </span>
           </div>
 
-          <p className="mt-7 text-[11px] font-semibold uppercase tracking-[0.32em] text-white/55">
-            BeLoyal
-          </p>
-
-          <p className="mt-2 text-sm font-medium text-white/80">
+          <p className="mt-4 text-sm font-medium">
             Getting your card ready
           </p>
 
-          <div className="mx-auto mt-6 h-[3px] w-32 overflow-hidden rounded-full bg-white/10">
-            <div className="beloyal-loader-bar h-full w-1/2 rounded-full bg-white" />
+          <div className="mx-auto mt-4 h-[2px] w-20 overflow-hidden rounded-full bg-[#DDE4EB]">
+            <div className="beloyal-loader-line h-full w-1/3 rounded-full bg-[#102B49]" />
           </div>
         </div>
 
         <style jsx global>{`
-          @keyframes beloyal-loader-mark {
-            0%, 100% {
-              transform: translateY(0) scale(1);
-              box-shadow: 0 20px 70px rgba(255,255,255,0.12);
-            }
-            50% {
-              transform: translateY(-6px) scale(1.04);
-              box-shadow: 0 24px 90px rgba(255,255,255,0.24);
-            }
-          }
-
-          @keyframes beloyal-loader-bar {
+          @keyframes beloyal-loader-line {
             0% {
-              transform: translateX(-110%);
-              opacity: 0.55;
-            }
-            50% {
-              opacity: 1;
+              transform: translateX(-120%);
             }
             100% {
-              transform: translateX(220%);
-              opacity: 0.55;
+              transform: translateX(320%);
             }
           }
 
-          .beloyal-loader-mark {
-            animation: beloyal-loader-mark 1.6s ease-in-out infinite;
+          .beloyal-loader-line {
+            animation: beloyal-loader-line 1.15s ease-in-out infinite;
           }
 
-          .beloyal-loader-bar {
-            animation: beloyal-loader-bar 1.15s ease-in-out infinite;
+          @media (prefers-color-scheme: dark) {
+            main {
+              color-scheme: light;
+            }
           }
 
           @media (prefers-reduced-motion: reduce) {
-            .beloyal-loader-mark,
-            .beloyal-loader-bar {
+            .beloyal-loader-line {
               animation: none;
+              transform: translateX(100%);
             }
           }
         `}</style>
