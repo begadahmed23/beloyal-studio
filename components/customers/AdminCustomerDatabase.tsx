@@ -402,7 +402,7 @@ export default function AdminCustomerDatabase() {
   return (
     <div className="space-y-6">
       <section
-        className="rounded-[28px] border p-6"
+        className="rounded-[28px] border p-4 sm:p-6"
         style={{
           borderColor: theme.border,
           backgroundColor: theme.surface,
@@ -418,7 +418,7 @@ export default function AdminCustomerDatabase() {
               Customer intelligence
             </p>
 
-            <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
               Customer database
             </h2>
 
@@ -435,7 +435,7 @@ export default function AdminCustomerDatabase() {
             type="button"
             onClick={exportFiltered}
             disabled={filteredCustomers.length === 0}
-            className="flex h-11 items-center justify-center gap-2 px-4 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-11 w-full touch-manipulation items-center justify-center gap-2 px-4 text-sm font-semibold transition duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 xl:w-auto"
             style={{
               backgroundColor: theme.accent,
               color: theme.buttonText,
@@ -449,7 +449,7 @@ export default function AdminCustomerDatabase() {
       </section>
 
       <section
-        className="rounded-[24px] border p-5"
+        className="rounded-[24px] border p-4 sm:p-5"
         style={{
           borderColor: theme.border,
           backgroundColor: theme.surface,
@@ -486,7 +486,7 @@ export default function AdminCustomerDatabase() {
                 setSearch(event.target.value)
               }
               placeholder="Name, phone, Instagram..."
-              className="w-full bg-transparent text-sm outline-none"
+              className="w-full bg-transparent text-base outline-none sm:text-sm"
               style={{ color: theme.textPrimary }}
             />
 
@@ -510,7 +510,7 @@ export default function AdminCustomerDatabase() {
                 event.target.value as BirthdayFilter,
               )
             }
-            className="h-11 border px-3 text-sm outline-none"
+            className="h-11 border px-3 text-base outline-none sm:text-sm"
             style={{
               borderColor: theme.inputBorder,
               backgroundColor: theme.inputBackground,
@@ -531,7 +531,7 @@ export default function AdminCustomerDatabase() {
                 event.target.value as ActivityFilter,
               )
             }
-            className="h-11 border px-3 text-sm outline-none"
+            className="h-11 border px-3 text-base outline-none sm:text-sm"
             style={{
               borderColor: theme.inputBorder,
               backgroundColor: theme.inputBackground,
@@ -555,7 +555,7 @@ export default function AdminCustomerDatabase() {
                 event.target.value as ContactFilter,
               )
             }
-            className="h-11 border px-3 text-sm outline-none"
+            className="h-11 border px-3 text-base outline-none sm:text-sm"
             style={{
               borderColor: theme.inputBorder,
               backgroundColor: theme.inputBackground,
@@ -633,7 +633,7 @@ export default function AdminCustomerDatabase() {
         }}
       >
         <div
-          className="flex items-center justify-between border-b px-5 py-4"
+          className="flex flex-col items-start gap-2 border-b px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
           style={{ borderColor: theme.border }}
         >
           <div className="flex items-center gap-2">
@@ -654,7 +654,176 @@ export default function AdminCustomerDatabase() {
           )}
         </div>
 
-        <div className="overflow-x-auto">
+        {filteredCustomers.length > 0 && (
+          <div className="space-y-3 p-4 md:hidden">
+            {filteredCustomers.map(
+              (customer) => {
+                const rewardReady =
+                  Boolean(
+                    customer.rewardEarnedAt,
+                  ) ||
+                  customer.stamps >=
+                    data.cafe
+                      .rewardTarget;
+
+                return (
+                  <article
+                    key={customer.id}
+                    className="border p-4"
+                    style={{
+                      borderColor:
+                        rewardReady
+                          ? `${theme.success}65`
+                          : theme.border,
+                      backgroundColor:
+                        rewardReady
+                          ? `${theme.success}0D`
+                          : theme.surfaceRaised,
+                      borderRadius:
+                        theme.radiusMedium,
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="break-words font-semibold">
+                          {customer.name}
+                        </p>
+                        <p
+                          className="mt-1 text-xs"
+                          style={{
+                            color:
+                              theme.textMuted,
+                          }}
+                        >
+                          {
+                            customer.memberNumber
+                          }
+                        </p>
+                      </div>
+
+                      {rewardReady && (
+                        <span
+                          className="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold"
+                          style={{
+                            backgroundColor:
+                              `${theme.success}18`,
+                            color:
+                              theme.success,
+                          }}
+                        >
+                          Reward ready
+                        </span>
+                      )}
+                    </div>
+
+                    <div
+                      className="mt-3 border-t pt-3 text-sm"
+                      style={{
+                        borderColor:
+                          theme.border,
+                      }}
+                    >
+                      <p className="break-all">
+                        {customer.phone ||
+                          "No phone"}
+                      </p>
+                      <p
+                        className="mt-1 break-all text-xs"
+                        style={{
+                          color:
+                            theme.textMuted,
+                        }}
+                      >
+                        {customer.instagram
+                          ? `@${customer.instagram.replace(
+                              /^@/,
+                              "",
+                            )}`
+                          : "No Instagram"}
+                      </p>
+                    </div>
+
+                    <dl className="mt-4 grid grid-cols-2 gap-3">
+                      {[
+                        [
+                          "Birthday",
+                          formatDate(
+                            customer.birthday,
+                          ),
+                        ],
+                        [
+                          "Last visit",
+                          formatDate(
+                            customer.lastVisitAt,
+                          ),
+                        ],
+                        [
+                          "Visits",
+                          customer.totalVisits,
+                        ],
+                        [
+                          "Stamps",
+                          customer.stamps,
+                        ],
+                        [
+                          "Rewards",
+                          customer.rewardsRedeemed,
+                        ],
+                        [
+                          "Joined",
+                          formatDate(
+                            customer.createdAt,
+                          ),
+                        ],
+                      ].map(
+                        ([label, value]) => (
+                          <div
+                            key={label}
+                            className="min-w-0"
+                          >
+                            <dt
+                              className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+                              style={{
+                                color:
+                                  theme.textMuted,
+                              }}
+                            >
+                              {label}
+                            </dt>
+                            <dd className="mt-1 truncate text-sm font-medium tabular-nums">
+                              {value}
+                            </dd>
+                          </div>
+                        ),
+                      )}
+                    </dl>
+                  </article>
+                );
+              },
+            )}
+          </div>
+        )}
+
+        {filteredCustomers.length ===
+          0 && (
+          <div className="p-8 text-center md:hidden">
+            <p className="font-medium">
+              No customers match these
+              filters.
+            </p>
+            <p
+              className="mt-2 text-sm"
+              style={{
+                color: theme.textMuted,
+              }}
+            >
+              Try changing the birthday,
+              activity, or contact filters.
+            </p>
+          </div>
+        )}
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="min-w-[1050px] w-full text-left text-sm">
             <thead>
               <tr
