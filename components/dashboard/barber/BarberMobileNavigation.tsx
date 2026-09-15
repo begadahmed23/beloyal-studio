@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import {
+  usePathname,
+  useRouter,
+} from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
@@ -22,9 +25,17 @@ function isCurrentPage(pathname: string, href: string) {
 
 export default function BarberMobileNavigation() {
   const pathname = usePathname();
+  const router = useRouter();
   const { theme } = useCafeTheme();
   const [formControlFocused, setFormControlFocused] =
     useState(false);
+  const [
+    pendingNavigation,
+    setPendingNavigation,
+  ] = useState<{
+    href: string;
+    fromPathname: string;
+  } | null>(null);
 
   useEffect(() => {
     function isFormControl(target: EventTarget | null) {
@@ -66,6 +77,16 @@ export default function BarberMobileNavigation() {
     };
   }, []);
 
+  useEffect(() => {
+    for (const item of barberNavigation) {
+      router.prefetch(item.href);
+    }
+
+    router.prefetch(
+      "/dashboard/settings",
+    );
+  }, [router]);
+
   if (formControlFocused) {
     return null;
   }
@@ -80,13 +101,50 @@ export default function BarberMobileNavigation() {
     >
       {barberNavigation.map((item) => {
         const Icon = item.icon;
-        const active = isCurrentPage(pathname, item.href);
+        const navigationPending =
+          pendingNavigation?.fromPathname ===
+            pathname &&
+          pendingNavigation.href ===
+            item.href;
+
+        const active =
+          navigationPending ||
+          isCurrentPage(
+            pathname,
+            item.href,
+          );
 
         return (
           <Link
             key={item.href}
             href={item.href}
-            className="flex min-w-0 flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-medium transition"
+            prefetch
+            aria-current={
+              isCurrentPage(
+                pathname,
+                item.href,
+              )
+                ? "page"
+                : undefined
+            }
+            onPointerDown={() =>
+              router.prefetch(item.href)
+            }
+            onClick={() => {
+              if (
+                !isCurrentPage(
+                  pathname,
+                  item.href,
+                )
+              ) {
+                setPendingNavigation({
+                  href: item.href,
+                  fromPathname:
+                    pathname,
+                });
+              }
+            }}
+            className="flex min-w-0 touch-manipulation flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-medium transition duration-150 active:scale-[0.96]"
             style={{
               backgroundColor: active
                 ? theme.accentSoft
