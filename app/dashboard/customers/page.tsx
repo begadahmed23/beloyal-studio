@@ -1,26 +1,23 @@
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 import AdminCustomerDatabase from "@/components/customers/AdminCustomerDatabase";
-import { requireAuth } from "@/lib/require-auth";
+import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
-export default async function CustomersPage() {
-  const authData = await requireAuth(await headers());
+export default function CustomersPage() {
+  const router = useRouter();
+  const { userRole } = useCafeTheme();
 
-  if (!authData) {
-    redirect("/login");
-  }
+  useEffect(() => {
+    if (userRole === "CASHIER") {
+      router.replace("/dashboard");
+    }
+  }, [router, userRole]);
 
-  if (authData.isCashier) {
-    redirect("/dashboard");
-  }
-
-  if (
-    authData.isSuperAdmin ||
-    !authData.cafe ||
-    !authData.cafeId
-  ) {
-    redirect("/studio");
+  if (userRole === "CASHIER") {
+    return null;
   }
 
   return <AdminCustomerDatabase />;
