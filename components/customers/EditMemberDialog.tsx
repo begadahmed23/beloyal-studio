@@ -142,21 +142,44 @@ export default function EditMemberDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="
-          max-h-[90vh]
-          overflow-y-auto
-          overscroll-contain
+          fixed
+          bottom-0
+          left-0
+          top-auto
+          z-50
+          flex
+          max-h-[calc(100dvh-0.5rem)]
+          w-full
+          max-w-none
+          translate-x-0
+          translate-y-0
+          flex-col
+          gap-0
+          overflow-hidden
+          rounded-b-none
+          rounded-t-[28px]
           border
           border-white/[0.08]
           bg-[#0d0d0d]
           p-0
           text-white
           shadow-[0_30px_100px_rgba(0,0,0,0.65)]
+          sm:bottom-auto
+          sm:left-1/2
+          sm:top-1/2
+          sm:max-h-[90vh]
+          sm:w-[calc(100%-2rem)]
           sm:max-w-md
+          sm:-translate-x-1/2
+          sm:-translate-y-1/2
+          sm:rounded-[28px]
           [&>button]:hidden
         "
       >
         {/* Header */}
-        <div className="border-b border-white/[0.07] px-6 py-5">
+        <div className="shrink-0 border-b border-white/[0.07] px-4 pb-4 pt-3 sm:px-6 sm:py-5">
+          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/15 sm:hidden" />
+
           <DialogHeader>
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -204,7 +227,7 @@ export default function EditMemberDialog({
         </div>
 
         {/* Form */}
-        <div className="space-y-5 px-6 py-6">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:py-6">
           <div>
             <label
               htmlFor="edit-member-name"
@@ -386,7 +409,10 @@ export default function EditMemberDialog({
                 text-sm
                 font-medium
                 text-[#c7c7c7]
+                touch-manipulation
                 transition
+                duration-150
+                active:scale-[0.98]
                 hover:border-white/[0.14]
                 hover:bg-white/[0.075]
                 hover:text-white
@@ -413,9 +439,11 @@ export default function EditMemberDialog({
                 text-sm
                 font-semibold
                 text-black
+                touch-manipulation
                 transition
+                duration-150
                 hover:bg-[#e9e9e9]
-                active:scale-[0.99]
+                active:scale-[0.98]
                 disabled:cursor-not-allowed
                 disabled:opacity-50
               "
