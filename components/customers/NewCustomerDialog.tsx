@@ -150,7 +150,7 @@ export default function NewCustomerDialog() {
           setError("");
           setOpen(true);
         }}
-        className="flex h-11 items-center justify-center gap-2 px-5 text-sm font-semibold transition hover:opacity-90"
+        className="flex h-11 w-full touch-manipulation items-center justify-center gap-2 px-5 text-sm font-semibold transition duration-150 active:scale-[0.98] hover:opacity-90 sm:w-auto"
         style={{
           backgroundColor: theme.accent,
           color: theme.buttonText,
@@ -176,20 +176,27 @@ export default function NewCustomerDialog() {
         }}
       >
         <DialogContent
-          className="max-h-[90vh] overflow-y-auto overscroll-contain border p-0 shadow-2xl sm:max-w-md"
+          className="fixed bottom-0 left-0 top-auto z-50 flex max-h-[calc(100dvh-0.5rem)] w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-b-none rounded-t-[28px] border p-0 shadow-2xl sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[90vh] sm:w-[calc(100%-2rem)] sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[28px]"
           style={{
             borderColor: theme.border,
             backgroundColor: theme.surface,
             color: theme.textPrimary,
-            borderRadius: theme.radiusLarge,
           }}
         >
           <div
-            className="border-b px-6 py-5"
+            className="shrink-0 border-b px-4 pb-4 pt-3 sm:px-6 sm:py-5"
             style={{
               borderColor: theme.border,
             }}
           >
+            <div
+              className="mx-auto mb-3 h-1 w-10 rounded-full sm:hidden"
+              style={{
+                backgroundColor:
+                  theme.border,
+              }}
+            />
+
             <DialogHeader>
               <div
                 className="mb-3 flex h-10 w-10 items-center justify-center"
@@ -222,7 +229,7 @@ export default function NewCustomerDialog() {
             </DialogHeader>
           </div>
 
-          <div className="space-y-5 px-6 pb-6 pt-5">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pb-6">
             {error && (
               <div
                 className="flex items-start gap-3 border px-4 py-3 text-sm"
@@ -404,7 +411,7 @@ export default function NewCustomerDialog() {
                 type="button"
                 onClick={() => setOpen(false)}
                 disabled={loading}
-                className="h-12 flex-1 border text-sm font-medium transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-12 flex-1 touch-manipulation border text-sm font-medium transition duration-150 active:scale-[0.98] hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
                 style={{
                   borderColor: theme.border,
                   backgroundColor: theme.surfaceRaised,
@@ -419,7 +426,7 @@ export default function NewCustomerDialog() {
                 type="button"
                 onClick={createMember}
                 disabled={loading}
-                className="h-12 flex-1 text-sm font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                className="h-12 flex-1 touch-manipulation text-sm font-semibold transition duration-150 active:scale-[0.98] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                 style={{
                   backgroundColor: theme.accent,
                   color: theme.buttonText,
