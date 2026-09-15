@@ -261,8 +261,9 @@ export default function DashboardShell({
             {userRole !== "CASHIER" && (
             <Link
               href="/dashboard/settings"
+              prefetch
               aria-label="Open settings"
-              className="flex h-10 w-10 items-center justify-center border text-sm font-medium transition hover:opacity-80 sm:w-auto sm:gap-2 sm:px-3"
+              className="flex h-10 w-10 touch-manipulation items-center justify-center border text-sm font-medium transition duration-150 active:scale-[0.96] hover:opacity-80 sm:w-auto sm:gap-2 sm:px-3"
               style={{
                 borderColor: theme.border,
                 backgroundColor: theme.surface,
