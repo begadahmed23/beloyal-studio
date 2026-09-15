@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import {
+  usePathname,
+  useRouter,
+} from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
@@ -13,9 +16,17 @@ import {
 
 export default function CafeMobileNavigation() {
   const pathname = usePathname();
+  const router = useRouter();
   const { theme, userRole } = useCafeTheme();
   const [formControlFocused, setFormControlFocused] =
     useState(false);
+  const [
+    pendingNavigation,
+    setPendingNavigation,
+  ] = useState<{
+    href: string;
+    fromPathname: string;
+  } | null>(null);
 
   useEffect(() => {
     function isFormControl(target: EventTarget | null) {
@@ -68,6 +79,28 @@ export default function CafeMobileNavigation() {
         )
       : cafeNavigation;
 
+  useEffect(() => {
+    for (const item of cafeNavigation) {
+      if (
+        userRole === "CASHIER" &&
+        item.href !== "/dashboard" &&
+        item.href !== "/dashboard/members" &&
+        item.href !== "/dashboard/scanner" &&
+        item.href !== "/dashboard/scanner/phone"
+      ) {
+        continue;
+      }
+
+      router.prefetch(item.href);
+    }
+
+    if (userRole !== "CASHIER") {
+      router.prefetch(
+        "/dashboard/settings",
+      );
+    }
+  }, [router, userRole]);
+
   if (formControlFocused) {
     return null;
   }
@@ -85,16 +118,50 @@ export default function CafeMobileNavigation() {
     >
       {navigationItems.map((item) => {
         const Icon = item.icon;
-        const active = isCafeCurrentPage(
-          pathname,
-          item.href,
-        );
+        const navigationPending =
+          pendingNavigation?.fromPathname ===
+            pathname &&
+          pendingNavigation.href ===
+            item.href;
+
+        const active =
+          navigationPending ||
+          isCafeCurrentPage(
+            pathname,
+            item.href,
+          );
 
         return (
           <Link
             key={item.href}
             href={item.href}
-            className="flex min-w-0 flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-medium transition"
+            prefetch
+            aria-current={
+              isCafeCurrentPage(
+                pathname,
+                item.href,
+              )
+                ? "page"
+                : undefined
+            }
+            onPointerDown={() =>
+              router.prefetch(item.href)
+            }
+            onClick={() => {
+              if (
+                !isCafeCurrentPage(
+                  pathname,
+                  item.href,
+                )
+              ) {
+                setPendingNavigation({
+                  href: item.href,
+                  fromPathname:
+                    pathname,
+                });
+              }
+            }}
+            className="flex min-w-0 touch-manipulation flex-col items-center gap-1 rounded-2xl px-1 py-2 text-[10px] font-medium transition duration-150 active:scale-[0.96]"
             style={{
               backgroundColor: active
                 ? theme.accentSoft
