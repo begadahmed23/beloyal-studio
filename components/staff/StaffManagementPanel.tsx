@@ -509,7 +509,7 @@ export default function StaffManagementPanel({
               setName(event.target.value)
             }
             placeholder="Name"
-            className={`h-11 border px-3 text-sm outline-none ${
+            className={`h-11 border px-3 text-base outline-none sm:text-sm ${
               themed
                 ? ""
                 : "rounded-xl border-black/[0.10] bg-white"
@@ -529,7 +529,7 @@ export default function StaffManagementPanel({
               setEmail(event.target.value)
             }
             placeholder="Email"
-            className={`h-11 border px-3 text-sm outline-none ${
+            className={`h-11 border px-3 text-base outline-none sm:text-sm ${
               themed
                 ? ""
                 : "rounded-xl border-black/[0.10] bg-white"
@@ -549,7 +549,7 @@ export default function StaffManagementPanel({
               setPassword(event.target.value)
             }
             placeholder="Temporary password"
-            className={`h-11 border px-3 text-sm outline-none ${
+            className={`h-11 border px-3 text-base outline-none sm:text-sm ${
               themed
                 ? ""
                 : "rounded-xl border-black/[0.10] bg-white"
@@ -568,7 +568,7 @@ export default function StaffManagementPanel({
               onChange={(event) =>
                 setRole(event.target.value as Role)
               }
-              className={`h-11 border px-3 text-sm outline-none ${
+              className={`h-11 border px-3 text-base outline-none sm:text-sm ${
               themed
                 ? ""
                 : "rounded-xl border-black/[0.10] bg-white"
@@ -613,7 +613,7 @@ export default function StaffManagementPanel({
           type="button"
           onClick={createAccount}
           disabled={saving}
-          className={`mt-3 flex h-11 items-center justify-center gap-2 px-4 text-sm font-semibold disabled:opacity-50 ${
+          className={`mt-3 flex h-11 w-full touch-manipulation items-center justify-center gap-2 px-4 text-sm font-semibold transition active:scale-[0.98] disabled:opacity-50 sm:w-auto ${
             themed
               ? ""
               : "rounded-xl bg-[#1D1D1F] text-white"
@@ -812,7 +812,7 @@ export default function StaffManagementPanel({
                           )
                         }
                         placeholder="New password"
-                        className="h-10 rounded-lg border border-black/[0.10] bg-white px-3 text-xs outline-none"
+                        className="h-10 rounded-lg border border-black/[0.10] bg-white px-3 text-base outline-none sm:text-xs"
                       />
                       <input
                         type="password"
@@ -823,7 +823,7 @@ export default function StaffManagementPanel({
                           )
                         }
                         placeholder="Confirm password"
-                        className="h-10 rounded-lg border border-black/[0.10] bg-white px-3 text-xs outline-none"
+                        className="h-10 rounded-lg border border-black/[0.10] bg-white px-3 text-base outline-none sm:text-xs"
                       />
                     </div>
 
@@ -896,7 +896,7 @@ export default function StaffManagementPanel({
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Search staff or customer"
-                  className="w-full bg-transparent text-xs outline-none"
+                  className="w-full bg-transparent text-base outline-none sm:text-xs"
                   style={{ color: themed ? theme!.textPrimary : undefined }}
                 />
               </div>
@@ -904,7 +904,7 @@ export default function StaffManagementPanel({
               <select
                 value={staffFilter}
                 onChange={(event) => setStaffFilter(event.target.value)}
-                className={`h-10 border px-3 text-xs ${themed ? "" : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"}`}
+                className={`h-10 border px-3 text-base sm:text-xs ${themed ? "" : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"}`}
                 style={{ ...inputStyle, borderRadius: themed ? theme!.radiusMedium : undefined }}
               >
                 <option value="ALL">All staff</option>
@@ -916,7 +916,7 @@ export default function StaffManagementPanel({
               <select
                 value={dateFilter}
                 onChange={(event) => setDateFilter(event.target.value)}
-                className={`h-10 border px-3 text-xs ${themed ? "" : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"}`}
+                className={`h-10 border px-3 text-base sm:text-xs ${themed ? "" : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"}`}
                 style={{ ...inputStyle, borderRadius: themed ? theme!.radiusMedium : undefined }}
               >
                 <option value="TODAY">Today</option>
@@ -928,7 +928,7 @@ export default function StaffManagementPanel({
               <select
                 value={actionFilter}
                 onChange={(event) => setActionFilter(event.target.value)}
-                className={`h-10 border px-3 text-xs ${themed ? "" : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"}`}
+                className={`h-10 border px-3 text-base sm:text-xs ${themed ? "" : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"}`}
                 style={{ ...inputStyle, borderRadius: themed ? theme!.radiusMedium : undefined }}
               >
                 <option value="ALL">All actions</option>
@@ -940,7 +940,7 @@ export default function StaffManagementPanel({
               <select
                 value={activityLimit}
                 onChange={(event) => setActivityLimit(Number(event.target.value))}
-                className={`h-10 border px-3 text-xs ${themed ? "" : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"}`}
+                className={`h-10 border px-3 text-base sm:text-xs ${themed ? "" : "rounded-xl border-black/[0.08] bg-[#FAFAFB]"}`}
                 style={{ ...inputStyle, borderRadius: themed ? theme!.radiusMedium : undefined }}
               >
                 {[25, 50, 100, 250, 500, 1000].map((limit) => (
