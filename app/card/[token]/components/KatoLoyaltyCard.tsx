@@ -262,21 +262,12 @@ export default function KatoLoyaltyCard({
           <div className="relative mt-7">
             <div className="h-[3px] overflow-hidden rounded-full bg-white/10">
               <div
-                className={
-                  "relative h-full rounded-full bg-[#F7F5EC] transition-[width,opacity] duration-700 ease-out " +
-                  (newStampIndex !== null ? "kato-progress-pulse" : "")
-                }
+                className="relative h-full rounded-full bg-[#F7F5EC] transition-[width,opacity] duration-700 ease-out"
                 style={{
                   width: progressPercent + "%",
                   opacity: displayStamps > 0 ? 1 : 0.72,
                 }}
               >
-                {newStampIndex !== null && (
-                  <span
-                    aria-hidden="true"
-                    className="kato-progress-spark pointer-events-none absolute right-0 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white"
-                  />
-                )}
               </div>
             </div>
 
@@ -463,27 +454,6 @@ export default function KatoLoyaltyCard({
             transform: scale(1.8);
           }
         }
-
-        @keyframes kato-progress-pulse {
-          0% {
-            opacity: 0.72;
-            transform: scaleY(1);
-          }
-          45% {
-            opacity: 1;
-            transform: scaleY(1.65);
-          }
-          100% {
-            opacity: 1;
-            transform: scaleY(1);
-          }
-        }
-
-        @keyframes kato-progress-spark {
-          0% {
-            opacity: 0;
-            transform: translateY(-50%) scale(0.4);
-          }
           35% {
             opacity: 1;
             transform: translateY(-50%) scale(1.25);
@@ -498,18 +468,8 @@ export default function KatoLoyaltyCard({
           animation: kato-stamp-ripple 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
-        .kato-progress-pulse {
-          animation: kato-progress-pulse 820ms ease-out both;
-        }
-
-        .kato-progress-spark {
-          animation: kato-progress-spark 720ms ease-out both;
-        }
-
         @media (prefers-reduced-motion: reduce) {
-          .kato-stamp-ripple,
-          .kato-progress-pulse,
-          .kato-progress-spark {
+          .kato-stamp-ripple {
             animation: none;
           }
         }
