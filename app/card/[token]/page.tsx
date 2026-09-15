@@ -122,7 +122,12 @@ function getLoaderTheme(
   );
 
   const foreground =
-    getReadableText(backgroundColor);
+    isKato &&
+    cafe.theme === "DARK_LUXURY"
+      ? "#FFFFFF"
+      : getReadableText(
+          backgroundColor,
+        );
 
   const background = isKato
     ? cafe.theme === "DARK_LUXURY"
