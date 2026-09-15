@@ -531,7 +531,7 @@ router.refresh();
                 }
                 maxLength={80}
                 required
-                className="h-12 w-full border px-4 text-sm outline-none transition focus:ring-2 focus:ring-current/20"
+                className="h-12 w-full border px-4 text-base sm:text-sm outline-none transition focus:ring-2 focus:ring-current/20"
                 style={inputStyle}
               />
             </Field>
@@ -547,7 +547,7 @@ router.refresh();
                 type="text"
                 value={cafe.slug}
                 disabled
-                className="h-12 w-full cursor-not-allowed border px-4 text-sm opacity-60"
+                className="h-12 w-full cursor-not-allowed border px-4 text-base opacity-60 sm:text-sm"
                 style={inputStyle}
               />
             </Field>
@@ -612,7 +612,7 @@ router.refresh();
                     placeholder="Or paste a direct image URL"
                     maxLength={1000}
                     disabled={uploadingLogo}
-                    className="h-12 w-full border px-4 text-sm outline-none transition focus:ring-2 focus:ring-current/20 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="h-12 w-full border px-4 text-base sm:text-sm outline-none transition focus:ring-2 focus:ring-current/20 disabled:cursor-not-allowed disabled:opacity-60"
                     style={inputStyle}
                   />
                 </div>
@@ -889,7 +889,7 @@ router.refresh();
                   )
                 }
                 required
-                className="h-12 w-full border px-4 text-sm outline-none"
+                className="h-12 w-full border px-4 text-base sm:text-sm outline-none"
                 style={inputStyle}
               />
             </Field>
@@ -913,7 +913,7 @@ router.refresh();
                 }
                 maxLength={80}
                 required
-                className="h-12 w-full border px-4 text-sm outline-none"
+                className="h-12 w-full border px-4 text-base sm:text-sm outline-none"
                 style={inputStyle}
               />
             </Field>
@@ -934,7 +934,7 @@ router.refresh();
                 placeholder="Any regular-sized drink from the menu."
                 maxLength={300}
                 rows={4}
-                className="w-full resize-none border px-4 py-3 text-sm outline-none"
+                className="w-full resize-none border px-4 py-3 text-base sm:text-sm outline-none"
                 style={inputStyle}
               />
             </Field>
@@ -969,7 +969,7 @@ router.refresh();
                 }
                 maxLength={300}
                 rows={4}
-                className="w-full resize-none border px-4 py-3 text-sm outline-none"
+                className="w-full resize-none border px-4 py-3 text-base sm:text-sm outline-none"
                 style={inputStyle}
               />
             </Field>
@@ -1002,7 +1002,7 @@ router.refresh();
                     )
                   }
                   placeholder="0.00"
-                  className="h-12 w-full border px-4 pr-16 text-sm outline-none"
+                  className="h-12 w-full border px-4 pr-16 text-base sm:text-sm outline-none"
                   style={inputStyle}
                 />
 
@@ -1250,7 +1250,7 @@ router.refresh();
                 }
                 placeholder="https://g.page/r/your-review-link/review"
                 maxLength={1000}
-                className="h-12 w-full border px-4 text-sm outline-none transition focus:ring-2 focus:ring-current/20"
+                className="h-12 w-full border px-4 text-base sm:text-sm outline-none transition focus:ring-2 focus:ring-current/20"
                 style={inputStyle}
               />
             </Field>
