@@ -909,7 +909,7 @@ export default function DigitalCardPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F7F7F5] px-6 text-[#111111]">
+      <main className="flex min-h-screen items-center justify-center bg-[#ECECEA] px-6 text-[#111111]">
         <div className="w-full max-w-[250px] text-center">
           <div className="relative mx-auto h-20 w-20">
             <div className="beloyal-loader-ring absolute inset-0 rounded-full border border-black/15" />
