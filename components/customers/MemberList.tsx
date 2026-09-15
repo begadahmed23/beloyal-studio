@@ -257,7 +257,7 @@ export default function MemberList() {
         )}
       </div>
 
-      <div className="mt-5 flex items-center justify-between gap-4">
+      <div className="mt-5 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-sm font-medium" style={{ color: theme.textSecondary }}>
             {search ? "Search results" : `Recent ${personPlural}`}
@@ -273,7 +273,7 @@ export default function MemberList() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-3">
+        <div className="flex w-full flex-wrap items-center justify-start gap-3 sm:w-auto sm:justify-end">
           {refreshing && (
             <div className="flex items-center gap-2 text-xs" style={{ color: theme.textMuted }}>
               <LoaderCircle size={13} className="animate-spin" />
@@ -286,7 +286,7 @@ export default function MemberList() {
               type="button"
               onClick={() => setBirthdaysFirst((current) => !current)}
               aria-pressed={birthdaysFirst}
-              className="flex h-9 items-center gap-2 border px-3 text-xs font-semibold transition hover:opacity-85"
+              className="flex h-9 touch-manipulation items-center gap-2 border px-3 text-xs font-semibold transition duration-150 hover:opacity-85 active:scale-[0.98]"
               style={{
                 borderColor: birthdaysFirst ? `${theme.accent}75` : theme.inputBorder,
                 backgroundColor: birthdaysFirst ? theme.accentSoft : theme.inputBackground,
@@ -316,7 +316,7 @@ export default function MemberList() {
                   current === "newest" ? "recently-stamped" : "newest",
                 )
               }
-              className="flex h-9 items-center gap-2 border px-3 text-xs font-medium transition hover:opacity-80"
+              className="flex h-9 touch-manipulation items-center gap-2 border px-3 text-xs font-medium transition duration-150 hover:opacity-80 active:scale-[0.98]"
               style={{
                 borderColor: theme.inputBorder,
                 backgroundColor: theme.inputBackground,
