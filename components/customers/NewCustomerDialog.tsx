@@ -5,6 +5,7 @@ import {
   AlertCircle,
   Plus,
   UserPlus,
+  X,
 } from "lucide-react";
 
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
@@ -176,7 +177,8 @@ export default function NewCustomerDialog() {
         }}
       >
         <DialogContent
-          className="fixed bottom-0 left-0 top-auto z-50 flex max-h-[calc(100dvh-0.5rem)] w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-b-none rounded-t-[28px] border p-0 shadow-2xl sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[90vh] sm:w-[calc(100%-2rem)] sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[28px]"
+          showCloseButton={false}
+          className="fixed bottom-2 left-2 top-auto z-50 flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-[28px] border p-0 shadow-[0_28px_90px_rgba(0,0,0,0.34)] sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[90vh] sm:w-[calc(100%-2rem)] sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2"
           style={{
             borderColor: theme.border,
             backgroundColor: theme.surface,
@@ -184,52 +186,65 @@ export default function NewCustomerDialog() {
           }}
         >
           <div
-            className="shrink-0 border-b px-4 pb-4 pt-3 sm:px-6 sm:py-5"
+            className="shrink-0 px-4 pb-4 pt-3 sm:px-6 sm:pb-5 sm:pt-5"
             style={{
-              borderColor: theme.border,
+              background: `linear-gradient(145deg, ${theme.accentSoft}, ${theme.surface} 72%)`,
             }}
           >
             <div
-              className="mx-auto mb-3 h-1 w-10 rounded-full sm:hidden"
-              style={{
-                backgroundColor:
-                  theme.border,
-              }}
+              className="mx-auto mb-3 h-1 w-9 rounded-full opacity-70 sm:hidden"
+              style={{ backgroundColor: theme.textMuted }}
             />
 
             <DialogHeader>
-              <div
-                className="mb-3 flex h-10 w-10 items-center justify-center"
-                style={{
-                  backgroundColor: theme.accentSoft,
-                  color: theme.accent,
-                  borderRadius: theme.radiusMedium,
-                }}
-              >
-                <UserPlus size={19} />
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex min-w-0 items-center gap-3.5">
+                  <div
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
+                    style={{
+                      backgroundColor: theme.accent,
+                      color: theme.buttonText,
+                      boxShadow: `0 10px 24px ${theme.accent}28`,
+                    }}
+                  >
+                    <UserPlus size={18} />
+                  </div>
+
+                  <div className="min-w-0 text-left">
+                    <DialogTitle
+                      className="text-xl font-semibold tracking-[-0.025em] sm:text-2xl"
+                      style={{ color: theme.textPrimary }}
+                    >
+                      New {personLabel}
+                    </DialogTitle>
+                    <p className="mt-1 text-sm" style={{ color: theme.textMuted }}>
+                      Add them to {cafe.name}&apos;s loyalty program.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetForm();
+                    setOpen(false);
+                  }}
+                  disabled={loading}
+                  aria-label={`Close new ${personLabel} dialog`}
+                  className="flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full border transition duration-150 active:scale-95 hover:opacity-80 disabled:opacity-50"
+                  style={{
+                    borderColor: theme.border,
+                    backgroundColor: theme.surface,
+                    color: theme.textSecondary,
+                  }}
+                >
+                  <X size={16} />
+                </button>
               </div>
-
-              <DialogTitle
-                className="text-2xl font-semibold tracking-tight"
-                style={{
-                  color: theme.textPrimary,
-                }}
-              >
-                New {personLabel}
-              </DialogTitle>
-
-              <p
-                className="mt-1 text-sm"
-                style={{
-                  color: theme.textMuted,
-                }}
-              >
-                Create a loyalty account for a {personLabel}.
-              </p>
             </DialogHeader>
           </div>
 
-          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pb-6">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6">
             {error && (
               <div
                 className="flex items-start gap-3 border px-4 py-3 text-sm"
@@ -406,38 +421,32 @@ export default function NewCustomerDialog() {
               />
             </div>
 
-            <div className="flex gap-3 pt-1">
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                disabled={loading}
-                className="h-12 flex-1 touch-manipulation border text-sm font-medium transition duration-150 active:scale-[0.98] hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
-                style={{
-                  borderColor: theme.border,
-                  backgroundColor: theme.surfaceRaised,
-                  color: theme.textSecondary,
-                  borderRadius: theme.radiusMedium,
-                }}
-              >
-                Cancel
-              </button>
+          </div>
 
-              <button
-                type="button"
-                onClick={createMember}
-                disabled={loading}
-                className="h-12 flex-1 touch-manipulation text-sm font-semibold transition duration-150 active:scale-[0.98] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-                style={{
-                  backgroundColor: theme.accent,
-                  color: theme.buttonText,
-                  borderRadius: theme.radiusMedium,
-                }}
-              >
-                {loading
-                  ? "Creating..."
-                  : `Create ${isBarbershop ? "Client" : "Member"}`}
-              </button>
-            </div>
+          <div
+            className="shrink-0 px-4 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 sm:px-6 sm:pb-5"
+            style={{
+              backgroundColor: theme.surface,
+              boxShadow: `0 -12px 28px ${theme.surface}F2`,
+            }}
+          >
+            <button
+              type="button"
+              onClick={createMember}
+              disabled={loading}
+              className="flex h-12 w-full touch-manipulation items-center justify-center gap-2 text-sm font-semibold transition duration-150 active:scale-[0.98] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{
+                backgroundColor: theme.accent,
+                color: theme.buttonText,
+                borderRadius: theme.radiusMedium,
+                boxShadow: `0 10px 24px ${theme.accent}24`,
+              }}
+            >
+              <UserPlus size={17} />
+              {loading
+                ? "Creating..."
+                : `Create ${isBarbershop ? "Client" : "Member"}`}
+            </button>
           </div>
         </DialogContent>
       </Dialog>
