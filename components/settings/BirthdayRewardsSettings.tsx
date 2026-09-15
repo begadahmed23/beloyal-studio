@@ -228,7 +228,7 @@ export default function BirthdayRewardsSettings() {
                   placeholder={isBarbershop ? "25% off a haircut" : "Complimentary Cookie"}
                   maxLength={80}
                   disabled={disabled}
-                  className="h-12 w-full border px-4 text-sm outline-none disabled:cursor-not-allowed"
+                  className="h-12 w-full border px-4 text-base sm:text-sm outline-none disabled:cursor-not-allowed"
                   style={inputStyle}
                 />
               </Field>
@@ -238,7 +238,7 @@ export default function BirthdayRewardsSettings() {
                   value={settings.validityDays}
                   onChange={(event) => update("validityDays", Number(event.target.value))}
                   disabled={disabled}
-                  className="h-12 w-full border px-4 text-sm outline-none disabled:cursor-not-allowed"
+                  className="h-12 w-full border px-4 text-base sm:text-sm outline-none disabled:cursor-not-allowed"
                   style={inputStyle}
                 >
                   <option value={1}>Birthday only</option>
@@ -263,7 +263,7 @@ export default function BirthdayRewardsSettings() {
                   placeholder={isBarbershop ? "With a paid haircut" : "With any drink purchase"}
                   maxLength={300}
                   disabled={disabled}
-                  className="h-12 w-full border px-4 text-sm outline-none disabled:cursor-not-allowed"
+                  className="h-12 w-full border px-4 text-base sm:text-sm outline-none disabled:cursor-not-allowed"
                   style={inputStyle}
                 />
               </Field>
@@ -276,7 +276,7 @@ export default function BirthdayRewardsSettings() {
                   placeholder={isBarbershop ? "A birthday treat from us." : "A little something from us to celebrate your day."}
                   maxLength={300}
                   disabled={disabled}
-                  className="h-12 w-full border px-4 text-sm outline-none disabled:cursor-not-allowed"
+                  className="h-12 w-full border px-4 text-base sm:text-sm outline-none disabled:cursor-not-allowed"
                   style={inputStyle}
                 />
               </Field>
@@ -351,7 +351,7 @@ export default function BirthdayRewardsSettings() {
                   placeholder="Africa/Cairo"
                   maxLength={100}
                   disabled={disabled}
-                  className="h-12 w-full border px-4 text-sm outline-none disabled:cursor-not-allowed"
+                  className="h-12 w-full border px-4 text-base sm:text-sm outline-none disabled:cursor-not-allowed"
                   style={inputStyle}
                 />
               </Field>
@@ -513,7 +513,7 @@ function DiscountRule({
               onChange(nextValue);
             }}
             disabled={disabled}
-            className="h-11 w-full border px-4 pr-9 text-sm outline-none disabled:cursor-not-allowed"
+            className="h-11 w-full border px-4 pr-9 text-base sm:text-sm outline-none disabled:cursor-not-allowed"
             style={{
               borderColor: theme.inputBorder,
               backgroundColor: theme.surface,
