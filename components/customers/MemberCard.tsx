@@ -657,7 +657,7 @@ export default function MemberCard({
       >
         <DialogContent
           showCloseButton={false}
-          className="fixed bottom-0 left-0 top-auto z-50 flex max-h-[calc(100dvh-0.5rem)] w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-b-none rounded-t-[28px] border p-0 shadow-2xl sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[90vh] sm:w-[calc(100%-2rem)] sm:max-w-xl sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-[28px]"
+          className="fixed bottom-2 left-2 top-auto z-50 flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-[28px] border p-0 shadow-[0_28px_90px_rgba(0,0,0,0.34)] sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:max-h-[90vh] sm:w-[calc(100%-2rem)] sm:max-w-xl sm:-translate-x-1/2 sm:-translate-y-1/2"
           style={{
             borderColor: theme.border,
             backgroundColor:
@@ -666,184 +666,148 @@ export default function MemberCard({
           }}
         >
           <div
-            className="shrink-0 border-b px-4 pb-4 pt-3 sm:px-6 sm:py-5"
+            className="relative shrink-0 px-4 pb-4 pt-3 sm:px-6 sm:pb-5 sm:pt-5"
             style={{
-              borderColor:
-                theme.border,
+              background: `linear-gradient(145deg, ${theme.accentSoft}, ${theme.surface} 72%)`,
             }}
           >
             <div
-              className="mx-auto mb-3 h-1 w-10 rounded-full sm:hidden"
-              style={{
-                backgroundColor:
-                  theme.border,
-              }}
+              className="mx-auto mb-3 h-1 w-9 rounded-full opacity-70 sm:hidden"
+              style={{ backgroundColor: theme.textMuted }}
             />
 
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 pt-0.5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-3.5">
                 <div
-                  className="flex items-center gap-2 text-xs font-medium"
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-lg font-semibold uppercase"
                   style={{
-                    color:
-                      theme.textSecondary,
+                    backgroundColor: theme.accent,
+                    color: theme.buttonText,
+                    boxShadow: `0 10px 24px ${theme.accent}28`,
                   }}
                 >
-                  <Hash size={13} />
-                  <span className="truncate">
-                    {customer.memberNumber}
-                  </span>
+                  {customer.name.trim().charAt(0) || "?"}
                 </div>
 
-                <DialogTitle
-                  className="mt-2 break-words text-xl font-semibold leading-tight tracking-tight sm:text-2xl"
-                  style={{
-                    color:
-                      theme.textPrimary,
-                  }}
-                >
-                  {customer.name}
-                </DialogTitle>
+                <div className="min-w-0">
+                  <DialogTitle
+                    className="truncate text-xl font-semibold leading-tight tracking-[-0.025em] sm:text-2xl"
+                    style={{ color: theme.textPrimary }}
+                  >
+                    {customer.name}
+                  </DialogTitle>
+
+                  <div
+                    className="mt-1.5 flex items-center gap-1.5 text-xs font-medium"
+                    style={{ color: theme.textMuted }}
+                  >
+                    <Hash size={12} />
+                    <span className="truncate">{customer.memberNumber}</span>
+                    <span aria-hidden="true">·</span>
+                    <span style={{ color: rewardReady ? theme.success : theme.textSecondary }}>
+                      {rewardReady ? "Reward ready" : `${visibleStamps}/${paidStampTarget} ${loyaltyUnit}s`}
+                    </span>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setDeleteOpen(true)
-                  }
-                  aria-label={`Delete ${personLabel}`}
-                  className="flex h-10 w-10 items-center justify-center gap-2 border text-sm font-semibold transition active:scale-[0.97] hover:opacity-80 sm:w-auto sm:px-3"
-                  style={{
-                    borderColor:
-                      `${theme.danger}55`,
-                    backgroundColor:
-                      `${theme.danger}18`,
-                    color: theme.danger,
-                    borderRadius:
-                      "12px",
-                  }}
-                >
-                  <Trash2 size={16} />
-                  <span className="sr-only sm:not-sr-only">
-                    Delete
-                  </span>
-                </button>
+              <button
+                type="button"
+                onClick={() => setProfileOpen(false)}
+                aria-label="Close customer details"
+                className="flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full border transition duration-150 active:scale-95 hover:opacity-80"
+                style={{
+                  borderColor: theme.border,
+                  backgroundColor: theme.surface,
+                  color: theme.textSecondary,
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
 
-                <button
-                  type="button"
-                  onClick={
-                    openEditDialog
-                  }
-                  aria-label={`Edit ${personLabel}`}
-                  className="flex h-10 w-10 items-center justify-center gap-2 text-sm font-semibold transition active:scale-[0.97] hover:opacity-90 sm:w-auto sm:px-4"
-                  style={{
-                    backgroundColor:
-                      theme.accent,
-                    color:
-                      theme.buttonText,
-                    borderRadius:
-                      "12px",
-                  }}
-                >
-                  <Pencil size={16} />
-                  <span className="sr-only sm:not-sr-only">
-                    Edit
-                  </span>
-                </button>
+            <div className="mt-4 flex gap-2">
+              <button
+                type="button"
+                onClick={openEditDialog}
+                className="flex h-10 flex-1 touch-manipulation items-center justify-center gap-2 border text-sm font-semibold transition duration-150 active:scale-[0.98] hover:opacity-90"
+                style={{
+                  borderColor: `${theme.accent}45`,
+                  backgroundColor: theme.accentSoft,
+                  color: theme.accent,
+                  borderRadius: theme.radiusMedium,
+                }}
+              >
+                <Pencil size={15} />
+                Edit details
+              </button>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    setProfileOpen(false)
-                  }
-                  aria-label="Close customer details"
-                  className="flex h-10 w-10 items-center justify-center border transition active:scale-[0.97] hover:opacity-80"
-                  style={{
-                    borderColor:
-                      theme.border,
-                    backgroundColor:
-                      theme.surfaceRaised,
-                    color:
-                      theme.textSecondary,
-                    borderRadius:
-                      "12px",
-                  }}
-                >
-                  <X size={17} />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setDeleteOpen(true)}
+                aria-label={`Delete ${personLabel}`}
+                className="flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center border transition duration-150 active:scale-95 hover:opacity-80"
+                style={{
+                  borderColor: `${theme.danger}35`,
+                  backgroundColor: `${theme.danger}0D`,
+                  color: theme.danger,
+                  borderRadius: theme.radiusMedium,
+                }}
+              >
+                <Trash2 size={15} />
+              </button>
             </div>
           </div>
 
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pb-6">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div
-                className="border p-4"
-                style={{
-                  borderColor:
-                    theme.border,
-                  backgroundColor:
-                    theme.surfaceRaised,
-                  borderRadius:
-                    theme.radiusMedium,
-                }}
-              >
+            <div
+              className="overflow-hidden border"
+              style={{
+                borderColor: theme.border,
+                backgroundColor: theme.surfaceRaised,
+                borderRadius: theme.radiusMedium,
+              }}
+            >
+              <div className="flex items-center gap-3 px-4 py-3.5">
                 <div
-                  className="flex items-center gap-2 text-xs"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
                   style={{
-                    color:
-                      theme.textMuted,
+                    backgroundColor: theme.accentSoft,
+                    color: theme.accent,
                   }}
                 >
                   <Phone size={14} />
-                  Phone number
                 </div>
-
-                <p
-                  className="mt-2 break-all text-sm font-medium"
-                  style={{
-                    color:
-                      theme.textPrimary,
-                  }}
-                >
-                  {customer.phone}
-                </p>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium" style={{ color: theme.textMuted }}>
+                    Phone number
+                  </p>
+                  <p className="mt-0.5 break-all text-sm font-medium" style={{ color: theme.textPrimary }}>
+                    {customer.phone}
+                  </p>
+                </div>
               </div>
 
-              <div
-                className="border p-4"
-                style={{
-                  borderColor:
-                    theme.border,
-                  backgroundColor:
-                    theme.surfaceRaised,
-                  borderRadius:
-                    theme.radiusMedium,
-                }}
-              >
-                <div
-                  className="flex items-center gap-2 text-xs"
-                  style={{
-                    color:
-                      theme.textMuted,
-                  }}
-                >
-                  <CalendarDays
-                    size={14}
-                  />
-                  Birthday
-                </div>
+              <div className="mx-4 h-px" style={{ backgroundColor: theme.border }} />
 
-                <p
-                  className="mt-2 text-sm font-medium"
+              <div className="flex items-center gap-3 px-4 py-3.5">
+                <div
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
                   style={{
-                    color:
-                      theme.textPrimary,
+                    backgroundColor: theme.accentSoft,
+                    color: theme.accent,
                   }}
                 >
-                  {formattedBirthday}
-                </p>
+                  <CalendarDays size={14} />
+                </div>
+                <div>
+                  <p className="text-[11px] font-medium" style={{ color: theme.textMuted }}>
+                    Birthday
+                  </p>
+                  <p className="mt-0.5 text-sm font-medium" style={{ color: theme.textPrimary }}>
+                    {formattedBirthday}
+                  </p>
+                </div>
               </div>
             </div>
 
