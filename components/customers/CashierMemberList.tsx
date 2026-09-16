@@ -449,7 +449,7 @@ export default function CashierMemberList() {
                       "/api/customers/stamp",
                     )
                   }
-                  className="flex h-11 touch-manipulation items-center justify-center gap-2 text-sm font-semibold transition duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100"
+                  className="flex h-11 touch-manipulation items-center justify-center gap-2 text-sm font-semibold transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-45"
                   style={{
                     backgroundColor: theme.accent,
                     color: theme.buttonText,
@@ -476,7 +476,7 @@ export default function CashierMemberList() {
                       "/api/customers/redeem",
                     )
                   }
-                  className="flex h-11 touch-manipulation items-center justify-center gap-2 border text-sm font-semibold transition duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 disabled:active:scale-100"
+                  className="flex h-11 touch-manipulation items-center justify-center gap-2 border text-sm font-semibold transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-40"
                   style={{
                     borderColor: member.rewardReady
                       ? `${theme.success}70`
