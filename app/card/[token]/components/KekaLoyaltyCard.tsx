@@ -26,13 +26,13 @@ function KekaStamp({ active = false, creamTheme = false }: { active?: boolean; c
   const ink = active
     ? creamTheme ? "#FFF6E6" : "#741A1D"
     : creamTheme ? "rgba(116,26,29,0.30)" : "rgba(244,229,198,0.32)";
-  const cupFill = active
+  const fill = active
     ? creamTheme ? "#741A1D" : "#F4E5C6"
     : "transparent";
 
   return (
     <div
-      className="flex h-[40px] w-[31px] items-center justify-center min-[390px]:h-[43px] min-[390px]:w-[34px]"
+      className="flex h-[42px] w-[34px] items-center justify-center min-[390px]:h-[45px] min-[390px]:w-[37px]"
       style={{
         color: ink,
         filter: active
@@ -42,31 +42,12 @@ function KekaStamp({ active = false, creamTheme = false }: { active?: boolean; c
           : "none",
       }}
     >
-      <svg viewBox="95 88 210 360" className="h-full w-full overflow-visible" aria-hidden="true">
-        <g
-          stroke="currentColor"
-          strokeWidth="10"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        >
-          <ellipse cx="200" cy="115" rx="80" ry="20" fill={cupFill} />
-          <ellipse cx="160" cy="112" rx="12" ry="5" fill="currentColor" stroke="none" />
-          <path
-            d="M115 120 L110 145 C110 162 290 162 290 145 L285 120"
-            fill={cupFill}
-          />
-          <path d="M110 145 C110 162 290 162 290 145" />
-          <path
-            d="M120 160 L150 420 C152 435 248 435 250 420 L280 160"
-            fill={cupFill}
-          />
-          <path
-            d="M128 230 C160 245 240 245 272 230 L264 310 C235 325 165 325 136 310Z"
-            fill={cupFill}
-          />
-          <path d="M150 420 C152 435 248 435 250 420" />
-        </g>
+      <svg viewBox="0 0 42 50" className="h-full w-full overflow-visible" aria-hidden="true">
+        <path d="M9 16.5h24l-2.2 5.2H11.2L9 16.5Z" fill={fill} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M11.3 21.7h19.4l-1.6 20.1c-.25 3.1-2.8 5.5-5.9 5.5h-4.4c-3.1 0-5.65-2.4-5.9-5.5l-1.6-20.1Z" fill={fill} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M8.2 12.2h25.6c1.3 0 2.2 1.2 1.8 2.4l-.7 1.9H7.1l-.7-1.9c-.4-1.2.5-2.4 1.8-2.4Z" fill={fill} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M12.2 9.2c.6-2.8 3.2-4.8 6.1-4.8h5.4c2.9 0 5.5 2 6.1 4.8H12.2Z" fill={fill} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M13 29.5h16" stroke="currentColor" strokeWidth="1.2" opacity=".55" />
       </svg>
     </div>
   );
@@ -158,8 +139,15 @@ export default function KekaLoyaltyCard({
           <p className="text-[13px] font-medium tracking-[0.08em]" style={{ color: isCreamTheme ? "rgba(74,13,16,0.62)" : "rgba(244,229,198,0.68)" }}>
             Keka
           </p>
-          <div className="mt-1 text-[4.05rem] font-medium leading-[0.88] tracking-[-0.08em] min-[390px]:text-[4.55rem]" dir="rtl" style={{ color: isCreamTheme ? burgundy : cream }}>
-            كَيكَة
+          <div
+            className="relative mx-auto mt-1 w-fit text-[4.05rem] font-medium leading-[0.88] tracking-[-0.08em] min-[390px]:text-[4.55rem]"
+            dir="rtl"
+            style={{ color: isCreamTheme ? burgundy : cream }}
+            aria-label="كَيكَة"
+          >
+            <span>كيكة</span>
+            <span aria-hidden="true" className="absolute right-[7%] top-[-0.08em] text-[0.36em] font-bold leading-none">َ</span>
+            <span aria-hidden="true" className="absolute left-[25%] top-[-0.08em] text-[0.36em] font-bold leading-none">َ</span>
           </div>
           <p className="mt-3 font-serif text-[16px] tracking-[0.015em] min-[390px]:text-[17px]" style={{ color: cardText }}>
             Little Rituals, Big Comfort
