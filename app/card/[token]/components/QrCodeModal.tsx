@@ -7,6 +7,8 @@ import QRCode from "react-qr-code";
 type QrCodeModalProps = {
   businessType: "CAFE" | "BARBERSHOP";
   cafeName: string;
+  cafeSlug?: string;
+  cafeTheme?: string;
   memberNumber: string;
   publicToken: string;
   logoUrl: string | null;
@@ -37,6 +39,8 @@ const QR_SYNC_INTERVAL_MS = 2000;
 export default function QrCodeModal({
   businessType,
   cafeName,
+  cafeSlug = "",
+  cafeTheme = "",
   memberNumber,
   publicToken,
   logoUrl,
@@ -57,6 +61,17 @@ export default function QrCodeModal({
   onLogoError,
 }: QrCodeModalProps) {
   const isBarbershop = businessType === "BARBERSHOP";
+  const normalizedCafeName = cafeName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const isKeka = cafeSlug.toLowerCase().includes("keka") || normalizedCafeName.includes("keka");
+  const isKekaCream = isKeka && cafeTheme === "MODERN_MINIMAL";
+  const modalBackground = isKeka ? (isKekaCream ? "#FFF6E6" : "#741A1D") : cardBackground;
+  const modalText = isKeka ? (isKekaCream ? "#4A0D10" : "#FFF6E6") : textPrimary;
+  const modalSecondary = isKeka ? (isKekaCream ? "rgba(74,13,16,.68)" : "rgba(244,229,198,.72)") : textSecondary;
+  const modalMuted = isKeka ? (isKekaCream ? "rgba(74,13,16,.5)" : "rgba(244,229,198,.5)") : textMuted;
+  const modalBorder = isKeka ? (isKekaCream ? "rgba(116,26,29,.16)" : "rgba(244,229,198,.16)") : cardBorder;
+  const modalSurface = isKeka ? (isKekaCream ? "rgba(116,26,29,.06)" : "rgba(58,7,9,.2)") : surfaceColor;
+  const modalPrimary = isKeka ? (isKekaCream ? "#741A1D" : "#F4E5C6") : primaryColor;
+  const modalAccentText = isKeka ? (isKekaCream ? "#FFF6E6" : "#4A0D10") : accentText;
   const baselineRef = useRef<{
     stamps: number;
     updatedAt: string;
@@ -163,15 +178,15 @@ export default function QrCodeModal({
       <div
         className="relative w-full max-w-sm overflow-hidden rounded-[24px] border p-4 shadow-[0_30px_100px_rgba(0,0,0,0.55)] min-[380px]:rounded-[30px] min-[380px]:p-6"
         style={{
-          borderColor: cardBorder,
-          backgroundColor: cardBackground,
-          color: textPrimary,
+          borderColor: modalBorder,
+          backgroundColor: modalBackground,
+          color: modalText,
           forcedColorAdjust: "none",
         }}
       >
         <div
           className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full blur-3xl"
-          style={{ backgroundColor: primaryGlow }}
+          style={{ backgroundColor: isKeka ? (isKekaCream ? "rgba(116,26,29,.12)" : "rgba(244,229,198,.12)") : primaryGlow }}
         />
 
         <button
@@ -180,9 +195,9 @@ export default function QrCodeModal({
           aria-label="Close QR code"
           className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border transition hover:opacity-75"
           style={{
-            borderColor: cardBorder,
-            backgroundColor: surfaceColor,
-            color: textSecondary,
+            borderColor: modalBorder,
+            backgroundColor: modalSurface,
+            color: modalSecondary,
           }}
         >
           <X size={18} />
@@ -209,11 +224,11 @@ export default function QrCodeModal({
             </div>
           )}
 
-          <p className="mt-4 text-lg font-semibold" style={{ color: textPrimary }}>
+          <p className="mt-4 text-lg font-semibold" style={{ color: modalText }}>
             Your loyalty code
           </p>
 
-          <p className="mt-2 text-sm leading-6" style={{ color: textSecondary }}>
+          <p className="mt-2 text-sm leading-6" style={{ color: modalSecondary }}>
             Show this code to the {isBarbershop ? "barber" : "cashier"}{" "}
             after an eligible {isBarbershop ? "service" : "purchase"}.
           </p>
@@ -249,27 +264,27 @@ export default function QrCodeModal({
             />
           </div>
 
-          <p className="mt-3 text-xs" style={{ color: textMuted }}>
+          <p className="mt-3 text-xs" style={{ color: modalMuted }}>
             Your card updates automatically after the scan.
           </p>
 
           <div
             className="mt-5 rounded-2xl border px-4 py-3"
             style={{
-              borderColor: cardBorder,
-              backgroundColor: surfaceColor,
+              borderColor: modalBorder,
+              backgroundColor: modalSurface,
             }}
           >
             <p
               className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-              style={{ color: textMuted }}
+              style={{ color: modalMuted }}
             >
               Member number
             </p>
 
             <p
               className="mt-1 text-sm font-semibold tracking-[0.08em]"
-              style={{ color: textPrimary }}
+              style={{ color: modalText }}
             >
               {memberNumber}
             </p>
@@ -280,8 +295,8 @@ export default function QrCodeModal({
             onClick={onClose}
             className="mt-5 h-12 w-full rounded-2xl text-sm font-semibold transition hover:opacity-90 active:scale-[0.99]"
             style={{
-              backgroundColor: primaryColor,
-              color: accentText,
+              backgroundColor: modalPrimary,
+              color: modalAccentText,
             }}
           >
             Done
