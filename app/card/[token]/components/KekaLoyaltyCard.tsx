@@ -61,8 +61,10 @@ export default function KekaLoyaltyCard({
   const cardMuted = isCreamTheme ? "rgba(74,13,16,0.58)" : "rgba(244,229,198,0.58)";
   const cardBorder = isCreamTheme ? "rgba(116,26,29,0.14)" : "rgba(244,229,198,0.12)";
   const cardSurface = isCreamTheme ? "rgba(116,26,29,0.055)" : "rgba(58,7,9,0.16)";
-  const totalSlots = Math.max(customer.cafe.rewardTarget, rewardTarget + 1, 2);
-  const paidTarget = Math.max(totalSlots - 1, 1);
+  // rewardTarget is already the number of paid visits required to unlock
+  // the reward. Keep one separate final slot for the free reward itself.
+  const paidTarget = Math.max(rewardTarget, 1);
+  const totalSlots = paidTarget + 1;
   const displayStamps = Math.min(visibleStamps, paidTarget);
   const progressPercent = rewardReady ? 100 : Math.min((displayStamps / paidTarget) * 100, 100);
   const remaining = Math.max(paidTarget - displayStamps, 0);
@@ -157,10 +159,10 @@ export default function KekaLoyaltyCard({
               const isPurchaseSlot = index < paidTarget;
               const active = isPurchaseSlot && index < displayStamps;
               const isNew = isPurchaseSlot && newStampIndex === index;
-              const rewardSlotReady = !isPurchaseSlot && rewardReady;
+              const rewardSlotReady = false;
               return (
                 <div key={index} className={"flex min-w-0 justify-center " + (isNew ? "keka-stamp-glow" : "")}>
-                  <KekaStamp active={active || rewardSlotReady} creamTheme={isCreamTheme} />
+                  <KekaStamp active={active} creamTheme={isCreamTheme} />
                 </div>
               );
             })}
