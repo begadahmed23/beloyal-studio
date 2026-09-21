@@ -129,6 +129,29 @@ export default function KekaLoyaltyCard({
           </p>
         </div>
 
+        <div className="mt-6 flex justify-center">
+          <div
+            className="inline-flex max-w-full items-center gap-3 rounded-full border px-4 py-2.5 min-[390px]:px-5"
+            style={{
+              borderColor: cardBorder,
+              backgroundColor: isCreamTheme ? "rgba(116,26,29,0.055)" : "rgba(244,229,198,0.075)",
+            }}
+          >
+            <span
+              className="text-[9px] font-semibold uppercase tracking-[0.24em]"
+              style={{ color: cardMuted }}
+            >
+              Made for
+            </span>
+            <span
+              className="max-w-[210px] truncate font-serif text-[15px] font-semibold tracking-[0.01em] min-[390px]:text-[16px]"
+              style={{ color: isCreamTheme ? burgundy : cream }}
+            >
+              {customer.name}
+            </span>
+          </div>
+        </div>
+
         {(customer.cafe.eligiblePurchaseDescription?.trim() || customer.cafe.rewardDescription?.trim()) && (
           <div className="mt-7 rounded-[18px] border px-4 py-3 text-center" style={{ borderColor: "rgba(244,229,198,0.13)", backgroundColor: "rgba(55,5,8,0.12)" }}>
             {customer.cafe.eligiblePurchaseDescription?.trim() && (
