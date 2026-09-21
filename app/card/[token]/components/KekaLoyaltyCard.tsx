@@ -117,33 +117,31 @@ export default function KekaLoyaltyCard({
         }}
       >
         <header>
-          <div>
-            <div className="flex items-center justify-between gap-5">
-              <p
-                className="font-serif text-[2.35rem] font-semibold leading-none tracking-[-0.055em] min-[390px]:text-[2.65rem]"
-                style={{ color: isCreamTheme ? burgundy : cream }}
+          <div className="text-center">
+            <div
+              className="relative mx-auto w-fit pb-1 pt-5 text-[3.85rem] font-medium leading-none tracking-[-0.08em] min-[390px]:text-[4.25rem]"
+              dir="rtl"
+              style={{ color: isCreamTheme ? burgundy : cream }}
+              aria-label="كَيكَة"
+            >
+              <span>كيكة</span>
+              <span
+                aria-hidden="true"
+                className="absolute right-[8%] top-[0.03em] block h-[3px] w-[20px] rotate-[-24deg] rounded-full min-[390px]:w-[22px]"
+                style={{ backgroundColor: "currentColor" }}
+              />
+              <span
+                aria-hidden="true"
+                className="absolute left-[24%] top-[0.03em] block h-[3px] w-[20px] rotate-[-24deg] rounded-full min-[390px]:w-[22px]"
+                style={{ backgroundColor: "currentColor" }}
+              />
+              <span
+                dir="ltr"
+                className="absolute left-1/2 top-0 -translate-x-1/2 font-serif text-[0.19em] font-semibold tracking-[0.06em]"
+                style={{ color: isCreamTheme ? "rgba(74,13,16,0.72)" : "rgba(244,229,198,0.78)" }}
               >
                 Keka
-              </p>
-
-              <div
-                className="relative shrink-0 pb-1 text-[3.15rem] font-medium leading-none tracking-[-0.08em] min-[390px]:text-[3.5rem]"
-                dir="rtl"
-                style={{ color: isCreamTheme ? burgundy : cream }}
-                aria-label="كَيكَة"
-              >
-                <span>كيكة</span>
-                <span
-                  aria-hidden="true"
-                  className="absolute right-[8%] top-[-0.13em] block h-[3px] w-[17px] rotate-[-24deg] rounded-full min-[390px]:w-[19px]"
-                  style={{ backgroundColor: "currentColor" }}
-                />
-                <span
-                  aria-hidden="true"
-                  className="absolute left-[24%] top-[-0.13em] block h-[3px] w-[17px] rotate-[-24deg] rounded-full min-[390px]:w-[19px]"
-                  style={{ backgroundColor: "currentColor" }}
-                />
-              </div>
+              </span>
             </div>
 
             <div className="mt-3 flex items-center justify-center gap-3">
