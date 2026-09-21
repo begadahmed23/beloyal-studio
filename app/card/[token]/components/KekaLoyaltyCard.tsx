@@ -22,32 +22,39 @@ type Props = {
   onShowFeedback: () => void;
 };
 
-function KekaStarStamp({ active = false }: { active?: boolean }) {
+function KekaCupStamp({ active = false }: { active?: boolean }) {
+  const cream = "#F4E5C6";
   return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 48 48"
-      className="h-10 w-10 overflow-visible min-[390px]:h-11 min-[390px]:w-11"
-      fill="none"
-      style={{
-        opacity: active ? 1 : 0.38,
-        filter: active ? "drop-shadow(0 5px 10px rgba(42,3,5,0.22))" : "none",
-      }}
-    >
-      <path
-        d="M24 5.5c1.8 10.4 8.1 16.7 18.5 18.5C32.1 25.8 25.8 32.1 24 42.5 22.2 32.1 15.9 25.8 5.5 24 15.9 22.2 22.2 15.9 24 5.5Z"
-        fill={active ? "#F4E5C6" : "transparent"}
-        stroke="#F4E5C6"
-        strokeWidth="1.7"
-        strokeLinejoin="round"
-      />
-      <circle
-        cx="24"
-        cy="24"
-        r="2.2"
-        fill={active ? "#741A1D" : "#F4E5C6"}
-      />
+    <svg aria-hidden="true" viewBox="0 0 48 48" className="h-10 w-10 overflow-visible min-[390px]:h-11 min-[390px]:w-11" fill="none"
+      style={{ opacity: active ? 1 : 0.34, filter: active ? "drop-shadow(0 5px 9px rgba(42,3,5,0.22))" : "none" }}>
+      <path d="M11 14h23l-2.4 25H14L11 14Z" fill={active ? cream : "transparent"} stroke={cream} strokeWidth="1.8" strokeLinejoin="round" />
+      <path d="M9.5 14h26" stroke={cream} strokeWidth="2.3" strokeLinecap="round" />
+      <path d="M13 18h20" stroke={active ? "#741A1D" : cream} strokeWidth="1.2" opacity="0.7" />
+      <path d="M17 26h12" stroke={active ? "#741A1D" : cream} strokeWidth="1.35" strokeLinecap="round" opacity="0.9" />
+      <path d="M18.5 29.5h9" stroke={active ? "#741A1D" : cream} strokeWidth="1.15" strokeLinecap="round" opacity="0.7" />
     </svg>
+  );
+}
+
+function KekaLogo() {
+  const cream = "#F4E5C6";
+  return (
+    <div className="mx-auto w-full max-w-[300px]" aria-label="Keka">
+      <svg viewBox="0 0 420 150" className="h-auto w-full overflow-visible" role="img">
+        <g fill="none" stroke={cream} strokeWidth="16" strokeLinecap="square" strokeLinejoin="round">
+          <path d="M55 82v35h64c29 0 45-15 45-40V58h-31" />
+          <path d="M365 82v35h-64c-29 0-45-15-45-40V58h31" />
+          <path d="M137 117h146" />
+          <path d="M128 43l29-12" />
+          <path d="M292 43l29-12" />
+        </g>
+        <rect x="45" y="55" width="11" height="11" fill={cream} />
+        <rect x="62" y="55" width="11" height="11" fill={cream} />
+        <rect x="204" y="128" width="11" height="11" fill={cream} />
+        <rect x="221" y="128" width="11" height="11" fill={cream} />
+        <text x="210" y="59" textAnchor="middle" fill="#F06A86" fontSize="34" fontWeight="700" fontFamily="Arial, sans-serif">Keka</text>
+      </svg>
+    </div>
   );
 }
 
@@ -120,21 +127,7 @@ export default function KekaLoyaltyCard({
         </header>
 
         <div className="mt-8 text-center">
-          <div
-            className="flex items-center justify-center gap-2 text-[4rem] font-medium leading-none tracking-[-0.08em] min-[390px]:gap-3 min-[390px]:text-[4.7rem]"
-            dir="rtl"
-            style={{ color: cream }}
-          >
-            <span>ك</span>
-            <span
-              dir="ltr"
-              className="relative top-[-1px] text-[12px] font-semibold tracking-[0.04em] min-[390px]:text-[13px]"
-              style={{ color: creamSoft }}
-            >
-              Keka
-            </span>
-            <span>ك</span>
-          </div>
+          <KekaLogo />
           <p className="mt-4 font-serif text-[17px] tracking-[0.02em] min-[390px]:text-[19px]" style={{ color: creamSoft }}>
             Little Rituals, Big Comfort
           </p>
@@ -173,7 +166,7 @@ export default function KekaLoyaltyCard({
               const rewardSlotReady = !isPurchaseSlot && rewardReady;
               return (
                 <div key={index} className={"flex min-w-0 justify-center " + (isNew ? "keka-stamp-glow" : "")}>
-                  <KekaStarStamp active={active || rewardSlotReady} />
+                  <KekaCupStamp active={active || rewardSlotReady} />
                 </div>
               );
             })}
