@@ -1471,16 +1471,17 @@ const progressPercentage = rewardReady
   const rewardEmeraldLight =
     "#2D6A5A";
 
-  const feedbackCardBackground = isKeka ? "#741A1D" : cardBackground;
-  const feedbackTextPrimary = isKeka ? "#FFF6E6" : textPrimary;
-  const feedbackTextSecondary = isKeka ? "rgba(255,246,230,0.72)" : textSecondary;
-  const feedbackTextMuted = isKeka ? "rgba(244,229,198,0.5)" : textMuted;
-  const feedbackBorder = isKeka ? "rgba(244,229,198,0.16)" : cardBorder;
-  const feedbackSurface = isKeka ? "rgba(58,7,9,0.2)" : surfaceColor;
-  const feedbackPrimary = isKeka ? "#F4E5C6" : primaryColor;
-  const feedbackPrimarySoft = isKeka ? "rgba(244,229,198,0.11)" : primarySoft;
-  const feedbackPrimaryBorder = isKeka ? "rgba(244,229,198,0.28)" : primaryBorder;
-  const feedbackAccentText = isKeka ? "#4A0D10" : accentText;
+  const isKekaCream = isKeka && customer.cafe.theme === "MODERN_MINIMAL";
+  const feedbackCardBackground = isKeka ? (isKekaCream ? "#FFF6E6" : "#741A1D") : cardBackground;
+  const feedbackTextPrimary = isKeka ? (isKekaCream ? "#4A0D10" : "#FFF6E6") : textPrimary;
+  const feedbackTextSecondary = isKeka ? (isKekaCream ? "rgba(74,13,16,0.68)" : "rgba(255,246,230,0.72)") : textSecondary;
+  const feedbackTextMuted = isKeka ? (isKekaCream ? "rgba(74,13,16,0.5)" : "rgba(244,229,198,0.5)") : textMuted;
+  const feedbackBorder = isKeka ? (isKekaCream ? "rgba(116,26,29,0.16)" : "rgba(244,229,198,0.16)") : cardBorder;
+  const feedbackSurface = isKeka ? (isKekaCream ? "rgba(116,26,29,0.06)" : "rgba(58,7,9,0.2)") : surfaceColor;
+  const feedbackPrimary = isKeka ? (isKekaCream ? "#741A1D" : "#F4E5C6") : primaryColor;
+  const feedbackPrimarySoft = isKeka ? (isKekaCream ? "rgba(116,26,29,0.09)" : "rgba(244,229,198,0.11)") : primarySoft;
+  const feedbackPrimaryBorder = isKeka ? (isKekaCream ? "rgba(116,26,29,0.24)" : "rgba(244,229,198,0.28)") : primaryBorder;
+  const feedbackAccentText = isKeka ? (isKekaCream ? "#FFF6E6" : "#4A0D10") : accentText;
 
   const rewardChampagne = "#D8BE82";
 
@@ -1736,6 +1737,8 @@ const progressPercentage = rewardReady
           cafeName={
             customer.cafe.name
           }
+          cafeSlug={customer.cafe.slug}
+          cafeTheme={customer.cafe.theme}
           memberNumber={
             customer.memberNumber
           }
