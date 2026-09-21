@@ -1471,6 +1471,17 @@ const progressPercentage = rewardReady
   const rewardEmeraldLight =
     "#2D6A5A";
 
+  const feedbackCardBackground = isKeka ? "#741A1D" : cardBackground;
+  const feedbackTextPrimary = isKeka ? "#FFF6E6" : textPrimary;
+  const feedbackTextSecondary = isKeka ? "rgba(255,246,230,0.72)" : textSecondary;
+  const feedbackTextMuted = isKeka ? "rgba(244,229,198,0.5)" : textMuted;
+  const feedbackBorder = isKeka ? "rgba(244,229,198,0.16)" : cardBorder;
+  const feedbackSurface = isKeka ? "rgba(58,7,9,0.2)" : surfaceColor;
+  const feedbackPrimary = isKeka ? "#F4E5C6" : primaryColor;
+  const feedbackPrimarySoft = isKeka ? "rgba(244,229,198,0.11)" : primarySoft;
+  const feedbackPrimaryBorder = isKeka ? "rgba(244,229,198,0.28)" : primaryBorder;
+  const feedbackAccentText = isKeka ? "#4A0D10" : accentText;
+
   const rewardChampagne = "#D8BE82";
 
   const rewardIvory = "#F7EFD9";
@@ -1781,9 +1792,9 @@ const progressPercentage = rewardReady
           <div
             className="relative w-full max-w-md overflow-hidden rounded-[28px] border p-5 shadow-2xl sm:rounded-[32px] sm:p-6"
             style={{
-              borderColor: cardBorder,
+              borderColor: feedbackBorder,
               backgroundColor:
-                cardBackground,
+                feedbackCardBackground,
               boxShadow:
                 "0 30px 100px rgba(0,0,0,0.48)",
             }}
@@ -1800,10 +1811,10 @@ const progressPercentage = rewardReady
               className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border transition hover:opacity-70 disabled:opacity-40"
               style={{
                 borderColor:
-                  cardBorder,
+                  feedbackBorder,
                 backgroundColor:
-                  surfaceColor,
-                color: textSecondary,
+                  feedbackSurface,
+                color: feedbackTextSecondary,
               }}
             >
               <X size={17} />
@@ -1815,8 +1826,8 @@ const progressPercentage = rewardReady
                   className="flex h-12 w-12 items-center justify-center rounded-2xl"
                   style={{
                     backgroundColor:
-                      primarySoft,
-                    color: primaryColor,
+                      feedbackPrimarySoft,
+                    color: feedbackPrimary,
                   }}
                 >
                   <MessageCircle
@@ -1827,7 +1838,7 @@ const progressPercentage = rewardReady
                 <h2
                   className="mt-5 pr-10 text-2xl font-semibold tracking-tight"
                   style={{
-                    color: textPrimary,
+                    color: feedbackTextPrimary,
                   }}
                 >
                   How was your
@@ -1838,7 +1849,7 @@ const progressPercentage = rewardReady
                   className="mt-2 text-sm leading-6"
                   style={{
                     color:
-                      textSecondary,
+                      feedbackTextSecondary,
                   }}
                 >
                   The good, the bad,
@@ -1881,17 +1892,17 @@ const progressPercentage = rewardReady
                               "#EF4444",
                               0.45,
                             )
-                          : cardBorder,
+                          : feedbackBorder,
 
                       backgroundColor:
-                        surfaceColor,
+                        feedbackSurface,
 
                       color:
-                        textPrimary,
+                        feedbackTextPrimary,
 
                       ["--tw-ring-color" as string]:
                         withAlpha(
-                          primaryColor,
+                          feedbackPrimary,
                           0.28,
                         ),
                     }}
@@ -1916,7 +1927,7 @@ const progressPercentage = rewardReady
                           className="text-xs leading-5"
                           style={{
                             color:
-                              textMuted,
+                              feedbackTextMuted,
                           }}
                         >
                           A few honest
@@ -1931,7 +1942,7 @@ const progressPercentage = rewardReady
                       className="shrink-0 text-[11px]"
                       style={{
                         color:
-                          textMuted,
+                          feedbackTextMuted,
                       }}
                     >
                       {
@@ -1956,11 +1967,11 @@ const progressPercentage = rewardReady
                   className="mt-6 flex h-13 min-h-13 w-full items-center justify-center rounded-2xl px-5 text-sm font-semibold transition hover:brightness-105 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
                     backgroundColor:
-                      primaryColor,
+                      feedbackPrimary,
                     color:
-                      accentText,
+                      feedbackAccentText,
                     boxShadow: `0 14px 35px ${withAlpha(
-                      primaryColor,
+                      feedbackPrimary,
                       0.25,
                     )}`,
                   }}
@@ -1983,7 +1994,7 @@ const progressPercentage = rewardReady
                     <p
                       className="mt-4 text-center text-[11px] leading-5"
                       style={{
-                        color: textMuted,
+                        color: feedbackTextMuted,
                       }}
                     >
                       Your first note comes with a{" "}
@@ -1997,8 +2008,8 @@ const progressPercentage = rewardReady
                   className="flex h-14 w-14 items-center justify-center rounded-full"
                   style={{
                     backgroundColor:
-                      primarySoft,
-                    color: primaryColor,
+                      feedbackPrimarySoft,
+                    color: feedbackPrimary,
                   }}
                 >
                   <Check size={24} />
@@ -2007,7 +2018,7 @@ const progressPercentage = rewardReady
                 <h2
                   className="mt-5 pr-10 text-2xl font-semibold tracking-tight"
                   style={{
-                    color: textPrimary,
+                    color: feedbackTextPrimary,
                   }}
                 >
                   Thank you for
@@ -2018,7 +2029,7 @@ const progressPercentage = rewardReady
                   className="mt-2 text-sm leading-6"
                   style={{
                     color:
-                      textSecondary,
+                      feedbackTextSecondary,
                   }}
                 >
                   {feedbackRewardGranted
@@ -2033,16 +2044,16 @@ const progressPercentage = rewardReady
                     className="mt-5 rounded-2xl border px-4 py-4"
                     style={{
                       borderColor:
-                        primaryBorder,
+                        feedbackPrimaryBorder,
                       backgroundColor:
-                        primarySoft,
+                        feedbackPrimarySoft,
                     }}
                   >
                     <p
                       className="text-sm font-medium"
                       style={{
                         color:
-                          textPrimary,
+                          feedbackTextPrimary,
                       }}
                     >
                       +1 {isBarbershop ? "visit" : "stamp"}
@@ -2052,7 +2063,7 @@ const progressPercentage = rewardReady
                       className="mt-1 text-xs leading-5"
                       style={{
                         color:
-                          textMuted,
+                          feedbackTextMuted,
                       }}
                     >
                       A little
@@ -2071,14 +2082,14 @@ const progressPercentage = rewardReady
                     className="mt-6 border-t pt-5"
                     style={{
                       borderColor:
-                        cardBorder,
+                        feedbackBorder,
                     }}
                   >
                     <p
                       className="text-sm font-medium"
                       style={{
                         color:
-                          textPrimary,
+                          feedbackTextPrimary,
                       }}
                     >
                       Enjoyed your
@@ -2089,7 +2100,7 @@ const progressPercentage = rewardReady
                       className="mt-1 text-xs leading-5"
                       style={{
                         color:
-                          textMuted,
+                          feedbackTextMuted,
                       }}
                     >
                       You can share
@@ -2105,11 +2116,11 @@ const progressPercentage = rewardReady
                       className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border text-sm font-semibold transition hover:opacity-80"
                       style={{
                         borderColor:
-                          cardBorder,
+                          feedbackBorder,
                         backgroundColor:
-                          surfaceColor,
+                          feedbackSurface,
                         color:
-                          textPrimary,
+                          feedbackTextPrimary,
                       }}
                     >
                       Share it on
@@ -2129,7 +2140,7 @@ const progressPercentage = rewardReady
                   className="mt-3 h-12 w-full rounded-2xl text-sm font-semibold transition hover:opacity-75"
                   style={{
                     color:
-                      textSecondary,
+                      feedbackTextSecondary,
                   }}
                 >
                   Back to my card
