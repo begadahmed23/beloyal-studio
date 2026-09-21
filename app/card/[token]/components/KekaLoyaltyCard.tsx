@@ -170,7 +170,7 @@ export default function KekaLoyaltyCard({
         <div className="my-7 flex items-center justify-center gap-3">
           <div className="h-px w-10" style={{ backgroundColor: "rgba(244,229,198,0.26)" }} />
           <p className="text-[8px] font-semibold uppercase tracking-[0.45em]" style={{ color: "rgba(244,229,198,0.5)" }}>
-            Little rituals · bigger days
+             little rituals · bigger days
           </p>
           <div className="h-px w-10" style={{ backgroundColor: "rgba(244,229,198,0.26)" }} />
         </div>
