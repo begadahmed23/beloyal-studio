@@ -44,6 +44,9 @@ function CafeDashboardHome() {
   const isKato =
     cafe.slug.toLowerCase().includes("kato") ||
     normalizedCafeName.includes("kato");
+  const isKeka =
+    cafe.slug.toLowerCase().includes("keka") ||
+    normalizedCafeName.includes("keka");
 
   const actions = [
     {
@@ -75,7 +78,63 @@ function CafeDashboardHome() {
 
   return (
     <div className="space-y-7">
-      {isKato ? (
+      {isKeka ? (
+        <section className="relative overflow-hidden rounded-[30px] border border-[#8E3538] bg-[linear-gradient(145deg,#8A2426_0%,#741A1D_54%,#4A0D10_100%)] p-6 text-[#FFF6E6] shadow-[0_24px_70px_rgba(74,13,16,0.24)] sm:p-8">
+          <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-[#F4E5C6]/10 blur-3xl" />
+          <div className="relative grid gap-7 lg:grid-cols-[1fr_320px] lg:items-stretch">
+            <div>
+              <div className="flex items-start justify-between gap-5">
+                <div>
+                  <p className="text-[12px] font-medium tracking-[0.12em] text-[#F4E5C6]/65">
+                    Keka
+                  </p>
+                  <p className="mt-1 text-[4.2rem] font-medium leading-[0.86] tracking-[-0.08em] text-[#F4E5C6]" dir="rtl">
+                    كيكة
+                  </p>
+                  <p className="mt-3 font-serif text-[15px] tracking-[0.03em] text-[#FFF6E6]/85">
+                    Little Rituals, Big Comfort
+                  </p>
+                </div>
+                {cafe.logoUrl ? (
+                  <img
+                    src={cafe.logoUrl}
+                    alt="Keka logo"
+                    className="h-16 w-16 shrink-0 rounded-[20px] border border-[#F4E5C6]/20 object-cover shadow-[0_12px_28px_rgba(38,4,6,0.22)]"
+                  />
+                ) : null}
+              </div>
+
+              <p className="mt-8 text-[10px] font-semibold uppercase tracking-[0.26em] text-[#F4E5C6]/55">
+                Keka loyalty
+              </p>
+              <h2 className="mt-2 max-w-2xl text-3xl font-semibold tracking-[-0.045em] text-[#FFF6E6] sm:text-4xl">
+                Little rituals · bigger days
+              </h2>
+              <p className="mt-4 max-w-xl text-sm leading-6 text-[#F4E5C6]/65">
+                Members, rewards, birthdays, and every returning ritual — all in one Keka workspace.
+              </p>
+            </div>
+
+            <div className="relative overflow-hidden rounded-[26px] border border-[#F4E5C6]/12 bg-[#3D080B]/35 p-6 shadow-[inset_0_1px_0_rgba(255,246,230,0.05)]">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#F4E5C6]/50">
+                The ritual
+              </p>
+              <p className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#FFF6E6]">
+                {Math.max(cafe.rewardTarget - 1, 1)} visits
+              </p>
+              <p className="mt-1 text-sm text-[#F4E5C6]/65">
+                then {cafe.rewardName || "a Keka reward"}
+              </p>
+              <div className="mt-7 h-[3px] overflow-hidden rounded-full bg-[#F4E5C6]/10">
+                <div className="h-full w-full rounded-full bg-[#F4E5C6]/80" />
+              </div>
+              <p className="mt-4 font-serif text-sm italic text-[#F4E5C6]/55">
+                Good coffee · better days
+              </p>
+            </div>
+          </div>
+        </section>
+      ) : isKato ? (
         <section className="relative overflow-hidden rounded-[30px] border border-[#DCE3EA] bg-white p-6 shadow-[0_22px_60px_rgba(16,43,73,0.09)] sm:p-8">
           <div className="grid gap-7 lg:grid-cols-[1fr_320px] lg:items-stretch">
             <div>
