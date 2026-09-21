@@ -52,6 +52,9 @@ export default function KekaLoyaltyCard({
   onShowFeedback,
 }: Props) {
   const [birthdayOpen, setBirthdayOpen] = useState(false);
+  const customerName = customer.name
+    ? customer.name.charAt(0).toUpperCase() + customer.name.slice(1)
+    : "";
   const isCreamTheme = customer.cafe.theme === "MODERN_MINIMAL";
   const burgundy = "#741A1D";
   const burgundyDeep = "#4A0D10";
@@ -134,13 +137,13 @@ export default function KekaLoyaltyCard({
             className="font-serif text-[14px] italic tracking-[0.01em]"
             style={{ color: cardMuted }}
           >
-            Your little ritual,
+            Good to see you,
           </p>
           <h1
-            className="mt-1 max-w-full truncate font-serif text-[2rem] font-semibold leading-tight tracking-[-0.035em] min-[390px]:text-[2.25rem]"
+            className="mt-1 max-w-full truncate text-[2.2rem] font-semibold leading-none tracking-[-0.055em] min-[390px]:text-[2.45rem]"
             style={{ color: isCreamTheme ? burgundy : cream }}
           >
-            {customer.name}
+            {customerName}
           </h1>
         </div>
 
