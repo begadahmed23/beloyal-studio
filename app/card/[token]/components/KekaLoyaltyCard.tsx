@@ -32,21 +32,17 @@ function KekaStamp({ active = false, creamTheme = false }: { active?: boolean; c
 
   return (
     <div
-      className="flex h-[44px] w-[36px] items-center justify-center min-[390px]:h-[48px] min-[390px]:w-[39px]"
+      className="flex h-[40px] w-[31px] items-center justify-center min-[390px]:h-[43px] min-[390px]:w-[34px]"
       style={{
         color: ink,
         filter: active
           ? creamTheme
-            ? "drop-shadow(0 6px 9px rgba(74,13,16,0.20))"
-            : "drop-shadow(0 6px 9px rgba(36,4,5,0.18))"
+            ? "drop-shadow(0 5px 7px rgba(74,13,16,0.18))"
+            : "drop-shadow(0 5px 7px rgba(36,4,5,0.16))"
           : "none",
       }}
     >
-      <svg
-        viewBox="70 82 260 370"
-        className="h-full w-full overflow-visible"
-        aria-hidden="true"
-      >
+      <svg viewBox="95 88 210 360" className="h-full w-full overflow-visible" aria-hidden="true">
         <g
           stroke="currentColor"
           strokeWidth="10"
@@ -54,42 +50,22 @@ function KekaStamp({ active = false, creamTheme = false }: { active?: boolean; c
           strokeLinejoin="round"
           fill="none"
         >
-          <ellipse cx="200" cy="115" rx="100" ry="25" fill={cupFill} />
-          <ellipse cx="200" cy="112" rx="75" ry="16" fill={cupFill} />
-
+          <ellipse cx="200" cy="115" rx="80" ry="20" fill={cupFill} />
+          <ellipse cx="160" cy="112" rx="12" ry="5" fill="currentColor" stroke="none" />
           <path
-            d="M148 114 Q165 102 180 110 Q168 120 148 114Z"
-            fill="currentColor"
-            stroke="none"
-          />
-          <path d="M185 112 Q225 100 248 110" />
-
-          <path d="M98 120 C98 138 302 138 302 120" />
-          <path
-            d="M97 124 L95 135 C95 155 305 155 305 135 L303 124"
+            d="M115 120 L110 145 C110 162 290 162 290 145 L285 120"
             fill={cupFill}
           />
-
+          <path d="M110 145 C110 162 290 162 290 145" />
           <path
-            d="M92 140 L88 158 C88 182 312 182 312 158 L308 140"
+            d="M120 160 L150 420 C152 435 248 435 250 420 L280 160"
             fill={cupFill}
           />
-          <path d="M88 158 C88 180 312 180 312 158" />
-
           <path
-            d="M102 178 L140 420 C143 438 257 438 260 420 L298 178"
+            d="M128 230 C160 245 240 245 272 230 L264 310 C235 325 165 325 136 310Z"
             fill={cupFill}
           />
-          <path d="M140 420 C143 438 257 438 260 420" />
-
-          <path
-            d="M112 240 C150 260 250 260 288 240 L278 305 C245 325 155 325 122 305Z"
-            fill={cupFill}
-          />
-
-          <path d="M124 318 C155 335 245 335 276 318" />
-
-
+          <path d="M150 420 C152 435 248 435 250 420" />
         </g>
       </svg>
     </div>
