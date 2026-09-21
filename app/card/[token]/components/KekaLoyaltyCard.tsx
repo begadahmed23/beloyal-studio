@@ -22,15 +22,15 @@ type Props = {
   onShowFeedback: () => void;
 };
 
-function KekaStamp({ active = false }: { active?: boolean }) {
+function KekaStamp({ active = false, creamTheme = false }: { active?: boolean; creamTheme?: boolean }) {
   return (
     <div
       className="flex h-11 w-11 items-center justify-center rounded-[42%] border text-[18px] font-semibold min-[390px]:h-12 min-[390px]:w-12"
       style={{
-        color: active ? "#6F171A" : "rgba(248,236,210,0.32)",
-        backgroundColor: active ? "#F4E5C6" : "transparent",
-        borderColor: active ? "#F4E5C6" : "rgba(248,236,210,0.24)",
-        boxShadow: active ? "0 7px 18px rgba(36,4,5,0.18)" : "none",
+        color: active ? (creamTheme ? "#FFF6E6" : "#6F171A") : (creamTheme ? "rgba(116,26,29,0.32)" : "rgba(248,236,210,0.32)"),
+        backgroundColor: active ? (creamTheme ? "#741A1D" : "#F4E5C6") : "transparent",
+        borderColor: active ? (creamTheme ? "#741A1D" : "#F4E5C6") : (creamTheme ? "rgba(116,26,29,0.2)" : "rgba(248,236,210,0.24)"),
+        boxShadow: active ? (creamTheme ? "0 7px 18px rgba(74,13,16,0.22)" : "0 7px 18px rgba(36,4,5,0.18)") : "none",
       }}
     >
       ك
@@ -160,15 +160,15 @@ export default function KekaLoyaltyCard({
               const rewardSlotReady = !isPurchaseSlot && rewardReady;
               return (
                 <div key={index} className={"flex min-w-0 justify-center " + (isNew ? "keka-stamp-glow" : "")}>
-                  <KekaStamp active={active || rewardSlotReady} />
+                  <KekaStamp active={active || rewardSlotReady} creamTheme={isCreamTheme} />
                 </div>
               );
             })}
           </div>
 
           <div className="mt-6">
-            <div className="h-[3px] overflow-hidden rounded-full" style={{ backgroundColor: "rgba(244,229,198,0.15)" }}>
-              <div className="h-full rounded-full transition-[width] duration-700 ease-out" style={{ width: progressPercent + "%", backgroundColor: cream }} />
+            <div className="h-[3px] overflow-hidden rounded-full" style={{ backgroundColor: isCreamTheme ? "rgba(116,26,29,0.12)" : "rgba(244,229,198,0.15)" }}>
+              <div className="h-full rounded-full transition-[width] duration-700 ease-out" style={{ width: progressPercent + "%", backgroundColor: isCreamTheme ? burgundy : cream }} />
             </div>
             <p className="mt-4 text-center font-serif text-[16px]" style={{ color: isCreamTheme ? "rgba(74,13,16,0.82)" : "rgba(255,246,230,0.86)" }}>
               {progressMessage}
@@ -177,11 +177,11 @@ export default function KekaLoyaltyCard({
         </section>
 
         <div className="my-7 flex items-center justify-center gap-3">
-          <div className="h-px w-10" style={{ backgroundColor: "rgba(244,229,198,0.26)" }} />
-          <p className="text-[8px] font-semibold uppercase tracking-[0.45em]" style={{ color: "rgba(244,229,198,0.5)" }}>
+          <div className="h-px w-10" style={{ backgroundColor: isCreamTheme ? "rgba(116,26,29,0.22)" : "rgba(244,229,198,0.26)" }} />
+          <p className="text-[8px] font-semibold uppercase tracking-[0.45em]" style={{ color: isCreamTheme ? "rgba(74,13,16,0.5)" : "rgba(244,229,198,0.5)" }}>
              little rituals · bigger days
           </p>
-          <div className="h-px w-10" style={{ backgroundColor: "rgba(244,229,198,0.26)" }} />
+          <div className="h-px w-10" style={{ backgroundColor: isCreamTheme ? "rgba(116,26,29,0.22)" : "rgba(244,229,198,0.26)" }} />
         </div>
 
         <button
@@ -190,21 +190,21 @@ export default function KekaLoyaltyCard({
           className="flex w-full items-center gap-3 rounded-[22px] border px-4 py-3.5 text-left transition"
           style={{ borderColor: cardBorder, backgroundColor: cardSurface }}
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px]" style={{ backgroundColor: "rgba(244,229,198,0.11)", color: cream }}>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px]" style={{ backgroundColor: isCreamTheme ? "rgba(116,26,29,0.09)" : "rgba(244,229,198,0.11)", color: isCreamTheme ? burgundy : cream }}>
             <Cake size={18} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px]" style={{ color: "rgba(244,229,198,0.55)" }}>Your Birthday</p>
+            <p className="text-[11px]" style={{ color: isCreamTheme ? "rgba(74,13,16,0.56)" : "rgba(244,229,198,0.55)" }}>Your Birthday</p>
             <p className="mt-0.5 text-[14px] font-semibold" style={{ color: creamSoft }}>{birthdayText}</p>
           </div>
-          <p className="shrink-0 text-[11px]" style={{ color: "rgba(244,229,198,0.55)" }}>
+          <p className="shrink-0 text-[11px]" style={{ color: isCreamTheme ? "rgba(74,13,16,0.56)" : "rgba(244,229,198,0.55)" }}>
             {daysUntilBirthday === 0 ? "Today" : `In ${daysUntilBirthday} ${daysUntilBirthday === 1 ? "day" : "days"}`}
           </p>
           <ChevronRight size={16} style={{ color: "rgba(244,229,198,0.5)", transform: birthdayOpen ? "rotate(90deg)" : "none", transition: "transform 180ms ease" }} />
         </button>
 
         {birthdayOpen && (
-          <div className="mt-2 rounded-[18px] border px-4 py-4 text-xs leading-5" style={{ borderColor: "rgba(244,229,198,0.14)", backgroundColor: "rgba(58,7,9,0.2)", color: "rgba(255,246,230,0.72)" }}>
+          <div className="mt-2 rounded-[18px] border px-4 py-4 text-xs leading-5" style={{ borderColor: cardBorder, backgroundColor: cardSurface, color: isCreamTheme ? "rgba(74,13,16,0.7)" : "rgba(255,246,230,0.72)" }}>
             {customer.cafe.birthdayRewardsEnabled ? (
               <>
                 <p className="font-semibold" style={{ color: creamSoft }}>{customer.cafe.birthdayRewardName || "Birthday Reward"}</p>
@@ -233,16 +233,16 @@ export default function KekaLoyaltyCard({
             type="button"
             onClick={onShowFeedback}
             className="mt-3 flex w-full items-center justify-between rounded-[20px] border px-4 py-3.5 text-left transition"
-            style={{ borderColor: "rgba(244,229,198,0.14)", backgroundColor: "rgba(58,7,9,0.16)", color: creamSoft }}
+            style={{ borderColor: cardBorder, backgroundColor: cardSurface, color: cardText }}
           >
             <div className="flex items-center gap-3">
               <MessageCircle size={18} style={{ color: isCreamTheme ? burgundy : cream }} />
               <div>
                 <p className="text-sm font-semibold">Share your thoughts</p>
-                <p className="mt-0.5 text-[11px]" style={{ color: "rgba(244,229,198,0.55)" }}>Help us make Keka even better.</p>
+                <p className="mt-0.5 text-[11px]" style={{ color: isCreamTheme ? "rgba(74,13,16,0.56)" : "rgba(244,229,198,0.55)" }}>Help us make Keka even better.</p>
               </div>
             </div>
-            <ChevronRight size={17} style={{ color: "rgba(244,229,198,0.5)" }} />
+            <ChevronRight size={17} style={{ color: isCreamTheme ? "rgba(74,13,16,0.5)" : "rgba(244,229,198,0.5)" }} />
           </button>
         )}
       </div>
@@ -253,9 +253,9 @@ export default function KekaLoyaltyCard({
 
       <style jsx global>{`
         @keyframes keka-stamp-glow {
-          0% { filter: drop-shadow(0 0 0 rgba(244,229,198,0)); transform: scale(0.9); }
-          45% { filter: drop-shadow(0 0 9px rgba(244,229,198,0.85)); transform: scale(1.08); }
-          100% { filter: drop-shadow(0 0 0 rgba(244,229,198,0)); transform: scale(1); }
+          0% { filter: drop-shadow(0 0 0 rgba(116,26,29,0)); transform: scale(0.9); }
+          45% { filter: drop-shadow(0 0 11px rgba(116,26,29,0.72)); transform: scale(1.08); }
+          100% { filter: drop-shadow(0 0 0 rgba(116,26,29,0)); transform: scale(1); }
         }
         .keka-stamp-glow { animation: keka-stamp-glow 760ms cubic-bezier(0.16,1,0.3,1) both; }
         @media (prefers-reduced-motion: reduce) { .keka-stamp-glow { animation: none; } }
