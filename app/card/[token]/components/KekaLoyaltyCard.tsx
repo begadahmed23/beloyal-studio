@@ -74,7 +74,7 @@ export default function KekaLoyaltyCard({
   const progressMessage = rewardReady
     ? "Your reward is ready."
     : displayStamps === 0
-      ? "Your first little ritual is waiting."
+      ? "Your first stamp is waiting."
       : remaining === 1
         ? "One more visit until your reward."
         : `${remaining} more visits until your reward.`;
@@ -120,27 +120,27 @@ export default function KekaLoyaltyCard({
           </button>
         </header>
 
-        <div className="mt-8 text-center">
+        <div className="mt-6 text-center">
           <p className="text-[13px] font-medium tracking-[0.08em]" style={{ color: isCreamTheme ? "rgba(74,13,16,0.62)" : "rgba(244,229,198,0.68)" }}>
             Keka
           </p>
-          <div className="mt-1 text-[4.5rem] font-medium leading-[0.9] tracking-[-0.08em] min-[390px]:text-[5.2rem]" dir="rtl" style={{ color: isCreamTheme ? burgundy : cream }}>
+          <div className="mt-1 text-[3.9rem] font-medium leading-[0.9] tracking-[-0.08em] min-[390px]:text-[4.45rem]" dir="rtl" style={{ color: isCreamTheme ? burgundy : cream }}>
             كيكة
           </div>
-          <p className="mt-4 font-serif text-[17px] tracking-[0.02em] min-[390px]:text-[19px]" style={{ color: cardText }}>
+          <p className="mt-3 font-serif text-[16px] tracking-[0.02em] min-[390px]:text-[17px]" style={{ color: cardText }}>
             Little Rituals, Big Comfort
           </p>
         </div>
 
-        <div className="mt-7">
+        <div className="mt-8">
           <p
-            className="font-serif text-[14px] italic tracking-[0.01em]"
+            className="text-[15px] font-medium tracking-[0.01em]"
             style={{ color: cardMuted }}
           >
             Good to see you,
           </p>
           <h1
-            className="mt-1 max-w-full truncate text-[2.2rem] font-semibold leading-none tracking-[-0.055em] min-[390px]:text-[2.45rem]"
+            className="mt-1 max-w-full truncate text-[2.2rem] font-semibold leading-none tracking-[-0.055em] min-[390px]:text-[2.35rem]"
             style={{ color: isCreamTheme ? burgundy : cream }}
           >
             {customerName}
@@ -162,7 +162,7 @@ export default function KekaLoyaltyCard({
           </div>
         )}
 
-        <section className="mt-8">
+        <section className="mt-7 rounded-[28px] border px-4 pb-5 pt-5 min-[390px]:px-5" style={{ borderColor: cardBorder, backgroundColor: isCreamTheme ? "rgba(116,26,29,0.045)" : "rgba(58,7,9,0.18)" }}>
           <div className="flex items-center justify-between">
             <p className="text-[10px] font-semibold uppercase tracking-[0.3em]" style={{ color: cardMuted }}>
               Your rituals
@@ -172,7 +172,7 @@ export default function KekaLoyaltyCard({
             </p>
           </div>
 
-          <div className="mt-5 grid items-center gap-1" style={{ gridTemplateColumns: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
+          <div className="mt-6 grid items-center gap-1" style={{ gridTemplateColumns: `repeat(${totalSlots}, minmax(0, 1fr))` }}>
             {Array.from({ length: totalSlots }).map((_, index) => {
               const isPurchaseSlot = index < paidTarget;
               const active = isPurchaseSlot && index < displayStamps;
@@ -186,7 +186,7 @@ export default function KekaLoyaltyCard({
             })}
           </div>
 
-          <div className="mt-6">
+          <div className="mt-7">
             <div className="h-[3px] overflow-hidden rounded-full" style={{ backgroundColor: isCreamTheme ? "rgba(116,26,29,0.12)" : "rgba(244,229,198,0.15)" }}>
               <div className="h-full rounded-full transition-[width] duration-700 ease-out" style={{ width: progressPercent + "%", backgroundColor: isCreamTheme ? burgundy : cream }} />
             </div>
@@ -196,7 +196,7 @@ export default function KekaLoyaltyCard({
           </div>
         </section>
 
-        <div className="my-7 flex items-center justify-center gap-3">
+        <div className="my-5 flex items-center justify-center gap-3">
           <div className="h-px w-10" style={{ backgroundColor: isCreamTheme ? "rgba(116,26,29,0.22)" : "rgba(244,229,198,0.26)" }} />
           <p className="text-[8px] font-semibold uppercase tracking-[0.45em]" style={{ color: isCreamTheme ? "rgba(74,13,16,0.5)" : "rgba(244,229,198,0.5)" }}>
              little rituals · bigger days
