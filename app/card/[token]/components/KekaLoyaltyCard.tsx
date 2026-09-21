@@ -117,40 +117,41 @@ export default function KekaLoyaltyCard({
         }}
       >
         <header>
-          <div className="flex items-start justify-between gap-5">
-            <div className="min-w-0 pt-1">
+          <div>
+            <div className="flex items-center justify-between gap-5">
               <p
                 className="font-serif text-[2.35rem] font-semibold leading-none tracking-[-0.055em] min-[390px]:text-[2.65rem]"
                 style={{ color: isCreamTheme ? burgundy : cream }}
               >
                 Keka
               </p>
-              <p
-                className="mt-2 text-[9px] font-semibold uppercase tracking-[0.34em]"
-                style={{ color: cardMuted }}
+
+              <div
+                className="relative shrink-0 pb-1 text-[3.15rem] font-medium leading-none tracking-[-0.08em] min-[390px]:text-[3.5rem]"
+                dir="rtl"
+                style={{ color: isCreamTheme ? burgundy : cream }}
+                aria-label="كَيكَة"
               >
-                Little Rituals, Big Comfort
-              </p>
+                <span>كيكة</span>
+                <span
+                  aria-hidden="true"
+                  className="absolute right-[8%] top-[-0.13em] block h-[3px] w-[17px] rotate-[-24deg] rounded-full min-[390px]:w-[19px]"
+                  style={{ backgroundColor: "currentColor" }}
+                />
+                <span
+                  aria-hidden="true"
+                  className="absolute left-[24%] top-[-0.13em] block h-[3px] w-[17px] rotate-[-24deg] rounded-full min-[390px]:w-[19px]"
+                  style={{ backgroundColor: "currentColor" }}
+                />
+              </div>
             </div>
 
-            <div
-              className="relative shrink-0 pb-2 pt-3 text-[3.15rem] font-medium leading-none tracking-[-0.08em] min-[390px]:text-[3.5rem]"
-              dir="rtl"
-              style={{ color: isCreamTheme ? burgundy : cream }}
-              aria-label="كَيكَة"
+            <p
+              className="mt-3 text-center font-serif text-[13px] font-semibold tracking-[0.08em] min-[390px]:text-[14px]"
+              style={{ color: isCreamTheme ? "rgba(74,13,16,0.78)" : "rgba(255,246,230,0.84)" }}
             >
-              <span>كيكة</span>
-              <span
-                aria-hidden="true"
-                className="absolute right-[8%] top-[-0.03em] block h-[3px] w-[17px] rotate-[-24deg] rounded-full min-[390px]:w-[19px]"
-                style={{ backgroundColor: "currentColor" }}
-              />
-              <span
-                aria-hidden="true"
-                className="absolute left-[24%] top-[-0.03em] block h-[3px] w-[17px] rotate-[-24deg] rounded-full min-[390px]:w-[19px]"
-                style={{ backgroundColor: "currentColor" }}
-              />
-            </div>
+              Little Rituals, Big Comfort
+            </p>
           </div>
 
           <div className="mt-7 flex items-end justify-between gap-4">
