@@ -22,38 +22,18 @@ type Props = {
   onShowFeedback: () => void;
 };
 
-function KekaCupStamp({ active = false }: { active?: boolean }) {
-  const cream = "#F4E5C6";
+function KekaStamp({ active = false }: { active?: boolean }) {
   return (
-    <svg aria-hidden="true" viewBox="0 0 48 48" className="h-10 w-10 overflow-visible min-[390px]:h-11 min-[390px]:w-11" fill="none"
-      style={{ opacity: active ? 1 : 0.34, filter: active ? "drop-shadow(0 5px 9px rgba(42,3,5,0.22))" : "none" }}>
-      <path d="M11 14h23l-2.4 25H14L11 14Z" fill={active ? cream : "transparent"} stroke={cream} strokeWidth="1.8" strokeLinejoin="round" />
-      <path d="M9.5 14h26" stroke={cream} strokeWidth="2.3" strokeLinecap="round" />
-      <path d="M13 18h20" stroke={active ? "#741A1D" : cream} strokeWidth="1.2" opacity="0.7" />
-      <path d="M17 26h12" stroke={active ? "#741A1D" : cream} strokeWidth="1.35" strokeLinecap="round" opacity="0.9" />
-      <path d="M18.5 29.5h9" stroke={active ? "#741A1D" : cream} strokeWidth="1.15" strokeLinecap="round" opacity="0.7" />
-    </svg>
-  );
-}
-
-function KekaLogo() {
-  const cream = "#F4E5C6";
-  return (
-    <div className="mx-auto w-full max-w-[300px]" aria-label="Keka">
-      <svg viewBox="0 0 420 150" className="h-auto w-full overflow-visible" role="img">
-        <g fill="none" stroke={cream} strokeWidth="16" strokeLinecap="square" strokeLinejoin="round">
-          <path d="M55 82v35h64c29 0 45-15 45-40V58h-31" />
-          <path d="M365 82v35h-64c-29 0-45-15-45-40V58h31" />
-          <path d="M137 117h146" />
-          <path d="M128 43l29-12" />
-          <path d="M292 43l29-12" />
-        </g>
-        <rect x="45" y="55" width="11" height="11" fill={cream} />
-        <rect x="62" y="55" width="11" height="11" fill={cream} />
-        <rect x="204" y="128" width="11" height="11" fill={cream} />
-        <rect x="221" y="128" width="11" height="11" fill={cream} />
-        <text x="210" y="59" textAnchor="middle" fill="#F06A86" fontSize="34" fontWeight="700" fontFamily="Arial, sans-serif">Keka</text>
-      </svg>
+    <div
+      className="flex h-11 w-11 items-center justify-center rounded-[42%] border text-[18px] font-semibold min-[390px]:h-12 min-[390px]:w-12"
+      style={{
+        color: active ? "#6F171A" : "rgba(248,236,210,0.32)",
+        backgroundColor: active ? "#F4E5C6" : "transparent",
+        borderColor: active ? "#F4E5C6" : "rgba(248,236,210,0.24)",
+        boxShadow: active ? "0 7px 18px rgba(36,4,5,0.18)" : "none",
+      }}
+    >
+      ك
     </div>
   );
 }
@@ -127,7 +107,12 @@ export default function KekaLoyaltyCard({
         </header>
 
         <div className="mt-8 text-center">
-          <KekaLogo />
+          <p className="text-[13px] font-medium tracking-[0.08em]" style={{ color: "rgba(244,229,198,0.68)" }}>
+            Keka
+          </p>
+          <div className="mt-1 text-[4.5rem] font-medium leading-[0.9] tracking-[-0.08em] min-[390px]:text-[5.2rem]" dir="rtl" style={{ color: cream }}>
+            كيكة
+          </div>
           <p className="mt-4 font-serif text-[17px] tracking-[0.02em] min-[390px]:text-[19px]" style={{ color: creamSoft }}>
             Little Rituals, Big Comfort
           </p>
@@ -166,7 +151,7 @@ export default function KekaLoyaltyCard({
               const rewardSlotReady = !isPurchaseSlot && rewardReady;
               return (
                 <div key={index} className={"flex min-w-0 justify-center " + (isNew ? "keka-stamp-glow" : "")}>
-                  <KekaCupStamp active={active || rewardSlotReady} />
+                  <KekaStamp active={active || rewardSlotReady} />
                 </div>
               );
             })}
@@ -182,7 +167,13 @@ export default function KekaLoyaltyCard({
           </div>
         </section>
 
-        <div className="h-7" aria-hidden="true" />
+        <div className="my-7 flex items-center justify-center gap-3">
+          <div className="h-px w-10" style={{ backgroundColor: "rgba(244,229,198,0.26)" }} />
+          <p className="text-[8px] font-semibold uppercase tracking-[0.45em]" style={{ color: "rgba(244,229,198,0.5)" }}>
+            Same little rituals · bigger days
+          </p>
+          <div className="h-px w-10" style={{ backgroundColor: "rgba(244,229,198,0.26)" }} />
+        </div>
 
         <button
           type="button"
@@ -253,14 +244,12 @@ export default function KekaLoyaltyCard({
 
       <style jsx global>{`
         @keyframes keka-stamp-glow {
-          0% { filter: drop-shadow(0 0 0 rgba(244,229,198,0)); transform: scale(0.92); }
-          42% { filter: drop-shadow(0 0 10px rgba(244,229,198,0.72)); transform: scale(1.06); }
+          0% { filter: drop-shadow(0 0 0 rgba(244,229,198,0)); transform: scale(0.9); }
+          45% { filter: drop-shadow(0 0 9px rgba(244,229,198,0.85)); transform: scale(1.08); }
           100% { filter: drop-shadow(0 0 0 rgba(244,229,198,0)); transform: scale(1); }
         }
-        .keka-stamp-glow { animation: keka-stamp-glow 820ms cubic-bezier(0.16,1,0.3,1) both; }
-        @media (prefers-reduced-motion: reduce) {
-          .keka-stamp-glow { animation: none; }
-        }
+        .keka-stamp-glow { animation: keka-stamp-glow 760ms cubic-bezier(0.16,1,0.3,1) both; }
+        @media (prefers-reduced-motion: reduce) { .keka-stamp-glow { animation: none; } }
       `}</style>
     </div>
   );
