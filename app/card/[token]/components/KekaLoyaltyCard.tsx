@@ -32,7 +32,7 @@ function KekaStamp({ active = false, creamTheme = false }: { active?: boolean; c
 
   return (
     <div
-      className="flex h-[52px] w-[43px] items-center justify-center min-[390px]:h-[56px] min-[390px]:w-[46px]"
+      className="flex h-[44px] w-[36px] items-center justify-center min-[390px]:h-[48px] min-[390px]:w-[39px]"
       style={{
         color: ink,
         filter: active
@@ -89,18 +89,7 @@ function KekaStamp({ active = false, creamTheme = false }: { active?: boolean; c
 
           <path d="M124 318 C155 335 245 335 276 318" />
 
-          <text
-            x="200"
-            y="292"
-            textAnchor="middle"
-            fill="currentColor"
-            stroke="none"
-            fontSize="48"
-            fontWeight="700"
-            fontFamily="serif"
-          >
-            ك
-          </text>
+
         </g>
       </svg>
     </div>
