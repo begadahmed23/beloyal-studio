@@ -1282,6 +1282,9 @@ const normalizedCafeName = customer.cafe.name
 const isKato =
   customer.cafe.slug.toLowerCase().includes("kato") ||
   normalizedCafeName.includes("kato");
+const isKeka =
+  customer.cafe.slug.toLowerCase().includes("keka") ||
+  normalizedCafeName.includes("keka");
 
 const unlockAt = getLoyaltyProgressTarget({
   businessType: customer.cafe.businessType,
@@ -1494,11 +1497,13 @@ const progressPercentage = rewardReady
         WebkitTextSizeAdjust: "100%",
         textSizeAdjust: "100%",
         color: textPrimary,
-        background: isKato
-          ? customer.cafe.theme === "DARK_LUXURY"
-            ? "linear-gradient(180deg,#06172B 0%,#0A223E 100%)"
-            : "linear-gradient(180deg,#F7F9FB 0%,#EEF3F7 100%)"
-          : `
+        background: isKeka
+          ? "linear-gradient(180deg,#F5E7D2 0%,#E8D2B8 100%)"
+          : isKato
+            ? customer.cafe.theme === "DARK_LUXURY"
+              ? "linear-gradient(180deg,#06172B 0%,#0A223E 100%)"
+              : "linear-gradient(180deg,#F7F9FB 0%,#EEF3F7 100%)"
+            : `
               radial-gradient(
                 circle at 50% -10%,
                 ${withAlpha(
