@@ -183,7 +183,7 @@ export default function KekaLoyaltyCard({
             Keka
           </p>
           <div className="mt-1 text-[4.05rem] font-medium leading-[0.88] tracking-[-0.08em] min-[390px]:text-[4.55rem]" dir="rtl" style={{ color: isCreamTheme ? burgundy : cream }}>
-            كيكة
+            كَيكَة
           </div>
           <p className="mt-3 font-serif text-[16px] tracking-[0.015em] min-[390px]:text-[17px]" style={{ color: cardText }}>
             Little Rituals, Big Comfort
