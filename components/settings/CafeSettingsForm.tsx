@@ -677,7 +677,7 @@ router.refresh();
         </section>
         )}
 
-        {!isKato && (
+        {!isKato && !isKeka && (
         <section
           className="border p-5 sm:p-7"
           style={cardStyle}
