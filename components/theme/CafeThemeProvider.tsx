@@ -126,29 +126,29 @@ function isKatoCafe(cafe: CafeSettings) {
 }
 
 const KEKA_DASHBOARD_THEME: CafeThemeConfig = {
-  pageBackground: "#F3E5D3",
-  surface: "#FFF7EA",
-  surfaceRaised: "#EBD7C0",
-  border: "rgba(116, 26, 29, 0.14)",
+  pageBackground: "#4A0D10",
+  surface: "#641417",
+  surfaceRaised: "#741A1D",
+  border: "rgba(244, 229, 198, 0.14)",
 
-  textPrimary: "#4A0D10",
-  textSecondary: "#6F3435",
-  textMuted: "#98706B",
+  textPrimary: "#FFF6E6",
+  textSecondary: "#F4E5C6",
+  textMuted: "rgba(244, 229, 198, 0.62)",
 
-  accent: "#741A1D",
-  accentHover: "#8A2426",
-  accentSoft: "rgba(116, 26, 29, 0.09)",
-  accentText: "#FFF6E6",
+  accent: "#F4E5C6",
+  accentHover: "#FFF6E6",
+  accentSoft: "rgba(244, 229, 198, 0.11)",
+  accentText: "#4A0D10",
 
-  success: "#5F7962",
-  warning: "#A8753E",
-  danger: "#A94343",
+  success: "#AFC7A7",
+  warning: "#E5BD79",
+  danger: "#F09A92",
 
-  inputBackground: "#FFF9F0",
-  inputBorder: "rgba(116, 26, 29, 0.16)",
+  inputBackground: "#551013",
+  inputBorder: "rgba(244, 229, 198, 0.18)",
 
-  buttonText: "#FFF6E6",
-  cardShadow: "0 22px 60px rgba(74, 13, 16, 0.10)",
+  buttonText: "#4A0D10",
+  cardShadow: "0 22px 60px rgba(32, 3, 5, 0.22)",
 
   radiusLarge: "30px",
   radiusMedium: "18px",
