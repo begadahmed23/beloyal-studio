@@ -25,30 +25,33 @@ type Props = {
 function KekaStamp({ active = false, creamTheme = false }: { active?: boolean; creamTheme?: boolean }) {
   const ink = active
     ? creamTheme ? "#FFF6E6" : "#741A1D"
-    : creamTheme ? "rgba(116,26,29,0.30)" : "rgba(244,229,198,0.32)";
+    : creamTheme ? "rgba(116,26,29,0.30)" : "rgba(244,229,198,0.30)";
   const fill = active
     ? creamTheme ? "#741A1D" : "#F4E5C6"
     : "transparent";
 
   return (
     <div
-      className="flex h-[42px] w-[34px] items-center justify-center min-[390px]:h-[45px] min-[390px]:w-[37px]"
+      className="relative flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] min-[390px]:h-11 min-[390px]:w-11"
       style={{
         color: ink,
-        filter: active
+        borderColor: active
+          ? fill
+          : creamTheme ? "rgba(116,26,29,0.24)" : "rgba(244,229,198,0.24)",
+        backgroundColor: fill,
+        boxShadow: active
           ? creamTheme
-            ? "drop-shadow(0 5px 7px rgba(74,13,16,0.18))"
-            : "drop-shadow(0 5px 7px rgba(36,4,5,0.16))"
+            ? "0 5px 14px rgba(74,13,16,0.18)"
+            : "0 5px 14px rgba(36,4,5,0.16)"
           : "none",
       }}
     >
-      <svg viewBox="0 0 42 50" className="h-full w-full overflow-visible" aria-hidden="true">
-        <path d="M9 16.5h24l-2.2 5.2H11.2L9 16.5Z" fill={fill} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-        <path d="M11.3 21.7h19.4l-1.6 20.1c-.25 3.1-2.8 5.5-5.9 5.5h-4.4c-3.1 0-5.65-2.4-5.9-5.5l-1.6-20.1Z" fill={fill} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-        <path d="M8.2 12.2h25.6c1.3 0 2.2 1.2 1.8 2.4l-.7 1.9H7.1l-.7-1.9c-.4-1.2.5-2.4 1.8-2.4Z" fill={fill} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-        <path d="M12.2 9.2c.6-2.8 3.2-4.8 6.1-4.8h5.4c2.9 0 5.5 2 6.1 4.8H12.2Z" fill={fill} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-        <path d="M13 29.5h16" stroke="currentColor" strokeWidth="1.2" opacity=".55" />
-      </svg>
+      <span
+        aria-hidden="true"
+        className="absolute inset-[3px] rounded-full border border-dashed"
+        style={{ borderColor: "currentColor", opacity: active ? 0.48 : 0.38 }}
+      />
+      <span className="font-serif text-[13px] font-semibold tracking-[0.06em] min-[390px]:text-[14px]">K</span>
     </div>
   );
 }
@@ -113,60 +116,70 @@ export default function KekaLoyaltyCard({
             : "0 28px 90px rgba(61,8,10,0.28)",
         }}
       >
-        <header className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-[9px] font-semibold uppercase tracking-[0.38em]" style={{ color: isCreamTheme ? "rgba(74,13,16,0.66)" : "rgba(244,229,198,0.72)" }}>
-              Good coffee · better days
-            </p>
-            <p className="mt-1 text-[9px] font-medium uppercase tracking-[0.42em]" style={{ color: isCreamTheme ? "rgba(74,13,16,0.46)" : "rgba(244,229,198,0.48)" }}>
-              Alexandria
-            </p>
+        <header>
+          <div className="flex items-start justify-between gap-5">
+            <div className="min-w-0 pt-1">
+              <p
+                className="font-serif text-[2.35rem] font-semibold leading-none tracking-[-0.055em] min-[390px]:text-[2.65rem]"
+                style={{ color: isCreamTheme ? burgundy : cream }}
+              >
+                Keka
+              </p>
+              <p
+                className="mt-2 text-[9px] font-semibold uppercase tracking-[0.34em]"
+                style={{ color: cardMuted }}
+              >
+                Little Rituals, Big Comfort
+              </p>
+            </div>
+
+            <div
+              className="relative shrink-0 pb-2 pt-3 text-[3.15rem] font-medium leading-none tracking-[-0.08em] min-[390px]:text-[3.5rem]"
+              dir="rtl"
+              style={{ color: isCreamTheme ? burgundy : cream }}
+              aria-label="كَيكَة"
+            >
+              <span>كيكة</span>
+              <span
+                aria-hidden="true"
+                className="absolute right-[8%] top-[-0.03em] block h-[3px] w-[17px] rotate-[-24deg] rounded-full min-[390px]:w-[19px]"
+                style={{ backgroundColor: "currentColor" }}
+              />
+              <span
+                aria-hidden="true"
+                className="absolute left-[24%] top-[-0.03em] block h-[3px] w-[17px] rotate-[-24deg] rounded-full min-[390px]:w-[19px]"
+                style={{ backgroundColor: "currentColor" }}
+              />
+            </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={refreshing}
-            aria-label="Refresh loyalty card"
-            className="flex h-10 w-10 items-center justify-center rounded-full border transition disabled:opacity-50"
-            style={{ borderColor: isCreamTheme ? "rgba(116,26,29,0.16)" : "rgba(244,229,198,0.16)", color: isCreamTheme ? burgundy : cream }}
-          >
-            <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
-          </button>
+          <div className="mt-7 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[13px] font-medium" style={{ color: cardMuted }}>
+                Good to see you,
+              </p>
+              <h1
+                className="mt-1 max-w-full truncate pb-[0.12em] text-[2rem] font-semibold leading-[1.08] tracking-[-0.05em] min-[390px]:text-[2.2rem]"
+                style={{ color: isCreamTheme ? burgundy : cream }}
+              >
+                {customerName}
+              </h1>
+            </div>
+
+            <button
+              type="button"
+              onClick={onRefresh}
+              disabled={refreshing}
+              aria-label="Refresh loyalty card"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition disabled:opacity-50"
+              style={{ borderColor: cardBorder, color: isCreamTheme ? burgundy : cream }}
+            >
+              <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
+            </button>
+          </div>
         </header>
 
-        <div className="mt-7 text-center">
-          <p className="text-[13px] font-medium tracking-[0.08em]" style={{ color: isCreamTheme ? "rgba(74,13,16,0.62)" : "rgba(244,229,198,0.68)" }}>
-            Keka
-          </p>
-          <div
-            className="relative mx-auto mt-1 w-fit text-[4.05rem] font-medium leading-[0.88] tracking-[-0.08em] min-[390px]:text-[4.55rem]"
-            dir="rtl"
-            style={{ color: isCreamTheme ? burgundy : cream }}
-            aria-label="كَيكَة"
-          >
-            <span>كيكة</span>
-            <span aria-hidden="true" className="absolute right-[7%] top-[-0.08em] text-[0.36em] font-bold leading-none">َ</span>
-            <span aria-hidden="true" className="absolute left-[25%] top-[-0.08em] text-[0.36em] font-bold leading-none">َ</span>
-          </div>
-          <p className="mt-3 font-serif text-[16px] tracking-[0.015em] min-[390px]:text-[17px]" style={{ color: cardText }}>
-            Little Rituals, Big Comfort
-          </p>
-        </div>
-
-        <div className="mt-7 border-t pt-5" style={{ borderColor: cardBorder }}>
-          <p
-            className="text-[13px] font-medium tracking-[0.01em]"
-            style={{ color: cardMuted }}
-          >
-            Good to see you,
-          </p>
-          <h1
-            className="mt-1 max-w-full truncate pb-[0.16em] text-[2rem] font-semibold leading-[1.12] tracking-[-0.05em] min-[390px]:text-[2.2rem]"
-            style={{ color: isCreamTheme ? burgundy : cream }}
-          >
-            {customerName}
-          </h1>
+        <div className="mt-6 border-t pt-5" style={{ borderColor: cardBorder }}>
         </div>
 
         {(customer.cafe.eligiblePurchaseDescription?.trim() || customer.cafe.rewardDescription?.trim()) && (
