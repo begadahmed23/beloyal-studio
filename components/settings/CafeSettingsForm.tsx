@@ -102,6 +102,9 @@ export default function CafeSettingsForm({
   const isKato =
     cafe.slug.toLowerCase().includes("kato") ||
     normalizedCafeName.includes("kato");
+  const isKeka =
+    cafe.slug.toLowerCase().includes("keka") ||
+    normalizedCafeName.includes("keka");
 
   const themeOptions = getBusinessThemeOptions(
     cafe.businessType,
@@ -498,7 +501,7 @@ router.refresh();
       )}
 
       <div className="mt-8 grid gap-6">
-        {!isKato && (
+        {!isKato && !isKeka && (
         <section
           className="border p-5 sm:p-7"
           style={cardStyle}
@@ -741,6 +744,111 @@ router.refresh();
         </section>
 
         )}
+        {isKeka && (
+          <section
+            className="border p-5 sm:p-7"
+            style={cardStyle}
+          >
+            <SectionHeader
+              theme={theme}
+              icon={Palette}
+              title="Customer card appearance"
+              description="Choose the Keka loyalty card style customers see on their phones."
+            />
+
+            <div className="mt-7 grid gap-4 sm:grid-cols-2">
+              {[
+                {
+                  value: "COFFEE_CLASSIC" as CafeThemeName,
+                  label: "Burgundy",
+                  description: "Keka’s deep burgundy with warm cream details.",
+                  background: "#4A0D10",
+                  card: "#741A1D",
+                  accent: "#F4E5C6",
+                },
+                {
+                  value: "MODERN_MINIMAL" as CafeThemeName,
+                  label: "Cream",
+                  description: "Warm cream with burgundy typography and details.",
+                  background: "#F3E5D3",
+                  card: "#FFF6E6",
+                  accent: "#741A1D",
+                },
+              ].map((option) => {
+                const selected = form.theme === option.value;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => selectTheme(option.value)}
+                    className="overflow-hidden border p-3 text-left transition hover:-translate-y-0.5"
+                    style={{
+                      borderColor: selected ? theme.accent : theme.border,
+                      backgroundColor: theme.surface,
+                      borderRadius: theme.radiusLarge,
+                    }}
+                  >
+                    <div
+                      className="relative min-h-40 overflow-hidden p-5"
+                      style={{
+                        backgroundColor: option.background,
+                        borderRadius: theme.radiusMedium,
+                      }}
+                    >
+                      <div
+                        className="rounded-[22px] border p-4"
+                        style={{
+                          backgroundColor: option.card,
+                          borderColor: option.accent + "33",
+                          color: option.accent,
+                        }}
+                      >
+                        <p className="font-serif text-2xl font-semibold">Keka</p>
+                        <p className="mt-1 text-[9px] uppercase tracking-[0.18em] opacity-65">
+                          Little Rituals, Big Comfort
+                        </p>
+                        <div className="mt-7 flex gap-2">
+                          {[0, 1, 2, 3].map((stamp) => (
+                            <span
+                              key={stamp}
+                              className="h-6 w-6 rounded-[9px] border"
+                              style={{
+                                borderColor: option.accent + "55",
+                                backgroundColor:
+                                  stamp < 3 ? option.accent : "transparent",
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      {selected ? (
+                        <span
+                          className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full"
+                          style={{
+                            backgroundColor: option.accent,
+                            color: option.card,
+                          }}
+                        >
+                          <Check size={14} />
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="px-2 pb-2 pt-4">
+                      <p className="font-semibold" style={{ color: theme.textPrimary }}>
+                        {option.label}
+                      </p>
+                      <p className="mt-1 text-sm" style={{ color: theme.textMuted }}>
+                        {option.description}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {isKato && (
           <section
             className="border p-5 sm:p-7"
