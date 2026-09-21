@@ -127,12 +127,12 @@ export default function KekaLoyaltyCard({
               <span>كيكة</span>
               <span
                 aria-hidden="true"
-                className="absolute right-[8%] top-[0.03em] block h-[3px] w-[20px] rotate-[-24deg] rounded-full min-[390px]:w-[22px]"
+                className="absolute right-[8%] top-[0.13em] block h-[3px] w-[20px] rotate-[-24deg] rounded-full min-[390px]:w-[22px]"
                 style={{ backgroundColor: "currentColor" }}
               />
               <span
                 aria-hidden="true"
-                className="absolute left-[24%] top-[0.03em] block h-[3px] w-[20px] rotate-[-24deg] rounded-full min-[390px]:w-[22px]"
+                className="absolute left-[24%] top-[0.13em] block h-[3px] w-[20px] rotate-[-24deg] rounded-full min-[390px]:w-[22px]"
                 style={{ backgroundColor: "currentColor" }}
               />
               <span
