@@ -137,8 +137,11 @@ export default function KekaLoyaltyCard({
               />
               <span
                 dir="ltr"
-                className="absolute left-1/2 top-0 -translate-x-1/2 font-serif text-[0.19em] font-semibold tracking-[0.06em]"
-                style={{ color: isCreamTheme ? "rgba(74,13,16,0.72)" : "rgba(244,229,198,0.78)" }}
+                className="absolute left-1/2 top-[-0.10em] block -translate-x-1/2 whitespace-nowrap text-center font-serif text-[0.19em] font-semibold tracking-[0.02em]"
+                style={{
+                  color: isCreamTheme ? "rgba(74,13,16,0.72)" : "rgba(244,229,198,0.78)",
+                  width: "max-content",
+                }}
               >
                 Keka
               </span>
