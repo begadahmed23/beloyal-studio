@@ -146,12 +146,24 @@ export default function KekaLoyaltyCard({
               </div>
             </div>
 
-            <p
-              className="mt-3 text-center font-serif text-[13px] font-semibold tracking-[0.08em] min-[390px]:text-[14px]"
-              style={{ color: isCreamTheme ? "rgba(74,13,16,0.78)" : "rgba(255,246,230,0.84)" }}
-            >
-              Little Rituals, Big Comfort
-            </p>
+            <div className="mt-3 flex items-center justify-center gap-3">
+              <span
+                aria-hidden="true"
+                className="h-px w-7 min-[390px]:w-9"
+                style={{ backgroundColor: isCreamTheme ? "rgba(116,26,29,0.22)" : "rgba(244,229,198,0.24)" }}
+              />
+              <p
+                className="text-center font-serif text-[12px] font-medium tracking-[0.07em] min-[390px]:text-[13px]"
+                style={{ color: isCreamTheme ? "rgba(74,13,16,0.56)" : "rgba(255,246,230,0.58)" }}
+              >
+                Little Rituals, Big Comfort
+              </p>
+              <span
+                aria-hidden="true"
+                className="h-px w-7 min-[390px]:w-9"
+                style={{ backgroundColor: isCreamTheme ? "rgba(116,26,29,0.22)" : "rgba(244,229,198,0.24)" }}
+              />
+            </div>
           </div>
 
           <div className="mt-7 flex items-end justify-between gap-4">
