@@ -22,19 +22,62 @@ type Props = {
   onShowFeedback: () => void;
 };
 
-function KekaStamp({ active = false }: { active?: boolean }) {
+function KekaBoxStamp({ active = false }: { active?: boolean }) {
+  const cream = "#F4E5C6";
+
   return (
-    <div
-      className="flex h-11 w-11 items-center justify-center rounded-[42%] border text-[18px] font-semibold min-[390px]:h-12 min-[390px]:w-12"
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 72 62"
+      className="h-[46px] w-[52px] overflow-visible min-[390px]:h-[50px] min-[390px]:w-[56px]"
+      fill="none"
       style={{
-        color: active ? "#6F171A" : "rgba(248,236,210,0.32)",
-        backgroundColor: active ? "#F4E5C6" : "transparent",
-        borderColor: active ? "#F4E5C6" : "rgba(248,236,210,0.24)",
-        boxShadow: active ? "0 7px 18px rgba(36,4,5,0.18)" : "none",
+        opacity: active ? 1 : 0.42,
+        filter: active ? "drop-shadow(0 7px 9px rgba(42,3,5,0.24))" : "none",
       }}
     >
-      ك
-    </div>
+      <g className={active ? "keka-box-stamp__lid keka-box-stamp__lid--open" : "keka-box-stamp__lid"}>
+        <path
+          d="M13 25.5 34.5 17 59 23.5 37 33Z"
+          fill={active ? "#E33A27" : "rgba(244,229,198,0.06)"}
+          stroke={cream}
+          strokeWidth="1.8"
+          strokeLinejoin="round"
+        />
+        <path
+          d="m13 25.5 24 7.5v7L13 31.5Z"
+          fill={active ? "#B51D14" : "transparent"}
+          stroke={cream}
+          strokeWidth="1.4"
+          strokeLinejoin="round"
+        />
+        <path
+          d="m37 33 22-9.5v7L37 40Z"
+          fill={active ? "#7B0D09" : "transparent"}
+          stroke={cream}
+          strokeWidth="1.4"
+          strokeLinejoin="round"
+        />
+      </g>
+
+      <path
+        d="m14 36 23 8 21-8v12L37 57 14 48Z"
+        fill={active ? "#8F110D" : "rgba(244,229,198,0.035)"}
+        stroke={cream}
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+      <path d="M37 44v13" stroke={cream} strokeWidth="1.2" opacity="0.72" />
+      <path
+        d="M29 27.2c2.2 1.7 4.4 2.3 7 2.1 2.3-.1 4.4-.9 6.4-2.5"
+        stroke={cream}
+        strokeWidth="1.35"
+        strokeLinecap="round"
+        opacity={active ? 0.95 : 0.6}
+      />
+      <circle cx="33" cy="26" r="0.9" fill={cream} />
+      <circle cx="39" cy="25.5" r="0.9" fill={cream} />
+    </svg>
   );
 }
 
@@ -151,7 +194,7 @@ export default function KekaLoyaltyCard({
               const rewardSlotReady = !isPurchaseSlot && rewardReady;
               return (
                 <div key={index} className={"flex min-w-0 justify-center " + (isNew ? "keka-stamp-glow" : "")}>
-                  <KekaStamp active={active || rewardSlotReady} />
+                  <KekaBoxStamp active={active || rewardSlotReady} />
                 </div>
               );
             })}
@@ -167,13 +210,7 @@ export default function KekaLoyaltyCard({
           </div>
         </section>
 
-        <div className="my-7 flex items-center justify-center gap-3">
-          <div className="h-px w-10" style={{ backgroundColor: "rgba(244,229,198,0.26)" }} />
-          <p className="text-[8px] font-semibold uppercase tracking-[0.45em]" style={{ color: "rgba(244,229,198,0.5)" }}>
-            Same little rituals · bigger days
-          </p>
-          <div className="h-px w-10" style={{ backgroundColor: "rgba(244,229,198,0.26)" }} />
-        </div>
+        <div className="h-7" aria-hidden="true" />
 
         <button
           type="button"
@@ -244,12 +281,22 @@ export default function KekaLoyaltyCard({
 
       <style jsx global>{`
         @keyframes keka-stamp-glow {
-          0% { filter: drop-shadow(0 0 0 rgba(244,229,198,0)); transform: scale(0.9); }
-          45% { filter: drop-shadow(0 0 9px rgba(244,229,198,0.85)); transform: scale(1.08); }
+          0% { filter: drop-shadow(0 0 0 rgba(244,229,198,0)); transform: scale(0.92); }
+          42% { filter: drop-shadow(0 0 10px rgba(244,229,198,0.72)); transform: scale(1.06); }
           100% { filter: drop-shadow(0 0 0 rgba(244,229,198,0)); transform: scale(1); }
         }
-        .keka-stamp-glow { animation: keka-stamp-glow 760ms cubic-bezier(0.16,1,0.3,1) both; }
-        @media (prefers-reduced-motion: reduce) { .keka-stamp-glow { animation: none; } }
+        @keyframes keka-box-open {
+          0% { transform: translateY(5px) rotate(0deg); }
+          55% { transform: translateY(-5px) rotate(-4deg); }
+          100% { transform: translateY(-3px) rotate(-2deg); }
+        }
+        .keka-stamp-glow { animation: keka-stamp-glow 820ms cubic-bezier(0.16,1,0.3,1) both; }
+        .keka-box-stamp__lid { transform-box: fill-box; transform-origin: 18% 100%; transition: transform 420ms cubic-bezier(0.16,1,0.3,1); }
+        .keka-box-stamp__lid--open { transform: translateY(-3px) rotate(-2deg); }
+        .keka-stamp-glow .keka-box-stamp__lid--open { animation: keka-box-open 720ms cubic-bezier(0.16,1,0.3,1) both; }
+        @media (prefers-reduced-motion: reduce) {
+          .keka-stamp-glow, .keka-stamp-glow .keka-box-stamp__lid--open { animation: none; }
+        }
       `}</style>
     </div>
   );
