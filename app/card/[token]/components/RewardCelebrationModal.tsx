@@ -26,6 +26,91 @@ export default function RewardCelebrationModal({
   const isKato =
     cafeSlug.toLowerCase().includes("kato") ||
     normalizedName.includes("kato");
+  const isKeka =
+    cafeSlug.toLowerCase().includes("keka") ||
+    normalizedName.includes("keka");
+
+  if (isKeka) {
+    return (
+      <div
+        className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-[#3A080A]/95 px-4 py-7 backdrop-blur-2xl sm:px-5 sm:py-8"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Keka reward redeemed"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) onClose();
+        }}
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_22%,rgba(244,229,198,0.17),transparent_27%),radial-gradient(circle_at_50%_76%,rgba(138,36,38,0.42),transparent_42%)]" />
+
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+          {Array.from({ length: 26 }).map((_, index) => (
+            <span
+              key={index}
+              className="keka-confetti absolute -top-8 block rounded-full"
+              style={{
+                left: `${(index * 43) % 100}%`,
+                width: `${4 + (index % 3) * 2}px`,
+                height: `${4 + (index % 3) * 2}px`,
+                backgroundColor: index % 3 === 0 ? "#FFF6E6" : index % 3 === 1 ? "#F4E5C6" : "#A53A3D",
+                animationDelay: `${(index % 9) * 0.08}s`,
+                animationDuration: `${2.2 + (index % 5) * 0.18}s`,
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="keka-reward relative w-full max-w-sm overflow-hidden rounded-[32px] border border-[#F4E5C6]/20 bg-[linear-gradient(155deg,#8A2426_0%,#741A1D_54%,#4A0D10_100%)] p-6 text-center text-[#FFF6E6] shadow-[0_40px_130px_rgba(25,2,4,0.68)] sm:rounded-[36px] sm:p-7">
+          <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#F4E5C6]/80 to-transparent" />
+
+          <button type="button" onClick={onClose} aria-label="Close reward celebration" className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#F4E5C6]/15 bg-black/10 text-[#F4E5C6]/70 transition hover:bg-black/15">
+            <X size={18} />
+          </button>
+
+          <div className="keka-reward-mark mx-auto mt-3 flex h-24 w-24 items-center justify-center rounded-[30px] border border-[#F4E5C6]/20 bg-[#F4E5C6] text-[#741A1D] shadow-[0_18px_60px_rgba(244,229,198,0.18)]">
+            <span className="text-5xl font-semibold leading-none" dir="rtl">ك</span>
+          </div>
+
+          <p className="mt-7 text-[10px] font-semibold uppercase tracking-[0.3em] text-[#F4E5C6]/60">Keka ritual complete</p>
+          <h2 className="mt-3 font-serif text-[2rem] font-semibold leading-tight text-[#FFF6E6]">Enjoy your {rewardName || "reward"}</h2>
+          <p className="mx-auto mt-3 max-w-[18rem] text-sm leading-6 text-[#F4E5C6]/70">Your reward was redeemed. A new little ritual starts now.</p>
+
+          {rewardDescription ? (
+            <div className="mt-6 rounded-2xl border border-[#F4E5C6]/12 bg-black/10 px-4 py-3 text-sm leading-6 text-[#F4E5C6]/75">{rewardDescription}</div>
+          ) : null}
+
+          <p className="mt-7 font-serif text-sm italic text-[#F4E5C6]/55">Little Rituals, Big Comfort</p>
+
+          <button type="button" onClick={onClose} className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#F4E5C6] text-sm font-semibold text-[#4A0D10] shadow-[0_14px_40px_rgba(244,229,198,0.16)] transition hover:brightness-105 active:scale-[0.99]">
+            <Sparkles size={17} />
+            Continue
+          </button>
+        </div>
+
+        <style jsx global>{`
+          @keyframes keka-reward-in {
+            0% { opacity: 0; transform: translateY(22px) scale(0.91); }
+            65% { opacity: 1; transform: translateY(-3px) scale(1.02); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          @keyframes keka-reward-mark {
+            0% { opacity: 0; transform: scale(0.65) rotate(-8deg); }
+            60% { opacity: 1; transform: scale(1.09) rotate(3deg); }
+            100% { opacity: 1; transform: scale(1) rotate(0); }
+          }
+          @keyframes keka-confetti-fall {
+            0% { opacity: 0; transform: translate3d(0,-8vh,0) scale(.7); }
+            12% { opacity: 1; }
+            100% { opacity: 0; transform: translate3d(24px,108vh,0) scale(1); }
+          }
+          .keka-reward { animation: keka-reward-in 620ms cubic-bezier(.16,1,.3,1) both; }
+          .keka-reward-mark { animation: keka-reward-mark 760ms cubic-bezier(.16,1,.3,1) 100ms both; }
+          .keka-confetti { animation-name: keka-confetti-fall; animation-timing-function: cubic-bezier(.18,.7,.3,1); animation-fill-mode: both; }
+          @media (prefers-reduced-motion: reduce) { .keka-reward,.keka-reward-mark,.keka-confetti { animation: none; } }
+        `}</style>
+      </div>
+    );
+  }
 
   if (isKato) {
     return (
