@@ -23,17 +23,71 @@ type Props = {
 };
 
 function KekaStamp({ active = false, creamTheme = false }: { active?: boolean; creamTheme?: boolean }) {
+  const ink = active
+    ? creamTheme ? "#FFF6E6" : "#741A1D"
+    : creamTheme ? "rgba(116,26,29,0.28)" : "rgba(244,229,198,0.30)";
+  const fill = active
+    ? creamTheme ? "#741A1D" : "#F4E5C6"
+    : "transparent";
+
   return (
     <div
-      className="flex h-11 w-11 items-center justify-center rounded-[42%] border text-[18px] font-semibold min-[390px]:h-12 min-[390px]:w-12"
+      className="flex h-12 w-11 items-center justify-center min-[390px]:h-[52px] min-[390px]:w-12"
       style={{
-        color: active ? (creamTheme ? "#FFF6E6" : "#6F171A") : (creamTheme ? "rgba(116,26,29,0.32)" : "rgba(248,236,210,0.32)"),
-        backgroundColor: active ? (creamTheme ? "#741A1D" : "#F4E5C6") : "transparent",
-        borderColor: active ? (creamTheme ? "#741A1D" : "#F4E5C6") : (creamTheme ? "rgba(116,26,29,0.2)" : "rgba(248,236,210,0.24)"),
-        boxShadow: active ? (creamTheme ? "0 7px 18px rgba(74,13,16,0.22)" : "0 7px 18px rgba(36,4,5,0.18)") : "none",
+        color: ink,
+        filter: active
+          ? creamTheme
+            ? "drop-shadow(0 6px 8px rgba(74,13,16,0.18))"
+            : "drop-shadow(0 6px 8px rgba(36,4,5,0.16))"
+          : "none",
       }}
     >
-      ك
+      <svg
+        viewBox="0 0 42 50"
+        className="h-full w-full overflow-visible"
+        aria-hidden="true"
+      >
+        <path
+          d="M9 16.5h24l-2.2 5.2H11.2L9 16.5Z"
+          fill={fill}
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M11.3 21.7h19.4l-1.6 20.1c-.25 3.1-2.8 5.5-5.9 5.5h-4.4c-3.1 0-5.65-2.4-5.9-5.5l-1.6-20.1Z"
+          fill={fill}
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M8.2 12.2h25.6c1.3 0 2.2 1.2 1.8 2.4l-.7 1.9H7.1l-.7-1.9c-.4-1.2.5-2.4 1.8-2.4Z"
+          fill={fill}
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M12.2 9.2c.6-2.8 3.2-4.8 6.1-4.8h5.4c2.9 0 5.5 2 6.1 4.8H12.2Z"
+          fill={fill}
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path d="M13 29.5h16" stroke="currentColor" strokeWidth="1.2" opacity=".55" />
+        <text
+          x="21"
+          y="38.2"
+          textAnchor="middle"
+          fill="currentColor"
+          fontSize="8.5"
+          fontWeight="700"
+          fontFamily="serif"
+        >
+          ك
+        </text>
+      </svg>
     </div>
   );
 }
@@ -140,7 +194,7 @@ export default function KekaLoyaltyCard({
             Good to see you,
           </p>
           <h1
-            className="mt-1 max-w-full truncate text-[2rem] font-semibold leading-none tracking-[-0.05em] min-[390px]:text-[2.2rem]"
+            className="mt-1 max-w-full truncate pb-[0.16em] text-[2rem] font-semibold leading-[1.12] tracking-[-0.05em] min-[390px]:text-[2.2rem]"
             style={{ color: isCreamTheme ? burgundy : cream }}
           >
             {customerName}
