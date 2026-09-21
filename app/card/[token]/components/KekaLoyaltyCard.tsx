@@ -25,68 +25,83 @@ type Props = {
 function KekaStamp({ active = false, creamTheme = false }: { active?: boolean; creamTheme?: boolean }) {
   const ink = active
     ? creamTheme ? "#FFF6E6" : "#741A1D"
-    : creamTheme ? "rgba(116,26,29,0.28)" : "rgba(244,229,198,0.30)";
-  const fill = active
+    : creamTheme ? "rgba(116,26,29,0.30)" : "rgba(244,229,198,0.32)";
+  const cupFill = active
     ? creamTheme ? "#741A1D" : "#F4E5C6"
     : "transparent";
 
   return (
     <div
-      className="flex h-12 w-11 items-center justify-center min-[390px]:h-[52px] min-[390px]:w-12"
+      className="flex h-[52px] w-[43px] items-center justify-center min-[390px]:h-[56px] min-[390px]:w-[46px]"
       style={{
         color: ink,
         filter: active
           ? creamTheme
-            ? "drop-shadow(0 6px 8px rgba(74,13,16,0.18))"
-            : "drop-shadow(0 6px 8px rgba(36,4,5,0.16))"
+            ? "drop-shadow(0 6px 9px rgba(74,13,16,0.20))"
+            : "drop-shadow(0 6px 9px rgba(36,4,5,0.18))"
           : "none",
       }}
     >
       <svg
-        viewBox="0 0 42 50"
+        viewBox="70 82 260 370"
         className="h-full w-full overflow-visible"
         aria-hidden="true"
       >
-        <path
-          d="M9 16.5h24l-2.2 5.2H11.2L9 16.5Z"
-          fill={fill}
+        <g
           stroke="currentColor"
-          strokeWidth="1.6"
+          strokeWidth="10"
+          strokeLinecap="round"
           strokeLinejoin="round"
-        />
-        <path
-          d="M11.3 21.7h19.4l-1.6 20.1c-.25 3.1-2.8 5.5-5.9 5.5h-4.4c-3.1 0-5.65-2.4-5.9-5.5l-1.6-20.1Z"
-          fill={fill}
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M8.2 12.2h25.6c1.3 0 2.2 1.2 1.8 2.4l-.7 1.9H7.1l-.7-1.9c-.4-1.2.5-2.4 1.8-2.4Z"
-          fill={fill}
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M12.2 9.2c.6-2.8 3.2-4.8 6.1-4.8h5.4c2.9 0 5.5 2 6.1 4.8H12.2Z"
-          fill={fill}
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
-        <path d="M13 29.5h16" stroke="currentColor" strokeWidth="1.2" opacity=".55" />
-        <text
-          x="21"
-          y="38.2"
-          textAnchor="middle"
-          fill="currentColor"
-          fontSize="8.5"
-          fontWeight="700"
-          fontFamily="serif"
+          fill="none"
         >
-          ك
-        </text>
+          <ellipse cx="200" cy="115" rx="100" ry="25" fill={cupFill} />
+          <ellipse cx="200" cy="112" rx="75" ry="16" fill={cupFill} />
+
+          <path
+            d="M148 114 Q165 102 180 110 Q168 120 148 114Z"
+            fill="currentColor"
+            stroke="none"
+          />
+          <path d="M185 112 Q225 100 248 110" />
+
+          <path d="M98 120 C98 138 302 138 302 120" />
+          <path
+            d="M97 124 L95 135 C95 155 305 155 305 135 L303 124"
+            fill={cupFill}
+          />
+
+          <path
+            d="M92 140 L88 158 C88 182 312 182 312 158 L308 140"
+            fill={cupFill}
+          />
+          <path d="M88 158 C88 180 312 180 312 158" />
+
+          <path
+            d="M102 178 L140 420 C143 438 257 438 260 420 L298 178"
+            fill={cupFill}
+          />
+          <path d="M140 420 C143 438 257 438 260 420" />
+
+          <path
+            d="M112 240 C150 260 250 260 288 240 L278 305 C245 325 155 325 122 305Z"
+            fill={cupFill}
+          />
+
+          <path d="M124 318 C155 335 245 335 276 318" />
+
+          <text
+            x="200"
+            y="292"
+            textAnchor="middle"
+            fill="currentColor"
+            stroke="none"
+            fontSize="48"
+            fontWeight="700"
+            fontFamily="serif"
+          >
+            ك
+          </text>
+        </g>
       </svg>
     </div>
   );
