@@ -197,19 +197,19 @@ export default function KekaLoyaltyCard({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-[11px]" style={{ color: isCreamTheme ? "rgba(74,13,16,0.56)" : "rgba(244,229,198,0.55)" }}>Your Birthday</p>
-            <p className="mt-0.5 text-[14px] font-semibold" style={{ color: creamSoft }}>{birthdayText}</p>
+            <p className="mt-0.5 text-[14px] font-semibold" style={{ color: cardText }}>{birthdayText}</p>
           </div>
           <p className="shrink-0 text-[11px]" style={{ color: isCreamTheme ? "rgba(74,13,16,0.56)" : "rgba(244,229,198,0.55)" }}>
             {daysUntilBirthday === 0 ? "Today" : `In ${daysUntilBirthday} ${daysUntilBirthday === 1 ? "day" : "days"}`}
           </p>
-          <ChevronRight size={16} style={{ color: "rgba(244,229,198,0.5)", transform: birthdayOpen ? "rotate(90deg)" : "none", transition: "transform 180ms ease" }} />
+          <ChevronRight size={16} style={{ color: isCreamTheme ? "rgba(74,13,16,0.5)" : "rgba(244,229,198,0.5)", transform: birthdayOpen ? "rotate(90deg)" : "none", transition: "transform 180ms ease" }} />
         </button>
 
         {birthdayOpen && (
           <div className="mt-2 rounded-[18px] border px-4 py-4 text-xs leading-5" style={{ borderColor: cardBorder, backgroundColor: cardSurface, color: isCreamTheme ? "rgba(74,13,16,0.7)" : "rgba(255,246,230,0.72)" }}>
             {customer.cafe.birthdayRewardsEnabled ? (
               <>
-                <p className="font-semibold" style={{ color: creamSoft }}>{customer.cafe.birthdayRewardName || "Birthday Reward"}</p>
+                <p className="font-semibold" style={{ color: cardText }}>{customer.cafe.birthdayRewardName || "Birthday Reward"}</p>
                 {customer.cafe.birthdayRewardDescription && <p className="mt-2">{customer.cafe.birthdayRewardDescription}</p>}
                 {customer.cafe.birthdayPurchaseRequirement && <p className="mt-2">{customer.cafe.birthdayPurchaseRequirement}</p>}
                 <p className="mt-2">Valid for {customer.cafe.birthdayValidityDays} {customer.cafe.birthdayValidityDays === 1 ? "day" : "days"} from your birthday.</p>
