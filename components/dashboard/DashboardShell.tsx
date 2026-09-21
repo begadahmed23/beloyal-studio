@@ -34,6 +34,9 @@ export default function DashboardShell({
   const isKato =
     cafe.slug.toLowerCase().includes("kato") ||
     normalizedCafeName.includes("kato");
+  const isKeka =
+    cafe.slug.toLowerCase().includes("keka") ||
+    normalizedCafeName.includes("keka");
 
   const navigationItems =
     userRole === "CASHIER"
@@ -86,6 +89,12 @@ export default function DashboardShell({
               >
                 <KatoMark size={31} />
               </div>
+            ) : isKeka && cafe.logoUrl ? (
+              <img
+                src={cafe.logoUrl}
+                alt="Keka logo"
+                className="h-14 w-14 shrink-0 object-contain"
+              />
             ) : cafe.logoUrl ? (
               <img
                 src={cafe.logoUrl}
@@ -114,7 +123,7 @@ export default function DashboardShell({
                 }
                 style={{ color: theme.textPrimary }}
               >
-                {isKato ? "KATŌ" : cafe.name}
+                {isKato ? "KATŌ" : isKeka ? "Keka" : cafe.name}
               </p>
 
               <p
@@ -125,7 +134,11 @@ export default function DashboardShell({
                 }
                 style={{ color: theme.textMuted }}
               >
-                {isKato ? "Specialty Coffee" : "Loyalty Dashboard"}
+                {isKato
+                  ? "Specialty Coffee"
+                  : isKeka
+                    ? "Little Rituals, Big Comfort"
+                    : "Loyalty Dashboard"}
               </p>
             </div>
           </div>
@@ -217,6 +230,12 @@ export default function DashboardShell({
               >
                 <KatoMark size={25} />
               </div>
+            ) : isKeka && cafe.logoUrl ? (
+              <img
+                src={cafe.logoUrl}
+                alt="Keka logo"
+                className="h-10 w-10 shrink-0 object-contain lg:hidden"
+              />
             ) : cafe.logoUrl ? (
               <img
                 src={cafe.logoUrl}
@@ -243,7 +262,7 @@ export default function DashboardShell({
                   color: theme.textMuted,
                 }}
               >
-                {isKato ? "KATŌ" : cafe.name}
+                {isKato ? "KATŌ" : isKeka ? "Keka" : cafe.name}
               </p>
 
               <h1
