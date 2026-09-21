@@ -125,6 +125,47 @@ function isKatoCafe(cafe: CafeSettings) {
   );
 }
 
+const KEKA_DASHBOARD_THEME: CafeThemeConfig = {
+  pageBackground: "#F3E5D3",
+  surface: "#FFF7EA",
+  surfaceRaised: "#EBD7C0",
+  border: "rgba(116, 26, 29, 0.14)",
+
+  textPrimary: "#4A0D10",
+  textSecondary: "#6F3435",
+  textMuted: "#98706B",
+
+  accent: "#741A1D",
+  accentHover: "#8A2426",
+  accentSoft: "rgba(116, 26, 29, 0.09)",
+  accentText: "#FFF6E6",
+
+  success: "#5F7962",
+  warning: "#A8753E",
+  danger: "#A94343",
+
+  inputBackground: "#FFF9F0",
+  inputBorder: "rgba(116, 26, 29, 0.16)",
+
+  buttonText: "#FFF6E6",
+  cardShadow: "0 22px 60px rgba(74, 13, 16, 0.10)",
+
+  radiusLarge: "30px",
+  radiusMedium: "18px",
+};
+
+function isKekaCafe(cafe: CafeSettings) {
+  const normalizedName = cafe.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+  return (
+    cafe.slug.toLowerCase().includes("keka") ||
+    normalizedName.includes("keka")
+  );
+}
+
 const DASHBOARD_REFRESH_AFTER_HIDDEN_MS = 30_000;
 const DASHBOARD_REFRESH_THROTTLE_MS = 10_000;
 
@@ -250,10 +291,12 @@ export default function CafeThemeProvider({
     () =>
       isKatoCafe(currentCafe)
         ? KATO_DASHBOARD_THEME
-        : getBusinessTheme(
-            previewThemeName,
-            currentCafe.businessType,
-          ),
+        : isKekaCafe(currentCafe)
+          ? KEKA_DASHBOARD_THEME
+          : getBusinessTheme(
+              previewThemeName,
+              currentCafe.businessType,
+            ),
     [
       previewThemeName,
       currentCafe,
