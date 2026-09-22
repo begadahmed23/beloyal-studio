@@ -22,10 +22,10 @@ function LorettoStamp({ active, dark }: { active: boolean; dark: boolean }) {
 export default function LorettoLoyaltyCard({customer,refreshing,newStampIndex,birthdayText,daysUntilBirthday,rewardTarget,visibleStamps,rewardReady,onRefresh,onShowQrCode,onShowFeedback}:Props) {
   const [birthdayOpen,setBirthdayOpen]=useState(false);
   const dark=customer.cafe.theme==="DARK_LUXURY";
-  const espresso="#3B2418", ivory="#E9DCC0", paper="#F3E8D0";
-  const muted=dark?"rgba(242,228,194,.60)":"rgba(58,28,13,.58)";
-  const border=dark?"rgba(242,228,194,.15)":"rgba(58,28,13,.14)";
-  const surface=dark?"rgba(242,228,194,.055)":"rgba(58,28,13,.045)";
+  const espresso="#46362D", ivory="#E8DDC8", paper="#F2EBDD";
+  const muted=dark?"rgba(242,235,221,.62)":"rgba(70,54,45,.58)";
+  const border=dark?"rgba(242,235,221,.15)":"rgba(83,94,86,.18)";
+  const surface=dark?"rgba(242,235,221,.055)":"rgba(102,112,102,.065)";
   const text=dark?paper:espresso;
   const paidTarget=Math.max(rewardTarget,1), totalSlots=paidTarget+1;
   const displayStamps=Math.min(visibleStamps,paidTarget), remaining=Math.max(paidTarget-displayStamps,0);
@@ -35,22 +35,28 @@ export default function LorettoLoyaltyCard({customer,refreshing,newStampIndex,bi
 
   return <div className="mx-auto w-full max-w-[430px]">
     <div className="overflow-hidden rounded-[30px] border px-5 pb-6 pt-6 min-[390px]:rounded-[34px] min-[390px]:px-7 min-[390px]:pb-8"
-      style={{color:text,borderColor:border,background:dark?"radial-gradient(circle at 85% 4%,rgba(196,145,87,.13),transparent 30%),linear-gradient(150deg,#4B2917 0%,#351B0E 58%,#251108 100%)":"radial-gradient(circle at 84% 5%,rgba(91,63,42,.055),transparent 31%),linear-gradient(155deg,#F1E6CF 0%,#E7D8BA 100%)",boxShadow:dark?"0 28px 90px rgba(35,16,7,.30)":"0 28px 80px rgba(58,28,13,.13)"}}>
+      style={{color:text,borderColor:border,background:dark?"radial-gradient(circle at 85% 4%,rgba(196,145,87,.13),transparent 30%),linear-gradient(150deg,#4B2917 0%,#351B0E 58%,#251108 100%)":"radial-gradient(circle at 86% 3%,rgba(122,104,128,.10),transparent 27%),radial-gradient(circle at 8% 82%,rgba(93,108,96,.09),transparent 30%),linear-gradient(155deg,#F3EBDD 0%,#E8DDC8 58%,#DED2BC 100%)",boxShadow:dark?"0 28px 90px rgba(35,16,7,.30)":"0 28px 80px rgba(58,28,13,.13)"}}>
       <header>
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 pt-1">
             <div className="flex items-baseline">
               <span
-                className="font-serif text-[2.8rem] font-medium uppercase leading-[0.86] tracking-[-0.075em] min-[390px]:text-[3.15rem]"
-                style={{ color: text }}
+                className="flex items-baseline font-serif text-[2.8rem] font-medium uppercase leading-[0.86] tracking-[-0.075em] min-[390px]:text-[3.15rem]"
+                style={{
+                  color: text,
+                  textShadow: dark ? "none" : "0 1px 0 rgba(255,255,255,.7), 0 2px 3px rgba(70,54,45,.12)",
+                }}
+                aria-label="LORETTO"
               >
-                LORETTO
+                <span>LO</span>
+                <span className="inline-block" style={{ transform: "scaleX(-1)", marginLeft: "-0.02em", marginRight: "-0.02em" }} aria-hidden="true">R</span>
+                <span>ETTO</span>
               </span>
             </div>
             <div className="mt-3 flex items-center gap-2.5">
               <span className="h-px w-6" style={{ backgroundColor: border }} />
               <p className="text-[8px] font-semibold uppercase tracking-[0.3em]" style={{ color: muted }}>
-                Artisan coffee · Alexandria
+                Artisan coffee & bakery
               </p>
             </div>
           </div>
@@ -70,7 +76,7 @@ export default function LorettoLoyaltyCard({customer,refreshing,newStampIndex,bi
         <div className="mt-6"><div className="h-[3px] overflow-hidden rounded-full" style={{backgroundColor:dark?"rgba(242,228,194,.12)":"rgba(58,28,13,.10)"}}><div className="h-full rounded-full transition-[width] duration-700" style={{width:progressPercent+"%",backgroundColor:dark?ivory:espresso}}/></div>
           <p className="mt-4 text-center font-serif text-[15px]" style={{color:muted}}>{progressMessage}</p></div>
       </section>
-      <div className="my-7 flex items-center justify-center gap-3"><span className="h-px w-8" style={{backgroundColor:border}}/><span className="text-[8px] font-semibold uppercase tracking-[.35em]" style={{color:muted}}>Coffee · People · Loretto</span><span className="h-px w-8" style={{backgroundColor:border}}/></div>
+      <div className="my-7 flex items-center justify-center gap-3"><span className="h-px w-8" style={{backgroundColor:border}}/><span className="text-[8px] font-semibold uppercase tracking-[.35em]" style={{color:muted}}>Alexandria · Egypt</span><span className="h-px w-8" style={{backgroundColor:border}}/></div>
       <button type="button" onClick={()=>setBirthdayOpen(v=>!v)} className="flex w-full items-center gap-3 rounded-[20px] border px-4 py-3.5 text-left" style={{borderColor:border,backgroundColor:surface}}>
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px]" style={{backgroundColor:surface}}><Cake size={18}/></div>
         <div className="min-w-0 flex-1"><p className="text-[11px]" style={{color:muted}}>Your Birthday</p><p className="mt-.5 font-serif text-[15px] font-semibold">{birthdayText}</p></div>
