@@ -13,6 +13,7 @@ import { withAlpha } from "../card-utils";
 import BirthdayCustomerDisplay from "./BirthdayCustomerDisplay";
 import KatoLoyaltyCard from "./KatoLoyaltyCard";
 import KekaLoyaltyCard from "./KekaLoyaltyCard";
+import LorettoLoyaltyCard from "./LorettoLoyaltyCard";
 
 export type Cafe = {
   id: string;
@@ -217,6 +218,28 @@ export default function LoyaltyCard({
   const isKeka =
     customer.cafe.slug.toLowerCase().includes("keka") ||
     normalizedCafeName.includes("keka");
+  const isLoretto =
+    customer.cafe.slug.toLowerCase().includes("loretto") ||
+    normalizedCafeName.includes("loretto");
+
+  if (isLoretto) {
+    return (
+      <LorettoLoyaltyCard
+        customer={customer}
+        refreshing={refreshing}
+        newStampIndex={newStampIndex}
+        birthdayText={birthdayText}
+        daysUntilBirthday={daysUntilBirthday}
+        rewardTarget={rewardTarget}
+        visibleStamps={visibleStamps}
+        rewardReady={rewardReady}
+        remainingStamps={remainingStamps}
+        onRefresh={onRefresh}
+        onShowQrCode={onShowQrCode}
+        onShowFeedback={onShowFeedback}
+      />
+    );
+  }
 
   if (isKeka) {
     return (
