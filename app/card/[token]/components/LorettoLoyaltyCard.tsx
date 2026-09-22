@@ -22,7 +22,7 @@ function LorettoStamp({ active, dark }: { active: boolean; dark: boolean }) {
 export default function LorettoLoyaltyCard({customer,refreshing,newStampIndex,birthdayText,daysUntilBirthday,rewardTarget,visibleStamps,rewardReady,onRefresh,onShowQrCode,onShowFeedback}:Props) {
   const [birthdayOpen,setBirthdayOpen]=useState(false);
   const dark=customer.cafe.theme==="DARK_LUXURY";
-  const espresso="#3A1C0D", ivory="#F2E4C2", paper="#F8EFD9";
+  const espresso="#3B2418", ivory="#E9DCC0", paper="#F3E8D0";
   const muted=dark?"rgba(242,228,194,.60)":"rgba(58,28,13,.58)";
   const border=dark?"rgba(242,228,194,.15)":"rgba(58,28,13,.14)";
   const surface=dark?"rgba(242,228,194,.055)":"rgba(58,28,13,.045)";
@@ -35,15 +35,24 @@ export default function LorettoLoyaltyCard({customer,refreshing,newStampIndex,bi
 
   return <div className="mx-auto w-full max-w-[430px]">
     <div className="overflow-hidden rounded-[30px] border px-5 pb-6 pt-6 min-[390px]:rounded-[34px] min-[390px]:px-7 min-[390px]:pb-8"
-      style={{color:text,borderColor:border,background:dark?"radial-gradient(circle at 85% 4%,rgba(196,145,87,.13),transparent 30%),linear-gradient(150deg,#4B2917 0%,#351B0E 58%,#251108 100%)":"radial-gradient(circle at 85% 4%,rgba(128,78,39,.08),transparent 31%),linear-gradient(155deg,#FBF3E2 0%,#F0DFC0 100%)",boxShadow:dark?"0 28px 90px rgba(35,16,7,.30)":"0 28px 80px rgba(58,28,13,.13)"}}>
+      style={{color:text,borderColor:border,background:dark?"radial-gradient(circle at 85% 4%,rgba(196,145,87,.13),transparent 30%),linear-gradient(150deg,#4B2917 0%,#351B0E 58%,#251108 100%)":"radial-gradient(circle at 84% 5%,rgba(91,63,42,.055),transparent 31%),linear-gradient(155deg,#F1E6CF 0%,#E7D8BA 100%)",boxShadow:dark?"0 28px 90px rgba(35,16,7,.30)":"0 28px 80px rgba(58,28,13,.13)"}}>
       <header>
         <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-[68px] w-[68px] shrink-0 items-center justify-center border min-[390px]:h-[74px] min-[390px]:w-[74px]" style={{borderColor:border,backgroundColor:surface}}>
-              <span className="font-serif text-[2.05rem] font-medium tracking-[-0.12em]">LO</span>
+          <div className="min-w-0 pt-1">
+            <div className="flex items-baseline">
+              <span
+                className="font-serif text-[2.8rem] font-medium uppercase leading-[0.86] tracking-[-0.075em] min-[390px]:text-[3.15rem]"
+                style={{ color: text }}
+              >
+                LORETTO
+              </span>
             </div>
-            <div><p className="font-serif text-[2rem] font-semibold leading-none tracking-[-0.045em]">Loretto</p>
-              <p className="mt-2 text-[8px] font-semibold uppercase tracking-[0.3em]" style={{color:muted}}>Artisan coffee · Alexandria</p></div>
+            <div className="mt-3 flex items-center gap-2.5">
+              <span className="h-px w-6" style={{ backgroundColor: border }} />
+              <p className="text-[8px] font-semibold uppercase tracking-[0.3em]" style={{ color: muted }}>
+                Artisan coffee · Alexandria
+              </p>
+            </div>
           </div>
           <button type="button" onClick={onRefresh} disabled={refreshing} aria-label="Refresh loyalty card" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border" style={{borderColor:border,color:text}}><RefreshCw size={16} className={refreshing?"animate-spin":""}/></button>
         </div>
