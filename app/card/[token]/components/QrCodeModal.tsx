@@ -63,15 +63,49 @@ export default function QrCodeModal({
   const isBarbershop = businessType === "BARBERSHOP";
   const normalizedCafeName = cafeName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const isKeka = cafeSlug.toLowerCase().includes("keka") || normalizedCafeName.includes("keka");
+  const isLoretto = cafeSlug.toLowerCase().includes("loretto") || normalizedCafeName.includes("loretto");
   const isKekaCream = isKeka && cafeTheme === "MODERN_MINIMAL";
-  const modalBackground = isKeka ? (isKekaCream ? "#FFF6E6" : "#741A1D") : cardBackground;
-  const modalText = isKeka ? (isKekaCream ? "#4A0D10" : "#FFF6E6") : textPrimary;
-  const modalSecondary = isKeka ? (isKekaCream ? "rgba(74,13,16,.68)" : "rgba(244,229,198,.72)") : textSecondary;
-  const modalMuted = isKeka ? (isKekaCream ? "rgba(74,13,16,.5)" : "rgba(244,229,198,.5)") : textMuted;
-  const modalBorder = isKeka ? (isKekaCream ? "rgba(116,26,29,.16)" : "rgba(244,229,198,.16)") : cardBorder;
-  const modalSurface = isKeka ? (isKekaCream ? "rgba(116,26,29,.06)" : "rgba(58,7,9,.2)") : surfaceColor;
-  const modalPrimary = isKeka ? (isKekaCream ? "#741A1D" : "#F4E5C6") : primaryColor;
-  const modalAccentText = isKeka ? (isKekaCream ? "#FFF6E6" : "#4A0D10") : accentText;
+
+  const modalBackground = isLoretto
+    ? "#F3EBDD"
+    : isKeka
+      ? (isKekaCream ? "#FFF6E6" : "#741A1D")
+      : cardBackground;
+  const modalText = isLoretto
+    ? "#2E2A27"
+    : isKeka
+      ? (isKekaCream ? "#4A0D10" : "#FFF6E6")
+      : textPrimary;
+  const modalSecondary = isLoretto
+    ? "rgba(46,42,39,.66)"
+    : isKeka
+      ? (isKekaCream ? "rgba(74,13,16,.68)" : "rgba(244,229,198,.72)")
+      : textSecondary;
+  const modalMuted = isLoretto
+    ? "rgba(46,42,39,.48)"
+    : isKeka
+      ? (isKekaCream ? "rgba(74,13,16,.5)" : "rgba(244,229,198,.5)")
+      : textMuted;
+  const modalBorder = isLoretto
+    ? "rgba(46,42,39,.11)"
+    : isKeka
+      ? (isKekaCream ? "rgba(116,26,29,.16)" : "rgba(244,229,198,.16)")
+      : cardBorder;
+  const modalSurface = isLoretto
+    ? "rgba(255,255,255,.42)"
+    : isKeka
+      ? (isKekaCream ? "rgba(116,26,29,.06)" : "rgba(58,7,9,.2)")
+      : surfaceColor;
+  const modalPrimary = isLoretto
+    ? "#2E2A27"
+    : isKeka
+      ? (isKekaCream ? "#741A1D" : "#F4E5C6")
+      : primaryColor;
+  const modalAccentText = isLoretto
+    ? "#F6F0E5"
+    : isKeka
+      ? (isKekaCream ? "#FFF6E6" : "#4A0D10")
+      : accentText;
   const baselineRef = useRef<{
     stamps: number;
     updatedAt: string;
@@ -176,7 +210,7 @@ export default function QrCodeModal({
       }}
     >
       <div
-        className="relative w-full max-w-sm overflow-hidden rounded-[24px] border p-4 shadow-[0_30px_100px_rgba(0,0,0,0.55)] min-[380px]:rounded-[30px] min-[380px]:p-6"
+        className="relative w-full max-w-sm overflow-hidden rounded-[26px] border p-4 shadow-[0_30px_100px_rgba(0,0,0,0.55)] min-[380px]:rounded-[32px] min-[380px]:p-6"
         style={{
           borderColor: modalBorder,
           backgroundColor: modalBackground,
@@ -186,7 +220,7 @@ export default function QrCodeModal({
       >
         <div
           className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full blur-3xl"
-          style={{ backgroundColor: isKeka ? (isKekaCream ? "rgba(116,26,29,.12)" : "rgba(244,229,198,.12)") : primaryGlow }}
+          style={{ backgroundColor: isLoretto ? "rgba(126,137,127,.11)" : isKeka ? (isKekaCream ? "rgba(116,26,29,.12)" : "rgba(244,229,198,.12)") : primaryGlow }}
         />
 
         <button
@@ -204,7 +238,22 @@ export default function QrCodeModal({
         </button>
 
         <div className="relative text-center">
-          {showLogo && logoUrl ? (
+          {isLoretto ? (
+            <div className="mx-auto inline-flex flex-col items-end" aria-label="LORETTO">
+              <div className="flex items-baseline font-serif text-[2.4rem] font-bold uppercase leading-none tracking-[0.02em]" style={{ color: modalText }}>
+                <span>L</span>
+                <span>O</span>
+                <span className="inline-block" style={{ transform: "scaleX(-1)" }} aria-hidden="true">R</span>
+                <span>E</span>
+                <span>T</span>
+                <span>T</span>
+                <span>O</span>
+              </div>
+              <p className="mt-1.5 text-[7px] font-semibold uppercase tracking-[0.27em]" style={{ color: modalText }}>
+                Artisan coffee &amp; bakery
+              </p>
+            </div>
+          ) : showLogo && logoUrl ? (
             <img
               src={logoUrl}
               alt={`${cafeName} logo`}
