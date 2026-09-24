@@ -243,13 +243,14 @@ export default function LorettoLoyaltyCard({
               const active = isPurchaseSlot && index < displayStamps;
               const isNew = isPurchaseSlot && newStampIndex === index;
               const rewardSlot = !isPurchaseSlot;
+              const rewardJustUnlocked = rewardSlot && rewardReady;
 
               return (
                 <div
                   key={index}
                   className={
                     "flex min-w-0 justify-center py-1 " +
-                    (isNew ? "loretto-stamp-glow" : "")
+                    (isNew || rewardJustUnlocked ? "loretto-stamp-glow" : "")
                   }
                 >
                   <LorettoStamp
@@ -426,7 +427,7 @@ export default function LorettoLoyaltyCard({
         }
 
         .loretto-stamp-glow {
-          animation: loretto-stamp-glow 760ms cubic-bezier(.16,1,.3,1) both;
+          animation: loretto-stamp-glow 920ms cubic-bezier(.16,1,.3,1) both;
           will-change: filter, transform;
         }
 
