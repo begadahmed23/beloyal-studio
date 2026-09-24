@@ -63,7 +63,7 @@ function LorettoStamp({
 }) {
   const ink = "#2E2A27";
   const cream = "#F6F0E5";
-  const activeStamp = active || (reward && rewardReady);
+  const activeStamp = active;
 
   return (
     <div
@@ -71,11 +71,17 @@ function LorettoStamp({
       style={{
         borderColor: activeStamp
           ? ink
-          : reward
-            ? "rgba(46,42,39,.28)"
-            : "rgba(46,42,39,.17)",
+          : reward && rewardReady
+            ? "rgba(119,100,116,.62)"
+            : reward
+              ? "rgba(46,42,39,.28)"
+              : "rgba(46,42,39,.17)",
         backgroundColor: activeStamp ? ink : "rgba(255,255,255,.16)",
-        color: activeStamp ? cream : "rgba(46,42,39,.40)",
+        color: activeStamp
+          ? cream
+          : reward && rewardReady
+            ? "#776474"
+            : "rgba(46,42,39,.40)",
         boxShadow: activeStamp ? "0 7px 18px rgba(46,42,39,.13)" : "none",
       }}
     >
