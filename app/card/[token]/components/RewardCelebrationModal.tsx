@@ -29,6 +29,135 @@ export default function RewardCelebrationModal({
   const isKeka =
     cafeSlug.toLowerCase().includes("keka") ||
     normalizedName.includes("keka");
+  const isLoretto =
+    cafeSlug.toLowerCase().includes("loretto") ||
+    normalizedName.includes("loretto");
+
+  if (isLoretto) {
+    return (
+      <div
+        className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-[#211D1A]/88 px-4 py-7 backdrop-blur-2xl sm:px-5 sm:py-8"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Loretto reward redeemed"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) onClose();
+        }}
+      >
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(246,240,229,0.16),transparent_27%),radial-gradient(circle_at_82%_78%,rgba(126,137,127,0.14),transparent_35%)]" />
+
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+          {Array.from({ length: 22 }).map((_, index) => (
+            <span
+              key={index}
+              className="loretto-confetti absolute -top-8 block rounded-full"
+              style={{
+                left: `${(index * 47) % 100}%`,
+                width: `${4 + (index % 3) * 2}px`,
+                height: `${4 + (index % 3) * 2}px`,
+                backgroundColor:
+                  index % 3 === 0
+                    ? "#F6F0E5"
+                    : index % 3 === 1
+                      ? "#7E897F"
+                      : "#776474",
+                animationDelay: `${(index % 8) * 0.08}s`,
+                animationDuration: `${2.2 + (index % 5) * 0.18}s`,
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="loretto-reward relative w-full max-w-sm overflow-hidden rounded-[32px] border border-[#2E2A27]/10 bg-[linear-gradient(155deg,#F8F3EA_0%,#F3EBDD_55%,#E9DFC9_100%)] p-6 text-center text-[#2E2A27] shadow-[0_40px_130px_rgba(24,20,17,0.50)] sm:rounded-[36px] sm:p-7">
+          <div className="pointer-events-none absolute inset-x-9 top-0 h-px bg-gradient-to-r from-transparent via-[#776474]/45 to-transparent" />
+          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[#7E897F]/10 blur-3xl" />
+
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close reward celebration"
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#2E2A27]/10 bg-white/35 text-[#2E2A27]/55 transition hover:bg-white/55"
+          >
+            <X size={18} />
+          </button>
+
+          <div className="loretto-reward-logo mx-auto mt-2 inline-flex flex-col items-end">
+            <div className="flex items-baseline font-serif text-[2.55rem] font-bold uppercase leading-none tracking-[0.02em]">
+              <span>L</span>
+              <span>O</span>
+              <span className="inline-block" style={{ transform: "scaleX(-1)" }} aria-hidden="true">R</span>
+              <span>E</span>
+              <span>T</span>
+              <span>T</span>
+              <span>O</span>
+            </div>
+            <p className="mt-1.5 text-[7px] font-semibold uppercase tracking-[0.27em]">
+              Artisan coffee &amp; bakery
+            </p>
+          </div>
+
+          <div className="loretto-reward-mark mx-auto mt-7 flex h-24 w-24 items-center justify-center rounded-full border border-[#2E2A27]/10 bg-[#2E2A27] text-[#F6F0E5] shadow-[0_18px_55px_rgba(46,42,39,0.18)]">
+            <Gift size={38} strokeWidth={1.7} />
+          </div>
+
+          <p className="mt-7 text-[9px] font-semibold uppercase tracking-[0.32em] text-[#776474]">
+            Loretto reward complete
+          </p>
+
+          <h2 className="mt-3 font-serif text-[2rem] font-semibold leading-tight tracking-[-0.035em] text-[#2E2A27]">
+            Your free drink is ready.
+          </h2>
+
+          <p className="mx-auto mt-3 max-w-[18rem] text-sm leading-6 text-[#2E2A27]/62">
+            You completed your Loretto card. Enjoy your {rewardName || "reward"}.
+          </p>
+
+          {rewardDescription ? (
+            <div className="mt-6 rounded-[20px] border border-[#2E2A27]/10 bg-white/32 px-4 py-3 text-sm leading-6 text-[#2E2A27]/66">
+              {rewardDescription}
+            </div>
+          ) : null}
+
+          <div className="mt-7 flex items-center justify-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#2E2A27]/50">
+            <Sparkles size={15} />
+            Show this screen to the cashier
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-[18px] bg-[#2E2A27] text-sm font-semibold text-[#F6F0E5] shadow-[0_14px_36px_rgba(46,42,39,0.18)] transition hover:brightness-110 active:scale-[0.99]"
+          >
+            Continue
+          </button>
+        </div>
+
+        <style jsx global>{`
+          @keyframes loretto-reward-in {
+            0% { opacity: 0; transform: translateY(22px) scale(.92); }
+            65% { opacity: 1; transform: translateY(-3px) scale(1.015); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          @keyframes loretto-reward-mark {
+            0% { opacity: 0; transform: scale(.72) rotate(-8deg); }
+            60% { opacity: 1; transform: scale(1.07) rotate(2deg); }
+            100% { opacity: 1; transform: scale(1) rotate(0); }
+          }
+          @keyframes loretto-confetti-fall {
+            0% { opacity: 0; transform: translate3d(0,-8vh,0) scale(.7); }
+            12% { opacity: 1; }
+            100% { opacity: 0; transform: translate3d(22px,108vh,0) scale(1); }
+          }
+          .loretto-reward { animation: loretto-reward-in 620ms cubic-bezier(.16,1,.3,1) both; }
+          .loretto-reward-mark { animation: loretto-reward-mark 760ms cubic-bezier(.16,1,.3,1) 100ms both; }
+          .loretto-confetti { animation-name: loretto-confetti-fall; animation-timing-function: cubic-bezier(.18,.7,.3,1); animation-fill-mode: both; }
+          @media (prefers-reduced-motion: reduce) {
+            .loretto-reward,.loretto-reward-mark,.loretto-confetti { animation: none; }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   if (isKeka) {
     return (
