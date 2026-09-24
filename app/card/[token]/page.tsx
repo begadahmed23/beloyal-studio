@@ -1285,6 +1285,9 @@ const isKato =
 const isKeka =
   customer.cafe.slug.toLowerCase().includes("keka") ||
   normalizedCafeName.includes("keka");
+const isLoretto =
+  customer.cafe.slug.toLowerCase().includes("loretto") ||
+  normalizedCafeName.includes("loretto");
 
 const unlockAt = getLoyaltyProgressTarget({
   businessType: customer.cafe.businessType,
@@ -1472,16 +1475,56 @@ const progressPercentage = rewardReady
     "#2D6A5A";
 
   const isKekaCream = isKeka && customer.cafe.theme === "MODERN_MINIMAL";
-  const feedbackCardBackground = isKeka ? (isKekaCream ? "#FFF6E6" : "#741A1D") : cardBackground;
-  const feedbackTextPrimary = isKeka ? (isKekaCream ? "#4A0D10" : "#FFF6E6") : textPrimary;
-  const feedbackTextSecondary = isKeka ? (isKekaCream ? "rgba(74,13,16,0.68)" : "rgba(255,246,230,0.72)") : textSecondary;
-  const feedbackTextMuted = isKeka ? (isKekaCream ? "rgba(74,13,16,0.5)" : "rgba(244,229,198,0.5)") : textMuted;
-  const feedbackBorder = isKeka ? (isKekaCream ? "rgba(116,26,29,0.16)" : "rgba(244,229,198,0.16)") : cardBorder;
-  const feedbackSurface = isKeka ? (isKekaCream ? "rgba(116,26,29,0.06)" : "rgba(58,7,9,0.2)") : surfaceColor;
-  const feedbackPrimary = isKeka ? (isKekaCream ? "#741A1D" : "#F4E5C6") : primaryColor;
-  const feedbackPrimarySoft = isKeka ? (isKekaCream ? "rgba(116,26,29,0.09)" : "rgba(244,229,198,0.11)") : primarySoft;
-  const feedbackPrimaryBorder = isKeka ? (isKekaCream ? "rgba(116,26,29,0.24)" : "rgba(244,229,198,0.28)") : primaryBorder;
-  const feedbackAccentText = isKeka ? (isKekaCream ? "#FFF6E6" : "#4A0D10") : accentText;
+  const feedbackCardBackground = isLoretto
+    ? "#F3EBDD"
+    : isKeka
+      ? (isKekaCream ? "#FFF6E6" : "#741A1D")
+      : cardBackground;
+  const feedbackTextPrimary = isLoretto
+    ? "#2E2A27"
+    : isKeka
+      ? (isKekaCream ? "#4A0D10" : "#FFF6E6")
+      : textPrimary;
+  const feedbackTextSecondary = isLoretto
+    ? "rgba(46,42,39,.66)"
+    : isKeka
+      ? (isKekaCream ? "rgba(74,13,16,0.68)" : "rgba(255,246,230,0.72)")
+      : textSecondary;
+  const feedbackTextMuted = isLoretto
+    ? "rgba(46,42,39,.48)"
+    : isKeka
+      ? (isKekaCream ? "rgba(74,13,16,0.5)" : "rgba(244,229,198,0.5)")
+      : textMuted;
+  const feedbackBorder = isLoretto
+    ? "rgba(46,42,39,.11)"
+    : isKeka
+      ? (isKekaCream ? "rgba(116,26,29,0.16)" : "rgba(244,229,198,0.16)")
+      : cardBorder;
+  const feedbackSurface = isLoretto
+    ? "rgba(255,255,255,.38)"
+    : isKeka
+      ? (isKekaCream ? "rgba(116,26,29,0.06)" : "rgba(58,7,9,0.2)")
+      : surfaceColor;
+  const feedbackPrimary = isLoretto
+    ? "#2E2A27"
+    : isKeka
+      ? (isKekaCream ? "#741A1D" : "#F4E5C6")
+      : primaryColor;
+  const feedbackPrimarySoft = isLoretto
+    ? "rgba(126,137,127,.12)"
+    : isKeka
+      ? (isKekaCream ? "rgba(116,26,29,0.09)" : "rgba(244,229,198,0.11)")
+      : primarySoft;
+  const feedbackPrimaryBorder = isLoretto
+    ? "rgba(46,42,39,.16)"
+    : isKeka
+      ? (isKekaCream ? "rgba(116,26,29,0.24)" : "rgba(244,229,198,0.28)")
+      : primaryBorder;
+  const feedbackAccentText = isLoretto
+    ? "#F6F0E5"
+    : isKeka
+      ? (isKekaCream ? "#FFF6E6" : "#4A0D10")
+      : accentText;
 
   const rewardChampagne = "#D8BE82";
 
@@ -1796,10 +1839,12 @@ const progressPercentage = rewardReady
             className="relative w-full max-w-md overflow-hidden rounded-[28px] border p-5 shadow-2xl sm:rounded-[32px] sm:p-6"
             style={{
               borderColor: feedbackBorder,
-              backgroundColor:
-                feedbackCardBackground,
-              boxShadow:
-                "0 30px 100px rgba(0,0,0,0.48)",
+              background: isLoretto
+                ? "radial-gradient(circle at 88% 4%,rgba(126,137,127,.10),transparent 25%),linear-gradient(155deg,#F8F3EA 0%,#F3EBDD 58%,#E9DFC9 100%)"
+                : feedbackCardBackground,
+              boxShadow: isLoretto
+                ? "0 30px 100px rgba(28,23,20,.34)"
+                : "0 30px 100px rgba(0,0,0,0.48)",
             }}
           >
             <button
@@ -1825,18 +1870,35 @@ const progressPercentage = rewardReady
 
             {!feedbackSubmitted ? (
               <>
-                <div
-                  className="flex h-12 w-12 items-center justify-center rounded-2xl"
-                  style={{
-                    backgroundColor:
-                      feedbackPrimarySoft,
-                    color: feedbackPrimary,
-                  }}
-                >
-                  <MessageCircle
-                    size={21}
-                  />
-                </div>
+                {isLoretto ? (
+                  <div className="inline-flex flex-col items-end" aria-label="LORETTO">
+                    <div className="flex items-baseline font-serif text-[2.15rem] font-bold uppercase leading-none tracking-[0.02em]" style={{ color: feedbackTextPrimary }}>
+                      <span>L</span>
+                      <span>O</span>
+                      <span className="inline-block" style={{ transform: "scaleX(-1)" }} aria-hidden="true">R</span>
+                      <span>E</span>
+                      <span>T</span>
+                      <span>T</span>
+                      <span>O</span>
+                    </div>
+                    <p className="mt-1.5 text-[7px] font-semibold uppercase tracking-[0.27em]" style={{ color: feedbackTextPrimary }}>
+                      Artisan coffee &amp; bakery
+                    </p>
+                  </div>
+                ) : (
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl"
+                    style={{
+                      backgroundColor:
+                        feedbackPrimarySoft,
+                      color: feedbackPrimary,
+                    }}
+                  >
+                    <MessageCircle
+                      size={21}
+                    />
+                  </div>
+                )}
 
                 <h2
                   className="mt-5 pr-10 text-2xl font-semibold tracking-tight"
@@ -1844,8 +1906,7 @@ const progressPercentage = rewardReady
                     color: feedbackTextPrimary,
                   }}
                 >
-                  How was your
-                  experience?
+                  {isLoretto ? "How was your Loretto visit?" : <>How was your experience?</>}
                 </h2>
 
                 <p
@@ -1855,11 +1916,9 @@ const progressPercentage = rewardReady
                       feedbackTextSecondary,
                   }}
                 >
-                  The good, the bad,
-                  or something we
-                  could do better —
-                  we’d love to hear
-                  it.
+                  {isLoretto
+                    ? "A few honest words help us make your next Loretto visit even better."
+                    : <>The good, the bad, or something we could do better — we’d love to hear it.</>}
                 </p>
 
                 <div className="mt-6">
