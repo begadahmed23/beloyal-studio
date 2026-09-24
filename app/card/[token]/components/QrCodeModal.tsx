@@ -116,6 +116,10 @@ export default function QrCodeModal({
     let timeout: number | null = null;
     let requestInFlight = false;
 
+    // The same shared modal is used by Kato, Keka, Loretto, and every other
+    // business. Reset sync state whenever a different member token is shown.
+    baselineRef.current = null;
+
     async function checkForStampUpdate() {
       if (requestInFlight || stopped) {
         return;
@@ -140,6 +144,10 @@ export default function QrCodeModal({
         }
 
         const data = (await response.json()) as CardSyncResponse;
+
+        if (stopped) {
+          return;
+        }
 
         if (
           typeof data.stamps !== "number" ||
@@ -199,11 +207,18 @@ export default function QrCodeModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 px-3 py-4 backdrop-blur-md min-[380px]:px-5 min-[380px]:py-8"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/75 px-3 py-4 min-[380px]:px-5 min-[380px]:py-8"
+      style={{
+        WebkitTextSizeAdjust: "100%",
+        textSizeAdjust: "100%",
+        overscrollBehavior: "contain",
+        paddingTop: "max(1rem, env(safe-area-inset-top))",
+        paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
+      }}
       role="dialog"
       aria-modal="true"
       aria-label="Loyalty card QR code"
-      onMouseDown={(event) => {
+      onClick={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
         }
@@ -216,6 +231,9 @@ export default function QrCodeModal({
           backgroundColor: modalBackground,
           color: modalText,
           forcedColorAdjust: "none",
+          maxHeight: "calc(100vh - 2rem)",
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
         }}
       >
         <div
@@ -232,6 +250,7 @@ export default function QrCodeModal({
             borderColor: modalBorder,
             backgroundColor: modalSurface,
             color: modalSecondary,
+            touchAction: "manipulation",
           }}
         >
           <X size={18} />
@@ -283,14 +302,17 @@ export default function QrCodeModal({
           </p>
 
           <div
-            className="mx-auto mt-5 w-fit max-w-full rounded-[20px] bg-white p-3 shadow-[0_20px_50px_rgba(0,0,0,0.18)] min-[380px]:mt-6 min-[380px]:rounded-[24px] min-[380px]:p-4"
+            className="mx-auto mt-5 max-w-full rounded-[20px] bg-white p-3 shadow-[0_20px_50px_rgba(0,0,0,0.18)] min-[380px]:mt-6 min-[380px]:rounded-[24px] min-[380px]:p-4"
             style={{
+              width: "min(232px, calc(100vw - 56px))",
               backgroundColor: "#FFFFFF",
-              colorScheme: "light",
+              colorScheme: "only light",
               forcedColorAdjust: "none",
               isolation: "isolate",
               filter: "none",
               opacity: 1,
+              transform: "translateZ(0)",
+              WebkitBackfaceVisibility: "hidden",
             }}
           >
             <QRCode
@@ -304,9 +326,11 @@ export default function QrCodeModal({
                 width: "100%",
                 height: "auto",
                 maxWidth: "200px",
+                margin: "0 auto",
                 backgroundColor: "#FFFFFF",
-                colorScheme: "light",
+                colorScheme: "only light",
                 forcedColorAdjust: "none",
+                shapeRendering: "crispEdges",
                 filter: "none",
                 opacity: 1,
               }}
@@ -346,6 +370,7 @@ export default function QrCodeModal({
             style={{
               backgroundColor: modalPrimary,
               color: modalAccentText,
+              touchAction: "manipulation",
             }}
           >
             Done
