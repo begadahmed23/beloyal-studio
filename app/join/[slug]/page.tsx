@@ -48,21 +48,34 @@ export default async function JoinPage({
     notFound();
   }
 
-  const businessTheme = getBusinessTheme(
+  const normalizedName = cafe.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const isLoretto = cafe.slug.toLowerCase().includes("loretto") || normalizedName.includes("loretto");
+  const heritage = cafe.theme === "DARK_LUXURY";
+  const baseTheme = getBusinessTheme(
     cafe.theme,
     cafe.businessType,
   );
+  const businessTheme = isLoretto ? {
+    ...baseTheme,
+    surface: heritage ? "#E9DFC9" : "#F3EBDD",
+    border: "rgba(46,42,39,.11)",
+    textPrimary: "#2E2A27",
+    textMuted: "rgba(46,42,39,.57)",
+    accent: "#4A3D34",
+    buttonText: "#F8F3EA",
+    cardShadow: "0 28px 90px rgba(57,48,41,.15)",
+  } : baseTheme;
   const [mappedPrimary, mappedSecondary, mappedBackground] =
     getBusinessThemeColors(
       cafe.theme,
       cafe.businessType,
     );
   const primaryColor =
-    cafe.businessType === "BARBERSHOP"
+    isLoretto ? "#4A3D34" : cafe.businessType === "BARBERSHOP"
       ? mappedPrimary
       : cafe.primaryColor;
   const secondaryColor =
-    cafe.businessType === "BARBERSHOP"
+    isLoretto ? "#4A3D34" : cafe.businessType === "BARBERSHOP"
       ? mappedSecondary
       : cafe.secondaryColor;
   const backgroundColor =
@@ -122,7 +135,11 @@ export default async function JoinPage({
     <main
       className="min-h-screen px-4 py-8 sm:px-6 sm:py-10"
       style={{
-        background: isKato
+        background: isLoretto
+          ? heritage
+            ? "linear-gradient(180deg,#F1E7D4 0%,#E9DFC9 55%,#E4D7BD 100%)"
+            : "linear-gradient(180deg,#F8F3EA 0%,#F3EBDD 55%,#ECE2D1 100%)"
+          : isKato
           ? isKatoDark
             ? "linear-gradient(180deg,#06172B 0%,#0A223E 100%)"
             : "linear-gradient(180deg,#F7F9FB 0%,#EEF3F7 100%)"
@@ -158,7 +175,20 @@ export default async function JoinPage({
               : businessTheme.cardShadow,
           }}
         >
-          {isKato ? (
+          {isLoretto ? (
+            <div className="px-6 pb-5 pt-8 text-center sm:px-8" style={{ color: "#2E2A27" }}>
+              <div className="inline-flex flex-col items-end" aria-label="LORETTO">
+                <div className="flex items-baseline font-serif text-[2.55rem] font-bold uppercase leading-none tracking-[.02em]">
+                  <span>L</span><span>O</span><span className="inline-block" style={{ transform: "scaleX(-1)" }} aria-hidden="true">R</span><span>E</span><span>T</span><span>T</span><span>O</span>
+                </div>
+                <p className="mt-2 text-[7px] font-semibold uppercase tracking-[.27em]">Artisan coffee &amp; bakery</p>
+              </div>
+              <h1 className="mt-7 font-serif text-3xl font-semibold tracking-tight">Join the loyalty club</h1>
+              <p className="mx-auto mt-3 max-w-sm text-sm leading-6" style={{ color: businessTheme.textMuted }}>
+                A little ritual, a little reward. Collect stamps with every eligible purchase at Loretto.
+              </p>
+            </div>
+          ) : isKato ? (
             <div className="px-6 pb-4 pt-7 text-center sm:px-8 sm:pt-8">
               <div
                 className="mx-auto flex h-16 w-16 items-center justify-center rounded-full"

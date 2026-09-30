@@ -42,7 +42,21 @@ export default function JoinForm({
 }: JoinFormProps) {
   const router = useRouter();
   const isBarbershop = businessType === "BARBERSHOP";
-  const theme = getBusinessTheme(themeName, businessType);
+  const normalizedName = cafeName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const isLoretto = cafeSlug.toLowerCase().includes("loretto") || normalizedName.includes("loretto");
+  const baseTheme = getBusinessTheme(themeName, businessType);
+  const theme = isLoretto ? {
+    ...baseTheme,
+    textPrimary: "#2E2A27",
+    textSecondary: "rgba(46,42,39,.72)",
+    textMuted: "rgba(46,42,39,.57)",
+    border: "rgba(46,42,39,.14)",
+    surfaceRaised: "rgba(255,255,255,.25)",
+    inputBackground: "rgba(255,255,255,.38)",
+    inputBorder: "rgba(46,42,39,.17)",
+    accentSoft: "rgba(126,137,127,.10)",
+    buttonText: "#F8F3EA",
+  } : baseTheme;
   const loyaltyTarget = getLoyaltyProgressTarget({
     businessType,
     rewardTarget,
@@ -176,7 +190,9 @@ export default function JoinForm({
   }
 
   const inputClassName = `h-14 w-full rounded-2xl border px-4 text-base outline-none transition ${
-    isKato
+    isLoretto
+      ? "placeholder:text-[#2E2A27]/40"
+      : isKato
       ? isKatoDark
         ? "placeholder:text-white/30"
         : "placeholder:text-[#102B49]/30"
@@ -390,7 +406,9 @@ export default function JoinForm({
               autoComplete="bday"
               required
               className={`${inputClassName} ${
-                isKato
+                isLoretto
+                  ? "[color-scheme:light]"
+                  : isKato
                   ? isKatoDark
                     ? "[color-scheme:dark]"
                     : "[color-scheme:light]"
@@ -413,7 +431,7 @@ export default function JoinForm({
 
         {error && (
           <div className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3">
-            <p className="text-sm leading-5 text-red-200">
+            <p className={`text-sm leading-5 ${isLoretto ? "text-red-800" : "text-red-200"}`}>
               {error}
             </p>
           </div>

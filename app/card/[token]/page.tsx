@@ -64,6 +64,17 @@ const DEFAULT_LOADER_THEME: LoaderTheme = {
   foreground: "#111111",
 };
 
+function getLorettoPageTheme(theme: string): LoaderTheme {
+  const heritage = theme === "DARK_LUXURY";
+
+  return {
+    background: heritage
+      ? "radial-gradient(circle at 50% 0%,rgba(126,137,127,.08),transparent 45%),linear-gradient(180deg,#F1E7D4 0%,#E9DFC9 55%,#E4D7BD 100%)"
+      : "radial-gradient(circle at 50% 0%,rgba(126,137,127,.07),transparent 45%),linear-gradient(180deg,#F8F3EA 0%,#F3EBDD 55%,#ECE2D1 100%)",
+    foreground: "#2E2A27",
+  };
+}
+
 function getLoaderTheme(
   customer: Customer,
 ): LoaderTheme {
@@ -77,6 +88,14 @@ function getLoaderTheme(
   const isKato =
     cafe.slug.toLowerCase().includes("kato") ||
     normalizedCafeName.includes("kato");
+
+  const isLoretto =
+    cafe.slug.toLowerCase().includes("loretto") ||
+    normalizedCafeName.includes("loretto");
+
+  if (isLoretto) {
+    return getLorettoPageTheme(cafe.theme);
+  }
 
   const isBarbershop =
     cafe.businessType === "BARBERSHOP";
@@ -1361,7 +1380,9 @@ const progressPercentage = rewardReady
   );
 
   const primaryColor = normalizeHex(
-    isKato
+    isLoretto
+      ? "#4A3D34"
+      : isKato
       ? "#0B2343"
       : isBarbershop
         ? barberPrimaryColor
@@ -1371,7 +1392,9 @@ const progressPercentage = rewardReady
 
   const secondaryColor =
     normalizeHex(
-      isKato
+      isLoretto
+        ? "#7E897F"
+        : isKato
         ? "#5E7188"
         : isBarbershop
           ? barberSecondaryColor
@@ -1381,7 +1404,9 @@ const progressPercentage = rewardReady
 
   const backgroundColor =
     normalizeHex(
-      isKato
+      isLoretto
+        ? customer.cafe.theme === "DARK_LUXURY" ? "#E9DFC9" : "#F3EBDD"
+        : isKato
         ? "#F4F7FA"
         : isBarbershop
           ? barberBackgroundColor
@@ -1392,8 +1417,10 @@ const progressPercentage = rewardReady
   const pageIsLight =
     isLightColor(backgroundColor);
 
-  const cardBackground = isKato
-    ? "#FFFFFF"
+  const cardBackground = isLoretto
+    ? backgroundColor
+    : isKato
+      ? "#FFFFFF"
     : isBrickBarber
       ? "#211D1A"
       : mixColors(
@@ -1552,8 +1579,10 @@ const progressPercentage = rewardReady
         WebkitTextSizeAdjust: "100%",
         textSizeAdjust: "100%",
         color: textPrimary,
-        background: isKeka
-          ? "linear-gradient(180deg,#F5E7D2 0%,#E8D2B8 100%)"
+        background: isLoretto
+          ? getLorettoPageTheme(customer.cafe.theme).background
+          : isKeka
+            ? "linear-gradient(180deg,#F5E7D2 0%,#E8D2B8 100%)"
           : isKato
             ? customer.cafe.theme === "DARK_LUXURY"
               ? "linear-gradient(180deg,#06172B 0%,#0A223E 100%)"
