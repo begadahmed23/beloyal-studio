@@ -2,10 +2,7 @@ import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
-import {
-  getBusinessTheme,
-  getBusinessThemeColors,
-} from "@/lib/cafe-theme";
+import { getJoinTheme } from "./join-theme";
 import KatoMark from "@/components/brand/KatoMark";
 import JoinForm from "./join-form";
 
@@ -48,51 +45,12 @@ export default async function JoinPage({
     notFound();
   }
 
-  const normalizedName = cafe.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const isLoretto = cafe.slug.toLowerCase().includes("loretto") || normalizedName.includes("loretto");
-  const heritage = cafe.theme === "DARK_LUXURY";
-  const baseTheme = getBusinessTheme(
-    cafe.theme,
-    cafe.businessType,
-  );
-  const businessTheme = isLoretto ? {
-    ...baseTheme,
-    surface: heritage ? "#E9DFC9" : "#F3EBDD",
-    border: "rgba(46,42,39,.11)",
-    textPrimary: "#2E2A27",
-    textMuted: "rgba(46,42,39,.57)",
-    accent: "#4A3D34",
-    buttonText: "#F8F3EA",
-    cardShadow: "0 28px 90px rgba(57,48,41,.15)",
-  } : baseTheme;
-  const [mappedPrimary, mappedSecondary, mappedBackground] =
-    getBusinessThemeColors(
-      cafe.theme,
-      cafe.businessType,
-    );
-  const primaryColor =
-    isLoretto ? "#4A3D34" : cafe.businessType === "BARBERSHOP"
-      ? mappedPrimary
-      : cafe.primaryColor;
-  const secondaryColor =
-    isLoretto ? "#4A3D34" : cafe.businessType === "BARBERSHOP"
-      ? mappedSecondary
-      : cafe.secondaryColor;
-  const backgroundColor =
-    cafe.businessType === "BARBERSHOP"
-      ? mappedBackground
-      : cafe.backgroundColor;
-  const isBarbershop =
-    cafe.businessType === "BARBERSHOP";
-  const normalizedCafeName = cafe.name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-  const isKato =
-    cafe.slug.toLowerCase().includes("kato") ||
-    normalizedCafeName.includes("kato");
-  const isKatoDark =
-    isKato && cafe.theme === "DARK_LUXURY";
+  const businessTheme = getJoinTheme(cafe);
+  const { isLoretto, isKeka, isKato } = businessTheme;
+  const primaryColor = businessTheme.primary;
+  const secondaryColor = businessTheme.secondary;
+  const isBarbershop = cafe.businessType === "BARBERSHOP";
+  const isKatoDark = isKato && cafe.theme === "DARK_LUXURY";
 
   /*
    * Check whether this device already has a remembered
@@ -135,22 +93,7 @@ export default async function JoinPage({
     <main
       className="min-h-screen px-4 py-8 sm:px-6 sm:py-10"
       style={{
-        background: isLoretto
-          ? heritage
-            ? "linear-gradient(180deg,#F1E7D4 0%,#E9DFC9 55%,#E4D7BD 100%)"
-            : "linear-gradient(180deg,#F8F3EA 0%,#F3EBDD 55%,#ECE2D1 100%)"
-          : isKato
-          ? isKatoDark
-            ? "linear-gradient(180deg,#06172B 0%,#0A223E 100%)"
-            : "linear-gradient(180deg,#F7F9FB 0%,#EEF3F7 100%)"
-          : `
-              radial-gradient(
-                circle at top,
-                ${primaryColor}30 0%,
-                transparent 42%
-              ),
-              ${backgroundColor}
-            `,
+        background: businessTheme.pageBackground,
       }}
     >
       <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-md items-center">
@@ -162,11 +105,11 @@ export default async function JoinPage({
                 ? "rgba(233,230,216,0.12)"
                 : "rgba(16,43,73,0.10)"
               : businessTheme.border,
-            backgroundColor: isKato
+            background: isKato
               ? isKatoDark
                 ? "#071A33"
                 : "#FFFFFF"
-              : businessTheme.surface,
+              : businessTheme.shellBackground,
             borderRadius: isKato ? "34px" : "32px",
             boxShadow: isKato
               ? isKatoDark
@@ -186,6 +129,62 @@ export default async function JoinPage({
               <h1 className="mt-7 font-serif text-3xl font-semibold tracking-tight">Join the loyalty club</h1>
               <p className="mx-auto mt-3 max-w-sm text-sm leading-6" style={{ color: businessTheme.textMuted }}>
                 A little ritual, a little reward. Collect stamps with every eligible purchase at Loretto.
+              </p>
+            </div>
+          ) : isKeka ? (
+            <div className="px-6 pb-5 pt-8 text-center sm:px-8" style={{ color: businessTheme.textPrimary }}>
+          <div className="text-center">
+            <div
+              className="relative mx-auto w-fit pb-1 pt-5 text-[3.85rem] font-medium leading-none tracking-[-0.08em] min-[390px]:text-[4.25rem]"
+              dir="rtl"
+              style={{ color: (cafe.theme === "MODERN_MINIMAL") ? "#741A1D" : "#F4E5C6" }}
+              aria-label="كَيكَة"
+            >
+              <span>كيكة</span>
+              <span
+                aria-hidden="true"
+                className="absolute right-[8%] top-[0.25em] block h-[3px] w-[20px] rotate-[-24deg] rounded-full min-[390px]:w-[22px]"
+                style={{ backgroundColor: "currentColor" }}
+              />
+              <span
+                aria-hidden="true"
+                className="absolute left-[24%] top-[0.25em] block h-[3px] w-[20px] rotate-[-24deg] rounded-full min-[390px]:w-[22px]"
+                style={{ backgroundColor: "currentColor" }}
+              />
+              <span
+                dir="ltr"
+                className="absolute left-[53%] top-[0.25em] block -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-center font-serif text-[0.19em] font-semibold tracking-[0.02em]"
+                style={{
+                  color: (cafe.theme === "MODERN_MINIMAL") ? "rgba(74,13,16,0.72)" : "rgba(244,229,198,0.78)",
+                  width: "max-content",
+                }}
+              >
+                Keka
+              </span>
+            </div>
+
+            <div className="mt-3 flex items-center justify-center gap-3">
+              <span
+                aria-hidden="true"
+                className="h-px w-7 min-[390px]:w-9"
+                style={{ backgroundColor: (cafe.theme === "MODERN_MINIMAL") ? "rgba(116,26,29,0.22)" : "rgba(244,229,198,0.24)" }}
+              />
+              <p
+                className="text-center font-serif text-[12px] font-medium tracking-[0.07em] min-[390px]:text-[13px]"
+                style={{ color: (cafe.theme === "MODERN_MINIMAL") ? "rgba(74,13,16,0.56)" : "rgba(255,246,230,0.58)" }}
+              >
+                Little Rituals, Big Comfort
+              </p>
+              <span
+                aria-hidden="true"
+                className="h-px w-7 min-[390px]:w-9"
+                style={{ backgroundColor: (cafe.theme === "MODERN_MINIMAL") ? "rgba(116,26,29,0.22)" : "rgba(244,229,198,0.24)" }}
+              />
+            </div>
+          </div>
+              <h1 className="mt-7 font-serif text-3xl font-semibold tracking-tight">Join the loyalty club</h1>
+              <p className="mx-auto mt-3 max-w-sm text-sm leading-6" style={{ color: businessTheme.textMuted }}>
+                Create your digital Keka card and collect stamps with every eligible purchase.
               </p>
             </div>
           ) : isKato ? (
@@ -292,6 +291,7 @@ export default async function JoinPage({
               themeName={cafe.theme}
               primaryColor={primaryColor}
               secondaryColor={secondaryColor}
+              backgroundColor={cafe.backgroundColor}
               rewardTarget={cafe.rewardTarget}
               rewardName={cafe.rewardName}
               isKato={isKato}
