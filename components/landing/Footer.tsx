@@ -18,8 +18,7 @@ export default function Footer() {
             </Link>
 
             <p className="mt-4 max-w-sm text-sm leading-6 text-neutral-500">
-              Digital loyalty infrastructure for cafés, barbershops, and
-              service businesses that value repeat customers.
+              Give them a reason to return. Digital loyalty for businesses that care about their regulars.
             </p>
           </div>
 

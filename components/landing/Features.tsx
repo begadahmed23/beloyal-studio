@@ -59,16 +59,14 @@ export default function Features() {
               The platform
             </p>
             <h2 className="mt-5 text-4xl font-semibold tracking-[-0.055em] sm:text-5xl lg:text-6xl">
-              One loyalty engine.
+              More than a stamp card.
               <span className="block text-neutral-400">
-                Built for each business.
+                A reason to come back.
               </span>
             </h2>
           </div>
           <p className="max-w-xl text-lg leading-8 text-neutral-500 lg:justify-self-end">
-            Cafés keep their familiar stamp experience. Barbershops get a
-            separate visit-based interface. Both run securely from the same
-            BeLoyal platform.
+            Make loyalty feel like your business. Give customers a card they can keep on their phone, help your team reward every visit, and understand who keeps coming back.
           </p>
         </div>
 

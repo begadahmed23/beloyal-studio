@@ -31,10 +31,10 @@ export default function Navbar() {
           </a>
 
           <a
-            href="#faq"
+            href="#pricing"
             className="transition-colors hover:text-neutral-950"
           >
-            FAQ
+            Pricing
           </a>
 
           <a
@@ -45,12 +45,12 @@ export default function Navbar() {
           </a>
         </nav>
 
-        <Link
-          href="/login"
+        <a
+          href="#contact"
           className="rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white transition hover:bg-neutral-800"
         >
-          Business login
-        </Link>
+          Get a quote ↗
+        </a>
       </div>
     </header>
   );

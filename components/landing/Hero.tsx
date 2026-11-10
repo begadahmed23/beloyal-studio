@@ -233,28 +233,26 @@ export default function Hero() {
               Built for cafés and barbershops
             </div>
             <h1 className="mt-7 max-w-3xl text-5xl font-semibold leading-[0.98] tracking-[-0.06em] text-neutral-950 sm:text-6xl lg:text-[76px]">
-              Bring customers back.
+              Give them a reason
               <span className="block text-neutral-400">
-                Without another app.
+                to return.
               </span>
             </h1>
             <p className="mt-8 max-w-xl text-lg leading-8 text-neutral-600 sm:text-xl">
-              BeLoyal turns everyday purchases and visits into a branded
-              digital loyalty experience—with QR cards, fast scanning,
-              automatic rewards, and useful customer insights.
+              Turn first-time visitors into familiar faces. Branded digital loyalty cards, meaningful rewards, and customer insights — all in one place.
             </p>
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
               <a
                 href="#contact"
                 className="inline-flex min-h-13 items-center justify-center rounded-full bg-neutral-950 px-8 py-3.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
               >
-                Start with BeLoyal
+                Get a custom quote
               </a>
               <Link
-                href="/login"
+                href="#how-it-works"
                 className="inline-flex min-h-13 items-center justify-center rounded-full border border-neutral-300 bg-white px-8 py-3.5 text-sm font-semibold text-neutral-950 transition hover:bg-neutral-100"
               >
-                Business login
+                See how it works
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-neutral-500">
@@ -274,6 +272,7 @@ export default function Hero() {
             <div className="absolute -left-12 top-12 h-52 w-52 rounded-full bg-[#b98552]/10 blur-3xl" />
             <div className="absolute -right-12 bottom-8 h-56 w-56 rounded-full bg-[#667d71]/15 blur-3xl" />
             <DesktopPreview />
+            <span className="absolute bottom-0 left-0 text-[10px] text-neutral-500">Illustrative product preview · sample data</span>
             <PhonePreview />
           </div>
         </div>
