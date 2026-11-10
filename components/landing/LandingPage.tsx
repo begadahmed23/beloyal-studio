@@ -27,7 +27,9 @@ export default function LandingPage() {
       const section = document.getElementById(id);
       const header = page?.querySelector("header");
       if (!page || !section || !header) return;
-      const top = window.scrollY + section.getBoundingClientRect().top - header.getBoundingClientRect().height;
+      // Align the content, not the padded section boundary.
+      const content = section.firstElementChild ?? section;
+      const top = window.scrollY + content.getBoundingClientRect().top - header.getBoundingClientRect().height - 24;
       window.history.pushState(null, "", `#${id}`);
       window.scrollTo({ top: Math.max(0, top), behavior: "instant" });
     });

@@ -221,6 +221,18 @@ function PhonePreview() {
   );
 }
 
+export function ProductPreview() {
+  return (
+    <div dir="ltr" lang="en" className="relative mx-auto h-[420px] w-full min-w-0 max-w-[660px] sm:h-[470px]">
+            <div className="absolute -left-12 top-12 h-52 w-52 rounded-full bg-[#b98552]/10 blur-3xl" />
+            <div className="absolute -right-12 bottom-8 h-56 w-56 rounded-full bg-[#667d71]/15 blur-3xl" />
+            <DesktopPreview />
+            <span className="absolute bottom-0 left-0 text-[10px] text-neutral-500">Illustrative product preview · sample data</span>
+            <PhonePreview />
+          </div>
+  );
+}
+
 export default function Hero() {
   return (
     <section className="relative overflow-hidden bg-[#f5f3ee] px-5 sm:px-6 pb-20 pt-16 sm:pt-20 lg:px-8 lg:pb-28 lg:pt-24">
@@ -268,13 +280,7 @@ export default function Hero() {
             </div>
           </div>
 
-          <div className="relative mx-auto h-[420px] w-full min-w-0 max-w-[660px] sm:h-[470px]">
-            <div className="absolute -left-12 top-12 h-52 w-52 rounded-full bg-[#b98552]/10 blur-3xl" />
-            <div className="absolute -right-12 bottom-8 h-56 w-56 rounded-full bg-[#667d71]/15 blur-3xl" />
-            <DesktopPreview />
-            <span className="absolute bottom-0 left-0 text-[10px] text-neutral-500">Illustrative product preview · sample data</span>
-            <PhonePreview />
-          </div>
+          <ProductPreview />
         </div>
 
         <div className="mt-16 border-t border-black/[0.08] pt-9">
