@@ -2,7 +2,7 @@ import { ArrowUpRight, Check } from "lucide-react";
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="scroll-mt-24 bg-[#f5f3ee] px-6 py-24 lg:px-8 lg:py-32">
+    <section id="pricing" className="bg-[#f5f3ee] px-6 py-24 lg:px-8 lg:py-32">
       <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-2 lg:gap-24">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#526b5e]">Pricing</p>

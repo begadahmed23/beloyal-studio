@@ -17,7 +17,7 @@ export default function Contact() {
     window.location.href = url;
   }
   return (
-    <section id="contact" className="scroll-mt-24 border-t border-neutral-200 bg-[#fcfbf8] px-6 py-24 lg:px-8 lg:py-32">
+    <section id="contact" className="border-t border-neutral-200 bg-[#fcfbf8] px-6 py-24 lg:px-8 lg:py-32">
       <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-24">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#526b5e]">Let’s talk loyalty</p>

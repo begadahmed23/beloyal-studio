@@ -33,7 +33,7 @@ export default function LandingPage() {
     setArabic(!arabic);
   }
   return (
-    <main lang={arabic ? "ar" : "en"} dir={arabic ? "rtl" : "ltr"} style={{ colorScheme: "light", ...(arabic ? {fontFamily: 'Tahoma, Arial, sans-serif'} : {}) }} className="min-h-screen bg-white text-neutral-950 [&_section[id]]:scroll-mt-36">
+    <main lang={arabic ? "ar" : "en"} dir={arabic ? "rtl" : "ltr"} style={{ colorScheme: "light", ...(arabic ? {fontFamily: 'Tahoma, Arial, sans-serif'} : {}) }} className="min-h-screen bg-white text-neutral-950 [--landing-header-height:121px] sm:[--landing-header-height:69px] [&_section[id]]:scroll-mt-[var(--landing-header-height)]">
       <Navbar arabic={arabic} onLanguageChange={changeLanguage} />
       {arabic ? <ArabicLanding /> : <><Hero /><Features /><HowItWorks /><Insights /><Pricing /><FAQ /><Contact /><Footer /></>}
     </main>

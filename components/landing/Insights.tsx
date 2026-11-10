@@ -9,7 +9,7 @@ const opportunities = [
 
 export default function Insights() {
   return (
-    <section id="insights" className="scroll-mt-24 bg-[#edf1ec] px-5 py-20 sm:px-6 lg:px-8 lg:py-28">
+    <section id="insights" className="bg-[#edf1ec] px-5 py-20 sm:px-6 lg:px-8 lg:py-28">
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-7 lg:grid-cols-2 lg:gap-20">
           <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#526b5e]">The data behind the loyalty</p><h2 className="mt-5 text-4xl font-semibold leading-[1.06] tracking-[-0.05em] sm:text-5xl lg:text-6xl">Every visit tells<br />you something.</h2></div>
