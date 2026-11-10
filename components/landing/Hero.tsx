@@ -223,7 +223,7 @@ function PhonePreview() {
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-[#f5f3ee] px-6 pb-20 pt-16 sm:pt-20 lg:px-8 lg:pb-28 lg:pt-24">
+    <section className="relative overflow-hidden bg-[#f5f3ee] px-5 sm:px-6 pb-20 pt-16 sm:pt-20 lg:px-8 lg:pb-28 lg:pt-24">
       <div className="pointer-events-none absolute left-1/2 top-[-22rem] h-[46rem] w-[46rem] -translate-x-1/2 rounded-full bg-white blur-3xl" />
       <div className="relative mx-auto max-w-7xl">
         <div className="grid items-center gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
@@ -232,7 +232,7 @@ export default function Hero() {
               <span className="h-1.5 w-1.5 rounded-full bg-[#668777]" />
               Built for cafés and barbershops
             </div>
-            <h1 className="mt-7 max-w-3xl text-5xl font-semibold leading-[0.98] tracking-[-0.06em] text-neutral-950 sm:text-6xl lg:text-[76px]">
+            <h1 className="mt-7 max-w-3xl text-[2.65rem] font-semibold leading-[1.04] tracking-[-0.06em] text-neutral-950 sm:text-6xl lg:text-[76px]">
               Give them a reason
               <span className="block text-neutral-400">
                 to return.
@@ -268,7 +268,7 @@ export default function Hero() {
             </div>
           </div>
 
-          <div className="relative mx-auto h-[450px] w-full max-w-[660px] sm:h-[470px]">
+          <div className="relative mx-auto h-[420px] w-full min-w-0 max-w-[660px] sm:h-[470px]">
             <div className="absolute -left-12 top-12 h-52 w-52 rounded-full bg-[#b98552]/10 blur-3xl" />
             <div className="absolute -right-12 bottom-8 h-56 w-56 rounded-full bg-[#667d71]/15 blur-3xl" />
             <DesktopPreview />
@@ -277,7 +277,7 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="mt-24 border-t border-black/[0.08] pt-9">
+        <div className="mt-16 border-t border-black/[0.08] pt-9">
           <p className="text-sm font-medium uppercase tracking-[0.17em] text-neutral-400">
             Designed around real repeat business
           </p>

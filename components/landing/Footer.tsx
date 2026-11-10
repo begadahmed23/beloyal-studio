@@ -34,6 +34,14 @@ export default function Footer() {
                 How it works
               </a>
 
+              <a href="#insights" className="transition hover:text-black">
+                Customer insights
+              </a>
+
+              <a href="#pricing" className="transition hover:text-black">
+                Pricing
+              </a>
+
               <a href="#faq" className="transition hover:text-black">
                 FAQ
               </a>
