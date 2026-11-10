@@ -12,7 +12,7 @@ export default function Contact() {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const body = ["Hi BeLoyal, I'd like a custom quote.", "", ...["Business name", "Your name", "Email", "Phone / WhatsApp", "Business type", "Branches", "What do you have in mind?"].map(key => `${key}: ${String(data.get(key) || "Not provided").trim()}`)].join("\n");
-    const url = `mailto:begad.ahmed124@gmail.com?subject=${encodeURIComponent(`BeLoyal quote — ${data.get("Business name")}`)}&body=${encodeURIComponent(body)}`;
+    const url = `mailto:getbeloyal@gmail.com?subject=${encodeURIComponent(`BeLoyal quote — ${data.get("Business name")}`)}&body=${encodeURIComponent(body)}`;
     setEmailDraft(url);
     window.location.href = url;
   }
@@ -23,7 +23,7 @@ export default function Contact() {
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#526b5e]">Let’s talk loyalty</p>
           <h2 className="mt-5 text-4xl font-semibold tracking-[-0.055em] sm:text-6xl">Your next regular<br />starts here.</h2>
           <p className="mt-7 max-w-md text-lg leading-8 text-neutral-600">Tell us a little about your business. We’ll help you shape a loyalty program your customers will want to come back to.</p>
-          <div className="mt-10 border-t border-neutral-200 pt-6 text-sm leading-7 text-neutral-500"><p>Prefer to reach out directly?</p><a className="break-all font-medium text-neutral-950 underline underline-offset-4" href="mailto:begad.ahmed124@gmail.com">begad.ahmed124@gmail.com</a></div>
+          <div className="mt-10 border-t border-neutral-200 pt-6 text-sm leading-7 text-neutral-500"><p>Prefer to reach out directly?</p><a className="break-all font-medium text-neutral-950 underline underline-offset-4" href="mailto:getbeloyal@gmail.com">getbeloyal@gmail.com</a></div>
           <p className="mt-8 text-sm text-neutral-500">Already with BeLoyal? <Link href="/login" className="font-medium text-neutral-950 underline underline-offset-4">Business login</Link></p>
         </div>
         <form onSubmit={submit} className="rounded-[2rem] border border-neutral-200 bg-white p-6 sm:p-10">

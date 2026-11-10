@@ -72,7 +72,7 @@ export default function Footer() {
               </Link>
 
               <a
-                href="mailto:begad.ahmed124@gmail.com"
+                href="mailto:getbeloyal@gmail.com"
                 className="transition hover:text-black"
               >
                 Contact
