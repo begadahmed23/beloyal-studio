@@ -221,9 +221,21 @@ function PhonePreview() {
   );
 }
 
+export function ProductPreview() {
+  return (
+    <div dir="ltr" lang="en" className="relative mx-auto h-[420px] w-full min-w-0 max-w-[660px] sm:h-[470px]">
+            <div className="absolute -left-12 top-12 h-52 w-52 rounded-full bg-[#b98552]/10 blur-3xl" />
+            <div className="absolute -right-12 bottom-8 h-56 w-56 rounded-full bg-[#667d71]/15 blur-3xl" />
+            <DesktopPreview />
+            <span className="absolute bottom-0 left-0 text-[10px] text-neutral-500">Illustrative product preview · sample data</span>
+            <PhonePreview />
+          </div>
+  );
+}
+
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-[#f5f3ee] px-6 pb-20 pt-16 sm:pt-20 lg:px-8 lg:pb-28 lg:pt-24">
+    <section className="relative overflow-hidden bg-[#f5f3ee] px-5 sm:px-6 pb-20 pt-16 sm:pt-20 lg:px-8 lg:pb-28 lg:pt-24">
       <div className="pointer-events-none absolute left-1/2 top-[-22rem] h-[46rem] w-[46rem] -translate-x-1/2 rounded-full bg-white blur-3xl" />
       <div className="relative mx-auto max-w-7xl">
         <div className="grid items-center gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
@@ -232,29 +244,27 @@ export default function Hero() {
               <span className="h-1.5 w-1.5 rounded-full bg-[#668777]" />
               Built for cafés and barbershops
             </div>
-            <h1 className="mt-7 max-w-3xl text-5xl font-semibold leading-[0.98] tracking-[-0.06em] text-neutral-950 sm:text-6xl lg:text-[76px]">
-              Bring customers back.
+            <h1 className="mt-7 max-w-3xl text-[2.65rem] font-semibold leading-[1.04] tracking-[-0.06em] text-neutral-950 sm:text-6xl lg:text-[76px]">
+              Give them a reason
               <span className="block text-neutral-400">
-                Without another app.
+                to return.
               </span>
             </h1>
             <p className="mt-8 max-w-xl text-lg leading-8 text-neutral-600 sm:text-xl">
-              BeLoyal turns everyday purchases and visits into a branded
-              digital loyalty experience—with QR cards, fast scanning,
-              automatic rewards, and useful customer insights.
+              Turn first-time visitors into familiar faces. Branded digital loyalty cards, meaningful rewards, and customer insights — all in one place.
             </p>
             <div className="mt-10 flex flex-col gap-3 sm:flex-row">
               <a
                 href="#contact"
                 className="inline-flex min-h-13 items-center justify-center rounded-full bg-neutral-950 px-8 py-3.5 text-sm font-semibold text-white transition hover:bg-neutral-800"
               >
-                Start with BeLoyal
+                Get a custom quote
               </a>
               <Link
-                href="/login"
+                href="#how-it-works"
                 className="inline-flex min-h-13 items-center justify-center rounded-full border border-neutral-300 bg-white px-8 py-3.5 text-sm font-semibold text-neutral-950 transition hover:bg-neutral-100"
               >
-                Business login
+                See how it works
               </Link>
             </div>
             <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-neutral-500">
@@ -270,15 +280,10 @@ export default function Hero() {
             </div>
           </div>
 
-          <div className="relative mx-auto h-[450px] w-full max-w-[660px] sm:h-[470px]">
-            <div className="absolute -left-12 top-12 h-52 w-52 rounded-full bg-[#b98552]/10 blur-3xl" />
-            <div className="absolute -right-12 bottom-8 h-56 w-56 rounded-full bg-[#667d71]/15 blur-3xl" />
-            <DesktopPreview />
-            <PhonePreview />
-          </div>
+          <ProductPreview />
         </div>
 
-        <div className="mt-24 border-t border-black/[0.08] pt-9">
+        <div className="mt-16 border-t border-black/[0.08] pt-9">
           <p className="text-sm font-medium uppercase tracking-[0.17em] text-neutral-400">
             Designed around real repeat business
           </p>

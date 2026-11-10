@@ -18,8 +18,7 @@ export default function Footer() {
             </Link>
 
             <p className="mt-4 max-w-sm text-sm leading-6 text-neutral-500">
-              Digital loyalty infrastructure for cafés, barbershops, and
-              service businesses that value repeat customers.
+              Give them a reason to return. Digital loyalty for businesses that care about their regulars.
             </p>
           </div>
 
@@ -33,6 +32,14 @@ export default function Footer() {
 
               <a href="#how-it-works" className="transition hover:text-black">
                 How it works
+              </a>
+
+              <a href="#insights" className="transition hover:text-black">
+                Customer insights
+              </a>
+
+              <a href="#pricing" className="transition hover:text-black">
+                Pricing
               </a>
 
               <a href="#faq" className="transition hover:text-black">
@@ -65,7 +72,7 @@ export default function Footer() {
               </Link>
 
               <a
-                href="mailto:begad.ahmed124@gmail.com"
+                href="mailto:getbeloyal@gmail.com"
                 className="transition hover:text-black"
               >
                 Contact
