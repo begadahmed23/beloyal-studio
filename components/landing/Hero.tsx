@@ -276,7 +276,7 @@ export default function Hero() {
                 <ScanLine size={15} /> Scan their card to add a stamp
               </span>
               <span className="flex items-center gap-2">
-                <Star size={15} /> Collect feedback after each visit
+                <Star size={15} /> See who’s coming back
               </span>
             </div>
           </div>
