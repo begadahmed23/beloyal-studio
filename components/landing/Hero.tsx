@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BusinessTypes from "./BusinessTypes";
 import {
   ArrowUpRight,
   ChartNoAxesCombined,
@@ -235,7 +236,7 @@ export function ProductPreview() {
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-[#f5f3ee] px-5 sm:px-6 pb-20 pt-16 sm:pt-20 lg:px-8 lg:pb-28 lg:pt-24">
+    <section className="relative overflow-hidden bg-[#f5f3ee] px-5 sm:px-6 pb-12 pt-16 sm:pt-20 lg:px-8 lg:pb-16 lg:pt-24">
       <div className="pointer-events-none absolute left-1/2 top-[-22rem] h-[46rem] w-[46rem] -translate-x-1/2 rounded-full bg-white blur-3xl" />
       <div className="relative mx-auto max-w-7xl">
         <div className="grid items-center gap-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
@@ -283,17 +284,7 @@ export default function Hero() {
           <ProductPreview />
         </div>
 
-        <div className="mt-16 border-t border-black/[0.08] pt-9">
-          <p className="text-sm font-medium uppercase tracking-[0.17em] text-neutral-400">
-            Designed around real repeat business
-          </p>
-          <div className="mt-7 grid grid-cols-2 gap-x-8 gap-y-5 text-lg font-semibold tracking-[-0.03em] text-neutral-300 sm:grid-cols-4">
-            <p className="text-neutral-700">Cafés</p>
-            <p className="text-neutral-700">Salons</p>
-            <p className="text-neutral-700">Car washes</p>
-            <p className="text-neutral-700">Bakeries</p>
-          </div>
-        </div>
+        <BusinessTypes />
       </div>
     </section>
   );

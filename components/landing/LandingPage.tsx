@@ -53,7 +53,7 @@ export default function LandingPage() {
     setArabic(!arabic);
   }
   return (
-    <main ref={pageRef} onClick={navigateToSection} lang={arabic ? "ar" : "en"} dir={arabic ? "rtl" : "ltr"} style={{ colorScheme: "light", ...(arabic ? {fontFamily: 'Tahoma, Arial, sans-serif'} : {}) }} className="landing-page min-h-screen bg-white text-neutral-950">
+    <main ref={pageRef} onClick={navigateToSection} lang={arabic ? "ar" : "en"} dir={arabic ? "rtl" : "ltr"} style={{ colorScheme: "light", fontFamily: arabic ? 'Tahoma, Arial, sans-serif' : 'Arial, Helvetica, sans-serif' }} className="landing-page min-h-screen bg-white text-neutral-950">
       <Navbar arabic={arabic} onLanguageChange={changeLanguage} />
       {arabic ? <ArabicLanding /> : <><Hero /><Features /><HowItWorks /><Insights /><Pricing /><FAQ /><Contact /><Footer /></>}
     </main>
