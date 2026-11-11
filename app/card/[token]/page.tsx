@@ -200,6 +200,8 @@ export default function DigitalCardPage() {
     searchParams.get("welcome") === "1",
   );
 
+  const [walletEnabled, setWalletEnabled] = useState(false);
+
   const [customer, setCustomer] =
     useState<Customer | null>(null);
 
@@ -447,6 +449,7 @@ export default function DigitalCardPage() {
         hasLoadedCard.current = true;
 
         setCustomer(incomingCustomer);
+        setWalletEnabled(data.appleWalletEnabled === true);
 
         setError("");
       } catch (caughtError) {
@@ -1609,6 +1612,7 @@ const progressPercentage = rewardReady
       }}
     >
       <LoyaltyCard
+        walletEnabled={walletEnabled}
         customer={customer}
         refreshing={refreshing}
         newStampIndex={newStampIndex}

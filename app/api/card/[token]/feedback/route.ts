@@ -1,3 +1,4 @@
+import { scheduleWalletUpdate } from "@/lib/wallet/updates";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -294,6 +295,7 @@ export async function POST(
 
           return {
             type: "success" as const,
+            customerId: customer.id,
             rewardGranted,
             rewardPending: rewardGranted && alreadyReady,
             stamps:
@@ -331,6 +333,8 @@ export async function POST(
         403,
       );
     }
+
+    if (result.rewardGranted) scheduleWalletUpdate(result.customerId);
 
     return jsonResponse({
       success: true,

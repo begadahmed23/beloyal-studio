@@ -41,3 +41,11 @@ yarn-error.log*
 next-env.d.ts
 
 /lib/generated/prisma
+
+# Apple Wallet signing credentials
+*.key
+*.p12
+*.pfx
+*.certSigningRequest
+*.cer
+*.pkpass
