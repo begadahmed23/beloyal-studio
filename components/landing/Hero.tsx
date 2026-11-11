@@ -242,7 +242,7 @@ export default function Hero() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-black/[0.08] bg-white/75 px-3 py-1.5 text-xs font-medium text-neutral-600 shadow-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-[#668777]" />
-              Built for cafés and barbershops
+              For cafés, salons, car washes & bakeries
             </div>
             <h1 className="mt-7 max-w-3xl text-[2.65rem] font-semibold leading-[1.04] tracking-[-0.06em] text-neutral-950 sm:text-6xl lg:text-[76px]">
               Give them a reason
@@ -287,13 +287,11 @@ export default function Hero() {
           <p className="text-sm font-medium uppercase tracking-[0.17em] text-neutral-400">
             Designed around real repeat business
           </p>
-          <div className="mt-7 grid grid-cols-2 gap-x-8 gap-y-5 text-lg font-semibold tracking-[-0.03em] text-neutral-300 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="mt-7 grid grid-cols-2 gap-x-8 gap-y-5 text-lg font-semibold tracking-[-0.03em] text-neutral-300 sm:grid-cols-4">
             <p className="text-neutral-700">Cafés</p>
-            <p className="text-neutral-700">Barbershops</p>
-            <p>Coffee shops</p>
-            <p>Salons</p>
-            <p>Bakeries</p>
-            <p>Hospitality</p>
+            <p className="text-neutral-700">Salons</p>
+            <p className="text-neutral-700">Car washes</p>
+            <p className="text-neutral-700">Bakeries</p>
           </div>
         </div>
       </div>

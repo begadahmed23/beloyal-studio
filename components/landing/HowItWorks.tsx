@@ -9,7 +9,7 @@ const steps = [
     number: "02",
     title: "Staff record the activity",
     description:
-      "The café records a stamp after a qualifying purchase. The barbershop records a visit after an eligible service.",
+      "Your team records a stamp after a qualifying purchase or service visit, using the reward rules agreed for your business.",
   },
   {
     number: "03",

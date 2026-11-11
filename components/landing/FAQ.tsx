@@ -27,12 +27,12 @@ const questions = [
   {
     question: "How can a business start using BeLoyal?",
     answer:
-      "BeLoyal is currently onboarding cafés and barbershops directly. Contact us and we will configure the account, loyalty rules, branding, and access.",
+      "BeLoyal onboards cafés, salons, car washes, and bakeries directly. Contact us and we will configure the account, loyalty rules, branding, and access.",
   },
   {
-    question: "Is the café experience different from the barber experience?",
+    question: "Can the loyalty program fit my type of business?",
     answer:
-      "Yes. Cafés use stamps and purchase-based rewards, while barbershops use visits, service-based rewards, and a separate barber interface.",
+      "Yes. We configure your program around qualifying purchases or service visits, with rewards suited to your café, salon, car wash, or bakery.",
   },
 ];
 
