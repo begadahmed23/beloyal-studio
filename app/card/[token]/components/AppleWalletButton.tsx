@@ -42,7 +42,7 @@ export default function AppleWalletButton({ token, enabled }: { token: string; e
         className="min-h-12 rounded-xl border border-white/30 bg-black px-6 py-3 text-sm font-semibold text-white disabled:opacity-60">
         {busy ? "Preparing your card…" : "Add to Apple Wallet"}
       </button>
-      <p className="mt-2 text-xs opacity-70">Keep your QR handy. View live stamps on your online card.</p>
+      <p className="mt-2 text-xs opacity-70">Keep your loyalty card and QR in Apple Wallet.</p>
       {error ? <p role="alert" className="mt-2 text-sm">{error}</p> : null}
     </div>
   );

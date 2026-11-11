@@ -1,3 +1,4 @@
+import { scheduleWalletUpdate } from "@/lib/wallet/updates";
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -408,6 +409,8 @@ export async function POST(request: NextRequest) {
             409,
           );
         }
+
+        scheduleWalletUpdate(result.updatedCustomer.id);
 
         const rewardReady = Boolean(
           result.updatedCustomer.rewardEarnedAt,

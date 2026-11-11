@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { appleWalletEnabled } from "@/lib/wallet/apple";
+import { appleWalletEnabled } from "@/lib/wallet/config";
 import { prisma } from "@/lib/prisma";
 import {
   applyPublicRateLimit,

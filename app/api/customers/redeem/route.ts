@@ -1,3 +1,4 @@
+import { scheduleWalletUpdate } from "@/lib/wallet/updates";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -337,6 +338,8 @@ export async function POST(request: NextRequest) {
         409,
       );
     }
+
+    scheduleWalletUpdate(customer.id);
 
     return jsonResponse({
       ...updatedCustomer,
