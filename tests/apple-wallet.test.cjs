@@ -101,6 +101,17 @@ test('signed artwork, stamp progress, auth and existing scanner payload', async 
   assert.equal(walid.foregroundColor, 'rgb(242, 238, 231)');
   assert.equal(walid.storeCard.auxiliaryFields[0].value, 'Free Haircut');
   assert.equal(walid.barcodes[0].message, `BL:${member.publicToken}`);
+  assert.equal(walid.locations[0].latitude, 31.2299403);
+  assert.equal(walid.locations[0].longitude, 29.9547298);
+  assert.equal(walid.maxDistance, 150);
+  assert.match(walid.locations[0].relevantText, /Near Waleed Saad/);
+  assert.equal(walid.storeCard.backFields.find(f => f.key === 'walid-reward-status').changeMessage, '%@');
+  assert.equal(pass.locations, undefined);
+  const readyWalid = JSON.parse(strFromU8(unzipSync(await createAppleWalletPass({ ...member,
+    stamps: 3, rewardEarnedAt: new Date(), cafe: { ...member.cafe, name: 'Waleed saad',
+    slug: 'walid-saad', businessType: 'BARBERSHOP', rewardTarget: 3, rewardName: 'Free Haircut' } }))['pass.json']));
+  assert.match(readyWalid.storeCard.backFields.find(f => f.key === 'walid-reward-status').value, /reward is ready/);
+
   if (process.env.WALLET_PREVIEW_DIR) {
     fs.writeFileSync(path.join(process.env.WALLET_PREVIEW_DIR, 'walid-strip.png'), walidZip['strip@3x.png']);
     fs.writeFileSync(path.join(process.env.WALLET_PREVIEW_DIR, 'walid-logo.png'), walidZip['logo@3x.png']);

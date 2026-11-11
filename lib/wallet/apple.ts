@@ -84,13 +84,23 @@ export async function createAppleWalletPass(member: WalletMember) {
     { serialNumber: member.id,
       passTypeIdentifier: process.env.APPLE_WALLET_PASS_TYPE_ID!,
       teamIdentifier: process.env.APPLE_WALLET_TEAM_ID!,
+      ...(walid ? { maxDistance: 150 } : {}),
       organizationName: member.cafe.name,
       description: `${member.cafe.name} loyalty card`,
       ...(walletUpdatesEnabled() ? { webServiceURL: process.env.APPLE_WALLET_WEB_SERVICE_URL!.replace(/\/$/, ""), authenticationToken: walletAuthToken(member.id) } : {}),
       backgroundColor: rgb(background), foregroundColor: rgb(foreground), labelColor: rgb(foreground) },
   );
   pass.type = "storeCard";
-  pass.headerFields.push({ key: "balance", label: ready ? "REWARD READY" : walid ? "VISITS" : "STAMPS", value: `${stamps}/${target}`, changeMessage: "Your loyalty progress is now %@." });
+  if (walid) {
+    pass.setLocations({ latitude: 31.2299403, longitude: 29.9547298,
+      relevantText: "Near Waleed Saad? Have your loyalty card ready for your next visit." });
+    pass.backFields.push({ key: "walid-reward-status", label: "REWARD STATUS",
+      value: ready ? `Your reward is ready at ${member.cafe.name}: ${member.cafe.rewardName}.` : "Collect visits toward your next free haircut.",
+      changeMessage: "%@" });
+    pass.backFields.push({ key: "shop-location", label: "FIND WALEED SAAD",
+      value: "467 Abou Quer, Fleming, Alexandria\nhttps://maps.app.goo.gl/DLqwQhwqEPJCnfpd8" });
+  }
+  pass.headerFields.push({ key: "balance", label: ready ? "REWARD READY" : walid ? "VISITS" : "STAMPS", value: `${stamps}/${target}`, ...(walid ? {} : { changeMessage: "Your loyalty progress is now %@." }) });
   pass.secondaryFields.push({ key: "member", label: "MEMBER", value: member.name });
   pass.auxiliaryFields.push({ key: "reward", label: "YOUR REWARD", value: member.cafe.rewardName });
   pass.backFields.push(
