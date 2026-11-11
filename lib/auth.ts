@@ -11,6 +11,7 @@ export const auth = betterAuth({
     "localhost:*",
     "getbeloyal.app",
     "www.getbeloyal.app",
+    "wallet-test.getbeloyal.app",
     "*.vercel.app",
   ],
   protocol: "auto",
@@ -21,6 +22,7 @@ trustedOrigins: [
   "http://localhost:3000",
   "https://getbeloyal.app",
   "https://www.getbeloyal.app",
+  "https://wallet-test.getbeloyal.app",
   "https://*.vercel.app",
 ],
 
