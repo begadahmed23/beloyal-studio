@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type MouseEvent } from "react";
 import Navbar from "./Navbar";
+import MobileNavigation from "./MobileNavigation";
 import Hero from "./Hero";
 import Features from "./Features";
 import HowItWorks from "./HowItWorks";
@@ -56,6 +57,7 @@ export default function LandingPage() {
     <main ref={pageRef} onClick={navigateToSection} lang={arabic ? "ar" : "en"} dir={arabic ? "rtl" : "ltr"} style={{ colorScheme: "light", fontFamily: arabic ? 'Tahoma, Arial, sans-serif' : 'Arial, Helvetica, sans-serif' }} className="landing-page min-h-screen bg-white text-neutral-950">
       <Navbar arabic={arabic} onLanguageChange={changeLanguage} />
       {arabic ? <ArabicLanding /> : <><Hero /><Features /><HowItWorks /><Insights /><Pricing /><FAQ /><Contact /><Footer /></>}
+      <MobileNavigation arabic={arabic} />
     </main>
   );
 }

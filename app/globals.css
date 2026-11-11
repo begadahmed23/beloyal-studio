@@ -147,3 +147,12 @@
 @media (min-width: 640px) {
   .landing-page { --landing-header-height: 69px; }
 }
+
+/* Keep the landing content clear of mobile shortcuts and reduce long gaps. */
+@media (max-width: 639px) {
+  .landing-page { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .landing-page section[id] { padding-top: 48px; padding-bottom: 48px; }
+  .landing-page #features article { min-height: 0; padding: 24px; }
+  .landing-page #features article > div:last-child { margin-top: 24px; }
+  .landing-page #how-it-works article { padding-top: 24px; padding-bottom: 24px; }
+}
