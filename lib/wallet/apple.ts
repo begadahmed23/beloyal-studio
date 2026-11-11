@@ -3,6 +3,7 @@ export { appleWalletEnabled } from "./config";
 import { getLoyaltyProgressTarget } from "../business/loyalty-target";
 import { PKPass } from "passkit-generator";
 import sharp from "sharp";
+import path from "node:path";
 
 export type WalletMember = {
   id: string;
@@ -39,17 +40,30 @@ export async function createAppleWalletPass(member: WalletMember) {
   const ready = Boolean(member.rewardEarnedAt) || member.stamps >= target;
   const accent = loretto ? "#7E897F" : foreground;
   const escape = (value: string) => value.replace(/[&<>"\']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "\'": "&apos;" })[c]!);
-  const svgPng = (svg: string) => sharp(Buffer.from(svg)).png().toBuffer();
+  const fontfile = path.join(process.cwd(), "lib/wallet/fonts/DejaVuSans.ttf");
+  const textImage = async (value: string, width: number, height: number) => sharp({
+    text: { text: `<span foreground="${foreground}">${escape(value)}</span>`,
+      font: "DejaVu Sans 48", fontfile, rgba: true },
+  }).resize(width, height, { fit: "contain", background: "#00000000" }).png().toBuffer();
   const count = Math.min(target, 12);
   const circles = Array.from({ length: count }, (_, i) => {
-    const x = 38 + i * (299 / Math.max(count - 1, 1));
+    const x = count === 1 ? 187.5 : 60 + i * (255 / (count - 1));
     const filled = target > 12 ? i < Math.floor(stamps / target * count) : i < stamps;
     return `<circle cx="${x}" cy="62" r="${Math.min(19, 135 / count)}" fill="${filled ? accent : background}" stroke="${accent}" stroke-width="1.5"/>${filled ? `<path d="M${x-6} 62 l4 4 l8 -9" fill="none" stroke="${background}" stroke-width="2"/>` : ""}`;
   }).join("");
-  const strip = await svgPng(`<svg xmlns="http://www.w3.org/2000/svg" width="1125" height="369" viewBox="0 0 375 123"><rect width="375" height="123" fill="${background}"/><text x="187.5" y="23" text-anchor="middle" fill="${foreground}" font-family="sans-serif" font-size="10" letter-spacing="2">${ready ? "YOUR REWARD IS READY" : "LITTLE VISITS. LOVELY REWARDS."}</text>${circles}<text x="187.5" y="110" text-anchor="middle" fill="${foreground}" font-family="sans-serif" font-size="11">${escape(ready ? member.cafe.rewardName : `${stamps} of ${target} ${member.cafe.businessType === "BARBERSHOP" ? "visits" : "stamps"}`)}</text></svg>`);
-  const logo = await svgPng(`<svg xmlns="http://www.w3.org/2000/svg" width="480" height="150" viewBox="0 0 160 50"><text x="0" y="32" fill="${foreground}" font-family="${loretto ? "serif" : "sans-serif"}" font-weight="bold" font-size="${loretto ? 27 : 18}" textLength="155" lengthAdjust="spacingAndGlyphs">${escape(loretto ? "LORETTO" : member.cafe.name.slice(0,32))}</text>${loretto ? `<text x="1" y="45" fill="${foreground}" font-family="sans-serif" font-size="6.5" letter-spacing="1">ARTISAN COFFEE &amp; BAKERY</text>` : ""}</svg>`);
-  // Local artwork only: no requests to customer-controlled logo URLs.
-  const icon = await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="87" height="87"><rect width="87" height="87" rx="18" fill="${background}"/><text x="43.5" y="62" text-anchor="middle" font-family="sans-serif" font-size="60" font-weight="bold" fill="${foreground}">B</text></svg>`)).png().toBuffer();
+  // Wallet crops the sides of store-card strips; keep stamps within the safe centre.
+  const strip = await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1125" height="369" viewBox="0 0 375 123"><rect width="375" height="123" fill="${background}"/>${circles}</svg>`))
+    .composite([
+      { input: await textImage(ready ? "YOUR REWARD IS READY" : "A LITTLE CLOSER TO YOUR REWARD", 840, 35), left: 142, top: 30 },
+      { input: await textImage(ready ? member.cafe.rewardName : `${stamps} of ${target} ${member.cafe.businessType === "BARBERSHOP" ? "visits" : "stamps"}`, 800, 44), left: 162, top: 292 },
+    ]).png().toBuffer();
+  const logo = await sharp({ create: { width: 480, height: 150, channels: 4, background: "#00000000" } })
+    .composite([
+      { input: await textImage(loretto ? "LORETTO" : member.cafe.name.slice(0, 32), 460, 85), left: 0, top: 8 },
+      ...(loretto ? [{ input: await textImage("ARTISAN COFFEE & BAKERY", 450, 22), left: 5, top: 110 }] : []),
+    ]).png().toBuffer();
+  const icon = await sharp({ create: { width: 87, height: 87, channels: 4, background } })
+    .composite([{ input: await textImage("B", 54, 65), left: 16, top: 11 }]).png().toBuffer();
   const pass = new PKPass(
     { "icon.png": await sharp(icon).resize(29, 29).png().toBuffer(),
       "icon@2x.png": await sharp(icon).resize(58, 58).png().toBuffer(),
