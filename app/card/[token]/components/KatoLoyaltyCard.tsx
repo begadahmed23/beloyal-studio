@@ -1,5 +1,7 @@
 "use client";
 
+import AppleWalletButton from "./AppleWalletButton";
+
 import { Cake, ChevronRight, MessageCircle, QrCode, RefreshCw } from "lucide-react";
 
 import { useState } from "react";
@@ -7,6 +9,7 @@ import KatoMark from "@/components/brand/KatoMark";
 import type { Customer } from "./LoyaltyCard";
 
 type Props = {
+  walletEnabled?: boolean;
   customer: Customer;
   refreshing: boolean;
   newStampIndex: number | null;
@@ -46,6 +49,7 @@ export default function KatoLoyaltyCard({
   onRefresh,
   onShowQrCode,
   onShowFeedback,
+  walletEnabled = false,
 }: Props) {
   const [birthdayOpen, setBirthdayOpen] = useState(false);
   const isDark = customer.cafe.theme === "DARK_LUXURY";
@@ -382,6 +386,8 @@ export default function KatoLoyaltyCard({
           <QrCode size={19} />
           Show QR Code
         </button>
+
+        <AppleWalletButton token={customer.publicToken} enabled={walletEnabled} />
 
         {customer.cafe.feedbackEnabled && (
           <div className="mt-3 grid gap-2">

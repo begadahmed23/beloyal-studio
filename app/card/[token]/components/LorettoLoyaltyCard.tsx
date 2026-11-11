@@ -1,10 +1,13 @@
 "use client";
 
+import AppleWalletButton from "./AppleWalletButton";
+
 import { Cake, ChevronRight, MessageCircle, QrCode, RefreshCw } from "lucide-react";
 import { useState } from "react";
 import type { Customer } from "./LoyaltyCard";
 
 type Props = {
+  walletEnabled?: boolean;
   customer: Customer;
   refreshing: boolean;
   newStampIndex: number | null;
@@ -104,6 +107,7 @@ export default function LorettoLoyaltyCard({
   onRefresh,
   onShowQrCode,
   onShowFeedback,
+  walletEnabled = false,
 }: Props) {
   const [birthdayOpen, setBirthdayOpen] = useState(false);
 
@@ -380,6 +384,8 @@ export default function LorettoLoyaltyCard({
           <QrCode size={18} />
           Show QR Code
         </button>
+
+        <AppleWalletButton token={customer.publicToken} enabled={walletEnabled} />
 
         {customer.cafe.feedbackEnabled && (
           <button

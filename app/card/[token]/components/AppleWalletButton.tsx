@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
+import Image from "next/image";
 
 const subscribe = () => () => {};
 const getSupported = () => /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
@@ -37,12 +38,25 @@ export default function AppleWalletButton({ token, enabled }: { token: string; e
   }
 
   return (
-    <div className="mx-auto mb-6 mt-4 w-full max-w-sm px-4 text-center">
-      <button type="button" onClick={() => void download()} disabled={busy}
-        className="min-h-12 rounded-xl border border-white/30 bg-black px-6 py-3 text-sm font-semibold text-white disabled:opacity-60">
-        {busy ? "Preparing your card…" : "Add to Apple Wallet"}
+    <div className="mx-auto mt-3 w-full text-center">
+      <button
+        type="button"
+        onClick={() => void download()}
+        disabled={busy}
+        aria-label="Add to Apple Wallet"
+        aria-busy={busy}
+        className="inline-flex items-center justify-center rounded-lg border-0 bg-transparent p-[5px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current disabled:cursor-wait"
+      >
+        <Image
+          src="/wallet/add-to-apple-wallet.svg"
+          alt="Add to Apple Wallet"
+          width={111}
+          height={35}
+          unoptimized
+          className="h-11 w-auto"
+        />
       </button>
-      <p className="mt-2 text-xs opacity-70">Keep your loyalty card and QR in Apple Wallet.</p>
+      <span role="status" className="sr-only">{busy ? "Preparing your Wallet card…" : ""}</span>
       {error ? <p role="alert" className="mt-2 text-sm">{error}</p> : null}
     </div>
   );

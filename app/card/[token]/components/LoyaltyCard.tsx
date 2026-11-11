@@ -1,5 +1,7 @@
 "use client";
 
+import AppleWalletButton from "./AppleWalletButton";
+
 import {
   Coffee,
   Gift,
@@ -61,6 +63,7 @@ export type Customer = {
 };
 
 type LoyaltyCardProps = {
+  walletEnabled?: boolean;
   customer: Customer;
   refreshing: boolean;
   newStampIndex: number | null;
@@ -203,6 +206,7 @@ export default function LoyaltyCard({
   onLogoError,
   onShowQrCode,
   onShowFeedback,
+  walletEnabled = false,
 }: LoyaltyCardProps) {
   const isBarbershop =
     customer.cafe.businessType === "BARBERSHOP";
@@ -225,6 +229,7 @@ export default function LoyaltyCard({
   if (isLoretto) {
     return (
       <LorettoLoyaltyCard
+        walletEnabled={walletEnabled}
         customer={customer}
         refreshing={refreshing}
         newStampIndex={newStampIndex}
@@ -244,6 +249,7 @@ export default function LoyaltyCard({
   if (isKeka) {
     return (
       <KekaLoyaltyCard
+        walletEnabled={walletEnabled}
         customer={customer}
         refreshing={refreshing}
         newStampIndex={newStampIndex}
@@ -266,6 +272,7 @@ export default function LoyaltyCard({
   if (isKato) {
     return (
       <KatoLoyaltyCard
+        walletEnabled={walletEnabled}
         customer={customer}
         refreshing={refreshing}
         newStampIndex={newStampIndex}
@@ -800,6 +807,8 @@ export default function LoyaltyCard({
 
               <span>Show QR Code</span>
             </button>
+
+            <AppleWalletButton token={customer.publicToken} enabled={walletEnabled} />
 
             {customer.cafe.feedbackEnabled ? (
               <button

@@ -13,7 +13,6 @@ import {
   normalizeHex,
 } from "./card-theme-utils";
 
-import AppleWalletButton from "./components/AppleWalletButton";
 import QrCodeModal from "./components/QrCodeModal";
 import RewardCelebrationModal from "./components/RewardCelebrationModal";
 import GoogleReviewModal from "./components/GoogleReviewModal";
@@ -1613,6 +1612,7 @@ const progressPercentage = rewardReady
       }}
     >
       <LoyaltyCard
+        walletEnabled={walletEnabled}
         customer={customer}
         refreshing={refreshing}
         newStampIndex={newStampIndex}
@@ -1690,8 +1690,6 @@ const progressPercentage = rewardReady
           openFeedbackModal
         }
       />
-
-      <AppleWalletButton token={token} enabled={walletEnabled} />
 
       {showRewardCelebration ? (
         <RewardCelebrationModal
