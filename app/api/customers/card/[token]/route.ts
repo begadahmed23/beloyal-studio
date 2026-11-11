@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { appleWalletEnabled } from "@/lib/wallet/apple";
 import { prisma } from "@/lib/prisma";
 import {
   applyPublicRateLimit,
@@ -138,6 +139,7 @@ export async function GET(
       : null;
 
     return jsonResponse({
+      appleWalletEnabled: appleWalletEnabled(),
       id: customer.id,
       memberNumber: customer.memberNumber,
       publicToken: customer.publicToken,

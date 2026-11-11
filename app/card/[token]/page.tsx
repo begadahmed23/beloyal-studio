@@ -13,6 +13,7 @@ import {
   normalizeHex,
 } from "./card-theme-utils";
 
+import AppleWalletButton from "./components/AppleWalletButton";
 import QrCodeModal from "./components/QrCodeModal";
 import RewardCelebrationModal from "./components/RewardCelebrationModal";
 import GoogleReviewModal from "./components/GoogleReviewModal";
@@ -199,6 +200,8 @@ export default function DigitalCardPage() {
   const isWelcomeVisit = useRef(
     searchParams.get("welcome") === "1",
   );
+
+  const [walletEnabled, setWalletEnabled] = useState(false);
 
   const [customer, setCustomer] =
     useState<Customer | null>(null);
@@ -447,6 +450,7 @@ export default function DigitalCardPage() {
         hasLoadedCard.current = true;
 
         setCustomer(incomingCustomer);
+        setWalletEnabled(data.appleWalletEnabled === true);
 
         setError("");
       } catch (caughtError) {
@@ -1686,6 +1690,8 @@ const progressPercentage = rewardReady
           openFeedbackModal
         }
       />
+
+      <AppleWalletButton token={token} enabled={walletEnabled} />
 
       {showRewardCelebration ? (
         <RewardCelebrationModal
