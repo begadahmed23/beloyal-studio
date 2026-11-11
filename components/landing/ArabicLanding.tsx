@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import WhatsAppEnquiry from "./WhatsAppEnquiry";
 import { useState, type FormEvent } from "react";
 import { ProductPreview } from "./Hero";
 import Footer from "./Footer";
@@ -57,7 +58,7 @@ function ArabicContact() {
       <label className="text-sm font-medium">نوع النشاط<select required name="نوع النشاط" defaultValue="" className={field}><option value="" disabled>اختار نوع نشاطك</option>{["كافيه", "صالون", "مغسلة عربيات", "مخبز"].map(x => <option key={x}>{x}</option>)}</select></label>
       <label className="text-sm font-medium">عدد الفروع<select required name="عدد الفروع" defaultValue="" className={field}><option value="" disabled>اختار عدد الفروع</option>{["فرع واحد", "من ٢ إلى ٥", "من ٦ إلى ١٠", "أكتر من ١٠"].map(x => <option key={x}>{x}</option>)}</select></label>
       <label className="text-sm font-medium sm:col-span-2">إيه اللي في بالك؟ (اختياري)<textarea name="تفاصيل إضافية" rows={3} maxLength={1500} placeholder="فكرة المكافأة، أهدافك، أو أي متطلبات خاصة…" className={field}/></label>
-    </div><p className="mt-5 text-xs leading-6 text-neutral-500">هنستخدم بياناتك للرد على استفسارك. شوف <Link href="/privacy" className="underline">سياسة الخصوصية (بالإنجليزية)</Link>.</p><button type="submit" className="mt-5 min-h-12 w-full rounded-full bg-neutral-950 px-5 py-4 text-sm font-semibold text-white">جهّز رسالتي</button><p className="mt-3 text-center text-xs leading-6 text-neutral-500">هنفتح لك رسالة جاهزة في تطبيق الإيميل عندك، وإنت تبعتها.</p>{draft && <p role="status" className="mt-5 rounded-xl bg-[#edf2ee] p-4 text-sm leading-7 text-[#385144]">رسالتك جاهزة. ابعتها من تطبيق الإيميل علشان يوصلنا استفسارك. <a href={draft} className="underline">افتح الرسالة تاني</a></p>}</form>
+    </div><p className="mt-5 text-xs leading-6 text-neutral-500">هنستخدم بياناتك للرد على استفسارك. شوف <Link href="/privacy" className="underline">سياسة الخصوصية (بالإنجليزية)</Link>.</p><button type="submit" className="mt-5 min-h-12 w-full rounded-full bg-neutral-950 px-5 py-4 text-sm font-semibold text-white">جهّز رسالتي</button><p className="mt-3 text-center text-xs leading-6 text-neutral-500">هنفتح لك رسالة جاهزة في تطبيق الإيميل عندك، وإنت تبعتها.</p>{draft && <p role="status" className="mt-5 rounded-xl bg-[#edf2ee] p-4 text-sm leading-7 text-[#385144]">رسالتك جاهزة. ابعتها من تطبيق الإيميل علشان يوصلنا استفسارك. <a href={draft} className="underline">افتح الرسالة تاني</a></p>}<WhatsAppEnquiry arabic /></form>
   </div></section>;
 }
 

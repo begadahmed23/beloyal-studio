@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import WhatsAppEnquiry from "./WhatsAppEnquiry";
 import { useState, type FormEvent } from "react";
 import { ArrowUpRight } from "lucide-react";
 
@@ -39,6 +40,7 @@ export default function Contact() {
           <button type="submit" className="mt-5 flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-neutral-950 px-6 py-4 text-sm font-semibold text-white transition hover:bg-neutral-800">Prepare my quote enquiry <ArrowUpRight size={17} /></button>
           <p className="mt-3 text-center text-xs leading-5 text-neutral-500">Opens a draft in your email app for you to send.</p>
           {emailDraft && <p role="status" className="mt-5 rounded-xl bg-[#edf2ee] p-4 text-sm leading-6 text-[#385144]">Your email draft is ready. Send it from your email app to complete your enquiry. <a href={emailDraft} className="font-semibold underline">Open draft again</a></p>}
+          <WhatsAppEnquiry />
         </form>
       </div>
     </section>
