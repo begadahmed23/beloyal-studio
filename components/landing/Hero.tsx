@@ -270,13 +270,13 @@ export default function Hero() {
             </div>
             <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-neutral-500">
               <span className="flex items-center gap-2">
-                <QrCode size={15} /> No customer download
+                <QrCode size={15} /> Customers join without an app
               </span>
               <span className="flex items-center gap-2">
-                <ScanLine size={15} /> Phone or USB scanning
+                <ScanLine size={15} /> Scan their card to add a stamp
               </span>
               <span className="flex items-center gap-2">
-                <Star size={15} /> Private ratings
+                <Star size={15} /> Collect feedback after each visit
               </span>
             </div>
           </div>
