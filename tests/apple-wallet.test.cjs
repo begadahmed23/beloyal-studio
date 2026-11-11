@@ -91,6 +91,21 @@ test('signed artwork, stamp progress, auth and existing scanner payload', async 
   assert.equal(reward.storeCard.headerFields[0].label, 'REWARD READY');
   const barber = JSON.parse(strFromU8(unzipSync(await createAppleWalletPass({ ...member, cafe: { ...member.cafe, businessType: 'BARBERSHOP' } }))['pass.json']));
   assert.equal(barber.storeCard.headerFields[0].value, '3/7');
+  const walidZip = unzipSync(await createAppleWalletPass({ ...member, stamps: 2, cafe: { ...member.cafe,
+    name: 'Waleed saad', slug: 'walid-saad', businessType: 'BARBERSHOP', rewardTarget: 3,
+    rewardName: 'Free Haircut', primaryColor: '#9B6546', backgroundColor: '#0E1513' } }));
+  const walid = JSON.parse(strFromU8(walidZip['pass.json']));
+  assert.equal(walid.storeCard.headerFields[0].label, 'VISITS');
+  assert.equal(walid.storeCard.headerFields[0].value, '2/3');
+  assert.equal(walid.backgroundColor, 'rgb(14, 21, 19)');
+  assert.equal(walid.foregroundColor, 'rgb(242, 238, 231)');
+  assert.equal(walid.storeCard.auxiliaryFields[0].value, 'Free Haircut');
+  assert.equal(walid.barcodes[0].message, `BL:${member.publicToken}`);
+  if (process.env.WALLET_PREVIEW_DIR) {
+    fs.writeFileSync(path.join(process.env.WALLET_PREVIEW_DIR, 'walid-strip.png'), walidZip['strip@3x.png']);
+    fs.writeFileSync(path.join(process.env.WALLET_PREVIEW_DIR, 'walid-logo.png'), walidZip['logo@3x.png']);
+  }
+
 });
 
 test('authentication is bound to serial, rejects malformed tokens, HTTPS required', () => {
