@@ -74,6 +74,7 @@ export default function StudioPage() {
           </div>
         </section>
 
+        <a href="/studio/campaigns" className="mb-6 inline-flex min-h-12 items-center rounded-2xl bg-[#171719] px-5 py-3 text-sm font-medium text-white">Wallet campaigns →</a>
         <StudioDashboard />
       </div>
     </main>

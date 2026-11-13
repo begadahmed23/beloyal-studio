@@ -32,10 +32,12 @@ export default function BarberDashboardShell({
   children,
 }: Props) {
   const pathname = usePathname();
-  const { cafe, theme } = useCafeTheme();
+  const { cafe, theme, userRole } = useCafeTheme();
+
+  const navigationItems = barberNavigation.filter(item => userRole !== "CASHIER" || item.href !== "/dashboard/campaigns");
 
   const currentPage =
-    barberNavigation.find((item) =>
+    navigationItems.find((item) =>
       isCurrentPage(pathname, item.href)
     )?.label ?? "Overview";
 
@@ -82,7 +84,7 @@ export default function BarberDashboardShell({
         </div>
 
         <nav className="flex-1 space-y-1.5 p-4">
-          {barberNavigation.map((item) => {
+          {navigationItems.map((item) => {
             const Icon = item.icon;
             const active = isCurrentPage(pathname, item.href);
 

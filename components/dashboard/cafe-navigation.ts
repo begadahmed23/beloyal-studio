@@ -1,6 +1,7 @@
 import {
   Database,
   LayoutDashboard,
+  Bell,
   Monitor,
   Settings,
   Smartphone,
@@ -37,6 +38,12 @@ export const cafeNavigation = [
     mobileLabel: "Phone",
     href: "/dashboard/scanner/phone",
     icon: Smartphone,
+  },
+  {
+    label: "Campaigns",
+    mobileLabel: "Wallet",
+    href: "/dashboard/campaigns",
+    icon: Bell,
   },
   {
     label: "Settings",

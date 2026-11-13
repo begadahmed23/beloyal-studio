@@ -1,5 +1,6 @@
 import {
   LayoutDashboard,
+  Bell,
   Monitor,
   Settings,
   Smartphone,
@@ -26,6 +27,11 @@ export const barberNavigation = [
     label: "Phone Scanner",
     href: "/dashboard/scanner/phone",
     icon: Smartphone,
+  },
+  {
+    label: "Campaigns",
+    href: "/dashboard/campaigns",
+    icon: Bell,
   },
   {
     label: "Settings",

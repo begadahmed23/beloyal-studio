@@ -92,4 +92,39 @@ A per-card one-minute lock limits repeated requests; identical messages are not
 resent. Messages persist in the environment-isolated Wallet Redis namespace.
 Message timestamps participate in discovery and Last-Modified, independently of
 customer timestamps. The result reports APNs acceptance, not visible delivery.
-No database migration is required. No broadcast or scheduled campaigns exist.
+No database migration is required. This original pilot sends one fixed test update.
+
+## Wallet campaigns
+
+- Super-admin: `/studio/campaigns` (business selector). Business admin:
+  `/dashboard/campaigns` (own business only). Cashiers have no access.
+- `/api/wallet/campaigns` requires administrator authentication, validates the
+  business scope on every request, checks active subscriptions for business
+  admins and validates same-origin mutations.
+- Audience membership comes from existing per-pass registration hashes: a
+  customer qualifies when at least one registered device remains. This is not
+  proof of notification permissions, a notification view, or continued install
+  if the device never unregisters. Removing the last registration excludes them.
+- Birthday segments use the business timezone. Today and next seven days are
+  separate choices; the latter includes today. Feb 29 maps to Feb 28 in non-leap
+  years, matching birthday reward handling.
+- Inactivity uses the last recorded transaction except feedback bonus entries.
+  No-visit members qualify based on joining age. 30+ is a subset of 14+.
+- Preview freezes one business, exact recipient IDs, segment and message for ten
+  minutes. It never sends pushes. Final Send rechecks eligibility, ownership and
+  registration. At most 50 recipients per campaign; choose multiple batches for
+  larger groups. An unchanged message is skipped.
+- Campaign claims prevent replay, and a business lock prevents overlapping
+  sends. Member results are checkpointed in Redis after each group of five.
+  History retains up to the last 20 indexed campaigns for 30 days (UI shows 10).
+  Messages persist until replaced; no TTL that could cause a reversal alert.
+- Delivery is synchronous with a 300-second route allowance, not a durable job
+  queue. If execution is interrupted, history can retain `sending`/pending
+  recipients. Do not automatically replay those campaigns: review first.
+- Accepted means APNs accepted at least one device update, not customer-visible
+  delivery. No open/read tracking or automatic campaign schedule is provided.
+- No schema migrations or customer/stamp/reward writes are introduced. Existing
+  Wallet updates and the QR scanner payload are preserved.
+
+Offline checks: `node --test tests/apple-wallet.test.cjs tests/wallet-campaigns.test.cjs`,
+`npx tsc --noEmit`, and `npm run build`. No live messages are sent by these tests.
