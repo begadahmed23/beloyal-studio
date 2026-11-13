@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+import WalletNotificationSettings from "@/components/wallet/WalletNotificationSettings";
+import { walletCampaignsEnabledForCafe } from "@/lib/wallet/campaign-access";
 import BirthdayRewardsSettings from "@/components/settings/BirthdayRewardsSettings";
 import CafeSettingsForm from "@/components/settings/CafeSettingsForm";
 import StaffManagementPanel from "@/components/staff/StaffManagementPanel";
@@ -11,6 +13,7 @@ import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 export default function SettingsPage() {
   const router = useRouter();
   const {
+    cafe,
     accountEmail,
     userRole,
   } = useCafeTheme();
@@ -30,6 +33,7 @@ export default function SettingsPage() {
       <CafeSettingsForm
         accountEmail={accountEmail}
       />
+      {walletCampaignsEnabledForCafe(cafe.id) && <WalletNotificationSettings cafeId={cafe.id} />}
       <BirthdayRewardsSettings />
       <StaffManagementPanel
         endpoint="/api/cafe/staff"

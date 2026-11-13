@@ -1,3 +1,4 @@
+import { walletProgressChangeMessage, type WalletNotificationSettings } from "./notification-text";
 import { walletCredential as credential, walletUpdatesEnabled, walletAuthToken } from "./config";
 export { appleWalletEnabled } from "./config";
 import { getLoyaltyProgressTarget } from "../business/loyalty-target";
@@ -24,7 +25,7 @@ function rgb(hex: string) {
   return `rgb(${[1, 3, 5].map((offset) => parseInt(hex.slice(offset, offset + 2), 16)).join(", ")})`;
 }
 
-export async function createAppleWalletPass(member: WalletMember, message?: string) {
+export async function createAppleWalletPass(member: WalletMember, message?: string, notificationSettings?: WalletNotificationSettings) {
   const site = new URL(process.env.APPLE_WALLET_SITE_URL!);
   if (site.protocol !== "https:" && site.hostname !== "localhost") {
     throw new Error("Wallet site URL must use HTTPS.");
@@ -100,7 +101,13 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
     pass.backFields.push({ key: "shop-location", label: "FIND WALEED SAAD",
       value: "467 Abou Quer, Fleming, Alexandria\nhttps://maps.app.goo.gl/DLqwQhwqEPJCnfpd8" });
   }
-  pass.headerFields.push({ key: "balance", label: ready ? "REWARD READY" : walid ? "VISITS" : "STAMPS", value: `${stamps}/${target}`, ...(walid ? {} : { changeMessage: "Your loyalty progress is now %@." }) });
+  const balanceChangeMessage = notificationSettings
+    ? walletProgressChangeMessage(ready, member.cafe.rewardName, {
+        ...notificationSettings,
+        stampSuffix: stamps > 0 ? notificationSettings.stampSuffix : "",
+      })
+    : "Your loyalty progress is now %@.";
+  pass.headerFields.push({ key: "balance", label: ready ? "REWARD READY" : walid ? "VISITS" : "STAMPS", value: `${stamps}/${target}`, ...(walid ? {} : { changeMessage: balanceChangeMessage }) });
   pass.secondaryFields.push({ key: "member", label: "MEMBER", value: member.name });
   pass.auxiliaryFields.push({ key: "reward", label: "YOUR REWARD", value: member.cafe.rewardName });
   pass.backFields.push({ key: "member-message", label: "CARD UPDATE",

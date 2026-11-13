@@ -2,6 +2,7 @@ export const campaignSegments = [
   { id: "all", label: "All Wallet members", description: "Everyone with a registered Apple Wallet card." },
   { id: "birthday_today", label: "Birthdays today", description: "Celebrate today, in your business’s timezone." },
   { id: "birthday_week", label: "Birthdays · next 7 days", description: "Today and the following six days." },
+  { id: "reward_ready", label: "Reward ready", description: "Members with a currently available, unredeemed loyalty reward." },
   { id: "inactive_14", label: "Inactive · 14+ days", description: "No recorded visit for at least 14 days." },
   { id: "inactive_30", label: "Inactive · 30+ days", description: "No recorded visit for at least 30 days." },
 ] as const;
@@ -31,10 +32,11 @@ export function daysUntilBirthday(birthday: Date, now: Date, timezone: string) {
   if (next < todayNumber) next = occurrence(today.year + 1);
   return Math.round((next - todayNumber) / DAY);
 }
-export function memberSegments(birthday: Date, createdAt: Date, lastVisitAt: Date | null, now: Date, timezone: string) {
+export function memberSegments(birthday: Date, createdAt: Date, lastVisitAt: Date | null, now: Date, timezone: string, rewardReady = false) {
   const birthdayInDays = daysUntilBirthday(birthday, now, timezone);
   const inactiveDays = Math.max(0, Math.floor((now.getTime() - (lastVisitAt ?? createdAt).getTime()) / DAY));
   const segments: CampaignSegment[] = ["all"];
+  if (rewardReady) segments.push("reward_ready");
   if (birthdayInDays === 0) segments.push("birthday_today");
   if (birthdayInDays < 7) segments.push("birthday_week");
   if (inactiveDays >= 14) segments.push("inactive_14");

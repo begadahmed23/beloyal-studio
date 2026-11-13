@@ -15,7 +15,7 @@ export const maxDuration = 300;
 const headers = { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" };
 const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers });
 const previewSchema = z.object({ action: z.literal("preview"), cafeId: z.string().min(1).max(100),
-  segment: z.enum(["all", "birthday_today", "birthday_week", "inactive_14", "inactive_30"]),
+  segment: z.enum(["all", "birthday_today", "birthday_week", "reward_ready", "inactive_14", "inactive_30"]),
   message: z.string().trim().min(1).max(180).refine(value => !/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)),
   customerIds: z.array(z.string().min(1).max(100)).min(1).max(MAX_CAMPAIGN_RECIPIENTS).refine(ids => new Set(ids).size === ids.length),
 });
@@ -36,7 +36,7 @@ async function handle(request: NextRequest) {
   if (typeof cafeId !== "string" || !cafeId || cafeId.length > 100) return json({ message: "Choose a business." }, 400);
   if (!auth.isSuperAdmin && auth.cafeId !== cafeId) return json({ message: "Business access denied." }, 403);
   if (!walletCampaignsEnabledForCafe(cafeId)) return json({ message: "Wallet campaigns are currently available for the Loretto pilot only." }, 403);
-  const cafe = await prisma.cafe.findFirst({ where: { id: cafeId, isActive: true }, select: { id: true, name: true, timezone: true } });
+  const cafe = await prisma.cafe.findFirst({ where: { id: cafeId, isActive: true }, select: { id: true, name: true, timezone: true, rewardName: true } });
   if (!cafe) return json({ message: "Active business not found." }, 404);
   if (request.method === "GET") {
     const [audience, history] = await Promise.all([walletAudience(cafeId, cafe.timezone), campaignHistory(cafeId)]);

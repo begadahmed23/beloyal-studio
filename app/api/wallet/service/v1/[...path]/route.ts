@@ -1,3 +1,4 @@
+import { getWalletNotificationSettings } from "@/lib/wallet/notification-settings";
 import { getWalletMessage } from "@/lib/wallet/messages";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -15,7 +16,7 @@ const identifier = (value: string) => /^[a-z0-9_-]{1,200}$/i.test(value);
 const ARTWORK_VERSION = Date.UTC(2026, 10, 13, 11, 57);
 const select = { id: true, publicToken: true, memberNumber: true, name: true, stamps: true,
   rewardEarnedAt: true, updatedAt: true,
-  cafe: { select: { name: true, slug: true, theme: true, businessType: true,
+  cafe: { select: { id: true, name: true, slug: true, theme: true, businessType: true,
     rewardTarget: true, rewardName: true, primaryColor: true, backgroundColor: true, updatedAt: true } } } as const;
 
 async function handler(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
@@ -81,7 +82,7 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
     const since = Date.parse(request.headers.get("if-modified-since") ?? "");
     // Strict comparison avoids suppressing updates made in the same second.
     if (Number.isFinite(since) && modified < since) return reply(304);
-    const pass = await createAppleWalletPass(member, message?.text);
+    const pass = await createAppleWalletPass(member, message?.text, await getWalletNotificationSettings(member.cafe.id));
     console.info("Wallet updated pass served", { messageVersion: message?.updatedAt ?? null });
     return new NextResponse(new Uint8Array(pass), { headers: { ...headers,
       "Content-Type": "application/vnd.apple.pkpass", "Last-Modified": new Date(modified).toUTCString() } });

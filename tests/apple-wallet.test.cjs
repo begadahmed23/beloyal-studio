@@ -228,3 +228,18 @@ test('push runs after response, removes expired device tokens, and contains deli
   })('app/api/studio/wallet-test/route.ts');
   assert.equal((await route.POST(new NextRequest('https://example.com/api/studio/wallet-test', { method: 'POST' }))).status, 403);
  });
+
+ test('custom Wallet notification adds only a suffix and keeps the signed reward and progress correct', async () => {
+  const { createAppleWalletPass } = load('lib/wallet/apple.ts');
+  const readyMember = { ...member, stamps: 6, rewardEarnedAt: new Date(), cafe: {...member.cafe, rewardName: 'Free Cookie'} };
+  const bytes = await createAppleWalletPass(readyMember, 'Existing campaign message', {stampSuffix:'Thank you',rewardSuffix:'Enjoy it!'});
+  const pass = JSON.parse(unzipSync(bytes)['pass.json']);
+  assert.equal(pass.storeCard.headerFields[0].value,'6/6');
+  assert.equal(pass.storeCard.headerFields[0].changeMessage,'Your loyalty progress is now %@. Your reward is ready: Free Cookie. Enjoy it!');
+  assert.equal(pass.storeCard.auxiliaryFields.find(f=>f.key==='reward').value,'Free Cookie');
+  assert.equal(pass.storeCard.backFields.find(f=>f.key==='member-message').value,'Existing campaign message');
+  assert.equal(pass.barcodes[0].message,`BL:${member.publicToken}`);
+  const reset = JSON.parse(unzipSync(await createAppleWalletPass({...readyMember, stamps:0, rewardEarnedAt:null}, undefined, {stampSuffix:'One step closer!',rewardSuffix:'Enjoy!'}))['pass.json']);
+  assert.equal(reset.storeCard.headerFields[0].value,'0/6');
+  assert.equal(reset.storeCard.headerFields[0].changeMessage,'Your loyalty progress is now %@.');
+ });

@@ -40,7 +40,7 @@ test('inactivity boundaries use visits, or joining for members with no visit', (
 });
 test('audience excludes unregistered cards and scopes query to business', async () => {
   let query;
-  const base = { birthday: new Date('2000-01-01'), createdAt: new Date('2020-01-01'), transactions: [], name: 'Member', memberNumber: '1' };
+  const base = { stamps: 0, rewardEarnedAt: null, cafe: { businessType: 'CAFE', rewardTarget: 7 }, birthday: new Date('2000-01-01'), createdAt: new Date('2020-01-01'), transactions: [], name: 'Member', memberNumber: '1' };
   const lib = loader({ '@/lib/prisma': { prisma: { customer: { findMany: async q => { query = q; return [{ ...base, id: 'installed' }, { ...base, id: 'removed' }]; } } } },
     './updates': { passKey: x => x, walletRedis: () => ({ pipeline: () => ({ hlen() {}, exec: async () => [2, 0] }) }) },
   })('lib/wallet/campaigns.ts');
@@ -106,4 +106,51 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
   const route = routeFor({ ...admin, cafeId: 'other' });
   assert.equal((await route.GET(new NextRequest('https://example.com/api/wallet/campaigns?cafeId=other'))).status, 403);
   assert.equal((await route.POST(post({action: 'send', cafeId:'other', campaignId:'11111111-1111-4111-8111-111111111111'}))).status,403);
+ });
+
+ test('reward-ready audience matches cafe/barber targets and excludes redeemed rewards', async () => {
+  const base = {name:'Member',memberNumber:'1',birthday:new Date('2000-01-01'),createdAt:new Date('2020-01-01'),transactions:[],rewardEarnedAt:null};
+  const cafe = {businessType:'CAFE',rewardTarget:7};
+  const barber = {businessType:'BARBERSHOP',rewardTarget:3};
+  const rows = [
+    {...base,id:'cafe5',cafe,stamps:5}, {...base,id:'cafe6',cafe,stamps:6},
+    {...base,id:'earned',cafe,stamps:0,rewardEarnedAt:new Date()},
+    {...base,id:'redeemed',cafe,stamps:0},
+    {...base,id:'barber2',cafe:barber,stamps:2}, {...base,id:'barber3',cafe:barber,stamps:3},
+  ];
+  const lib = loader({ '@/lib/prisma': {prisma:{customer:{findMany:async()=>rows}}},
+    './updates':{passKey:id=>id,walletRedis:()=>({pipeline:()=>({hlen(){},exec:async()=>rows.map(()=>1)})})}
+  })('lib/wallet/campaigns.ts');
+  const audience = await lib.walletAudience('cafe1','Africa/Cairo');
+  assert.deepEqual(audience.members.filter(m=>m.segments.includes('reward_ready')).map(m=>m.id),['cafe6','earned','barber3']);
+ });
+ test('notification text protects progress and uses the configured reward with safe optional text', () => {
+  const text = loader()('lib/wallet/notification-text.ts');
+  const settings = { stampSuffix: 'Thanks — 100% you!', rewardSuffix: 'Enjoy your treat %@@' };
+  assert.equal(text.walletProgressChangeMessage(false, 'Free Cookie', {stampSuffix:'',rewardSuffix:''}), 'Your loyalty progress is now %@.');
+  assert.equal(text.walletNotificationPreview('3/6', false, 'Free Cookie', settings), 'Your loyalty progress is now 3/6. Thanks — 100% you!');
+  const ready = text.walletProgressChangeMessage(true, 'Free Haircut', settings);
+  assert.ok(ready.startsWith('Your loyalty progress is now %@. Your reward is ready: Free Haircut.'));
+  assert.ok(ready.includes('%%@@'));
+  assert.equal((ready.match(/(?<!%)%@/g)||[]).length, 1);
+  assert.ok(!ready.includes('Free drink'));
+ });
+ test('notification settings reject cashiers, wrong businesses, and attempts to change reward/count fields', async () => {
+  let saved = 0;
+  function route(auth) { return loader({
+    '@/lib/require-auth': {requireAuth: async()=>auth},
+    '@/lib/require-active-cafe': {requireActiveCafe: async()=>({allowed:true})},
+    '@/lib/wallet/campaign-access': {walletCampaignsEnabledForCafe:id=>id==='cafe1'},
+    '@/lib/wallet/config': {walletUpdatesEnabled:()=>true},
+    '@/lib/prisma': {prisma:{cafe:{findFirst:async()=>({rewardName:'Free Cookie',rewardTarget:7,businessType:'CAFE'})}}},
+    '@/lib/wallet/notification-settings': {getWalletNotificationSettings:async()=>({stampSuffix:'',rewardSuffix:''}),saveWalletNotificationSettings:async()=>{saved++}},
+  })('app/api/wallet/notifications/route.ts'); }
+  const req = body => new NextRequest('https://example.com/api/wallet/notifications',{method:'POST',headers:{origin:'https://example.com','content-type':'application/json'},body:JSON.stringify(body)});
+  assert.equal((await route({...admin,isCashier:true}).POST(req({cafeId:'cafe1'}))).status,403);
+  assert.equal((await route(admin).POST(req({cafeId:'other',stampSuffix:'hi',rewardSuffix:'enjoy'}))).status,403);
+  assert.equal((await route(admin).POST(req({cafeId:'cafe1',stampSuffix:'hi',rewardSuffix:'enjoy',stamps:999,rewardName:'Wrong'}))).status,400);
+  assert.equal(saved,0);
+  const response = await route(admin).POST(req({cafeId:'cafe1',stampSuffix:'hi',rewardSuffix:'enjoy'}));
+  assert.equal(response.status,200); assert.equal(saved,1);
+  const data=await response.json();assert.equal(data.rewardName,'Free Cookie');assert.equal(data.target,6);
  });

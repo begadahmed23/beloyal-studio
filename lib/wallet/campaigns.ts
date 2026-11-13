@@ -1,3 +1,4 @@
+import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { passKey, walletRedis, notifyWalletMember } from "./updates";
@@ -16,7 +17,7 @@ export type WalletCampaign = {
 };
 export async function walletAudience(cafeId: string, timezone: string, now = new Date()) {
   const members = await prisma.customer.findMany({ where: { cafeId }, orderBy: [{ name: "asc" }, { id: "asc" }], take: 10001,
-    select: { id: true, name: true, memberNumber: true, birthday: true, createdAt: true,
+    select: { id: true, name: true, memberNumber: true, birthday: true, createdAt: true, stamps: true, rewardEarnedAt: true, cafe: { select: { businessType: true, rewardTarget: true } },
       transactions: { where: { OR: [{ description: null }, { NOT: { description: { startsWith: "Feedback", mode: "insensitive" } } }] }, orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } } } });
   if (members.length > 10000) throw new Error("AUDIENCE_TOO_LARGE");
   const audience: CampaignMember[] = [];
@@ -31,7 +32,7 @@ export async function walletAudience(cafeId: string, timezone: string, now = new
       const member = batch[i];
       const lastVisit = member.transactions[0]?.createdAt ?? null;
       audience.push({ id: member.id, name: member.name, memberNumber: member.memberNumber, devices: counts[i],
-        lastVisitAt: lastVisit?.toISOString() ?? null, ...memberSegments(member.birthday, member.createdAt, lastVisit, now, timezone) });
+        lastVisitAt: lastVisit?.toISOString() ?? null, ...memberSegments(member.birthday, member.createdAt, lastVisit, now, timezone, Boolean(member.rewardEarnedAt) || member.stamps >= getLoyaltyProgressTarget(member.cafe)) });
     }
   }
   return { totalMembers: members.length, members: audience };

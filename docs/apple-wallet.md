@@ -132,3 +132,24 @@ No database migration is required. This original pilot sends one fixed test upda
 
 Offline checks: `node --test tests/apple-wallet.test.cjs tests/wallet-campaigns.test.cjs`,
 `npx tsc --noEmit`, and `npm run build`. No live messages are sent by these tests.
+
+## Automatic notification extras and ready rewards
+
+The Loretto pilot includes a `reward_ready` audience, using the same readiness
+rule as the signed pass: `rewardEarnedAt` exists or stamps reach the existing
+business-specific target. Café N−1 and barbershop exact-target rules remain.
+Redemption removes readiness when the existing flow clears the flag/balance.
+
+Optional `stampSuffix` and `rewardSuffix` (100 characters each) are stored per
+business in the Wallet Redis namespace, editable in Settings → Wallet
+notifications or on the campaigns page. The authenticated notifications API
+allows only these fields, validates café scope/pilot access and rejects edits
+to count, target, and reward-name properties. Saving schedules no push and
+changes no database rows; future transaction-driven pass fetches apply it.
+
+The existing `balance` field and its `%@` substitution are preserved. Stamp
+messages keep the system-generated balance. Ready messages include that balance
+and the café’s actual `rewardName`. User-authored percent signs are escaped for
+Apple’s formatting syntax. Blank extras use default wording. Other businesses
+retain their original pass notification behavior. Campaign card messages stay
+independent and are never overwritten by these automatic suffixes.
