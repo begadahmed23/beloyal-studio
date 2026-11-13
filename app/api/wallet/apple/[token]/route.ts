@@ -1,3 +1,5 @@
+import { getWalletMessage } from "@/lib/wallet/messages";
+import { walletUpdatesEnabled } from "@/lib/wallet/config";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { applyPublicRateLimit, publicApiRateLimiters } from "@/lib/public-api-security";
@@ -20,7 +22,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ tok
         cafe: { select: { name: true, slug: true, theme: true, businessType: true, rewardTarget: true, rewardName: true, updatedAt: true, primaryColor: true, backgroundColor: true } } },
     });
     if (!member) return NextResponse.json({ message: "Card not found." }, { status: 404, headers });
-    const pass = await createAppleWalletPass(member);
+    const pass = await createAppleWalletPass(member, walletUpdatesEnabled() ? (await getWalletMessage(member.id))?.text : undefined);
     return new NextResponse(new Uint8Array(pass), { headers: { ...headers,
       "Content-Type": "application/vnd.apple.pkpass",
       "Content-Disposition": 'attachment; filename="BeLoyal.pkpass"' } });

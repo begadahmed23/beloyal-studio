@@ -74,6 +74,7 @@ test('signed artwork, stamp progress, auth and existing scanner payload', async 
   const bytes = await createAppleWalletPass(member);
   const zip = unzipSync(bytes); const pass = JSON.parse(strFromU8(zip['pass.json']));
   assert.equal(pass.serialNumber, member.id);
+  assert.equal(pass.storeCard.backFields.find(f => f.key === 'member-message').changeMessage, '%@');
   assert.equal(pass.barcodes[0].message, `BL:${member.publicToken}`);
   assert.equal(pass.backgroundColor, 'rgb(243, 235, 221)');
   assert.equal(pass.storeCard.headerFields[0].value, '3/6');
@@ -131,8 +132,9 @@ test('authentication is bound to serial, rejects malformed tokens, HTTPS require
 });
 
 test('Wallet registration, idempotency, update discovery, authorization, and download', async () => {
-  const registrations = new Set(); let push; let reads = 0;
+  const registrations = new Set(); let push; let reads = 0; let walletMessage = null;
   const route = loader({
+    '@/lib/wallet/messages': { getWalletMessage: async () => walletMessage },
     '@/lib/prisma': { prisma: {
       customer: { findFirst: async () => { reads++; return member; }, findMany: async () => [member] },
     } },
@@ -159,9 +161,14 @@ test('Wallet registration, idempotency, update discovery, authorization, and dow
   assert.equal(discovery.status,200);
   const data = await discovery.json(); assert.deepEqual(data.serialNumbers,[member.id]);
   assert.equal((await request('GET',listing,{},null,`?passesUpdatedSince=${data.lastUpdated}`)).status,204);
+  walletMessage = { text: 'Your Loretto card is connected', updatedAt: Number(data.lastUpdated) + 1000 };
+  assert.equal((await request('GET',listing,{},null,`?passesUpdatedSince=${data.lastUpdated}`)).status,200);
   member.updatedAt = new Date(member.updatedAt.getTime() + 1);
   assert.equal((await request('GET',listing,{},null,`?passesUpdatedSince=${data.lastUpdated}`)).status,200);
   const download = await request('GET',['passes',type,member.id],auth);
+  const updatedPass = JSON.parse(unzipSync(Buffer.from(await download.clone().arrayBuffer()))['pass.json']);
+  assert.equal(updatedPass.storeCard.backFields.find(f => f.key === 'member-message').value, walletMessage.text);
+  assert.equal(updatedPass.storeCard.headerFields[0].value, '3/6');
   assert.equal(download.status,200); assert.equal(download.headers.get('content-type'),'application/vnd.apple.pkpass');
   assert.equal((await request('POST',registration,auth,{pushToken:'invalid'})).status,400);
   assert.equal((await request('POST',registration,auth,{pushToken:'f'.repeat(4000)})).status,413);
@@ -214,3 +221,10 @@ test('push runs after response, removes expired device tokens, and contains deli
   registrations = { broken: 'c'.repeat(64) };
   await assert.doesNotReject(() => update.notifyWalletMember(member.id));
 });
+
+ test('Wallet test requires super-admin access before reading members or sending', async () => {
+  const route = loader({ '@/lib/require-super-admin': { requireSuperAdmin: async () => null },
+    '@/lib/prisma': { prisma: { customer: { findFirst: () => { throw new Error('Unauthorized database access'); } } } },
+  })('app/api/studio/wallet-test/route.ts');
+  assert.equal((await route.POST(new NextRequest('https://example.com/api/studio/wallet-test', { method: 'POST' }))).status, 403);
+ });

@@ -81,3 +81,15 @@ On a real iPhone:
 The current text Add to Apple Wallet button remains a pilot. Replace it with
 Apple's approved badge before public launch. To disable downloads, remove
 `APPLE_WALLET_ENABLED=true`; to disable updates only, remove the service URL.
+
+## Single-card Loretto notification test
+
+Super-admins can open `/studio/wallet-test`, paste their own customer card link,
+and check registered device count. Refresh the installed pass first to load the
+stable `member-message` field, then send the fixed test message. This pilot only
+accepts active Loretto cards and never changes stamps or reward eligibility.
+A per-card one-minute lock limits repeated requests; identical messages are not
+resent. Messages persist in the environment-isolated Wallet Redis namespace.
+Message timestamps participate in discovery and Last-Modified, independently of
+customer timestamps. The result reports APNs acceptance, not visible delivery.
+No database migration is required. No broadcast or scheduled campaigns exist.

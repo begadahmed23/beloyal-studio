@@ -1,3 +1,4 @@
+import { getWalletMessage } from "@/lib/wallet/messages";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { applyPublicRateLimit, publicApiRateLimiters } from "@/lib/public-api-security";
@@ -11,7 +12,7 @@ const headers = { "Cache-Control": "private, no-store", "X-Content-Type-Options"
 const reply = (status: number) => new NextResponse(null, { status, headers });
 const identifier = (value: string) => /^[a-z0-9_-]{1,200}$/i.test(value);
 // Bump when pass artwork changes, so installed cards can retrieve a new design.
-const ARTWORK_VERSION = Date.UTC(2026, 10, 11, 0);
+const ARTWORK_VERSION = Date.UTC(2026, 10, 13, 11, 57);
 const select = { id: true, publicToken: true, memberNumber: true, name: true, stamps: true,
   rewardEarnedAt: true, updatedAt: true,
   cafe: { select: { name: true, slug: true, theme: true, businessType: true,
@@ -40,7 +41,8 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
       if (since && !/^\d{1,16}$/.test(since)) return reply(400);
       const members = await prisma.customer.findMany({ where: { id: { in: ids }, cafe: { isActive: true } },
         select: { id: true, updatedAt: true, cafe: { select: { updatedAt: true } } } });
-      const version = (member: typeof members[number]) => Math.max(ARTWORK_VERSION, member.updatedAt.getTime(), member.cafe.updatedAt.getTime());
+      const messageVersions = new Map(await Promise.all(members.map(async (member) => [member.id, (await getWalletMessage(member.id))?.updatedAt ?? 0] as const)));
+      const version = (member: typeof members[number]) => Math.max(ARTWORK_VERSION, member.updatedAt.getTime(), member.cafe.updatedAt.getTime(), messageVersions.get(member.id) ?? 0);
       const changed = members.filter((member) => !since || version(member) > Number(since));
       if (!changed.length) return reply(204);
       return NextResponse.json({ serialNumbers: changed.map((member) => member.id),
@@ -74,11 +76,12 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
       return reply(added ? 201 : 200);
     }
     if (method !== "GET") return reply(405);
-    const modified = Math.max(ARTWORK_VERSION, member.updatedAt.getTime(), member.cafe.updatedAt.getTime());
+    const message = await getWalletMessage(member.id);
+    const modified = Math.max(ARTWORK_VERSION, member.updatedAt.getTime(), member.cafe.updatedAt.getTime(), message?.updatedAt ?? 0);
     const since = Date.parse(request.headers.get("if-modified-since") ?? "");
     // Strict comparison avoids suppressing updates made in the same second.
     if (Number.isFinite(since) && modified < since) return reply(304);
-    const pass = await createAppleWalletPass(member);
+    const pass = await createAppleWalletPass(member, message?.text);
     return new NextResponse(new Uint8Array(pass), { headers: { ...headers,
       "Content-Type": "application/vnd.apple.pkpass", "Last-Modified": new Date(modified).toUTCString() } });
   } catch {

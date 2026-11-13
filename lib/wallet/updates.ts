@@ -59,15 +59,19 @@ export async function notifyWalletMember(serial: string) {
   if (!registrations) return;
   // Few devices per member; cap concurrency without dropping registrations.
   const entries = Object.entries(registrations);
+  let accepted = 0;
+  let failed = 0;
   for (let i = 0; i < entries.length; i += 5) {
     await Promise.all(entries.slice(i, i + 5).map(async ([device, token]) => {
       try {
         const status = await pushToDevice(token);
+        if (status === 200) accepted++; else failed++;
         if (status === 410) await unregisterWalletDevice(device, serial);
         else if (status !== 200) console.error("Wallet push rejected:", status);
-      } catch { console.error("Wallet push delivery failed; manual refresh remains available."); }
+      } catch { failed++; console.error("Wallet push delivery failed; manual refresh remains available."); }
     }));
   }
+  return { registered: entries.length, accepted, failed };
 }
 
 export function scheduleWalletUpdate(serial: string) {

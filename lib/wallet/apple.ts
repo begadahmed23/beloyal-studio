@@ -24,7 +24,7 @@ function rgb(hex: string) {
   return `rgb(${[1, 3, 5].map((offset) => parseInt(hex.slice(offset, offset + 2), 16)).join(", ")})`;
 }
 
-export async function createAppleWalletPass(member: WalletMember) {
+export async function createAppleWalletPass(member: WalletMember, message?: string) {
   const site = new URL(process.env.APPLE_WALLET_SITE_URL!);
   if (site.protocol !== "https:" && site.hostname !== "localhost") {
     throw new Error("Wallet site URL must use HTTPS.");
@@ -103,6 +103,8 @@ export async function createAppleWalletPass(member: WalletMember) {
   pass.headerFields.push({ key: "balance", label: ready ? "REWARD READY" : walid ? "VISITS" : "STAMPS", value: `${stamps}/${target}`, ...(walid ? {} : { changeMessage: "Your loyalty progress is now %@." }) });
   pass.secondaryFields.push({ key: "member", label: "MEMBER", value: member.name });
   pass.auxiliaryFields.push({ key: "reward", label: "YOUR REWARD", value: member.cafe.rewardName });
+  pass.backFields.push({ key: "member-message", label: "CARD UPDATE",
+    value: message || "Your loyalty card is connected.", changeMessage: "%@" });
   pass.backFields.push(
     { key: "progress", label: "Live stamps & rewards", value: cardUrl },
     { key: "instructions", label: "How to use", value: "Show this QR code at checkout. Open your online card for your current stamps and rewards." },
