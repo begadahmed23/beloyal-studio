@@ -1,4 +1,5 @@
 "use client";
+import { walletCampaignsEnabledForCafe } from "@/lib/wallet/campaign-access";
 
 import Link from "next/link";
 import {
@@ -17,7 +18,7 @@ import {
 export default function CafeMobileNavigation() {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, userRole } = useCafeTheme();
+  const { theme, cafe, userRole } = useCafeTheme();
   const [formControlFocused, setFormControlFocused] =
     useState(false);
   const [
@@ -77,10 +78,11 @@ export default function CafeMobileNavigation() {
             item.href === "/dashboard/scanner" ||
             item.href === "/dashboard/scanner/phone",
         )
-      : cafeNavigation;
+      : cafeNavigation.filter(item => item.href !== "/campaigns" || walletCampaignsEnabledForCafe(cafe.id));
 
   useEffect(() => {
     for (const item of cafeNavigation) {
+      if (item.href === "/campaigns" && !walletCampaignsEnabledForCafe(cafe.id)) continue;
       if (
         userRole === "CASHIER" &&
         item.href !== "/dashboard" &&
@@ -99,7 +101,7 @@ export default function CafeMobileNavigation() {
         "/dashboard/settings",
       );
     }
-  }, [router, userRole]);
+  }, [router, userRole, cafe.id]);
 
   if (formControlFocused) {
     return null;

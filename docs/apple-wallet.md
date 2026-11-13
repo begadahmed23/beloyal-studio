@@ -97,7 +97,11 @@ No database migration is required. This original pilot sends one fixed test upda
 ## Wallet campaigns
 
 - Super-admin: `/studio/campaigns` (business selector). Business admin:
-  `/dashboard/campaigns` (own business only). Cashiers have no access.
+  `/campaigns` (standalone page outside the dashboard layout; own business only).
+  The old `/dashboard/campaigns` URL redirects. Cashiers have no access.
+  Pilot access is restricted by immutable Loretto business ID in
+  `lib/wallet/campaign-access.ts`, enforced in the API, standalone page, Studio
+  business list, and desktop/mobile navigation. Other businesses are not enabled.
 - `/api/wallet/campaigns` requires administrator authentication, validates the
   business scope on every request, checks active subscriptions for business
   admins and validates same-origin mutations.

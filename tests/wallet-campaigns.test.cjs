@@ -53,7 +53,7 @@ test('audience excludes unregistered cards and scopes query to business', async 
   assert.equal(result.members[0].devices, 2);
 });
 function routeFor(auth, extra = {}) {
-  return loader({ '@/lib/require-auth': { requireAuth: async () => auth },
+  return loader({ '@/lib/wallet/campaign-access': { walletCampaignsEnabledForCafe: id => id === 'cafe1' }, '@/lib/require-auth': { requireAuth: async () => auth },
     '@/lib/require-active-cafe': { requireActiveCafe: async () => ({ allowed: true }) },
     '@/lib/wallet/config': { walletUpdatesEnabled: () => true },
     '@/lib/prisma': { prisma: { cafe: { findFirst: async () => ({ id: 'cafe1', name: 'Loretto', timezone: 'Africa/Cairo' }) } } },
@@ -95,3 +95,15 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
   assert.equal(pushes, 1);
   assert.equal(retry.status, 'complete');
 });
+
+ test('Loretto pilot gate uses the immutable business ID, not its name', () => {
+  const access = loader()('lib/wallet/campaign-access.ts');
+  assert.equal(access.walletCampaignsEnabledForCafe(access.WALLET_CAMPAIGN_PILOT_CAFE_ID), true);
+  assert.equal(access.walletCampaignsEnabledForCafe('other-cafe'), false);
+  assert.equal(access.walletCampaignsEnabledForCafe(null), false);
+ });
+ test('non-pilot cafe admins cannot read or send campaigns, including their own business', async () => {
+  const route = routeFor({ ...admin, cafeId: 'other' });
+  assert.equal((await route.GET(new NextRequest('https://example.com/api/wallet/campaigns?cafeId=other'))).status, 403);
+  assert.equal((await route.POST(post({action: 'send', cafeId:'other', campaignId:'11111111-1111-4111-8111-111111111111'}))).status,403);
+ });

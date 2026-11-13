@@ -1,3 +1,4 @@
+import { walletCampaignsEnabledForCafe } from "@/lib/wallet/campaign-access";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -34,6 +35,7 @@ async function handle(request: NextRequest) {
   const cafeId = request.method === "POST" ? body?.cafeId : request.nextUrl.searchParams.get("cafeId");
   if (typeof cafeId !== "string" || !cafeId || cafeId.length > 100) return json({ message: "Choose a business." }, 400);
   if (!auth.isSuperAdmin && auth.cafeId !== cafeId) return json({ message: "Business access denied." }, 403);
+  if (!walletCampaignsEnabledForCafe(cafeId)) return json({ message: "Wallet campaigns are currently available for the Loretto pilot only." }, 403);
   const cafe = await prisma.cafe.findFirst({ where: { id: cafeId, isActive: true }, select: { id: true, name: true, timezone: true } });
   if (!cafe) return json({ message: "Active business not found." }, 404);
   if (request.method === "GET") {

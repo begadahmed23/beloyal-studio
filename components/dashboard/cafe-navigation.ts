@@ -42,7 +42,7 @@ export const cafeNavigation = [
   {
     label: "Campaigns",
     mobileLabel: "Wallet",
-    href: "/dashboard/campaigns",
+    href: "/campaigns",
     icon: Bell,
   },
   {

@@ -1,4 +1,5 @@
 "use client";
+import { walletCampaignsEnabledForCafe } from "@/lib/wallet/campaign-access";
 
 import { ReactNode } from "react";
 import Link from "next/link";
@@ -47,7 +48,7 @@ export default function DashboardShell({
             item.href === "/dashboard/scanner" ||
             item.href === "/dashboard/scanner/phone",
         )
-      : cafeNavigation;
+      : cafeNavigation.filter(item => item.href !== "/campaigns" || walletCampaignsEnabledForCafe(cafe.id));
 
   function isActive(href: string) {
     return isCafeCurrentPage(pathname, href);

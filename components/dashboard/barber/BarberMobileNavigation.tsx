@@ -1,4 +1,5 @@
 "use client";
+import { walletCampaignsEnabledForCafe } from "@/lib/wallet/campaign-access";
 
 import Link from "next/link";
 import {
@@ -26,7 +27,7 @@ function isCurrentPage(pathname: string, href: string) {
 export default function BarberMobileNavigation() {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, userRole } = useCafeTheme();
+  const { theme, cafe, userRole } = useCafeTheme();
   const [formControlFocused, setFormControlFocused] =
     useState(false);
   const [
@@ -79,19 +80,20 @@ export default function BarberMobileNavigation() {
 
   useEffect(() => {
     for (const item of barberNavigation) {
+      if (item.href === "/campaigns" && (userRole === "CASHIER" || !walletCampaignsEnabledForCafe(cafe.id))) continue;
       router.prefetch(item.href);
     }
 
     router.prefetch(
       "/dashboard/settings",
     );
-  }, [router]);
+  }, [router, userRole, cafe.id]);
 
   if (formControlFocused) {
     return null;
   }
 
-  const navigationItems = barberNavigation.filter(item => userRole !== "CASHIER" || item.href !== "/dashboard/campaigns");
+  const navigationItems = barberNavigation.filter(item => item.href !== "/campaigns" || (userRole !== "CASHIER" && walletCampaignsEnabledForCafe(cafe.id)));
 
   return (
     <nav
