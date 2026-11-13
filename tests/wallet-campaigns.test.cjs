@@ -149,6 +149,8 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
   assert.equal((await route({...admin,isCashier:true}).POST(req({cafeId:'cafe1'}))).status,403);
   assert.equal((await route(admin).POST(req({cafeId:'other',stampSuffix:'hi',rewardSuffix:'enjoy'}))).status,403);
   assert.equal((await route(admin).POST(req({cafeId:'cafe1',stampSuffix:'hi',rewardSuffix:'enjoy',stamps:999,rewardName:'Wrong'}))).status,400);
+  assert.equal((await route(admin).POST(req({cafeId:'cafe1',stampSuffix:'',rewardSuffix:'',nearbyEnabled:true,nearbyMessage:'Store nearby',nearbyLatitude:null,nearbyLongitude:null}))).status,400);
+  assert.equal((await route(admin).POST(req({cafeId:'cafe1',stampSuffix:'',rewardSuffix:'',nearbyEnabled:true,nearbyMessage:'Store nearby',nearbyLatitude:100,nearbyLongitude:29}))).status,400);
   assert.equal(saved,0);
   const response = await route(admin).POST(req({cafeId:'cafe1',stampSuffix:'hi',rewardSuffix:'enjoy'}));
   assert.equal(response.status,200); assert.equal(saved,1);

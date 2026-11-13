@@ -11,7 +11,12 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "private, no-store" } });
 const suffix = z.string().trim().max(100).refine(value => !/[\u0000-\u001f]/.test(value), "Use a single line of text.");
-const schema = z.object({ cafeId: z.string().min(1).max(100), stampSuffix: suffix, rewardSuffix: suffix, resetSuffix: suffix.optional() }).strict();
+const schema = z.object({ cafeId: z.string().min(1).max(100), stampSuffix: suffix, rewardSuffix: suffix, resetSuffix: suffix.optional(),
+  nearbyEnabled: z.boolean().optional(), nearbyMessage: suffix.optional(),
+  nearbyLatitude: z.number().finite().min(-90).max(90).nullable().optional(),
+  nearbyLongitude: z.number().finite().min(-180).max(180).nullable().optional(),
+  nearbyMaxDistance: z.number().int().min(50).max(1000).nullable().transform(value => value ?? 150).optional(),
+}).strict();
 async function handle(request: NextRequest) {
   const auth = await requireAuth(request.headers);
   if (!auth || auth.isCashier || !["CAFE_ADMIN", "SUPER_ADMIN"].includes(auth.user.role)) return json({ message: "Administrator access required." }, 403);
@@ -29,9 +34,13 @@ async function handle(request: NextRequest) {
   if (!cafe) return json({ message: "Active business not found." }, 404);
   if (request.method === "POST") {
     const parsed = schema.safeParse(body);
-    if (!parsed.success) return json({ message: "Use up to 100 characters for each optional message. Only the extra messages can be edited here." }, 400);
+    if (!parsed.success) return json({ message: "Use up to 100 characters for each optional message. Only notification messages and nearby settings can be edited here." }, 400);
     const current = await getWalletNotificationSettings(cafeId);
-    await saveWalletNotificationSettings(cafeId, { ...current, stampSuffix: parsed.data.stampSuffix, rewardSuffix: parsed.data.rewardSuffix, ...(parsed.data.resetSuffix !== undefined ? { resetSuffix: parsed.data.resetSuffix } : {}) });
+    const submitted = { ...parsed.data };
+    Reflect.deleteProperty(submitted, "cafeId");
+    const settings = { ...current, ...submitted };
+    if (settings.nearbyEnabled && (settings.nearbyLatitude == null || settings.nearbyLongitude == null || !settings.nearbyMessage?.trim())) return json({ message: "Add your business’s latitude, longitude and nearby message before enabling nearby reminders." }, 400);
+    await saveWalletNotificationSettings(cafeId, settings);
   }
   return json({ settings: await getWalletNotificationSettings(cafeId), rewardName: cafe.rewardName, target: getLoyaltyProgressTarget(cafe) });
 }

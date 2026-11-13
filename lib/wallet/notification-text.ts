@@ -1,5 +1,5 @@
-export type WalletNotificationSettings = { stampSuffix: string; rewardSuffix: string; resetSuffix?: string };
-export const DEFAULT_WALLET_NOTIFICATIONS: WalletNotificationSettings = { stampSuffix: "", rewardSuffix: "", resetSuffix: "A fresh start towards your next reward ✨" };
+export type WalletNotificationSettings = { stampSuffix: string; rewardSuffix: string; resetSuffix?: string; nearbyEnabled?: boolean; nearbyMessage?: string; nearbyLatitude?: number | null; nearbyLongitude?: number | null; nearbyMaxDistance?: number };
+export const DEFAULT_WALLET_NOTIFICATIONS: WalletNotificationSettings = { stampSuffix: "", rewardSuffix: "", resetSuffix: "A fresh start towards your next reward ✨", nearbyEnabled: false, nearbyMessage: "Your loyalty card, ready for your next visit nearby.", nearbyLatitude: null, nearbyLongitude: null, nearbyMaxDistance: 150 };
 // Escape café-authored text for Apple's printf-style changeMessage template.
 const literal = (text: string) => text.replace(/%/g, "%%");
 export function walletProgressChangeMessage(ready: boolean, rewardName: string, settings: WalletNotificationSettings, reset = false) {

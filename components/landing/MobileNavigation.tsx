@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LayoutGrid, ChartNoAxesCombined, Tag, Mail, MessageCircle } from "lucide-react";
+import { LayoutGrid, ChartNoAxesCombined, Tag, Wallet, MessageCircle } from "lucide-react";
 
 export default function MobileNavigation({ arabic = false }: { arabic?: boolean }) {
   const [active, setActive] = useState("");
@@ -28,7 +28,7 @@ export default function MobileNavigation({ arabic = false }: { arabic?: boolean 
     { label: arabic ? "المميزات" : "Features", href: "#features", icon: LayoutGrid },
     { label: arabic ? "البيانات" : "Insights", href: "#insights", icon: ChartNoAxesCombined },
     { label: arabic ? "الأسعار" : "Pricing", href: "#pricing", icon: Tag },
-    { label: arabic ? "تواصل" : "Contact", href: "#contact", icon: Mail },
+    { label: "Wallet", href: "#wallet", icon: Wallet },
     { label: arabic ? "واتساب" : "WhatsApp", href: `https://wa.me/201222134872?text=${encodeURIComponent(message)}`, icon: MessageCircle },
   ];
   return <nav aria-label={arabic ? "اختصارات الصفحة" : "Page shortcuts"} className="fixed inset-x-0 bottom-0 z-50 border-t border-neutral-200 bg-white pb-[env(safe-area-inset-bottom)] text-neutral-950 sm:hidden">

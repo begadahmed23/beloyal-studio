@@ -21,7 +21,7 @@ export default function Navbar({ arabic = false, onLanguageChange }: { arabic?: 
     observer.observe(bar);
     return () => observer.disconnect();
   }, []);
-  const links = arabic ? [["المميزات", "#features"], ["طريقة الاستخدام", "#how-it-works"], ["تحليل العملاء", "#insights"], ["الأسعار", "#pricing"]] : [["Features", "#features"], ["How it works", "#how-it-works"], ["Customer insights", "#insights"], ["Pricing", "#pricing"]];
+  const links = arabic ? [["المميزات", "#features"], ["Apple Wallet", "#wallet"], ["طريقة الاستخدام", "#how-it-works"], ["تحليل العملاء", "#insights"], ["الأسعار", "#pricing"]] : [["Features", "#features"], ["Apple Wallet", "#wallet"], ["How it works", "#how-it-works"], ["Customer insights", "#insights"], ["Pricing", "#pricing"]];
   return (
     <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-white/95 text-neutral-950 backdrop-blur-xl">
       <div ref={barRef} className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 sm:px-6 lg:px-8">

@@ -161,3 +161,25 @@ value. Blank reset text keeps just the default progress statement. Existing
 stored stamp/reward extras are merged with the new default when read; legacy
 clients that omit `resetSuffix` preserve its saved value. Saving settings still
 sends nothing. This does not change redemption, stamp, or reward transactions.
+
+## Nearby reminders and public landing page
+
+The Loretto pilot’s notification settings now include nearbyEnabled,
+nearbyMessage, business latitude/longitude and a preferred maxDistance (50–1000
+metres). Nearby is off until explicitly enabled with validated coordinates and
+non-empty copy. Existing saved messages are merged with these defaults.
+No location was guessed or activated for Loretto. Wallet pass locations use the
+configured business pin, not customer location data; no customer-location
+tracking is introduced. Existing Waleed Saad location behavior is preserved.
+
+Nearby relevance is a passive Lock Screen suggestion, not a new push for every
+walk-by. Apple determines the actual radius and presentation. Saving affects
+new passes and installed cards at their next normal update; no campaign or
+broadcast is triggered. Settings validation, pilot gating and tenant checks
+apply to both read and write operations.
+
+The English/Arabic landing pages share WalletStory’s code-native phone, card
+update, and nearby-map illustrations. The hero, navigation, FAQ and Apple Wallet
+pricing line use consistent wording. Messaging/nearby controls are explicitly
+marked as pilot, illustrative screens are labelled, and fixed-distance or
+instant-delivery guarantees are avoided. Mobile navigation links to #wallet.

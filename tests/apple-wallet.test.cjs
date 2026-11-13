@@ -243,3 +243,17 @@ test('push runs after response, removes expired device tokens, and contains deli
   assert.equal(reset.storeCard.headerFields[0].value,'0/6');
   assert.equal(reset.storeCard.headerFields[0].changeMessage,'Your loyalty progress is now %@. A fresh start towards your next reward ✨');
  });
+
+ test('nearby pass uses the saved business location and message only when enabled', async () => {
+  const { createAppleWalletPass } = load('lib/wallet/apple.ts');
+  const settings = {stampSuffix:'',rewardSuffix:'',nearbyEnabled:true,nearbyMessage:'Store nearby on Main Street',nearbyLatitude:31.2,nearbyLongitude:29.9,nearbyMaxDistance:150};
+  const pass = JSON.parse(unzipSync(await createAppleWalletPass(member,undefined,settings))['pass.json']);
+  assert.equal(pass.locations[0].latitude,31.2);
+  assert.equal(pass.locations[0].longitude,29.9);
+  assert.equal(pass.locations[0].relevantText,'Store nearby on Main Street');
+  assert.equal(pass.maxDistance,150);
+  const disabled = JSON.parse(unzipSync(await createAppleWalletPass(member,undefined,{...settings,nearbyEnabled:false}))['pass.json']);
+  assert.equal(disabled.locations,undefined);
+  const unconfigured = JSON.parse(unzipSync(await createAppleWalletPass(member,undefined,{...settings,nearbyLatitude:null}))['pass.json']);
+  assert.equal(unconfigured.locations,undefined);
+ });

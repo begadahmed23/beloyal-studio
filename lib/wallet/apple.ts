@@ -70,6 +70,8 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
     ]).png().toBuffer();
   const icon = await sharp({ create: { width: 87, height: 87, channels: 4, background } })
     .composite([{ input: await textImage(walid ? "WS" : "B", 54, 65), left: 16, top: 11 }]).png().toBuffer();
+  const nearby = notificationSettings?.nearbyEnabled && notificationSettings.nearbyLatitude != null && notificationSettings.nearbyLongitude != null
+    && Number.isFinite(notificationSettings.nearbyLatitude) && Number.isFinite(notificationSettings.nearbyLongitude) ? notificationSettings : null;
   const pass = new PKPass(
     { "icon.png": await sharp(icon).resize(29, 29).png().toBuffer(),
       "icon@2x.png": await sharp(icon).resize(58, 58).png().toBuffer(),
@@ -85,13 +87,17 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
     { serialNumber: member.id,
       passTypeIdentifier: process.env.APPLE_WALLET_PASS_TYPE_ID!,
       teamIdentifier: process.env.APPLE_WALLET_TEAM_ID!,
-      ...(walid ? { maxDistance: 150 } : {}),
+      ...(nearby ? { maxDistance: nearby.nearbyMaxDistance ?? 150 } : walid ? { maxDistance: 150 } : {}),
       organizationName: member.cafe.name,
       description: `${member.cafe.name} loyalty card`,
       ...(walletUpdatesEnabled() ? { webServiceURL: process.env.APPLE_WALLET_WEB_SERVICE_URL!.replace(/\/$/, ""), authenticationToken: walletAuthToken(member.id) } : {}),
       backgroundColor: rgb(background), foregroundColor: rgb(foreground), labelColor: rgb(foreground) },
   );
   pass.type = "storeCard";
+  if (nearby) {
+    pass.setLocations({ latitude: nearby.nearbyLatitude!, longitude: nearby.nearbyLongitude!,
+      relevantText: nearby.nearbyMessage || "Your loyalty card, ready for your next visit nearby." });
+  }
   if (walid) {
     pass.setLocations({ latitude: 31.2299403, longitude: 29.9547298,
       relevantText: "Near Waleed Saad? Have your loyalty card ready for your next visit." });

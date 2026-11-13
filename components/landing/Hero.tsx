@@ -7,6 +7,7 @@ import {
   ScanLine,
   Star,
   Users,
+  Wallet,
 } from "lucide-react";
 
 const chartBars = [38, 52, 44, 68, 57, 78, 91];
@@ -275,9 +276,9 @@ export default function Hero() {
               <span className="flex items-center gap-2">
                 <ScanLine size={15} /> Scan their card to add a stamp
               </span>
-              <span className="flex items-center gap-2">
-                <Star size={15} /> See who’s coming back
-              </span>
+              <a href="#wallet" className="flex min-h-11 items-center gap-2 underline-offset-4 hover:underline">
+                <Wallet size={15} /> Now with Apple Wallet
+              </a>
             </div>
           </div>
 

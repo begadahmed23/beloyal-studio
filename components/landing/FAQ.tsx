@@ -1,4 +1,6 @@
 const questions = [
+  { question: "Can customers save their card in Apple Wallet?", answer: "Yes. iPhone customers can add their branded card to Apple Wallet and keep its stamps and rewards updated. Android customers can continue using their mobile browser card." },
+  { question: "How do Wallet notifications and nearby reminders work?", answer: "Card updates can trigger notifications about stamps, rewards, or selected member campaigns. Nearby reminders can surface the card on the Lock Screen around a configured business location. Apple and device settings control delivery and visibility. Messaging and nearby reminder controls are currently in pilot; contact us about availability." },
   {
     question: "Do customers need to download an application?",
     answer:

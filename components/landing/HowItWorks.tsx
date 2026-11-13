@@ -3,7 +3,7 @@ const steps = [
     number: "01",
     title: "Customers join in seconds",
     description:
-      "They scan the business’s join QR, enter their details, and receive a personal digital loyalty card.",
+      "They scan the business’s join QR, enter their details, and receive a personal digital loyalty card. On iPhone, they can save it to Apple Wallet too.",
   },
   {
     number: "02",

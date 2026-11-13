@@ -3,6 +3,7 @@ import { ArrowUpRight, Check } from "lucide-react";
 export default function Pricing({ arabic = false }: { arabic?: boolean }) {
   const items = arabic ? [
     "كارت ولاء رقمي بلوجو وألوان مشروعك",
+    "إضافة كارت العميل إلى Apple Wallet على الآيفون",
     "مكافآت وقواعد ولاء تناسب نشاطك",
     "انضمام وتسجيل أختام واستلام مكافآت بكود QR",
     "قائمة عملائك وسجل نشاطهم في مكان واحد",
@@ -13,6 +14,7 @@ export default function Pricing({ arabic = false }: { arabic?: boolean }) {
     "تصدير بيانات العملاء والنشاط في ملفات CSV",
   ] : [
     "Digital loyalty card in your logo and colours",
+    "Apple Wallet cards for iPhone members",
     "Reward rules tailored to your business",
     "QR joining, stamping, and reward redemption",
     "Customer directory and recorded activity history",

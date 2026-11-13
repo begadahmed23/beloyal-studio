@@ -12,7 +12,7 @@ const features = [
     icon: CreditCard,
     title: "Branded digital cards",
     description:
-      "Every member receives a personal card styled for your café, salon, car wash, or bakery.",
+      "Every member receives a personal card styled for your business, with Apple Wallet on iPhone and a browser card on other phones.",
   },
   {
     icon: ScanLine,

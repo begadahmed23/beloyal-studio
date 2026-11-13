@@ -6,6 +6,7 @@ import { useState, type FormEvent } from "react";
 import { ProductPreview } from "./Hero";
 import Footer from "./Footer";
 import BusinessTypes from "./BusinessTypes";
+import WalletStory from "./WalletStory";
 import Pricing from "./Pricing";
 
 const section = "px-5 py-20 sm:px-8 lg:py-28";
@@ -14,7 +15,7 @@ const field = "mt-2 w-full rounded-xl border border-neutral-300 bg-white px-4 py
 const features = [
   ["كارت رقمي باسم مشروعك", "كل عميل بيبقى معاه كارت شخصي بألوان ولوجو مشروعك، ويفتحه من موبايله."],
   ["تسجيل الزيارات بسهولة", "فريقك يسجّل الزيارة أو الختم بمسح كود العميل بكاميرا الموبايل أو جهاز قارئ QR متوافق."],
-  ["انضمام من غير تحميل تطبيق", "العميل يمسح كود الانضمام، يدخل بياناته، ويستلم كارت الولاء على المتصفح."],
+  ["انضمام من غير تحميل تطبيق", "العميل يمسح كود الانضمام ويستلم كارت الولاء على المتصفح، ويقدر يحفظه في Apple Wallet على الآيفون."],
   ["صورة أوضح عن عملائك", "تابع نمو الأعضاء، النشاط المسجّل، واستلام المكافآت علشان تفهم مين بيرجع."],
   ["اعرف رأي عملائك", "اجمع تقييمات خاصة وسريعة تساعدك تفهم تجربتهم وتحسّن الخدمة."],
   ["مكافآت تناسب نشاطك", "اختار عدد الأختام أو الزيارات، وحدّد المكافأة والتصميم المناسبين لمشروعك."],
@@ -32,6 +33,8 @@ const insights = [
   ["اعرف حملاتك عملت فرق قد إيه", "من خلال تحليل مخصوص لحملتك، نتابع مين رجع بعد العرض ونقارنه بمجموعة عملاء مشابهة ما وصلهاش العرض، علشان نقدّر تأثيره."],
 ];
 const questions = [
+  ["ينفع أحفظ الكارت في Apple Wallet؟", "أيوه، على الآيفون تقدر تضيف الكارت إلى Apple Wallet. الأختام والمكافآت بتتحدّث، وباقي الموبايلات تقدر تستخدم كارت المتصفح."],
+  ["التنبيهات والتذكير بالقرب من المكان بيشتغلوا إزاي؟", "تحديث الكارت ممكن يطلع تنبيه عن الأختام أو المكافآت أو حملة لمجموعة مختارة. والتذكير بالقرب من المكان ممكن يُظهر الكارت على شاشة القفل. الميزات دي في مرحلة تجريبية، وظهورها وتوقيتها والمسافة بيتحكم فيهم Apple وإعدادات الجهاز."],
   ["هل العميل محتاج يحمّل تطبيق؟", "لأ. العميل بيعمل الكارت ويفتحه من لينك على متصفح موبايله."],
   ["بيشتغل على آيفون وأندرويد؟", "أيوه، الانضمام والكارت بيشتغلوا على متصفحات الموبايل الحديثة في الاتنين."],
   ["الأختام والزيارات بتتسجّل إزاي؟", "فريقك يمسح كود QR الموجود على كارت العميل، وبعدين يأكّد إن عملية الشراء أو الخدمة مستوفية شروط المكافأة."],
@@ -69,6 +72,7 @@ export default function ArabicLanding() {
       <ProductPreview />
     </div><div className="mx-auto max-w-7xl"><BusinessTypes arabic /></div></section>
     <section id="features" className={section}><div className="mx-auto max-w-7xl"><p className="mb-4 text-sm text-[#526b5e]">المميزات</p><h2 className={heading}>أكتر من كارت أختام.<br />سبب للزيارة الجاية.</h2><p className="mt-6 max-w-2xl text-lg leading-9 text-neutral-600">خلّي برنامج الولاء شبه مشروعك: سهل للعميل، واضح لفريقك، ومفيد ليك.</p><div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">{features.map(([title,text]) => <article key={title} className="rounded-2xl border border-neutral-200 p-6 sm:p-8"><h3 className="text-xl font-semibold leading-8">{title}</h3><p className="mt-4 leading-8 text-neutral-600">{text}</p></article>)}</div></div></section>
+    <WalletStory arabic />
     <section id="how-it-works" className={`${section} bg-[#111210] text-white`}><div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-2"><div><p className="mb-4 text-sm text-white/60">طريقة الاستخدام</p><h2 className={heading}>سهل لفريقك.<br />بسيط لعملائك.</h2><p className="mt-6 text-lg leading-9 text-white/65">من الانضمام لحد استلام المكافأة، بخطوات واضحة ومن غير كروت ورقية أو تطبيق للعميل.</p></div><ol>{steps.map(([title,text],i) => <li key={title} className="flex gap-5 border-b border-white/20 py-6"><span className="text-[#b9ceb9]">{i+1}</span><div><h3 className="text-xl font-semibold leading-8">{title}</h3><p className="mt-3 leading-8 text-white/65">{text}</p></div></li>)}</ol></div></section>
     <section id="insights" className={`${section} bg-[#edf1ec]`}><div className="mx-auto max-w-7xl"><p className="mb-4 text-sm text-[#526b5e]">افهم عملاءك من زياراتهم</p><h2 className={heading}>كل زيارة بتقولك حاجة.</h2><p className="mt-6 max-w-3xl text-lg leading-9 text-neutral-600">كل زيارة مسجّلة بتساعدك تفهم عملاءك أكتر: مين بيرجع، ومين غاب، وإيه اللي ممكن يشجّعهم يزوروك تاني.</p><div className="mt-10 grid gap-4 md:grid-cols-2">{insights.map(([title,text]) => <article key={title} className="rounded-2xl border border-[#526b5e]/15 bg-white/75 p-6 sm:p-8"><h3 className="text-xl font-semibold">{title}</h3><p className="mt-4 leading-8 text-neutral-600">{text}</p></article>)}</div><div className="mt-6 rounded-2xl bg-[#18261e] p-7 text-white"><h3 className="text-2xl leading-9">«مين محتاج نعزمه يرجع؟»</h3><ol className="mt-5 list-inside list-decimal space-y-3 leading-8 text-white/80"><li>نحدّد الأعضاء اللي زياراتهم المسجّلة قلّت.</li><li>نختار عرض مناسب لمجموعة تجريبية صغيرة.</li><li>نشوف مين رجع ونقارن النتيجة بمجموعة عملاء مشابهة ما وصلهاش العرض.</li></ol><p className="mt-5 text-sm leading-7 text-white/65">مثال لتحليل مخصّص بنتفق على تجهيزه وطريقة قياسه معاك.</p></div><p className="mt-6 text-sm leading-8 text-neutral-600">التحليل بيعتمد على الزيارات والنشاط اللي اتسجّلوا على BeLoyal. تحليل نتيجة الحملات بنجهّزه حسب احتياجك. ولو هنستخدم نماذج لتوقّع سلوك العملاء، هنحتاج بيانات كفاية ونتأكّد من دقتها الأول. وتحليل الإيرادات محتاج تسجيل قيمة المشتريات كمان.</p></div></section>
     <Pricing arabic />
