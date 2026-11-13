@@ -154,3 +154,25 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
   assert.equal(response.status,200); assert.equal(saved,1);
   const data=await response.json();assert.equal(data.rewardName,'Free Cookie');assert.equal(data.target,6);
  });
+
+ test('start-over message preserves count, supports custom or blank text, and keeps reward readiness priority', () => {
+  const text = loader()('lib/wallet/notification-text.ts');
+  const settings = {stampSuffix:'Stamp earned!',rewardSuffix:'Enjoy!',resetSuffix:'Here we go again — 100% ready!'};
+  assert.equal(text.walletProgressChangeMessage(false,'Free Cookie',settings,true),'Your loyalty progress is now %@. Here we go again — 100%% ready!');
+  assert.equal(text.walletNotificationPreview('0/6',false,'Free Cookie',settings),'Your loyalty progress is now 0/6. Here we go again — 100% ready!');
+  assert.equal(text.walletProgressChangeMessage(false,'Free Cookie',{...settings,resetSuffix:''},true),'Your loyalty progress is now %@.');
+  assert.ok(text.walletProgressChangeMessage(true,'Free Cookie',settings,true).endsWith('Enjoy!'));
+  assert.ok(!text.walletProgressChangeMessage(false,'Free Cookie',settings,true).includes('Stamp earned!'));
+ });
+
+test('existing saved stamp/reward extras gain the start-over default without being replaced', async () => {
+  const lib = loader({
+    './campaign-access': {walletCampaignsEnabledForCafe: id => id === 'pilot'},
+    './updates': {passKey: id => id, walletRedis: () => ({get:async()=>({stampSuffix:'Our original thank-you',rewardSuffix:'Our original reward note'})})},
+  })('lib/wallet/notification-settings.ts');
+  const settings = await lib.getWalletNotificationSettings('pilot');
+  assert.equal(settings.stampSuffix,'Our original thank-you');
+  assert.equal(settings.rewardSuffix,'Our original reward note');
+  assert.equal(settings.resetSuffix,'A fresh start towards your next reward ✨');
+  assert.equal(await lib.getWalletNotificationSettings('other'),undefined);
+});

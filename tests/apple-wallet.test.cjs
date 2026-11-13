@@ -241,5 +241,5 @@ test('push runs after response, removes expired device tokens, and contains deli
   assert.equal(pass.barcodes[0].message,`BL:${member.publicToken}`);
   const reset = JSON.parse(unzipSync(await createAppleWalletPass({...readyMember, stamps:0, rewardEarnedAt:null}, undefined, {stampSuffix:'One step closer!',rewardSuffix:'Enjoy!'}))['pass.json']);
   assert.equal(reset.storeCard.headerFields[0].value,'0/6');
-  assert.equal(reset.storeCard.headerFields[0].changeMessage,'Your loyalty progress is now %@.');
+  assert.equal(reset.storeCard.headerFields[0].changeMessage,'Your loyalty progress is now %@. A fresh start towards your next reward ✨');
  });

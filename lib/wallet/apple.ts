@@ -102,10 +102,7 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
       value: "467 Abou Quer, Fleming, Alexandria\nhttps://maps.app.goo.gl/DLqwQhwqEPJCnfpd8" });
   }
   const balanceChangeMessage = notificationSettings
-    ? walletProgressChangeMessage(ready, member.cafe.rewardName, {
-        ...notificationSettings,
-        stampSuffix: stamps > 0 ? notificationSettings.stampSuffix : "",
-      })
+    ? walletProgressChangeMessage(ready, member.cafe.rewardName, notificationSettings, !ready && stamps === 0)
     : "Your loyalty progress is now %@.";
   pass.headerFields.push({ key: "balance", label: ready ? "REWARD READY" : walid ? "VISITS" : "STAMPS", value: `${stamps}/${target}`, ...(walid ? {} : { changeMessage: balanceChangeMessage }) });
   pass.secondaryFields.push({ key: "member", label: "MEMBER", value: member.name });

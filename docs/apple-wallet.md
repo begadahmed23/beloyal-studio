@@ -153,3 +153,11 @@ and the café’s actual `rewardName`. User-authored percent signs are escaped f
 Apple’s formatting syntax. Blank extras use default wording. Other businesses
 retain their original pass notification behavior. Campaign card messages stay
 independent and are never overwritten by these automatic suffixes.
+
+The third optional field, `resetSuffix`, adds a separate start-over sentence
+when a non-ready balance resets to zero. Its default is “A fresh start towards
+your next reward ✨”. The real `0/target` balance remains the protected field
+value. Blank reset text keeps just the default progress statement. Existing
+stored stamp/reward extras are merged with the new default when read; legacy
+clients that omit `resetSuffix` preserve its saved value. Saving settings still
+sends nothing. This does not change redemption, stamp, or reward transactions.
