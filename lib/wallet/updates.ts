@@ -71,6 +71,7 @@ export async function notifyWalletMember(serial: string) {
       } catch { failed++; console.error("Wallet push delivery failed; manual refresh remains available."); }
     }));
   }
+  console.info("Wallet push result", { registered: entries.length, accepted, failed });
   return { registered: entries.length, accepted, failed };
 }
 

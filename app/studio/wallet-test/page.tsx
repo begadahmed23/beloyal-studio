@@ -31,8 +31,8 @@ export default function WalletTestPage() {
       <button disabled={busy || !token} onClick={() => run(false)} className="mt-4 rounded-xl bg-black px-5 py-3 text-sm text-white disabled:opacity-40">Check Wallet registration</button>
       {card && <section className="mt-6 rounded-2xl bg-gray-50 p-5">
         <p className="font-medium">{card.name} · {card.memberNumber}</p><p className="mt-1 text-sm">{card.business} · {card.devices} registered device(s)</p>
-        <p className="mt-4 text-sm">Before sending, open the card in Wallet, tap its details and pull down to refresh. This loads the new message field so Wallet can detect its next change.</p>
-        <p className="mt-4 rounded-xl border bg-white p-3 text-sm">BeLoyal test — your Loretto card is connected ☕</p>
+        <p className="mt-4 text-sm">For this second test, leave Wallet closed and lock your iPhone before pressing Send. Do not manually refresh the card. Make sure Automatic Updates and Allow Notifications are enabled in the card’s details.</p>
+        <p className="mt-4 rounded-xl border bg-white p-3 text-sm">Second BeLoyal test — automatic Loretto update ☕</p>
         <button disabled={busy || !card.devices} onClick={() => run(true)} className="mt-4 rounded-xl bg-black px-5 py-3 text-sm text-white disabled:opacity-40">Send test to this card</button>
       </section>}
       <p role="status" aria-live="polite" className="mt-4 text-sm">{busy ? "Working…" : status}</p>

@@ -27,7 +27,7 @@ async function handle(request: NextRequest) {
   if (!devices) return json({ message: "No Wallet devices registered. Add this card to Apple Wallet first." }, 409);
   const lock = `${passKey(member.id)}:message-test-lock`;
   if (!await walletRedis().set(lock, "1", { nx: true, ex: 60 })) return json({ message: "Wait one minute before another test." }, 429);
-  const text = "BeLoyal test — your Loretto card is connected ☕";
+  const text = "Second BeLoyal test — automatic Loretto update ☕";
   if ((await getWalletMessage(member.id))?.text === text) return json({ message: "This test message is already on the card. No duplicate notification sent." }, 409);
   await setWalletMessage(member.id, text);
   const result = await notifyWalletMember(member.id);

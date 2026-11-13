@@ -82,6 +82,7 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
     // Strict comparison avoids suppressing updates made in the same second.
     if (Number.isFinite(since) && modified < since) return reply(304);
     const pass = await createAppleWalletPass(member, message?.text);
+    console.info("Wallet updated pass served", { messageVersion: message?.updatedAt ?? null });
     return new NextResponse(new Uint8Array(pass), { headers: { ...headers,
       "Content-Type": "application/vnd.apple.pkpass", "Last-Modified": new Date(modified).toUTCString() } });
   } catch {
