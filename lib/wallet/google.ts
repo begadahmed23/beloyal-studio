@@ -14,9 +14,21 @@ export function googleWalletEnabled() {
     Boolean(process.env.GOOGLE_WALLET_ISSUER_ID && process.env.GOOGLE_WALLET_CLIENT_EMAIL &&
       process.env.GOOGLE_WALLET_PRIVATE_KEY && process.env.GOOGLE_WALLET_SITE_URL && process.env.GOOGLE_WALLET_LOGO_URL);
 }
+export function normalizeGoogleWalletKey(value: string) {
+  let key = value.trim();
+  // Accept the JSON field value, a quoted JSON string, or a service-account JSON file.
+  if (key.startsWith('"') || key.startsWith("{")) {
+    try {
+      const parsed: unknown = JSON.parse(key.replace(/,\s*$/, ""));
+      if (typeof parsed === "string") key = parsed;
+      else if (parsed && typeof parsed === "object" && "private_key" in parsed && typeof parsed.private_key === "string") key = parsed.private_key;
+    } catch { /* Leave malformed input for the signing validator. */ }
+  }
+  return key.replace(/\\r/g, "\r").replace(/\\n/g, "\n").trim();
+}
 function jwt(payload: object) {
   const encoded = [ { alg: "RS256", typ: "JWT" }, payload ].map(value => Buffer.from(JSON.stringify(value)).toString("base64url")).join(".");
-  try { return `${encoded}.${sign("RSA-SHA256", Buffer.from(encoded), process.env.GOOGLE_WALLET_PRIVATE_KEY!.replace(/\\n/g, "\n")).toString("base64url")}`; } catch { throw new GoogleWalletError("signing"); }
+  try { return `${encoded}.${sign("RSA-SHA256", Buffer.from(encoded), normalizeGoogleWalletKey(process.env.GOOGLE_WALLET_PRIVATE_KEY!)).toString("base64url")}`; } catch { throw new GoogleWalletError("signing"); }
 }
 const objectId = (id: string) => `${process.env.GOOGLE_WALLET_ISSUER_ID}.member_${createHash("sha256").update(id).digest("hex")}`;
 const classId = (slug: string) => `${process.env.GOOGLE_WALLET_ISSUER_ID}.cafe_${createHash("sha256").update(slug).digest("hex")}`;

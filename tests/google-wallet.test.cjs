@@ -33,3 +33,11 @@ test('reward state and barber target match existing loyalty rules', () => {
  const object = wallet.googleWalletObject({ ...member, stamps: 3, cafe: { ...member.cafe, businessType: 'BARBERSHOP', rewardTarget: 3 } });
  assert.equal(object.loyaltyPoints.balance.string, '3/3'); assert.equal(object.loyaltyPoints.label, 'REWARD READY');
 });
+
+test('private key copies support raw PEM, JSON strings and service-account JSON', () => {
+ const pem = privateKey.export({ type: 'pkcs8', format: 'pem' });
+ for (const value of [pem, JSON.stringify(pem), JSON.stringify({ private_key: pem }), pem.replace(/\n/g, '\\n')]) {
+   const normalized = wallet.normalizeGoogleWalletKey(value);
+   assert.doesNotThrow(() => crypto.createPrivateKey(normalized));
+ }
+});
