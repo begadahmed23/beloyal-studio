@@ -1,4 +1,5 @@
 "use client";
+import GoogleWalletButton from "./GoogleWalletButton";
 
 import AppleWalletButton from "./AppleWalletButton";
 
@@ -8,6 +9,7 @@ import type { Customer } from "./LoyaltyCard";
 
 type Props = {
   walletEnabled?: boolean;
+  googleEnabled?: boolean;
   customer: Customer;
   refreshing: boolean;
   newStampIndex: number | null;
@@ -108,6 +110,7 @@ export default function LorettoLoyaltyCard({
   onShowQrCode,
   onShowFeedback,
   walletEnabled = false,
+  googleEnabled = false,
 }: Props) {
   const [birthdayOpen, setBirthdayOpen] = useState(false);
 
@@ -386,6 +389,7 @@ export default function LorettoLoyaltyCard({
         </button>
 
         <AppleWalletButton token={customer.publicToken} enabled={walletEnabled} />
+        <GoogleWalletButton token={customer.publicToken} enabled={googleEnabled} />
 
         {customer.cafe.feedbackEnabled && (
           <button

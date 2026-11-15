@@ -1,3 +1,4 @@
+import { googleWalletEnabled } from "@/lib/wallet/google";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -140,6 +141,7 @@ export async function GET(
 
     return jsonResponse({
       appleWalletEnabled: appleWalletEnabled(),
+      googleWalletEnabled: googleWalletEnabled(),
       id: customer.id,
       memberNumber: customer.memberNumber,
       publicToken: customer.publicToken,
