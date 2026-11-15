@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { applyPublicRateLimit, publicApiRateLimiters } from "@/lib/public-api-security";
-import { googleWalletEnabled, createGoogleWalletLink } from "@/lib/wallet/google";
+import { googleWalletEnabled, createGoogleWalletLink, GoogleWalletError } from "@/lib/wallet/google";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "private, no-store", "Referrer-Policy": "no-referrer" };
@@ -19,8 +19,8 @@ export async function GET(request: NextRequest, context: { params: Promise<{ tok
     });
     if (!member) return NextResponse.json({ message: "Card not found." }, { status: 404, headers });
     return NextResponse.json({ url: await createGoogleWalletLink(member) }, { headers });
-  } catch {
-    console.error("Google Wallet pass generation failed.");
+  } catch (error) {
+    console.error("Google Wallet pass generation failed.", error instanceof GoogleWalletError ? { stage: error.stage, status: error.status } : { stage: "unexpected" });
     return NextResponse.json({ message: "Could not create your Google Wallet card. Please try again." }, { status: 500, headers });
   }
 }
