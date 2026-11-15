@@ -40,7 +40,13 @@ async function accessToken() {
     body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: jwt({
       iss: process.env.GOOGLE_WALLET_CLIENT_EMAIL, scope: "https://www.googleapis.com/auth/wallet_object.issuer",
       aud: "https://oauth2.googleapis.com/token", iat: now, exp: now + 3600 }) }) });
-  if (!response.ok) throw new GoogleWalletError("authentication", response.status);
+  if (!response.ok) {
+    const failure = await response.json().catch(() => ({}));
+    const code = ["invalid_grant", "invalid_client", "invalid_scope", "unauthorized_client"].includes(failure.error) ? failure.error : "rejected";
+    const description = typeof failure.error_description === "string" ? failure.error_description.toLowerCase() : "";
+    const reason = description.includes("signature") ? "signature" : description.includes("expired") || description.includes("timeframe") ? "time" : description.includes("account") ? "account" : "other";
+    throw new GoogleWalletError(`authentication:${code}:${reason}`, response.status);
+  }
   const data = await response.json();
   cachedToken = { value: data.access_token, expires: Date.now() + data.expires_in * 1000 };
   return cachedToken.value;
