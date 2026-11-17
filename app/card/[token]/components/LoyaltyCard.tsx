@@ -32,6 +32,7 @@ export type Cafe = {
   rewardName: string;
   rewardDescription: string | null;
   eligiblePurchaseDescription: string | null;
+  minimumPurchaseAmount?: string | null;
   feedbackEnabled: boolean;
   feedbackRewardEnabled: boolean;
   googleReviewUrl: string | null;
