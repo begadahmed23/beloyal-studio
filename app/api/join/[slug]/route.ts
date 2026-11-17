@@ -30,6 +30,8 @@ const slugSchema = z
 const joinRequestSchema = z
   .object({
     action: z.enum(["join", "recover"]).default("join"),
+    privacyAccepted: z.boolean().optional(),
+    marketingConsent: z.boolean().optional(),
 
     name: z
       .string()
@@ -455,6 +457,7 @@ export async function POST(
       );
     }
 
+    if (validationResult.data.privacyAccepted !== true) return jsonResponse({ error: "Please acknowledge the privacy notice." }, 400);
     const name = normalizeName(
       validationResult.data.name ?? ""
     );
@@ -498,6 +501,8 @@ export async function POST(
             instagram: hasInstagram ? instagram : null,
             birthday,
             stamps: 0,
+            privacyAcceptedAt: new Date(), privacyVersion: "2026-11-17",
+            marketingConsentAt: validationResult.data.marketingConsent === true ? new Date() : null,
           },
           select: {
             publicToken: true,

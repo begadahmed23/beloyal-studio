@@ -38,7 +38,7 @@ const sections = [
         Business-account information may include names, email addresses,
         login and authentication records, business details, branding,
         subscription information, and platform settings. Loyalty-member
-        information may include a name, phone number, birthday, member number,
+        information may include a name, phone number or Instagram username, birthday, member number,
         digital-card identifier, stamps or visits, reward and redemption
         activity, ratings, optional feedback, and timestamps. We may also
         process technical information such as IP address, browser or device
@@ -68,7 +68,7 @@ const sections = [
         ratings, provide support, prevent misuse, maintain the platform, and
         comply with legal obligations. If messaging features are enabled,
         contact details may also be used to deliver loyalty-related messages
-        requested by the participating business.
+        requested by the participating business. Promotional Wallet campaigns, including birthday offers, require a separate affirmative opt-in. Declining or withdrawing that choice does not affect membership or rewards. Apple and Google process saved pass information according to their own terms. Nearby reminders depend on device permissions and provider settings.
       </>
     ),
   },
@@ -196,7 +196,7 @@ export default function PrivacyPage() {
             business accounts and digital loyalty programs.
           </p>
           <p className="mt-5 text-sm text-neutral-400">
-            Last updated: August 21, 2026
+            Last updated: November 17, 2026
           </p>
         </header>
 

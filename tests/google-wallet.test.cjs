@@ -20,7 +20,7 @@ test('save flow signs a verifiable JWT and handles existing classes and objects'
  assert.equal(crypto.verify('RSA-SHA256', Buffer.from(`${header}.${payload}`), publicKey, Buffer.from(signature, 'base64url')), true);
  const data = JSON.parse(Buffer.from(payload, 'base64url'));
  assert.equal(data.typ, 'savetowallet'); assert.equal(data.payload.loyaltyObjects.length, 1);
- const object = JSON.parse(calls.find(call => call.method === 'PATCH').body);
+ const object = JSON.parse(calls.find(call => call.method === 'PATCH' && call.url.includes('loyaltyObject/')).body);
  assert.equal(object.loyaltyPoints.balance.string, '3/6'); assert.equal(object.barcode.value, `BL:${member.publicToken}`);
  assert.ok(!object.id.includes(member.publicToken));
 });
@@ -40,4 +40,11 @@ test('private key copies support raw PEM, JSON strings and service-account JSON'
    const normalized = wallet.normalizeGoogleWalletKey(value);
    assert.doesNotThrow(() => crypto.createPrivateKey(normalized));
  }
+});
+
+test('business branding and nearby coordinates are scoped to the class', () => {
+ const brand = wallet.googleClassBrand({...member.cafe, logoUrl:'https://example.com/cafe.png'}, {nearbyEnabled:true, nearbyLatitude:31.2, nearbyLongitude:29.9});
+ assert.equal(brand.programLogo.sourceUri.uri,'https://example.com/cafe.png');
+ assert.equal(brand.merchantLocations[0].latitude,31.2);
+ assert.equal(wallet.googleClassBrand(member.cafe,{nearbyEnabled:false}).merchantLocations.length,0);
 });

@@ -1,6 +1,7 @@
 import { createHash, sign } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+import { walletLocations, type WalletNotificationSettings } from "./notification-text";
 import type { WalletMember } from "./apple";
 
 export class GoogleWalletError extends Error {
@@ -67,15 +68,40 @@ export function googleWalletObject(member: WalletMember) {
     textModulesData: [{ id: "reward", header: "YOUR REWARD", body: member.cafe.rewardName }],
     linksModuleData: { uris: [{ id: "card", uri: new URL(`/card/${member.publicToken}`, process.env.GOOGLE_WALLET_SITE_URL!).href, description: "Open your BeLoyal card" }] } };
 }
-export async function createGoogleWalletLink(member: WalletMember) {
+type GoogleBrand = WalletMember["cafe"] & { logoUrl?: string | null };
+type GoogleLocation = Parameters<typeof walletLocations>[0];
+export function googleClassBrand(cafe: GoogleBrand, settings?: GoogleLocation) {
+  const fallback = new URL(process.env.GOOGLE_WALLET_LOGO_URL!);
+  let logo = fallback;
+  try { if (cafe.logoUrl) { const candidate = new URL(cafe.logoUrl); if (candidate.protocol === "https:") logo = candidate; } } catch { /* use fallback */ }
+  return { issuerName: cafe.name, programName: `${cafe.name} Rewards`, programLogo: { sourceUri: { uri: logo.href }, contentDescription: { defaultValue: { language: "en-US", value: cafe.name } } }, reviewStatus: "UNDER_REVIEW", hexBackgroundColor: /^#[0-9a-f]{6}$/i.test(cafe.backgroundColor) ? cafe.backgroundColor : "#111111", ...(settings ? { merchantLocations: walletLocations(settings).map(({latitude, longitude}) => ({latitude, longitude})) } : {}) };
+}
+export async function updateGoogleWalletClass(cafe: GoogleBrand, settings?: GoogleLocation) {
+  if (!googleWalletEnabled()) return;
+  const response = await api(`loyaltyClass/${classId(cafe.slug)}`, "PATCH", googleClassBrand(cafe, settings));
+  if (!response.ok && response.status !== 404) throw new GoogleWalletError("class-update", response.status);
+}
+export async function googleWalletHasUsers(id: string) {
+  if (!googleWalletEnabled()) return false;
+  const response = await api(`loyaltyObject/${objectId(id)}`, "GET");
+  if (response.status === 404) return false;
+  if (!response.ok) throw new GoogleWalletError("audience", response.status);
+  return (await response.json()).hasUsers === true;
+}
+export async function sendGoogleWalletMessage(id: string, campaignId: string, business: string, message: string) {
+  if (!await googleWalletHasUsers(id)) return false;
+  const response = await api(`loyaltyObject/${objectId(id)}/addMessage`, "POST", { message: { id: campaignId, header: business, body: message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"), messageType: "TEXT_AND_NOTIFY" } });
+  if (!response.ok) throw new GoogleWalletError("message", response.status);
+  return true;
+}
+export async function createGoogleWalletLink(member: WalletMember & { cafe: GoogleBrand }, settings?: GoogleLocation) {
   const site = new URL(process.env.GOOGLE_WALLET_SITE_URL!);
   const logo = new URL(process.env.GOOGLE_WALLET_LOGO_URL!);
   if (site.protocol !== "https:" || logo.protocol !== "https:") throw new GoogleWalletError("urls");
-  const passClass = { id: classId(member.cafe.slug), issuerName: member.cafe.name, programName: `${member.cafe.name} Rewards`,
-    programLogo: { sourceUri: { uri: logo.href }, contentDescription: { defaultValue: { language: "en-US", value: member.cafe.name } } },
-    reviewStatus: "UNDER_REVIEW", hexBackgroundColor: /^#[0-9a-f]{6}$/i.test(member.cafe.backgroundColor) ? member.cafe.backgroundColor : "#111111" };
+  const passClass = { id: classId(member.cafe.slug), ...googleClassBrand(member.cafe, settings) };
   const createdClass = await api("loyaltyClass", "POST", passClass);
-  if (!createdClass.ok && createdClass.status !== 409) throw new GoogleWalletError("program", createdClass.status);
+  if (createdClass.status === 409) await updateGoogleWalletClass(member.cafe, settings);
+  else if (!createdClass.ok) throw new GoogleWalletError("program", createdClass.status);
   const object = googleWalletObject(member);
   const createdObject = await api("loyaltyObject", "POST", object);
   if (createdObject.status === 409) {
@@ -93,3 +119,22 @@ export async function syncGoogleWalletMember(id: string) {
   const response = await api(`loyaltyObject/${object.id}`, "PATCH", object);
   if (!response.ok && response.status !== 404) throw new Error("Google Wallet balance sync failed.");
 }
+
+export async function googleWalletSavedObjects(slug: string) {
+  const ids = new Set<string>();
+  if (!googleWalletEnabled() || process.env.GOOGLE_WALLET_CAMPAIGNS_ENABLED !== "true") return ids;
+  let pageToken = "";
+  for (let page = 0; page < 100; page++) {
+    const query = new URLSearchParams({classId: classId(slug), maxResults: "200"});
+    if (pageToken) query.set("token", pageToken);
+    const response = await api(`loyaltyObject?${query}`, "GET");
+    if (response.status === 404 && !pageToken) return ids;
+    if (!response.ok) throw new GoogleWalletError("audience-list", response.status);
+    const data = await response.json();
+    for (const object of data.resources ?? []) if (object.hasUsers === true && typeof object.id === "string") ids.add(object.id);
+    pageToken = data.pagination?.nextPageToken ?? "";
+    if (!pageToken) return ids;
+  }
+  throw new GoogleWalletError("audience-pagination");
+}
+export const googleWalletObjectId = objectId;
