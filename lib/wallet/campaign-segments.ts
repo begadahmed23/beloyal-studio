@@ -1,5 +1,5 @@
 export const campaignSegments = [
-  { id: "all", label: "All Wallet members", description: "Everyone with a registered Apple Wallet card." },
+  { id: "all", label: "All Wallet members", description: "Everyone with a registered eligible Wallet card." },
   { id: "birthday_today", label: "Birthdays today", description: "Celebrate today, in your business’s timezone." },
   { id: "birthday_week", label: "Birthdays · next 7 days", description: "Today and the following six days." },
   { id: "reward_ready", label: "Reward ready", description: "Members with a currently available, unredeemed loyalty reward." },
