@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
+import { googleWalletEnabled } from "@/lib/wallet/google";
 import { walletUpdatesEnabled } from "@/lib/wallet/config";
 import { walletRedis, passKey } from "@/lib/wallet/updates";
 import { campaignSegments, MAX_CAMPAIGN_RECIPIENTS } from "@/lib/wallet/campaign-segments";
@@ -28,7 +29,7 @@ async function handle(request: NextRequest) {
     const access = await requireActiveCafe(request.headers);
     if (!access.allowed) return json({ message: access.message }, access.status);
   }
-  if (!walletUpdatesEnabled()) return json({ message: "Apple Wallet updates are not enabled." }, 503);
+  if (!walletUpdatesEnabled() && !(googleWalletEnabled() && process.env.GOOGLE_WALLET_CAMPAIGNS_ENABLED === "true")) return json({ message: "Wallet messaging is not configured in this environment." }, 503);
   if (request.method === "POST" && request.headers.get("origin") !== request.nextUrl.origin) return json({ message: "Invalid request origin." }, 403);
   if (request.method === "POST" && Number(request.headers.get("content-length") ?? 0) > 16384) return json({ message: "Request too large." }, 413);
   const body = request.method === "POST" ? await request.json() : null;
