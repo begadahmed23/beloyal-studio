@@ -41,7 +41,7 @@ export const cafeNavigation = [
   },
   {
     label: "Campaigns",
-    mobileLabel: "Wallet",
+    mobileLabel: "Campaigns",
     href: "/campaigns",
     icon: Bell,
   },
