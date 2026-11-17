@@ -30,7 +30,7 @@ export const barberNavigation = [
   },
   {
     label: "Campaigns",
-    href: "/campaigns",
+    href: "/dashboard/campaigns",
     icon: Bell,
   },
   {
