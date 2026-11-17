@@ -17,7 +17,7 @@ export type WalletCampaign = {
   recipients: CampaignRecipient[];
 };
 export async function walletAudience(cafeId: string, timezone: string, now = new Date()) {
-  const members = await prisma.customer.findMany({ where: { cafeId }, orderBy: [{ name: "asc" }, { id: "asc" }], take: 10001,
+  const members = await prisma.customer.findMany({ where: { cafeId, marketingConsentAt: { not: null }, marketingWithdrawnAt: null }, orderBy: [{ name: "asc" }, { id: "asc" }], take: 10001,
     select: { id: true, name: true, memberNumber: true, birthday: true, createdAt: true, stamps: true, rewardEarnedAt: true, cafe: { select: { businessType: true, rewardTarget: true } },
       transactions: { where: { OR: [{ description: null }, { NOT: { description: { startsWith: "Feedback", mode: "insensitive" } } }] }, orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } } } });
   if (members.length > 10000) throw new Error("AUDIENCE_TOO_LARGE");
@@ -32,7 +32,7 @@ export async function walletAudience(cafeId: string, timezone: string, now = new
     const counts = await pipeline.exec<number[]>();
     for (let i = 0; i < batch.length; i++) {
       const member = batch[i];
-      const google = googleIds.has(googleWalletObjectId(member.id));
+      const google = googleIds.size > 0 && googleIds.has(googleWalletObjectId(member.id));
       if ((!Number.isFinite(counts[i]) || counts[i] <= 0) && !google) continue;
       const lastVisit = member.transactions[0]?.createdAt ?? null;
       audience.push({ id: member.id, name: member.name, memberNumber: member.memberNumber, devices: (counts[i] || 0) + Number(google),
@@ -68,8 +68,14 @@ export async function sendCampaign(campaign: WalletCampaign, eligibleIds: Set<st
       try {
         if (!eligibleIds.has(recipient.id)) { recipient.status = "skipped"; return; }
         // Recheck ownership and registration at send time (e.g. pass removed after preview).
-        const member = await prisma.customer.findFirst({ where: { id: recipient.id, cafeId: campaign.cafeId }, select: { id: true } });
+        const member = await prisma.customer.findFirst({ where: { id: recipient.id, cafeId: campaign.cafeId, marketingConsentAt: { not: null }, marketingWithdrawnAt: null }, select: { id: true, birthday: true, cafe: { select: { timezone: true } } } });
         if (!member) { recipient.status = "skipped"; return; }
+        const birthday = campaign.segment === "birthday_today";
+        const now = new Date();
+        const year = new Intl.DateTimeFormat("en", { year: "numeric", timeZone: member.cafe.timezone }).format(now);
+        const cooldown = `${prefix()}cooldown:${campaign.cafeId}:${recipient.id}:${birthday ? `birthday:${year}` : "marketing"}`;
+        // Claim before contacting providers: ambiguous failures must not allow repeated notifications.
+        if (!await walletRedis().set(cooldown, campaign.id, { nx: true, ex: birthday ? 366 * 86400 : 86400 })) { recipient.status = "skipped"; return; }
         let accepted = 0, failed = 0;
         if (await walletRedis().hlen(passKey(recipient.id)) && (await getWalletMessage(recipient.id))?.text !== campaign.message) {
           try {
