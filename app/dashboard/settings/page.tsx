@@ -34,7 +34,7 @@ export default function SettingsPage() {
       <CafeSettingsForm
         accountEmail={accountEmail}
       />
-      {walletCampaignsEnabledForCafe(cafe.id) && <div className="min-w-0 rounded-3xl border p-2 sm:p-4" style={{backgroundColor:theme.surface,borderColor:theme.border}}><WalletNotificationSettings cafeId={cafe.id} /></div>}
+      {walletCampaignsEnabledForCafe(cafe.id) && <div className="min-w-0" style={{"--wallet-surface":theme.surface,"--wallet-raised":theme.surfaceRaised,"--wallet-border":theme.border,"--wallet-text":theme.textPrimary,"--wallet-secondary":theme.textSecondary,"--wallet-muted":theme.textMuted,"--wallet-accent":theme.accent,"--wallet-accent-text":theme.accentText,color:theme.textPrimary} as React.CSSProperties}><WalletNotificationSettings cafeId={cafe.id} /></div>}
       <BirthdayRewardsSettings />
       <StaffManagementPanel
         endpoint="/api/cafe/staff"
