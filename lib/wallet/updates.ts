@@ -1,3 +1,4 @@
+import { googleWalletEnabled, syncGoogleWalletMember } from "./google";
 import { createHash } from "node:crypto";
 import { connect } from "node:http2";
 import { Redis } from "@upstash/redis";
@@ -76,8 +77,10 @@ export async function notifyWalletMember(serial: string) {
 }
 
 export function scheduleWalletUpdate(serial: string) {
-  if (!walletUpdatesEnabled()) return;
+  if (!walletUpdatesEnabled() && !googleWalletEnabled()) return;
   after(async () => {
+    try { await syncGoogleWalletMember(serial); }
+    catch { console.error("Google Wallet sync failed; stamp transaction was already committed."); }
     try { await notifyWalletMember(serial); }
     catch { console.error("Wallet update scheduling failed; stamp transaction was already committed."); }
   });

@@ -1,4 +1,5 @@
 "use client";
+import GoogleWalletButton from "./GoogleWalletButton";
 
 import AppleWalletButton from "./AppleWalletButton";
 
@@ -64,6 +65,7 @@ export type Customer = {
 
 type LoyaltyCardProps = {
   walletEnabled?: boolean;
+  googleEnabled?: boolean;
   customer: Customer;
   refreshing: boolean;
   newStampIndex: number | null;
@@ -207,6 +209,7 @@ export default function LoyaltyCard({
   onShowQrCode,
   onShowFeedback,
   walletEnabled = false,
+  googleEnabled = false,
 }: LoyaltyCardProps) {
   const isBarbershop =
     customer.cafe.businessType === "BARBERSHOP";
@@ -229,7 +232,7 @@ export default function LoyaltyCard({
   if (isLoretto) {
     return (
       <LorettoLoyaltyCard
-        walletEnabled={walletEnabled}
+        walletEnabled={walletEnabled} googleEnabled={googleEnabled}
         customer={customer}
         refreshing={refreshing}
         newStampIndex={newStampIndex}
@@ -249,7 +252,7 @@ export default function LoyaltyCard({
   if (isKeka) {
     return (
       <KekaLoyaltyCard
-        walletEnabled={walletEnabled}
+        walletEnabled={walletEnabled} googleEnabled={googleEnabled}
         customer={customer}
         refreshing={refreshing}
         newStampIndex={newStampIndex}
@@ -272,7 +275,7 @@ export default function LoyaltyCard({
   if (isKato) {
     return (
       <KatoLoyaltyCard
-        walletEnabled={walletEnabled}
+        walletEnabled={walletEnabled} googleEnabled={googleEnabled}
         customer={customer}
         refreshing={refreshing}
         newStampIndex={newStampIndex}
@@ -809,6 +812,7 @@ export default function LoyaltyCard({
             </button>
 
             <AppleWalletButton token={customer.publicToken} enabled={walletEnabled} />
+        <GoogleWalletButton token={customer.publicToken} enabled={googleEnabled} />
 
             {customer.cafe.feedbackEnabled ? (
               <button
