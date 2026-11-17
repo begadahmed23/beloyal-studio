@@ -37,7 +37,7 @@ export default function WalletNotificationSettings({ cafeId, manageLocation = fa
     setData(previous => previous ? {...previous,settings:{...previous.settings,nearbyLocations:value}} : previous);
     setStatus("");
   }
-  return <section className="mt-7 rounded-3xl border border-black/10 bg-white p-5 text-[#18181b] sm:p-7" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
+  return <section className="rounded-3xl border border-black/10 bg-white p-4 text-[#18181b] sm:p-6" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
     <h2 className="flex items-center gap-2 text-lg font-semibold"><Bell size={19}/> Wallet notifications</h2>
     <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">Customize Apple Wallet automatic stamp, reward, and start-over notifications. Leave a message blank to use its default wording.</p>
     {!data && !error && <p className="mt-5 flex items-center gap-2 text-sm"><Loader2 size={16} className="animate-spin"/> Loading messages…</p>}
