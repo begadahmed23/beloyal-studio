@@ -48,7 +48,7 @@ export default function DashboardShell({
             item.href === "/dashboard/scanner" ||
             item.href === "/dashboard/scanner/phone",
         )
-      : cafeNavigation.filter(item => item.href !== "/campaigns" || walletCampaignsEnabledForCafe(cafe.id));
+      : cafeNavigation.filter(item => item.href !== "/dashboard/campaigns" || walletCampaignsEnabledForCafe(cafe.id));
 
   function isActive(href: string) {
     return isCafeCurrentPage(pathname, href);
