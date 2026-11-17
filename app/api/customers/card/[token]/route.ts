@@ -91,6 +91,7 @@ export async function GET(
             rewardName: true,
             rewardDescription: true,
             eligiblePurchaseDescription: true,
+            minimumPurchaseAmount: true,
             feedbackEnabled: true,
             feedbackRewardEnabled: true,
             googleReviewUrl: true,
@@ -115,6 +116,7 @@ export async function GET(
 
     const cafe = {
       ...customer.cafe,
+      minimumPurchaseAmount: customer.cafe.minimumPurchaseAmount?.toString() ?? null,
       feedbackEnabled:
         customer.cafe.feedbackEnabled ??
         customer.cafe.businessType === "CAFE",
