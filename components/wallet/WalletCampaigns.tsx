@@ -15,7 +15,7 @@ function totals(campaign: WalletCampaign) {
   return { accepted: campaign.recipients.filter(r => r.status === "accepted").length, failed: campaign.recipients.filter(r => r.status === "failed").length,
     skipped: campaign.recipients.filter(r => r.status === "skipped").length, pending: campaign.recipients.filter(r => r.status === "pending").length };
 }
-export default function WalletCampaigns({ businesses, initialCafeId, studio = false }: { businesses: Business[]; initialCafeId: string; studio?: boolean }) {
+export default function WalletCampaigns({ businesses, initialCafeId, studio = false, branded = false }: { businesses: Business[]; initialCafeId: string; studio?: boolean; branded?: boolean }) {
   const [cafeId, setCafeId] = useState(initialCafeId);
   const [data, setData] = useState<Audience | null>(null);
   const [segment, setSegment] = useState<CampaignSegment>("all");
@@ -60,7 +60,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
   }
   const chosenSegment = campaignSegments.find(value => value.id === segment)!;
   const business = data?.cafe.name ?? businesses.find(value => value.id === cafeId)?.name ?? "Your business";
-  return <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }} className="rounded-[28px] bg-[#f6f6f7] p-4 text-[#18181b] sm:p-7 lg:p-9">
+  return <div style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }} className={branded ? "min-w-0 rounded-3xl p-1 sm:p-3" : "rounded-[28px] bg-[#f6f6f7] p-4 text-[#18181b] sm:p-7 lg:p-9"}>
     {studio && <a href="/studio" className="mb-6 inline-flex min-h-11 items-center gap-2 text-sm text-zinc-600 hover:text-black"><ArrowLeft size={16} /> BeLoyal Studio</a>}
     <header className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
       <div><div className="mb-3 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1.5 text-xs font-medium"><Wallet size={14} /> Wallet campaigns</div>
@@ -71,7 +71,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
         <select id="campaign-business" className={field} value={cafeId} disabled={!!busy} onChange={event => changeBusiness(event.target.value)}>{businesses.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>}
     </header>
     {!businesses.length && <p className="mt-8 text-sm">Create an active business to start a Wallet campaign.</p>}
-    <div className="mt-7 grid grid-cols-3 gap-2 sm:gap-4">{[
+    <div className="mt-7 grid grid-cols-1 gap-2 min-[380px]:grid-cols-3 sm:gap-4">{[
       { label: "Total members", value: data?.totalMembers, icon: Users },
       { label: "Wallet members", value: data?.walletMembers, icon: Wallet },
       { label: "Selected", value: selected.length, icon: Check },
