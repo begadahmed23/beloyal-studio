@@ -412,9 +412,9 @@ export default function JoinForm({
           </div>
         )}
 
-        {mode === "join" && <div className="space-y-3 rounded-2xl border p-4 text-sm leading-5" style={{borderColor: theme.border, color: theme.textSecondary}}>
-          <label className="flex items-start gap-3"><input type="checkbox" required checked={privacyAccepted} onChange={e => setPrivacyAccepted(e.target.checked)} className="mt-1 h-4 w-4 shrink-0"/> <span>I acknowledge that {cafeName} and BeLoyal process my information to operate my loyalty membership. Read the <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">Privacy Notice</a>.</span></label>
-          <label className="flex items-start gap-3"><input type="checkbox" checked={marketingConsent} onChange={e => setMarketingConsent(e.target.checked)} className="mt-1 h-4 w-4 shrink-0"/> <span>I agree to receive promotional offers and birthday marketing messages from {cafeName} through Wallet. (Optional)</span></label>
+        {mode === "join" && <div className="space-y-2 text-xs leading-5" style={{borderColor: theme.border, color: theme.textSecondary}}>
+          <label className="flex items-start gap-3"><input type="checkbox" required checked={privacyAccepted} onChange={e => setPrivacyAccepted(e.target.checked)} className="mt-1 h-4 w-4 shrink-0"/> <span>I agree to the <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">Privacy Policy</a> and use of my data for loyalty membership.</span></label>
+          <label className="flex items-start gap-3"><input type="checkbox" checked={marketingConsent} onChange={e => setMarketingConsent(e.target.checked)} className="mt-1 h-4 w-4 shrink-0"/> <span>I agree to receive offers from {cafeName}. (Optional)</span></label>
         </div>}
         {error && (
           <div className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3">
@@ -479,7 +479,7 @@ export default function JoinForm({
               className="text-center text-xs leading-5"
               style={{ color: isKato ? katoTextMuted : theme.textMuted }}
             >
-              Marketing is optional and does not affect your loyalty rewards.
+              
             </p>
           </>
         ) : (
