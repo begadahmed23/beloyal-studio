@@ -198,14 +198,19 @@ export default function LorettoLoyaltyCard({
               border: `1px solid ${border}`,
             }}
           >
-            {(customer.cafe.eligiblePurchaseDescription?.trim() || Number(customer.cafe.minimumPurchaseAmount) > 0) && (
+            {customer.cafe.eligiblePurchaseDescription?.trim() && (
               <p className="text-[11px] font-medium leading-5" style={{ color: muted }}>
                 <span className="font-semibold" style={{ color: espresso }}>
                   Eligible purchase:
                 </span>{" "}
-                {customer.cafe.eligiblePurchaseDescription?.trim()}{Number(customer.cafe.minimumPurchaseAmount) > 0 && `${customer.cafe.eligiblePurchaseDescription?.trim() ? " · " : ""}Minimum ${Number(customer.cafe.minimumPurchaseAmount).toLocaleString("en-EG")} EGP`}
+                {customer.cafe.eligiblePurchaseDescription.trim()}
               </p>
             )}
+            {Number(customer.cafe.minimumPurchaseAmount) > 0 && (
+                <p className="text-[11px] font-medium leading-5" style={{ color: muted }}>
+                  <span className="font-semibold" style={{ color: espresso }}>Minimum purchase:</span>{" "}<span className="whitespace-nowrap">EGP {Number(customer.cafe.minimumPurchaseAmount).toLocaleString("en-EG")}</span>
+                </p>
+              )}
             {customer.cafe.rewardDescription?.trim() && (
               <p className="text-[11px] font-medium leading-5" style={{ color: muted }}>
                 <span className="font-semibold" style={{ color: espresso }}>
