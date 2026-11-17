@@ -80,7 +80,7 @@ export default function BarberMobileNavigation() {
 
   useEffect(() => {
     for (const item of barberNavigation) {
-      if (item.href === "/campaigns" && (userRole === "CASHIER" || !walletCampaignsEnabledForCafe(cafe.id))) continue;
+      if (item.href === "/dashboard/campaigns" && (userRole === "CASHIER" || !walletCampaignsEnabledForCafe(cafe.id))) continue;
       router.prefetch(item.href);
     }
 
@@ -93,7 +93,7 @@ export default function BarberMobileNavigation() {
     return null;
   }
 
-  const navigationItems = barberNavigation.filter(item => item.href !== "/campaigns" || (userRole !== "CASHIER" && walletCampaignsEnabledForCafe(cafe.id)));
+  const navigationItems = barberNavigation.filter(item => item.href !== "/dashboard/campaigns" || (userRole !== "CASHIER" && walletCampaignsEnabledForCafe(cafe.id)));
 
   return (
     <nav
