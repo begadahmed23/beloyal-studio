@@ -102,6 +102,7 @@ export default function StaffManagementPanel({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPasswords, setShowPasswords] = useState(false);
   const [role, setRole] =
     useState<Role>("CASHIER");
 
@@ -543,7 +544,7 @@ export default function StaffManagementPanel({
           />
 
           <input
-            type="password"
+            type={showPasswords ? "text" : "password"}
             value={password}
             onChange={(event) =>
               setPassword(event.target.value)
@@ -645,7 +646,7 @@ export default function StaffManagementPanel({
           }`}
           style={mutedStyle}
         >
-          Passwords require 12+ characters with uppercase, lowercase, and a number.
+          <button type="button" onClick={() => setShowPasswords(v => !v)} className="underline mr-2">{showPasswords ? "Hide passwords" : "Show passwords"}</button> Passwords require 12+ characters with uppercase, lowercase, and a number.
         </p>
       </div>
 
@@ -804,7 +805,7 @@ export default function StaffManagementPanel({
 
                     <div className="mt-2 grid gap-2 sm:grid-cols-2">
                       <input
-                        type="password"
+                        type={showPasswords ? "text" : "password"}
                         value={newPassword}
                         onChange={(event) =>
                           setNewPassword(
@@ -815,7 +816,7 @@ export default function StaffManagementPanel({
                         className="h-10 rounded-lg border border-black/[0.10] bg-white px-3 text-base outline-none sm:text-xs"
                       />
                       <input
-                        type="password"
+                        type={showPasswords ? "text" : "password"}
                         value={confirmPassword}
                         onChange={(event) =>
                           setConfirmPassword(
