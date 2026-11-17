@@ -173,16 +173,21 @@ export default function KatoLoyaltyCard({
         {(Number(customer.cafe.minimumPurchaseAmount) > 0 || customer.cafe.eligiblePurchaseDescription?.trim() ||
           customer.cafe.rewardDescription?.trim()) && (
           <div className="mt-6 space-y-2 px-1">
-            {(customer.cafe.eligiblePurchaseDescription?.trim() || Number(customer.cafe.minimumPurchaseAmount) > 0) && (
+            {customer.cafe.eligiblePurchaseDescription?.trim() && (
               <p
                 className="text-[12px] font-medium leading-5"
                 style={{ color: isDark ? cream : navy }}
               >
                 <span className="font-semibold">Eligible purchase:</span>{" "}
-                {customer.cafe.eligiblePurchaseDescription?.trim()}{Number(customer.cafe.minimumPurchaseAmount) > 0 && `${customer.cafe.eligiblePurchaseDescription?.trim() ? " · " : ""}Minimum ${Number(customer.cafe.minimumPurchaseAmount).toLocaleString("en-EG")} EGP`}
+                {customer.cafe.eligiblePurchaseDescription.trim()}
               </p>
             )}
 
+            {Number(customer.cafe.minimumPurchaseAmount) > 0 && (
+                <p className="text-[12px] font-medium leading-5" style={{ color: isDark ? cream : navy }}>
+                  <span className="font-semibold" >Minimum purchase:</span>{" "}<span className="whitespace-nowrap">EGP {Number(customer.cafe.minimumPurchaseAmount).toLocaleString("en-EG")}</span>
+                </p>
+              )}
             {customer.cafe.rewardDescription?.trim() && (
               <p
                 className="text-[12px] font-medium leading-5"
