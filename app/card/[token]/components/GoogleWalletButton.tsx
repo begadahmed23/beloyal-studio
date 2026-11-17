@@ -23,7 +23,7 @@ export default function GoogleWalletButton({ token, enabled }: { token: string; 
     <button type="button" onClick={() => void save()} disabled={busy} aria-busy={busy}
       aria-label="Add to Google Wallet"
       className="inline-flex min-h-12 items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-60">
-      <img src="https://wallet.google.com/static/images/marketing/add-to-google-wallet-badge.svg?hl=en" alt="Add to Google Wallet" className="h-12 w-auto" />
+      <img src="/wallet/add-to-google-wallet.svg" alt="Add to Google Wallet" className="h-12 w-auto" />
     </button>
     {busy ? <p role="status" className="mt-2 text-xs">Preparing your card…</p> : null}
     {error ? <p role="alert" className="mt-2 text-sm">{error}</p> : null}
