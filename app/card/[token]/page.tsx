@@ -1613,6 +1613,7 @@ const progressPercentage = rewardReady
             `,
       }}
     >
+      {Number(customer.cafe.minimumPurchaseAmount) > 0 && <div className="mx-auto mb-3 max-w-md rounded-2xl border px-4 py-3 text-center text-sm" style={{borderColor: cardBorder, backgroundColor: surfaceColor, color: textPrimary}}>Minimum qualifying purchase: {Number(customer.cafe.minimumPurchaseAmount).toLocaleString("en-EG")} EGP</div>}
       <LoyaltyCard
         walletEnabled={walletEnabled}
         googleEnabled={googleEnabled}
