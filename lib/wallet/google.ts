@@ -119,3 +119,21 @@ export async function syncGoogleWalletMember(id: string) {
   const response = await api(`loyaltyObject/${object.id}`, "PATCH", object);
   if (!response.ok && response.status !== 404) throw new Error("Google Wallet balance sync failed.");
 }
+
+export async function googleWalletSavedObjects(slug: string) {
+  const ids = new Set<string>();
+  if (!googleWalletEnabled() || process.env.GOOGLE_WALLET_CAMPAIGNS_ENABLED !== "true") return ids;
+  let pageToken = "";
+  for (let page = 0; page < 100; page++) {
+    const query = new URLSearchParams({classId: classId(slug), maxResults: "200"});
+    if (pageToken) query.set("token", pageToken);
+    const response = await api(`loyaltyObject?${query}`, "GET");
+    if (!response.ok) throw new GoogleWalletError("audience-list", response.status);
+    const data = await response.json();
+    for (const object of data.resources ?? []) if (object.hasUsers === true && typeof object.id === "string") ids.add(object.id);
+    pageToken = data.pagination?.nextPageToken ?? "";
+    if (!pageToken) return ids;
+  }
+  throw new GoogleWalletError("audience-pagination");
+}
+export const googleWalletObjectId = objectId;
