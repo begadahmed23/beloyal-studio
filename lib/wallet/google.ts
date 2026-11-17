@@ -69,7 +69,7 @@ export function googleWalletObject(member: WalletMember) {
     linksModuleData: { uris: [{ id: "card", uri: new URL(`/card/${member.publicToken}`, process.env.GOOGLE_WALLET_SITE_URL!).href, description: "Open your BeLoyal card" }] } };
 }
 type GoogleBrand = WalletMember["cafe"] & { logoUrl?: string | null };
-type GoogleLocation = WalletNotificationSettings; nearbyLatitude?: number | null; nearbyLongitude?: number | null };
+type GoogleLocation = Parameters<typeof walletLocations>[0];
 export function googleClassBrand(cafe: GoogleBrand, settings?: GoogleLocation) {
   const fallback = new URL(process.env.GOOGLE_WALLET_LOGO_URL!);
   let logo = fallback;
