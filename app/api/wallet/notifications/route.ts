@@ -13,6 +13,7 @@ export const runtime = "nodejs";
 const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { "Cache-Control": "private, no-store" } });
 const suffix = z.string().trim().max(100).refine(value => !/[\u0000-\u001f]/.test(value), "Use a single line of text.");
 const schema = z.object({ cafeId: z.string().min(1).max(100), stampSuffix: suffix, rewardSuffix: suffix, resetSuffix: suffix.optional(),
+  nearbyLocations: z.array(z.object({name:z.string().trim().min(1).max(80),latitude:z.number().finite().min(-90).max(90),longitude:z.number().finite().min(-180).max(180),message:suffix.min(1)}).strict()).max(10).optional(),
   nearbyEnabled: z.boolean().optional(), nearbyMessage: suffix.optional(),
   nearbyLatitude: z.number().finite().min(-90).max(90).nullable().optional(),
   nearbyLongitude: z.number().finite().min(-180).max(180).nullable().optional(),
@@ -26,7 +27,7 @@ async function handle(request: NextRequest) {
     if (!access.allowed) return json({ message: access.message }, access.status);
   }
   if (request.method === "POST" && request.headers.get("origin") !== request.nextUrl.origin) return json({ message: "Invalid request origin." }, 403);
-  if (Number(request.headers.get("content-length") ?? 0) > 4096) return json({ message: "Request too large." }, 413);
+  if (Number(request.headers.get("content-length") ?? 0) > 16384) return json({ message: "Request too large." }, 413);
   const body = request.method === "POST" ? await request.json() : null;
   const cafeId = body?.cafeId ?? request.nextUrl.searchParams.get("cafeId");
   if (typeof cafeId !== "string" || (!auth.isSuperAdmin && cafeId !== auth.cafeId) || !walletCampaignsEnabledForCafe(cafeId)) return json({ message: "Wallet notification settings are available to the Loretto pilot only." }, 403);
@@ -41,7 +42,7 @@ async function handle(request: NextRequest) {
     const submitted = { ...parsed.data };
     Reflect.deleteProperty(submitted, "cafeId");
     const settings = { ...current, ...submitted };
-    if (settings.nearbyEnabled && (settings.nearbyLatitude == null || settings.nearbyLongitude == null || !settings.nearbyMessage?.trim())) return json({ message: "Add your business’s latitude, longitude and nearby message before enabling nearby reminders." }, 400);
+    if (settings.nearbyEnabled && (settings.nearbyLocations ? settings.nearbyLocations.length === 0 : (settings.nearbyLatitude == null || settings.nearbyLongitude == null || !settings.nearbyMessage?.trim()))) return json({ message: "Add your business’s latitude, longitude and nearby message before enabling nearby reminders." }, 400);
     await saveWalletNotificationSettings(cafeId, settings);
     if (auth.isSuperAdmin && Object.keys(parsed.data).some(key => key.startsWith("nearby"))) await updateGoogleWalletClass(cafe, settings);
   }
