@@ -1,4 +1,5 @@
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+import { googleWalletSavedObjects, googleWalletObjectId, sendGoogleWalletMessage } from "./google";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { passKey, walletRedis, notifyWalletMember } from "./updates";
@@ -20,6 +21,8 @@ export async function walletAudience(cafeId: string, timezone: string, now = new
     select: { id: true, name: true, memberNumber: true, birthday: true, createdAt: true, stamps: true, rewardEarnedAt: true, cafe: { select: { businessType: true, rewardTarget: true } },
       transactions: { where: { OR: [{ description: null }, { NOT: { description: { startsWith: "Feedback", mode: "insensitive" } } }] }, orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } } } });
   if (members.length > 10000) throw new Error("AUDIENCE_TOO_LARGE");
+  const cafe = await prisma.cafe.findUnique({ where: { id: cafeId }, select: { slug: true } });
+  const googleIds = cafe ? await googleWalletSavedObjects(cafe.slug) : new Set<string>();
   const audience: CampaignMember[] = [];
   // Pipeline lookups keep existing installs usable; only cards with a live registration qualify.
   for (let start = 0; start < members.length; start += 250) {
@@ -28,10 +31,11 @@ export async function walletAudience(cafeId: string, timezone: string, now = new
     for (const member of batch) pipeline.hlen(passKey(member.id));
     const counts = await pipeline.exec<number[]>();
     for (let i = 0; i < batch.length; i++) {
-      if (!Number.isFinite(counts[i]) || counts[i] <= 0) continue;
       const member = batch[i];
+      const google = googleIds.has(googleWalletObjectId(member.id));
+      if ((!Number.isFinite(counts[i]) || counts[i] <= 0) && !google) continue;
       const lastVisit = member.transactions[0]?.createdAt ?? null;
-      audience.push({ id: member.id, name: member.name, memberNumber: member.memberNumber, devices: counts[i],
+      audience.push({ id: member.id, name: member.name, memberNumber: member.memberNumber, devices: (counts[i] || 0) + Number(google),
         lastVisitAt: lastVisit?.toISOString() ?? null, ...memberSegments(member.birthday, member.createdAt, lastVisit, now, timezone, Boolean(member.rewardEarnedAt) || member.stamps >= getLoyaltyProgressTarget(member.cafe)) });
     }
   }
@@ -65,13 +69,22 @@ export async function sendCampaign(campaign: WalletCampaign, eligibleIds: Set<st
         if (!eligibleIds.has(recipient.id)) { recipient.status = "skipped"; return; }
         // Recheck ownership and registration at send time (e.g. pass removed after preview).
         const member = await prisma.customer.findFirst({ where: { id: recipient.id, cafeId: campaign.cafeId }, select: { id: true } });
-        if (!member || !await walletRedis().hlen(passKey(recipient.id))) { recipient.status = "skipped"; return; }
-        if ((await getWalletMessage(recipient.id))?.text === campaign.message) { recipient.status = "skipped"; return; }
-        await setWalletMessage(recipient.id, campaign.message);
-        const result = await notifyWalletMember(recipient.id);
-        recipient.acceptedDevices = result?.accepted ?? 0;
-        recipient.failedDevices = result?.failed ?? 0;
-        recipient.status = result?.accepted ? "accepted" : "failed";
+        if (!member) { recipient.status = "skipped"; return; }
+        let accepted = 0, failed = 0;
+        if (await walletRedis().hlen(passKey(recipient.id)) && (await getWalletMessage(recipient.id))?.text !== campaign.message) {
+          try {
+            await setWalletMessage(recipient.id, campaign.message);
+            const result = await notifyWalletMember(recipient.id);
+            accepted += result?.accepted ?? 0; failed += result?.failed ?? 0;
+          } catch { failed++; }
+        }
+        if (process.env.GOOGLE_WALLET_CAMPAIGNS_ENABLED === "true") {
+          try { if (await sendGoogleWalletMessage(recipient.id, campaign.id, campaign.business, campaign.message)) accepted++; }
+          catch { failed++; }
+        }
+        recipient.acceptedDevices = accepted;
+        recipient.failedDevices = failed;
+        recipient.status = accepted ? "accepted" : failed ? "failed" : "skipped";
       } catch { recipient.status = "failed"; }
     }));
     await saveCampaign(campaign);
