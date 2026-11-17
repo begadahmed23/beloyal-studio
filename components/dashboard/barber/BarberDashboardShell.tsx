@@ -35,7 +35,7 @@ export default function BarberDashboardShell({
   const pathname = usePathname();
   const { cafe, theme, userRole } = useCafeTheme();
 
-  const navigationItems = barberNavigation.filter(item => item.href !== "/campaigns" || (userRole !== "CASHIER" && walletCampaignsEnabledForCafe(cafe.id)));
+  const navigationItems = barberNavigation.filter(item => item.href !== "/dashboard/campaigns" || (userRole !== "CASHIER" && walletCampaignsEnabledForCafe(cafe.id)));
 
   const currentPage =
     navigationItems.find((item) =>
