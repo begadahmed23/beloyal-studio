@@ -32,7 +32,7 @@ export default function WalletNotificationSettings({ cafeId, manageLocation = fa
     setData(previous => previous ? { ...previous, settings: { ...previous.settings, [key]: value } } : previous);
     setStatus("");
   }
-  const locations = data?.settings.nearbyLocations ?? (data?.settings.nearbyLatitude != null && data.settings.nearbyLongitude != null ? [{name:"Main branch",latitude:data.settings.nearbyLatitude,longitude:data.settings.nearbyLongitude,message:data.settings.nearbyMessage || "Your loyalty card is ready nearby."}] : []);
+  const locations: WalletLocation[] = data?.settings.nearbyLocations ?? (data?.settings.nearbyLatitude != null && data.settings.nearbyLongitude != null ? [{name:"Main branch",latitude:data.settings.nearbyLatitude,longitude:data.settings.nearbyLongitude,message:data.settings.nearbyMessage || "Your loyalty card is ready nearby."}] : []);
   function setLocations(value: WalletLocation[]) {
     setData(previous => previous ? {...previous,settings:{...previous.settings,nearbyLocations:value}} : previous);
     setStatus("");
@@ -54,6 +54,7 @@ export default function WalletNotificationSettings({ cafeId, manageLocation = fa
       <p className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Example notification</p>
       <p className="mt-2 break-words rounded-xl bg-zinc-50 p-3 text-sm leading-6">{walletNotificationPreview(`${item.reset ? 0 : item.ready ? data.target : Math.min(3, Math.max(0, data.target - 1))}/${data.target}`, item.ready, data.rewardName, data.settings)}</p>
     </div>)}</div>
+    {!manageLocation && locations.length>0 && <div className="mt-5 rounded-2xl border p-4"><h3 className="text-sm font-semibold">Business locations</h3>{locations.map((l,i)=><div key={i} className="mt-3 text-sm">{l.name} · {data.settings.nearbyEnabled ? "Nearby reminders enabled" : "Reminders disabled"}</div>)}</div>}
     {manageLocation && <div className="mt-5 rounded-2xl border border-black/10 p-4 sm:p-5">
       <h3 className="text-sm font-semibold">When a member is nearby</h3>
       <p className="mt-2 text-xs leading-5 text-zinc-500">Wallet can suggest the card on the Lock Screen near your business. This is a nearby card reminder, rather than a new push notification each time someone passes.</p>
@@ -61,12 +62,13 @@ export default function WalletNotificationSettings({ cafeId, manageLocation = fa
       <p className="mt-3 text-xs text-zinc-500">{locations.length}/10 locations · All branches share the same loyalty card. Apple supports custom text; Google chooses its own reminder wording.</p>
       {locations.map((location,index)=><div key={index} className="mt-4 space-y-2 rounded-xl border p-3">
         <div className="flex items-center justify-between"><span className="text-xs font-semibold">Branch {index+1}</span><button type="button" disabled={saving} onClick={()=>setLocations(locations.filter((_,i)=>i!==index))} className="text-xs text-red-700">Remove</button></div>
-        <label className="block text-xs">Branch name<input className="mt-1 w-full rounded-lg border p-3 text-sm" maxLength={80} value={location.name} disabled={saving} onChange={e=>setLocations(locations.map((l,i)=>i===index?{...l,name:e.target.value}:l))}/></label>
-        <div className="grid grid-cols-2 gap-2">{(["latitude","longitude"] as const).map(key=><label key={key} className="text-xs capitalize">{key}<input type="number" step="any" min={key==="latitude"?-90:-180} max={key==="latitude"?90:180} className="mt-1 w-full rounded-lg border p-3 text-sm" value={Number.isFinite(location[key])?location[key]:""} disabled={saving} onChange={e=>setLocations(locations.map((l,i)=>i===index?{...l,[key]:e.target.value===""?NaN:Number(e.target.value)}:l))}/></label>)}</div>
+        <label className="block text-xs">Branch name<input className="mt-1 w-full rounded-lg border p-3 text-sm" maxLength={80} value={location.name} disabled={saving} onChange={e=>setLocations(locations.map((l,i)=>i===index?{...l,name:e.target.value}:l))}/></label> 
+        <label className="block text-xs">Google Maps link<input type="url" placeholder="https://maps.app.goo.gl/..." className="mt-1 w-full rounded-lg border p-3 text-sm" value={location.mapsUrl ?? ""} disabled={saving} onChange={e=>setLocations(locations.map((l,i)=>i===index?{...l,mapsUrl:e.target.value,latitude:NaN,longitude:NaN}:l))}/></label>
+        {Number.isFinite(location.latitude)&&Number.isFinite(location.longitude)&&<p className="text-xs text-green-700">Location configured</p>}
         <label className="block text-xs">Apple nearby message<input className="mt-1 w-full rounded-lg border p-3 text-sm" maxLength={100} value={location.message} disabled={saving} onChange={e=>setLocations(locations.map((l,i)=>i===index?{...l,message:e.target.value}:l))}/></label>
       </div>)}
       <button type="button" disabled={saving||locations.length>=10} onClick={()=>setLocations([...locations,{name:"",latitude:NaN,longitude:NaN,message:"Your loyalty card is ready for your next visit."}])} className="mt-3 rounded-xl border px-4 py-3 text-sm disabled:opacity-40">+ Add branch</button>
-      <p className="mt-3 text-xs text-zinc-500">Copy coordinates from the branch’s Maps pin. Device permissions and Wallet determine when reminders appear.</p>
+      <p className="mt-3 text-xs text-zinc-500">Paste the Google Maps link for each branch. Device permissions and Wallet determine when reminders appear.</p>
     </div>}
     <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-xl text-xs leading-5 text-zinc-500">Saving doesn’t send a notification. Nearby settings reach installed cards on their next normal update. Stamp counts, reward names, and redemption rules stay managed by BeLoyal.</p><button onClick={save} disabled={saving} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#18181b] px-5 py-3 text-sm font-medium text-white disabled:opacity-40">{saving ? <Loader2 size={16} className="animate-spin"/> : <Save size={16}/>} {manageLocation ? "Save messages & location" : "Save messages"}</button></div></>}
     {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}
