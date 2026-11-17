@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Bell, Loader2, LockKeyhole, Save } from "lucide-react";
-import { walletNotificationPreview, type WalletNotificationSettings } from "@/lib/wallet/notification-text";
+import { walletNotificationPreview, type WalletLocation, type WalletNotificationSettings } from "@/lib/wallet/notification-text";
 
 type Data = { settings: WalletNotificationSettings; rewardName: string; target: number };
 export default function WalletNotificationSettings({ cafeId, manageLocation = false }: { cafeId: string; manageLocation?: boolean }) {
@@ -32,6 +32,11 @@ export default function WalletNotificationSettings({ cafeId, manageLocation = fa
     setData(previous => previous ? { ...previous, settings: { ...previous.settings, [key]: value } } : previous);
     setStatus("");
   }
+  const locations = data?.settings.nearbyLocations ?? (data?.settings.nearbyLatitude != null && data.settings.nearbyLongitude != null ? [{name:"Main branch",latitude:data.settings.nearbyLatitude,longitude:data.settings.nearbyLongitude,message:data.settings.nearbyMessage || "Your loyalty card is ready nearby."}] : []);
+  function setLocations(value: WalletLocation[]) {
+    setData(previous => previous ? {...previous,settings:{...previous.settings,nearbyLocations:value}} : previous);
+    setStatus("");
+  }
   return <section className="mt-7 rounded-3xl border border-black/10 bg-white p-5 text-[#18181b] sm:p-7" style={{ fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
     <h2 className="flex items-center gap-2 text-lg font-semibold"><Bell size={19}/> Wallet notifications</h2>
     <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">Customize Apple Wallet automatic stamp, reward, and start-over notifications. Leave a message blank to use its default wording.</p>
@@ -53,15 +58,15 @@ export default function WalletNotificationSettings({ cafeId, manageLocation = fa
       <h3 className="text-sm font-semibold">When a member is nearby</h3>
       <p className="mt-2 text-xs leading-5 text-zinc-500">Wallet can suggest the card on the Lock Screen near your business. This is a nearby card reminder, rather than a new push notification each time someone passes.</p>
       <label className="mt-4 flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="h-4 w-4 accent-black" checked={data.settings.nearbyEnabled ?? false} disabled={saving} onChange={event => edit("nearbyEnabled", event.target.checked)}/> Enable nearby card reminders</label>
-      <label htmlFor="wallet-nearby-message" className="mb-2 mt-3 block text-xs font-medium">Nearby message</label>
-      <input id="wallet-nearby-message" maxLength={100} value={data.settings.nearbyMessage ?? ""} disabled={saving} onChange={event => edit("nearbyMessage", event.target.value)} placeholder="Your loyalty card, ready for your next visit nearby." className="min-h-12 w-full rounded-xl border border-black/20 bg-white px-3 py-3 text-base outline-none focus:border-black sm:text-sm"/>
-      <div className="mt-4 grid gap-4 sm:grid-cols-3">{([
-        {key:"nearbyLatitude",label:"Business latitude",min:-90,max:90,placeholder:"e.g. 31.2001"},
-        {key:"nearbyLongitude",label:"Business longitude",min:-180,max:180,placeholder:"e.g. 29.9187"},
-        {key:"nearbyMaxDistance",label:"Preferred max distance (m)",min:50,max:1000,placeholder:"150"},
-      ] as const).map(item => <div key={item.key}><label htmlFor={`wallet-${item.key}`} className="mb-2 block text-xs font-medium">{item.label}</label><input id={`wallet-${item.key}`} type="number" inputMode="decimal" step={item.key === "nearbyMaxDistance" ? 1 : "any"} min={item.min} max={item.max} placeholder={item.placeholder} disabled={saving} value={data.settings[item.key] ?? ""} onChange={event => edit(item.key, event.target.value === "" ? null : Number(event.target.value))} className="min-h-12 w-full rounded-xl border border-black/20 bg-white px-3 py-3 text-base outline-none focus:border-black sm:text-sm"/></div>)}</div>
-      <p className="mt-3 text-xs leading-5 text-zinc-500">Use the coordinates from your business’s Google Maps pin. Apple may use a smaller distance and decides when the card appears; device location and Wallet settings also apply.</p>
-      <div className="mt-4 rounded-xl bg-zinc-50 p-4"><p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Nearby reminder preview</p><p className="mt-2 break-words text-sm leading-6">{data.settings.nearbyMessage || "Your nearby reminder will appear here."}</p></div>
+      <p className="mt-3 text-xs text-zinc-500">{locations.length}/10 locations · All branches share the same loyalty card. Apple supports custom text; Google chooses its own reminder wording.</p>
+      {locations.map((location,index)=><div key={index} className="mt-4 space-y-2 rounded-xl border p-3">
+        <div className="flex items-center justify-between"><span className="text-xs font-semibold">Branch {index+1}</span><button type="button" disabled={saving} onClick={()=>setLocations(locations.filter((_,i)=>i!==index))} className="text-xs text-red-700">Remove</button></div>
+        <label className="block text-xs">Branch name<input className="mt-1 w-full rounded-lg border p-3 text-sm" maxLength={80} value={location.name} disabled={saving} onChange={e=>setLocations(locations.map((l,i)=>i===index?{...l,name:e.target.value}:l))}/></label>
+        <div className="grid grid-cols-2 gap-2">{(["latitude","longitude"] as const).map(key=><label key={key} className="text-xs capitalize">{key}<input type="number" step="any" min={key==="latitude"?-90:-180} max={key==="latitude"?90:180} className="mt-1 w-full rounded-lg border p-3 text-sm" value={Number.isFinite(location[key])?location[key]:""} disabled={saving} onChange={e=>setLocations(locations.map((l,i)=>i===index?{...l,[key]:e.target.value===""?NaN:Number(e.target.value)}:l))}/></label>)}</div>
+        <label className="block text-xs">Apple nearby message<input className="mt-1 w-full rounded-lg border p-3 text-sm" maxLength={100} value={location.message} disabled={saving} onChange={e=>setLocations(locations.map((l,i)=>i===index?{...l,message:e.target.value}:l))}/></label>
+      </div>)}
+      <button type="button" disabled={saving||locations.length>=10} onClick={()=>setLocations([...locations,{name:"",latitude:NaN,longitude:NaN,message:"Your loyalty card is ready for your next visit."}])} className="mt-3 rounded-xl border px-4 py-3 text-sm disabled:opacity-40">+ Add branch</button>
+      <p className="mt-3 text-xs text-zinc-500">Copy coordinates from the branch’s Maps pin. Device permissions and Wallet determine when reminders appear.</p>
     </div>}
     <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-xl text-xs leading-5 text-zinc-500">Saving doesn’t send a notification. Nearby settings reach installed cards on their next normal update. Stamp counts, reward names, and redemption rules stay managed by BeLoyal.</p><button onClick={save} disabled={saving} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-[#18181b] px-5 py-3 text-sm font-medium text-white disabled:opacity-40">{saving ? <Loader2 size={16} className="animate-spin"/> : <Save size={16}/>} {manageLocation ? "Save messages & location" : "Save messages"}</button></div></>}
     {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}
