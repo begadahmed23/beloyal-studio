@@ -78,11 +78,11 @@ export default function CafeMobileNavigation() {
             item.href === "/dashboard/scanner" ||
             item.href === "/dashboard/scanner/phone",
         )
-      : cafeNavigation.filter(item => item.href !== "/campaigns" || walletCampaignsEnabledForCafe(cafe.id));
+      : cafeNavigation.filter(item => item.href !== "/dashboard/campaigns" || walletCampaignsEnabledForCafe(cafe.id));
 
   useEffect(() => {
     for (const item of cafeNavigation) {
-      if (item.href === "/campaigns" && !walletCampaignsEnabledForCafe(cafe.id)) continue;
+      if (item.href === "/dashboard/campaigns" && !walletCampaignsEnabledForCafe(cafe.id)) continue;
       if (
         userRole === "CASHIER" &&
         item.href !== "/dashboard" &&
