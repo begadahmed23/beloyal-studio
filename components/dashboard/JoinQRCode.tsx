@@ -32,7 +32,7 @@ export default function JoinQRCode() {
       process.env.NEXT_PUBLIC_APP_URL ||
       "https://getbeloyal.app";
 
-    return `${baseUrl}/join/${cafe.slug}`;
+    return `${baseUrl.replace(/\/$/, "")}/join/${encodeURIComponent(cafe.slug)}`;
   }, [cafe.slug]);
 
   async function copyJoinLink() {
@@ -87,13 +87,11 @@ export default function JoinQRCode() {
       }
 
       const image = await toPng(poster, {
-        cacheBust: true,
+        cacheBust: false,
         pixelRatio: 3,
         backgroundColor: "#ffffff",
         width: POSTER_WIDTH,
         height: POSTER_HEIGHT,
-        canvasWidth: POSTER_WIDTH * 3,
-        canvasHeight: POSTER_HEIGHT * 3,
         style: {
           width: `${POSTER_WIDTH}px`,
           height: `${POSTER_HEIGHT}px`,
