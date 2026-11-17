@@ -1,6 +1,7 @@
 import { createHash, sign } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+import { walletLocations, type WalletNotificationSettings } from "./notification-text";
 import type { WalletMember } from "./apple";
 
 export class GoogleWalletError extends Error {
@@ -68,13 +69,12 @@ export function googleWalletObject(member: WalletMember) {
     linksModuleData: { uris: [{ id: "card", uri: new URL(`/card/${member.publicToken}`, process.env.GOOGLE_WALLET_SITE_URL!).href, description: "Open your BeLoyal card" }] } };
 }
 type GoogleBrand = WalletMember["cafe"] & { logoUrl?: string | null };
-type GoogleLocation = { nearbyEnabled?: boolean; nearbyLatitude?: number | null; nearbyLongitude?: number | null };
+type GoogleLocation = WalletNotificationSettings; nearbyLatitude?: number | null; nearbyLongitude?: number | null };
 export function googleClassBrand(cafe: GoogleBrand, settings?: GoogleLocation) {
   const fallback = new URL(process.env.GOOGLE_WALLET_LOGO_URL!);
   let logo = fallback;
   try { if (cafe.logoUrl) { const candidate = new URL(cafe.logoUrl); if (candidate.protocol === "https:") logo = candidate; } } catch { /* use fallback */ }
-  const latitude = settings?.nearbyLatitude, longitude = settings?.nearbyLongitude;
-  return { issuerName: cafe.name, programName: `${cafe.name} Rewards`, programLogo: { sourceUri: { uri: logo.href }, contentDescription: { defaultValue: { language: "en-US", value: cafe.name } } }, reviewStatus: "UNDER_REVIEW", hexBackgroundColor: /^#[0-9a-f]{6}$/i.test(cafe.backgroundColor) ? cafe.backgroundColor : "#111111", ...(settings ? { merchantLocations: settings.nearbyEnabled && typeof latitude === "number" && typeof longitude === "number" && Number.isFinite(latitude) && Number.isFinite(longitude) && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180 ? [{ latitude, longitude }] : [] } : {}) };
+  return { issuerName: cafe.name, programName: `${cafe.name} Rewards`, programLogo: { sourceUri: { uri: logo.href }, contentDescription: { defaultValue: { language: "en-US", value: cafe.name } } }, reviewStatus: "UNDER_REVIEW", hexBackgroundColor: /^#[0-9a-f]{6}$/i.test(cafe.backgroundColor) ? cafe.backgroundColor : "#111111", ...(settings ? { merchantLocations: walletLocations(settings).map(({latitude, longitude}) => ({latitude, longitude})) } : {}) };
 }
 export async function updateGoogleWalletClass(cafe: GoogleBrand, settings?: GoogleLocation) {
   if (!googleWalletEnabled()) return;
