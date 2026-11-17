@@ -71,7 +71,7 @@ export default function JoinForm({
   const [phone, setPhone] = useState("");
   const [instagram, setInstagram] = useState("");
   const [birthday, setBirthday] = useState("");
-  const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [privacyAccepted, setPrivacyAccepted] = useState(true);
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
