@@ -23,7 +23,6 @@ type Member = {
   memberNumber: string;
   publicToken: string | null;
   name: string;
-  phone: string | null;
   instagram: string | null;
   stamps: number;
   stampDates: string[];
