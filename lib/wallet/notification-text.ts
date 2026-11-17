@@ -1,4 +1,4 @@
-export type WalletLocation = { name: string; latitude: number; longitude: number; message: string };
+export type WalletLocation = { name: string; mapsUrl?: string; latitude: number; longitude: number; message: string };
 export type WalletNotificationSettings = { stampSuffix: string; rewardSuffix: string; resetSuffix?: string; nearbyEnabled?: boolean; nearbyMessage?: string; nearbyLatitude?: number | null; nearbyLongitude?: number | null; nearbyMaxDistance?: number; nearbyLocations?: WalletLocation[] };
 export const DEFAULT_WALLET_NOTIFICATIONS: WalletNotificationSettings = { stampSuffix: "", rewardSuffix: "", resetSuffix: "A fresh start towards your next reward ✨", nearbyEnabled: false, nearbyMessage: "Your loyalty card, ready for your next visit nearby.", nearbyLatitude: null, nearbyLongitude: null, nearbyMaxDistance: 150 };
 // Escape café-authored text for Apple's printf-style changeMessage template.
