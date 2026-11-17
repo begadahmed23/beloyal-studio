@@ -189,7 +189,7 @@ export default function LorettoLoyaltyCard({
           </div>
         </header>
 
-        {(customer.cafe.eligiblePurchaseDescription?.trim() ||
+        {(Number(customer.cafe.minimumPurchaseAmount) > 0 || customer.cafe.eligiblePurchaseDescription?.trim() ||
           customer.cafe.rewardDescription?.trim()) && (
           <div
             className="mt-6 grid gap-2 rounded-[20px] px-4 py-3.5"
@@ -198,12 +198,12 @@ export default function LorettoLoyaltyCard({
               border: `1px solid ${border}`,
             }}
           >
-            {customer.cafe.eligiblePurchaseDescription?.trim() && (
+            {(customer.cafe.eligiblePurchaseDescription?.trim() || Number(customer.cafe.minimumPurchaseAmount) > 0) && (
               <p className="text-[11px] font-medium leading-5" style={{ color: muted }}>
                 <span className="font-semibold" style={{ color: espresso }}>
                   Eligible purchase:
                 </span>{" "}
-                {customer.cafe.eligiblePurchaseDescription.trim()}
+                {customer.cafe.eligiblePurchaseDescription?.trim()}{Number(customer.cafe.minimumPurchaseAmount) > 0 && `${customer.cafe.eligiblePurchaseDescription?.trim() ? " · " : ""}Minimum ${Number(customer.cafe.minimumPurchaseAmount).toLocaleString("en-EG")} EGP`}
               </p>
             )}
             {customer.cafe.rewardDescription?.trim() && (
