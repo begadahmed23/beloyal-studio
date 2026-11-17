@@ -36,13 +36,14 @@ async function handle(request: NextRequest) {
   if (request.method === "POST") {
     const parsed = schema.safeParse(body);
     if (!parsed.success) return json({ message: "Use up to 100 characters for each optional message. Only notification messages and nearby settings can be edited here." }, 400);
+    if (!auth.isSuperAdmin && Object.keys(parsed.data).some(key => key.startsWith("nearby"))) return json({ message: "Location is managed by BeLoyal Studio." }, 403);
     const current = await getWalletNotificationSettings(cafeId);
     const submitted = { ...parsed.data };
     Reflect.deleteProperty(submitted, "cafeId");
     const settings = { ...current, ...submitted };
     if (settings.nearbyEnabled && (settings.nearbyLatitude == null || settings.nearbyLongitude == null || !settings.nearbyMessage?.trim())) return json({ message: "Add your business’s latitude, longitude and nearby message before enabling nearby reminders." }, 400);
     await saveWalletNotificationSettings(cafeId, settings);
-    await updateGoogleWalletClass(cafe, settings);
+    if (auth.isSuperAdmin && Object.keys(parsed.data).some(key => key.startsWith("nearby"))) await updateGoogleWalletClass(cafe, settings);
   }
   return json({ settings: await getWalletNotificationSettings(cafeId), rewardName: cafe.rewardName, target: getLoyaltyProgressTarget(cafe) });
 }
