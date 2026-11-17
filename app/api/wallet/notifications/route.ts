@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
 import { walletCampaignsEnabledForCafe } from "@/lib/wallet/campaign-access";
-import { walletUpdatesEnabled } from "@/lib/wallet/config";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 import { getWalletNotificationSettings, saveWalletNotificationSettings } from "@/lib/wallet/notification-settings";
 import { updateGoogleWalletClass } from "@/lib/wallet/google";
@@ -45,7 +44,6 @@ async function handle(request: NextRequest) {
   const body = request.method === "POST" ? await request.json() : null;
   const cafeId = body?.cafeId ?? request.nextUrl.searchParams.get("cafeId");
   if (typeof cafeId !== "string" || (!auth.isSuperAdmin && cafeId !== auth.cafeId) || !walletCampaignsEnabledForCafe(cafeId)) return json({ message: "Wallet notification settings are available to the Loretto pilot only." }, 403);
-  if (!walletUpdatesEnabled()) return json({ message: "Wallet updates are disabled." }, 503);
   const cafe = await prisma.cafe.findFirst({ where: { id: cafeId, isActive: true },  });
   if (!cafe) return json({ message: "Active business not found." }, 404);
   if (request.method === "POST") {
