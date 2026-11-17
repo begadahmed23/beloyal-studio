@@ -102,6 +102,10 @@ model Customer {
   cafe                 Cafe                       @relation(fields: [cafeId], references: [id], onDelete: Cascade)
   review               CustomerReview?
   feedbackRewardedAt   DateTime?
+  privacyAcceptedAt DateTime?
+  privacyVersion String?
+  marketingConsentAt DateTime?
+  marketingWithdrawnAt DateTime?
   pendingFeedbackBonus Boolean                    @default(false)
   rewardEarnedAt       DateTime?
   feedbacks            CustomerFeedback[]
