@@ -203,11 +203,11 @@ export default function KekaLoyaltyCard({
         <div className="mt-6 border-t pt-5" style={{ borderColor: cardBorder }}>
         </div>
 
-        {(customer.cafe.eligiblePurchaseDescription?.trim() || customer.cafe.rewardDescription?.trim()) && (
+        {(Number(customer.cafe.minimumPurchaseAmount) > 0 || customer.cafe.eligiblePurchaseDescription?.trim() || customer.cafe.rewardDescription?.trim()) && (
           <div className="mt-7 rounded-[18px] border px-4 py-3 text-center" style={{ borderColor: "rgba(244,229,198,0.13)", backgroundColor: "rgba(55,5,8,0.12)" }}>
-            {customer.cafe.eligiblePurchaseDescription?.trim() && (
+            {(customer.cafe.eligiblePurchaseDescription?.trim() || Number(customer.cafe.minimumPurchaseAmount) > 0) && (
               <p className="text-[11px] leading-5" style={{ color: "rgba(255,246,230,0.72)" }}>
-                {customer.cafe.eligiblePurchaseDescription.trim()}
+                {customer.cafe.eligiblePurchaseDescription?.trim()}{Number(customer.cafe.minimumPurchaseAmount) > 0 && `${customer.cafe.eligiblePurchaseDescription?.trim() ? " · " : ""}Minimum ${Number(customer.cafe.minimumPurchaseAmount).toLocaleString("en-EG")} EGP`}
               </p>
             )}
             {customer.cafe.rewardDescription?.trim() && (
