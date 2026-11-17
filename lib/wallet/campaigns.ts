@@ -18,8 +18,8 @@ export type WalletCampaign = {
   recipients: CampaignRecipient[];
 };
 export async function walletAudience(cafeId: string, timezone: string, now = new Date()) {
-  const members = await prisma.customer.findMany({ where: { cafeId, marketingConsentAt: { not: null }, marketingWithdrawnAt: null }, orderBy: [{ name: "asc" }, { id: "asc" }], take: 10001,
-    select: { id: true, name: true, memberNumber: true, birthday: true, createdAt: true, stamps: true, rewardEarnedAt: true, cafe: { select: { businessType: true, rewardTarget: true } },
+  const members = await prisma.customer.findMany({ where: { cafeId }, orderBy: [{ name: "asc" }, { id: "asc" }], take: 10001,
+    select: { id: true, marketingConsentAt: true, marketingWithdrawnAt: true, name: true, memberNumber: true, birthday: true, createdAt: true, stamps: true, rewardEarnedAt: true, cafe: { select: { businessType: true, rewardTarget: true } },
       transactions: { where: { OR: [{ description: null }, { NOT: { description: { startsWith: "Feedback", mode: "insensitive" } } }] }, orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } } } });
   if (members.length > 10000) throw new Error("AUDIENCE_TOO_LARGE");
   const cafe = await prisma.cafe.findUnique({ where: { id: cafeId }, select: { slug: true } });
@@ -27,6 +27,7 @@ export async function walletAudience(cafeId: string, timezone: string, now = new
   const googleIds = cafe ? await googleWalletSavedObjects(cafe.slug) : new Set<string>();
   const totalMembers = await prisma.customer.count({where:{cafeId}});
   const audience: CampaignMember[] = [];
+  let walletMembers = 0;
   // Pipeline lookups keep existing installs usable; only cards with a live registration qualify.
   for (let start = 0; start < members.length; start += 250) {
     const batch = members.slice(start, start + 250);
@@ -37,12 +38,14 @@ export async function walletAudience(cafeId: string, timezone: string, now = new
       const member = batch[i];
       const google = googleIds.size > 0 && googleIds.has(googleWalletObjectId(member.id));
       if ((!Number.isFinite(counts[i]) || counts[i] <= 0) && !google) continue;
+      walletMembers++;
+      if (!member.marketingConsentAt || member.marketingWithdrawnAt) continue;
       const lastVisit = member.transactions[0]?.createdAt ?? null;
       audience.push({ id: member.id, name: member.name, memberNumber: member.memberNumber, devices: (counts[i] || 0) + Number(google),
         lastVisitAt: lastVisit?.toISOString() ?? null, ...memberSegments(member.birthday, member.createdAt, lastVisit, now, timezone, Boolean(member.rewardEarnedAt) || member.stamps >= getLoyaltyProgressTarget(member.cafe)) });
     }
   }
-  return { totalMembers, members: audience };
+  return { totalMembers, walletMembers, members: audience };
 }
 export async function saveCampaign(campaign: WalletCampaign) {
   await walletRedis().set(campaignKey(campaign.id), campaign, { ex: campaign.status === "draft" ? 600 : 30 * 86400 });
