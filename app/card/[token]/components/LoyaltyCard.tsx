@@ -548,8 +548,13 @@ export default function LoyaltyCard({
                     .eligiblePurchaseDescription ||
                     (isBarbershop
                       ? "One visit per eligible service"
-                      : "One stamp per eligible purchase")}{Number(customer.cafe.minimumPurchaseAmount) > 0 && ` · Minimum ${Number(customer.cafe.minimumPurchaseAmount).toLocaleString("en-EG")} EGP`}
+                      : "One stamp per eligible purchase")}
                 </p>
+                {Number(customer.cafe.minimumPurchaseAmount) > 0 && (
+                <p className="mt-2 text-xs leading-5" style={{ color: textSecondary }}>
+                  <span className="font-semibold" >Minimum purchase:</span>{" "}<span className="whitespace-nowrap">EGP {Number(customer.cafe.minimumPurchaseAmount).toLocaleString("en-EG")}</span>
+                </p>
+              )}
               </div>
 
               <span
