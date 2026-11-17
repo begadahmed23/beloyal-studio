@@ -377,6 +377,7 @@ export default function BirthdayCustomerDisplay({
           >
             {subtitle}
           </p>
+          {enabled && customer.cafe.birthdayFriendDiscountEnabled && <p className="mt-2 text-xs leading-5" style={{color: textPrimary}}>Birthday + 1 guest: {customer.cafe.birthdayOneFriendDiscount}% off · 2+ guests: {customer.cafe.birthdayGroupDiscount}% off</p>}
         </div>
 
         {interactive ? (
