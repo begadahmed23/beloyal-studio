@@ -128,6 +128,7 @@ export async function googleWalletSavedObjects(slug: string) {
     const query = new URLSearchParams({classId: classId(slug), maxResults: "200"});
     if (pageToken) query.set("token", pageToken);
     const response = await api(`loyaltyObject?${query}`, "GET");
+    if (response.status === 404 && !pageToken) return ids;
     if (!response.ok) throw new GoogleWalletError("audience-list", response.status);
     const data = await response.json();
     for (const object of data.resources ?? []) if (object.hasUsers === true && typeof object.id === "string") ids.add(object.id);
