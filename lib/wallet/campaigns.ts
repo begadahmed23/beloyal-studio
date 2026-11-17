@@ -1,5 +1,6 @@
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
-import { googleWalletSavedObjects, googleWalletObjectId, sendGoogleWalletMessage } from "./google";
+import { walletUpdatesEnabled } from "./config";
+import { googleWalletEnabled, googleWalletSavedObjects, googleWalletObjectId, sendGoogleWalletMessage } from "./google";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { passKey, walletRedis, notifyWalletMember } from "./updates";
@@ -22,14 +23,16 @@ export async function walletAudience(cafeId: string, timezone: string, now = new
       transactions: { where: { OR: [{ description: null }, { NOT: { description: { startsWith: "Feedback", mode: "insensitive" } } }] }, orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } } } });
   if (members.length > 10000) throw new Error("AUDIENCE_TOO_LARGE");
   const cafe = await prisma.cafe.findUnique({ where: { id: cafeId }, select: { slug: true } });
+  const appleEnabled = walletUpdatesEnabled();
   const googleIds = cafe ? await googleWalletSavedObjects(cafe.slug) : new Set<string>();
+  const totalMembers = await prisma.customer.count({where:{cafeId}});
   const audience: CampaignMember[] = [];
   // Pipeline lookups keep existing installs usable; only cards with a live registration qualify.
   for (let start = 0; start < members.length; start += 250) {
     const batch = members.slice(start, start + 250);
     const pipeline = walletRedis().pipeline();
     for (const member of batch) pipeline.hlen(passKey(member.id));
-    const counts = await pipeline.exec<number[]>();
+    const counts = appleEnabled ? await pipeline.exec<number[]>() : batch.map(() => 0);
     for (let i = 0; i < batch.length; i++) {
       const member = batch[i];
       const google = googleIds.size > 0 && googleIds.has(googleWalletObjectId(member.id));
@@ -39,7 +42,7 @@ export async function walletAudience(cafeId: string, timezone: string, now = new
         lastVisitAt: lastVisit?.toISOString() ?? null, ...memberSegments(member.birthday, member.createdAt, lastVisit, now, timezone, Boolean(member.rewardEarnedAt) || member.stamps >= getLoyaltyProgressTarget(member.cafe)) });
     }
   }
-  return { totalMembers: members.length, members: audience };
+  return { totalMembers, members: audience };
 }
 export async function saveCampaign(campaign: WalletCampaign) {
   await walletRedis().set(campaignKey(campaign.id), campaign, { ex: campaign.status === "draft" ? 600 : 30 * 86400 });
@@ -77,14 +80,14 @@ export async function sendCampaign(campaign: WalletCampaign, eligibleIds: Set<st
         // Claim before contacting providers: ambiguous failures must not allow repeated notifications.
         if (!await walletRedis().set(cooldown, campaign.id, { nx: true, ex: birthday ? 366 * 86400 : 86400 })) { recipient.status = "skipped"; return; }
         let accepted = 0, failed = 0;
-        if (await walletRedis().hlen(passKey(recipient.id)) && (await getWalletMessage(recipient.id))?.text !== campaign.message) {
+        if (walletUpdatesEnabled() && await walletRedis().hlen(passKey(recipient.id)) && (await getWalletMessage(recipient.id))?.text !== campaign.message) {
           try {
             await setWalletMessage(recipient.id, campaign.message);
             const result = await notifyWalletMember(recipient.id);
             accepted += result?.accepted ?? 0; failed += result?.failed ?? 0;
           } catch { failed++; }
         }
-        if (process.env.GOOGLE_WALLET_CAMPAIGNS_ENABLED === "true") {
+        if (googleWalletEnabled() && process.env.GOOGLE_WALLET_CAMPAIGNS_ENABLED === "true") {
           try { if (await sendGoogleWalletMessage(recipient.id, campaign.id, campaign.business, campaign.message)) accepted++; }
           catch { failed++; }
         }
