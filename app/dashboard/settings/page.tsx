@@ -14,6 +14,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const {
     cafe,
+    theme,
     accountEmail,
     userRole,
   } = useCafeTheme();
@@ -33,7 +34,7 @@ export default function SettingsPage() {
       <CafeSettingsForm
         accountEmail={accountEmail}
       />
-      {walletCampaignsEnabledForCafe(cafe.id) && <WalletNotificationSettings cafeId={cafe.id} />}
+      {walletCampaignsEnabledForCafe(cafe.id) && <div className="min-w-0 rounded-3xl border p-2 sm:p-4" style={{backgroundColor:theme.surface,borderColor:theme.border}}><WalletNotificationSettings cafeId={cafe.id} /></div>}
       <BirthdayRewardsSettings />
       <StaffManagementPanel
         endpoint="/api/cafe/staff"
