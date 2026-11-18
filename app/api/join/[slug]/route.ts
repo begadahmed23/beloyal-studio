@@ -458,6 +458,7 @@ export async function POST(
     }
 
     if (validationResult.data.privacyAccepted !== true) return jsonResponse({ error: "Please acknowledge the privacy notice." }, 400);
+    if (validationResult.data.marketingConsent !== true) return jsonResponse({ error: "Please confirm that you agree to receive offers." }, 400);
     const name = normalizeName(
       validationResult.data.name ?? ""
     );
@@ -491,6 +492,7 @@ export async function POST(
 
     for (let attempt = 0; attempt < 5; attempt += 1) {
       try {
+        const acceptedAt = new Date();
         const customer = await prisma.customer.create({
           data: {
             cafeId: cafe.id,
@@ -501,8 +503,9 @@ export async function POST(
             instagram: hasInstagram ? instagram : null,
             birthday,
             stamps: 0,
-            privacyAcceptedAt: new Date(), privacyVersion: "2026-11-17",
-            marketingConsentAt: validationResult.data.marketingConsent === true ? new Date() : null,
+            privacyAcceptedAt: acceptedAt,
+            privacyVersion: "2026-11-18",
+            marketingConsentAt: acceptedAt,
           },
           select: {
             publicToken: true,

@@ -68,7 +68,7 @@ const sections = [
         ratings, provide support, prevent misuse, maintain the platform, and
         comply with legal obligations. If messaging features are enabled,
         contact details may also be used to deliver loyalty-related messages
-        requested by the participating business. Promotional Wallet campaigns, including birthday offers, require a separate affirmative opt-in. Declining or withdrawing that choice does not affect membership or rewards. Apple and Google process saved pass information according to their own terms. Nearby reminders depend on device permissions and provider settings.
+        requested by the participating business. Promotional Wallet campaigns, including birthday offers, require permission to send offers. Creating a new card on the signup page requires checking the offers box. Members can withdraw permission and keep their card and earned rewards. Apple and Google process saved pass information according to their own terms. Nearby reminders depend on device permissions and provider settings.
       </>
     ),
   },
@@ -196,7 +196,7 @@ export default function PrivacyPage() {
             business accounts and digital loyalty programs.
           </p>
           <p className="mt-5 text-sm text-neutral-400">
-            Last updated: November 17, 2026
+            Last updated: November 18, 2026
           </p>
         </header>
 

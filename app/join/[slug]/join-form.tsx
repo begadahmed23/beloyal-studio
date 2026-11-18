@@ -143,6 +143,7 @@ export default function JoinForm({
       }
 
       if (!privacyAccepted) { setError("Please acknowledge the privacy notice."); return; }
+      if (!marketingConsent) { setError("Please confirm that you agree to receive offers."); return; }
       requestBody.privacyAccepted = privacyAccepted;
       requestBody.marketingConsent = marketingConsent;
       requestBody.name = cleanName;
@@ -414,7 +415,7 @@ export default function JoinForm({
 
         {mode === "join" && <div className="space-y-2 text-xs leading-5" style={{borderColor: theme.border, color: theme.textSecondary}}>
           <label className="flex items-start gap-3"><input type="checkbox" required checked={privacyAccepted} onChange={e => setPrivacyAccepted(e.target.checked)} className="mt-1 h-4 w-4 shrink-0"/> <span>I agree to the <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">Privacy Policy</a> and use of my data for loyalty membership.</span></label>
-          <label className="flex items-start gap-3"><input type="checkbox" checked={marketingConsent} onChange={e => setMarketingConsent(e.target.checked)} className="mt-1 h-4 w-4 shrink-0"/> <span>I agree to receive offers from {cafeName}. (Optional)</span></label>
+          <label className="flex items-start gap-3"><input type="checkbox" required checked={marketingConsent} onChange={e => setMarketingConsent(e.target.checked)} className="mt-1 h-4 w-4 shrink-0"/> <span>I agree to receive offers from {cafeName}.</span></label>
         </div>}
         {error && (
           <div className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3">
