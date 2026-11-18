@@ -35,7 +35,7 @@ type ScanResult = {
   };
   stamps?: number;
   rewardTarget: number;
-  rewardEarned: boolean;
+  rewardReady: boolean;
   rewardName: string;
   message: string;
 };
@@ -184,7 +184,7 @@ export default function PhoneScannerPage() {
         setResult(scanResult);
 
         setStatus(
-          scanResult.rewardEarned
+          scanResult.rewardReady
             ? "reward"
             : "success"
         );

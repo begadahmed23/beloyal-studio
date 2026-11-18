@@ -1,5 +1,7 @@
 "use client";
 
+import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
@@ -42,6 +44,7 @@ type Customer = {
   name: string;
   birthday: string;
   stamps: number;
+  rewardEarnedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   cafe: Cafe;
@@ -354,9 +357,9 @@ export default function DigitalCardPage() {
   const cafe = customer.cafe;
   const theme = getThemeStyles(cafe);
 
-  const rewardTarget = Math.max(cafe.rewardTarget, 1);
+  const rewardTarget = getLoyaltyProgressTarget(cafe);
   const visibleStamps = Math.min(customer.stamps, rewardTarget);
-  const rewardReady = customer.stamps >= rewardTarget;
+  const rewardReady = Boolean(customer.rewardEarnedAt) || customer.stamps >= rewardTarget;
   const remainingStamps = Math.max(rewardTarget - customer.stamps, 0);
   const progressPercentage = (visibleStamps / rewardTarget) * 100;
 

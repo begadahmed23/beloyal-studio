@@ -34,7 +34,7 @@ type ScanResult = {
   previousStamps: number;
   stamps?: number;
   rewardTarget: number;
-  rewardEarned: boolean;
+  rewardReady: boolean;
   rewardName: string;
   message: string;
 };
@@ -257,7 +257,7 @@ lastScanRef.current = {
 playSuccessSound();
       setResult(scanResult);
       setStatus(
-        scanResult.rewardEarned
+        scanResult.rewardReady
           ? "reward"
           : "success"
       );
@@ -448,9 +448,8 @@ playSuccessSound();
                 </p>
 
                 <p className="mt-3 max-w-md text-sm leading-6 opacity-60">
-                  The final {loyaltyUnit} was recorded and the
-                  {personLabel}&apos;s new card has started at
-                  0 / {result.rewardTarget}.
+                  The final {loyaltyUnit} was recorded. The
+                  {personLabel} can redeem the reward on their next visit.
                 </p>
 
                 <p className="mt-7 text-xs opacity-45">

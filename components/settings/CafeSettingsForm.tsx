@@ -1,5 +1,7 @@
 "use client";
 
+import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+
 import {
   Check,
   Coffee,
@@ -116,7 +118,7 @@ export default function CafeSettingsForm({
     logoUrl: cafe.logoUrl ?? "",
     theme: savedThemeName,
 
-    rewardTarget: String(cafe.rewardTarget),
+    rewardTarget: String(Math.max(cafe.rewardTarget, 2)),
     rewardName: cafe.rewardName,
     rewardDescription:
       cafe.rewardDescription ?? "",
@@ -712,11 +714,9 @@ router.refresh();
                       ? "Your barbershop"
                       : "Your café")
                   }
-                  rewardTarget={Math.max(
-                    Number(form.rewardTarget) ||
-                      (isBarbershop ? 3 : 8),
-                    1,
-                  )}
+                  rewardTarget={getLoyaltyProgressTarget({
+                    rewardTarget: Number(form.rewardTarget) || (isBarbershop ? 3 : 8),
+                  })}
                   rewardName={
                     form.rewardName ||
                     (isBarbershop
@@ -977,16 +977,12 @@ router.refresh();
           <div className="mt-7 grid gap-5 lg:grid-cols-2">
             <Field
               theme={theme}
-              label="Reward target"
-              description={
-                isBarbershop
-                  ? "The number of paid visits required to earn the free haircut."
-                  : "The number of stamps required to complete a loyalty card."
-              }
+              label="Reward visit"
+              description="A target of 7 means 6 paid visits, then the reward on visit 7."
             >
               <input
                 type="number"
-                min={1}
+                min={2}
                 max={100}
                 step={1}
                 value={form.rewardTarget}
@@ -1167,8 +1163,8 @@ router.refresh();
                     }}
                   >
                     {isBarbershop
-                      ? `Complete ${Math.max(Number(form.rewardTarget) || 1, 1)} paid visits and receive:`
-                      : `Buy ${Math.max((Number(form.rewardTarget) || 1) - 1, 1)} and get 1 free:`}
+                      ? `Complete ${getLoyaltyProgressTarget({ rewardTarget: Number(form.rewardTarget) })} paid visits, then redeem on your next visit:`
+                      : `Buy ${getLoyaltyProgressTarget({ rewardTarget: Number(form.rewardTarget) })} and get 1 free:`}
                   </p>
 
                   <p

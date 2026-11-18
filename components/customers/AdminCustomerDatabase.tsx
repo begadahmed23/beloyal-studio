@@ -1,5 +1,7 @@
 "use client";
 
+import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Cake,
@@ -305,7 +307,7 @@ export default function AdminCustomerDatabase() {
         rewardReadyOnly &&
         !customer.rewardEarnedAt &&
         customer.stamps <
-          data.cafe.rewardTarget
+          getLoyaltyProgressTarget(data.cafe)
       ) {
         return false;
       }
@@ -662,9 +664,7 @@ export default function AdminCustomerDatabase() {
                   Boolean(
                     customer.rewardEarnedAt,
                   ) ||
-                  customer.stamps >=
-                    data.cafe
-                      .rewardTarget;
+                  customer.stamps >= getLoyaltyProgressTarget(data.cafe);
 
                 return (
                   <article

@@ -12,8 +12,8 @@ export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" };
 const reply = (status: number) => new NextResponse(null, { status, headers });
 const identifier = (value: string) => /^[a-z0-9_-]{1,200}$/i.test(value);
-// Bump when pass artwork changes, so installed cards can retrieve a new design.
-const ARTWORK_VERSION = Date.UTC(2026, 10, 13, 11, 57);
+// Include the reward visit rule change in update discovery for installed passes.
+const ARTWORK_VERSION = Date.UTC(2026, 10, 18, 18, 52);
 const select = { id: true, publicToken: true, memberNumber: true, name: true, stamps: true,
   rewardEarnedAt: true, updatedAt: true,
   cafe: { select: { id: true, name: true, slug: true, theme: true, businessType: true,

@@ -637,7 +637,7 @@ export async function POST(
       return NextResponse.json(
         {
           message:
-            "Reward target must be between 2 and 30.",
+            "Reward visit must be between 2 and 30.",
         },
         {
           status: 400,

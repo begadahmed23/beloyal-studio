@@ -91,13 +91,13 @@ test('signed artwork, stamp progress, auth and existing scanner payload', async 
   assert.equal(reward.storeCard.headerFields[0].value, '6/6');
   assert.equal(reward.storeCard.headerFields[0].label, 'REWARD READY');
   const barber = JSON.parse(strFromU8(unzipSync(await createAppleWalletPass({ ...member, cafe: { ...member.cafe, businessType: 'BARBERSHOP' } }))['pass.json']));
-  assert.equal(barber.storeCard.headerFields[0].value, '3/7');
+  assert.equal(barber.storeCard.headerFields[0].value, '3/6');
   const walidZip = unzipSync(await createAppleWalletPass({ ...member, stamps: 2, cafe: { ...member.cafe,
     name: 'Waleed saad', slug: 'walid-saad', businessType: 'BARBERSHOP', rewardTarget: 3,
     rewardName: 'Free Haircut', primaryColor: '#9B6546', backgroundColor: '#0E1513' } }));
   const walid = JSON.parse(strFromU8(walidZip['pass.json']));
-  assert.equal(walid.storeCard.headerFields[0].label, 'VISITS');
-  assert.equal(walid.storeCard.headerFields[0].value, '2/3');
+  assert.equal(walid.storeCard.headerFields[0].label, 'REWARD READY');
+  assert.equal(walid.storeCard.headerFields[0].value, '2/2');
   assert.equal(walid.backgroundColor, 'rgb(14, 21, 19)');
   assert.equal(walid.foregroundColor, 'rgb(242, 238, 231)');
   assert.equal(walid.storeCard.auxiliaryFields[0].value, 'Free Haircut');
@@ -110,7 +110,7 @@ test('signed artwork, stamp progress, auth and existing scanner payload', async 
   assert.equal(pass.locations, undefined);
   const readyWalid = JSON.parse(strFromU8(unzipSync(await createAppleWalletPass({ ...member,
     stamps: 3, rewardEarnedAt: new Date(), cafe: { ...member.cafe, name: 'Waleed saad',
-    slug: 'walid-saad', businessType: 'BARBERSHOP', rewardTarget: 3, rewardName: 'Free Haircut' } }))['pass.json']));
+    slug: 'walid-saad', businessType: 'BARBERSHOP', rewardTarget: 7, rewardName: 'Free Haircut' } }))['pass.json']));
   assert.match(readyWalid.storeCard.backFields.find(f => f.key === 'walid-reward-status').value, /reward is ready/);
 
   if (process.env.WALLET_PREVIEW_DIR) {

@@ -347,7 +347,7 @@ export default function ManageCafeEditor() {
     setBackgroundColor(nextCafe.backgroundColor);
 
     setRewardName(nextCafe.rewardName);
-    setRewardTarget(String(nextCafe.rewardTarget));
+    setRewardTarget(String(Math.max(nextCafe.rewardTarget, 2)));
 
     setRewardDescription(
       nextCafe.rewardDescription || ""
@@ -866,14 +866,19 @@ export default function ManageCafeEditor() {
             onChange={setRewardName}
           />
 
-          <Field
-            type="number"
-            label="Stamps required"
-            value={rewardTarget}
-            onChange={setRewardTarget}
-            min={2}
-            max={30}
-          />
+          <div>
+            <Field
+              type="number"
+              label="Reward visit"
+              value={rewardTarget}
+              onChange={setRewardTarget}
+              min={2}
+              max={30}
+            />
+            <p className="mt-1.5 text-sm text-[#626267]">
+              A target of 7 means 6 paid visits, then the reward on visit 7.
+            </p>
+          </div>
 
           <Field
             type="number"

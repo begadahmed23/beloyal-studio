@@ -1,5 +1,7 @@
 "use client";
 
+import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -97,7 +99,7 @@ export default function BarberDashboardHome() {
               Loyalty rule
             </p>
             <p className="mt-3 text-2xl font-semibold">
-              {cafe.rewardTarget} visits
+              {getLoyaltyProgressTarget(cafe)} paid visits
             </p>
             <p
               className="mt-1 text-sm"

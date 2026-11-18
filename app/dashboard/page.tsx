@@ -1,5 +1,7 @@
 "use client";
 
+import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -115,7 +117,7 @@ function CafeDashboardHome() {
                   The ritual
                 </p>
                 <p className="mt-1 text-lg font-semibold text-[#FFF6E6]">
-                  {Math.max(cafe.rewardTarget - 1, 1)} visits
+                  {getLoyaltyProgressTarget(cafe)} visits
                 </p>
               </div>
               <div className="h-9 w-px bg-[#F4E5C6]/15" />
@@ -165,7 +167,7 @@ function CafeDashboardHome() {
               </p>
 
               <p className="relative mt-4 text-3xl font-semibold tracking-[-0.04em]">
-                Buy {Math.max(cafe.rewardTarget - 1, 1)}
+                Buy {getLoyaltyProgressTarget(cafe)}
               </p>
 
               <p className="relative mt-1 text-sm text-white/65">
@@ -231,7 +233,7 @@ function CafeDashboardHome() {
                 Loyalty rule
               </p>
               <p className="mt-3 text-2xl font-semibold">
-                {Math.max(cafe.rewardTarget - 1, 1)} stamps
+                {getLoyaltyProgressTarget(cafe)} stamps
               </p>
               <p
                 className="mt-1 text-sm"

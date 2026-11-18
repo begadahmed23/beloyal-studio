@@ -151,14 +151,14 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
     {...base,id:'cafe5',cafe,stamps:5}, {...base,id:'cafe6',cafe,stamps:6},
     {...base,id:'earned',cafe,stamps:0,rewardEarnedAt:new Date()},
     {...base,id:'redeemed',cafe,stamps:0},
-    {...base,id:'barber2',cafe:barber,stamps:2}, {...base,id:'barber3',cafe:barber,stamps:3},
+    {...base,id:'barber1',cafe:barber,stamps:1}, {...base,id:'barber2',cafe:barber,stamps:2},
   ];
   const lib = loader({ '@/lib/prisma': {prisma:{customer:{findMany:async()=>rows},cafe:{findUnique:async()=>null}}},
     './config': {walletUpdatesEnabled:()=>true},
     './updates':{passKey:id=>id,walletRedis:()=>({pipeline:()=>({hlen(){},exec:async()=>rows.map(()=>1)})})}
   })('lib/wallet/campaigns.ts');
   const audience = await lib.walletAudience('cafe1','Africa/Cairo');
-  assert.deepEqual(audience.members.filter(m=>m.segments.includes('reward_ready')).map(m=>m.id),['cafe6','earned','barber3']);
+  assert.deepEqual(audience.members.filter(m=>m.segments.includes('reward_ready')).map(m=>m.id),['cafe6','earned','barber2']);
  });
  test('notification text protects progress and uses the configured reward with safe optional text', () => {
   const text = loader()('lib/wallet/notification-text.ts');
@@ -181,12 +181,13 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
     '@/lib/prisma': {prisma:{cafe:{findFirst:async()=>({rewardName:'Free Cookie',rewardTarget:7,businessType:'CAFE'})}}},
     '@/lib/wallet/notification-settings': {getWalletNotificationSettings:async()=>({stampSuffix:'',rewardSuffix:''}),saveWalletNotificationSettings:async()=>{saved++}},
   })('app/api/wallet/notifications/route.ts'); }
+  const studio = { ...admin, isSuperAdmin: true, user: { ...admin.user, role: 'SUPER_ADMIN' } };
   const req = body => new NextRequest('https://example.com/api/wallet/notifications',{method:'POST',headers:{origin:'https://example.com','content-type':'application/json'},body:JSON.stringify(body)});
   assert.equal((await route({...admin,isCashier:true}).POST(req({cafeId:'cafe1'}))).status,403);
   assert.equal((await route(admin).POST(req({cafeId:'other',stampSuffix:'hi',rewardSuffix:'enjoy'}))).status,403);
   assert.equal((await route(admin).POST(req({cafeId:'cafe1',stampSuffix:'hi',rewardSuffix:'enjoy',stamps:999,rewardName:'Wrong'}))).status,400);
-  assert.equal((await route(admin).POST(req({cafeId:'cafe1',stampSuffix:'',rewardSuffix:'',nearbyEnabled:true,nearbyMessage:'Store nearby',nearbyLatitude:null,nearbyLongitude:null}))).status,400);
-  assert.equal((await route(admin).POST(req({cafeId:'cafe1',stampSuffix:'',rewardSuffix:'',nearbyEnabled:true,nearbyMessage:'Store nearby',nearbyLatitude:100,nearbyLongitude:29}))).status,400);
+  assert.equal((await route(studio).POST(req({cafeId:'cafe1',stampSuffix:'',rewardSuffix:'',nearbyEnabled:true,nearbyMessage:'Store nearby',nearbyLatitude:null,nearbyLongitude:null}))).status,400);
+  assert.equal((await route(studio).POST(req({cafeId:'cafe1',stampSuffix:'',rewardSuffix:'',nearbyEnabled:true,nearbyMessage:'Store nearby',nearbyLatitude:100,nearbyLongitude:29}))).status,400);
   assert.equal(saved,0);
   const response = await route(admin).POST(req({cafeId:'cafe1',stampSuffix:'hi',rewardSuffix:'enjoy'}));
   assert.equal(response.status,200); assert.equal(saved,1);

@@ -74,10 +74,6 @@ export default function CreateCafeDialog({
     businessType === "BARBERSHOP"
       ? "Barbershop"
       : "Café";
-  const loyaltyUnitLabel =
-    businessType === "BARBERSHOP"
-      ? "Visits"
-      : "Stamps";
   const availableThemes =
     getBusinessThemeOptions(businessType);
 
@@ -471,7 +467,7 @@ export default function CreateCafeDialog({
 
               <div>
                 <label className="mb-2 block text-sm font-medium text-[#48484D]">
-                  {loyaltyUnitLabel} required
+                  Reward visit
                 </label>
 
                 <input
@@ -486,6 +482,9 @@ export default function CreateCafeDialog({
                   disabled={loading}
                   className={inputClassName}
                 />
+                <p className="mt-1.5 text-sm text-[#626267]">
+                  A target of 7 means 6 paid visits, then the reward on visit 7.
+                </p>
               </div>
 
               <div>

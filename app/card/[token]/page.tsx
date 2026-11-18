@@ -368,18 +368,7 @@ export default function DigitalCardPage() {
           // The card still works when storage is unavailable.
         }
 
-        const incomingRewardTarget =
-          Math.max(
-            incomingCustomer.cafe
-              .rewardTarget,
-            1,
-          );
-
-        const incomingUnlockAt =
-          Math.max(
-            incomingRewardTarget - 1,
-            1,
-          );
+        const incomingUnlockAt = getLoyaltyProgressTarget(incomingCustomer.cafe);
 
         const rewardWasJustRedeemed =
           previousStampCount.current !==

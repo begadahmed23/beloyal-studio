@@ -425,7 +425,7 @@ export async function POST(request: NextRequest) {
           stampCreatedAt:
             result.stampCreatedAt,
 
-          rewardTarget,
+          rewardTarget: paidStampTarget,
 
           rewardReady,
 

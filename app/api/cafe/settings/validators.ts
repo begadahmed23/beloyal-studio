@@ -138,11 +138,11 @@ export function validateCafeSettings(
 
   if (
     !Number.isInteger(rewardTarget) ||
-    rewardTarget < 1 ||
+    rewardTarget < 2 ||
     rewardTarget > 100
   ) {
     throw new Error(
-      "Reward target must be a whole number between 1 and 100.",
+      "Reward target must be a whole number between 2 and 100.",
     );
   }
 

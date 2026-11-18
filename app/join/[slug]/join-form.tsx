@@ -511,7 +511,7 @@ export default function JoinForm({
                 style={{ color: isKato ? katoTextSecondary : theme.textSecondary }}
               >
                 {isBarbershop
-                  ? `Complete ${loyaltyTarget} paid visits to receive `
+                  ? `Complete ${loyaltyTarget} paid visits, then redeem on your next visit: `
                   : `Buy ${loyaltyTarget} and get 1 free: `}
                 <span
                   className="font-medium"

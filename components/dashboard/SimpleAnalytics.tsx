@@ -1,5 +1,7 @@
 "use client";
 
+import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+
 import {
   useCallback,
   useEffect,
@@ -524,10 +526,7 @@ export default function SimpleAnalytics() {
               color: theme.textPrimary,
             }}
           >
-            {Math.max(
-              data.rewardTarget - 1,
-              1,
-            )}{" "}
+            {getLoyaltyProgressTarget(data)}{" "}
             paid stamps →{" "}
             {data.rewardName}
           </span>

@@ -9,9 +9,17 @@ Object.assign(process.env, { GOOGLE_WALLET_ENABLED: 'true', GOOGLE_WALLET_ISSUER
 const member = { id: 'one', publicToken: 'a'.repeat(48), name: 'Test', memberNumber: 'BL-1', stamps: 3, rewardEarnedAt: null, cafe: { slug: 'cafe', name: 'Cafe', businessType: 'CAFE', rewardTarget: 7, rewardName: 'Cookie', backgroundColor: '#123456' } };
 const calls = [];
 let patchStatus = 200;
-const source = ts.transpileModule(fs.readFileSync('lib/wallet/google.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
+const compile = filename => ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
+ compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+}).outputText;
+function loadPureModule(filename) {
+ const exports = {};
+ vm.runInNewContext(compile(filename), { exports });
+ return exports;
+}
+const source = compile('lib/wallet/google.ts');
 const moduleObject = { exports: {} };
-vm.runInNewContext(source, { exports: moduleObject.exports, require: id => id === '@/lib/prisma' ? { prisma: { customer: { findUnique: async () => member } } } : id.includes('loyalty-target') ? { getLoyaltyProgressTarget: cafe => cafe.businessType === 'CAFE' ? cafe.rewardTarget - 1 : cafe.rewardTarget } : require(id), Buffer, URL, URLSearchParams, AbortSignal, process, console,
+vm.runInNewContext(source, { exports: moduleObject.exports, require: id => id === '@/lib/prisma' ? { prisma: { customer: { findUnique: async () => member } } } : id.includes('loyalty-target') ? loadPureModule('lib/business/loyalty-target.ts') : id === './notification-text' ? loadPureModule('lib/wallet/notification-text.ts') : require(id), Buffer, URL, URLSearchParams, AbortSignal, process, console,
   fetch: async (url, options) => { calls.push({ url, ...options }); if (url.includes('oauth2')) return { ok: true, json: async () => ({ access_token: 'test', expires_in: 3600 }) }; const status = options.method === 'PATCH' ? patchStatus : 409; return { ok: status === 200, status }; } });
 const wallet = moduleObject.exports;
 test('save flow signs a verifiable JWT and handles existing classes and objects', async () => {
@@ -30,8 +38,8 @@ test('missing passes do not get created by balance sync; API failures surface', 
  patchStatus = 500; await assert.rejects(wallet.syncGoogleWalletMember(member.id));
 });
 test('reward state and barber target match existing loyalty rules', () => {
- const object = wallet.googleWalletObject({ ...member, stamps: 3, cafe: { ...member.cafe, businessType: 'BARBERSHOP', rewardTarget: 3 } });
- assert.equal(object.loyaltyPoints.balance.string, '3/3'); assert.equal(object.loyaltyPoints.label, 'REWARD READY');
+ const object = wallet.googleWalletObject({ ...member, stamps: 2, cafe: { ...member.cafe, businessType: 'BARBERSHOP', rewardTarget: 3 } });
+ assert.equal(object.loyaltyPoints.balance.string, '2/2'); assert.equal(object.loyaltyPoints.label, 'REWARD READY');
 });
 
 test('private key copies support raw PEM, JSON strings and service-account JSON', () => {
