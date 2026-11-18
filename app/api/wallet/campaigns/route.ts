@@ -7,7 +7,7 @@ import { requireActiveCafe } from "@/lib/require-active-cafe";
 import { googleWalletEnabled } from "@/lib/wallet/google";
 import { walletUpdatesEnabled } from "@/lib/wallet/config";
 import { walletRedis, passKey } from "@/lib/wallet/updates";
-import { campaignSegments, MAX_CAMPAIGN_RECIPIENTS } from "@/lib/wallet/campaign-segments";
+import { campaignSegments, MAX_CAMPAIGN_RECIPIENTS, type CampaignMember, type CampaignSegment } from "@/lib/wallet/campaign-segments";
 import { walletAudience, campaignHistory, createCampaign, getCampaign, sendCampaign } from "@/lib/wallet/campaigns";
 
 export const runtime = "nodejs";
@@ -20,6 +20,8 @@ const previewSchema = z.object({ action: z.literal("preview"), cafeId: z.string(
   message: z.string().trim().min(1).max(180).refine(value => !/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(value)),
   customerIds: z.array(z.string().min(1).max(100)).min(1).max(MAX_CAMPAIGN_RECIPIENTS).refine(ids => new Set(ids).size === ids.length),
 });
+const eligibleFor = (member: CampaignMember, segment: CampaignSegment) =>
+  member.offersStatus === "enabled" && member.segments.includes(segment);
 const sendSchema = z.object({ action: z.literal("send"), cafeId: z.string().min(1).max(100), campaignId: z.string().uuid() });
 
 async function handle(request: NextRequest) {
@@ -41,7 +43,7 @@ async function handle(request: NextRequest) {
   if (!cafe) return json({ message: "Active business not found." }, 404);
   if (request.method === "GET") {
     const [audience, history] = await Promise.all([walletAudience(cafeId, cafe.timezone), campaignHistory(cafeId)]);
-    const counts = Object.fromEntries(campaignSegments.map(segment => [segment.id, audience.members.filter(member => member.segments.includes(segment.id)).length]));
+    const counts = Object.fromEntries(campaignSegments.map(segment => [segment.id, audience.members.filter(member => eligibleFor(member, segment.id)).length]));
     return json({ cafe, ...audience, counts, history, maxRecipients: MAX_CAMPAIGN_RECIPIENTS });
   }
   if (body?.action === "preview") {
@@ -49,7 +51,7 @@ async function handle(request: NextRequest) {
     if (!parsed.success) return json({ message: "Choose up to 50 members and write a card update of 1–180 characters." }, 400);
     const audience = await walletAudience(cafeId, cafe.timezone);
     const selected = new Set(parsed.data.customerIds);
-    const recipients = audience.members.filter(member => selected.has(member.id) && member.segments.includes(parsed.data.segment));
+    const recipients = audience.members.filter(member => selected.has(member.id) && eligibleFor(member, parsed.data.segment));
     if (recipients.length !== selected.size) return json({ message: "Your audience has changed. Refresh the list and choose recipients again." }, 409);
     const campaign = await createCampaign({ cafeId, business: cafe.name, createdBy: auth.user.id, segment: parsed.data.segment, message: parsed.data.message,
       recipients: recipients.map(member => ({ id: member.id, name: member.name, memberNumber: member.memberNumber, status: "pending" })) });
@@ -65,7 +67,7 @@ async function handle(request: NextRequest) {
   if (!await walletRedis().set(lock, campaign.id, { nx: true, ex: 300 })) return json({ message: "A campaign is already running for this business. Try again shortly." }, 409);
   try {
     const audience = await walletAudience(cafeId, cafe.timezone);
-    const eligibleIds = new Set(audience.members.filter(member => member.segments.includes(campaign.segment)).map(member => member.id));
+    const eligibleIds = new Set(audience.members.filter(member => eligibleFor(member, campaign.segment)).map(member => member.id));
     return json({ campaign: await sendCampaign(campaign, eligibleIds) });
   }
   finally {
@@ -76,6 +78,7 @@ async function respond(request: NextRequest) {
   try { return await handle(request); }
   catch (error) {
     if (error instanceof Error && error.message === "AUDIENCE_TOO_LARGE") return json({ message: "This business has over 10,000 members. Campaign audience pagination is required before sending." }, 503);
+    if (error instanceof Error && error.message === "WALLET_AUDIENCE_UNAVAILABLE") return json({ message: "Wallet registrations could not be loaded. Try refreshing the audience." }, 503);
     if (error instanceof SyntaxError) return json({ message: "Invalid request." }, 400);
     console.error("Wallet campaign request failed.");
     return json({ message: "Could not complete this request. Refresh campaign history before trying to send again." }, 500);

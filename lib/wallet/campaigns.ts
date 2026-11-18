@@ -24,28 +24,39 @@ export async function walletAudience(cafeId: string, timezone: string, now = new
   if (members.length > 10000) throw new Error("AUDIENCE_TOO_LARGE");
   const cafe = await prisma.cafe.findUnique({ where: { id: cafeId }, select: { slug: true } });
   const appleEnabled = walletUpdatesEnabled();
-  const googleIds = cafe ? await googleWalletSavedObjects(cafe.slug) : new Set<string>();
-  const totalMembers = await prisma.customer.count({where:{cafeId}});
+  let googleIds = new Set<string>();
+  let googleUnavailable = false;
+  if (cafe) {
+    try {
+      googleIds = await googleWalletSavedObjects(cafe.slug);
+    } catch {
+      if (!appleEnabled) throw new Error("WALLET_AUDIENCE_UNAVAILABLE");
+      googleUnavailable = true;
+      console.warn("Google Wallet audience lookup failed.");
+    }
+  }
   const audience: CampaignMember[] = [];
-  let walletMembers = 0;
   // Pipeline lookups keep existing installs usable; only cards with a live registration qualify.
   for (let start = 0; start < members.length; start += 250) {
     const batch = members.slice(start, start + 250);
-    const pipeline = walletRedis().pipeline();
-    for (const member of batch) pipeline.hlen(passKey(member.id));
-    const counts = appleEnabled ? await pipeline.exec<number[]>() : batch.map(() => 0);
+    let counts: number[] = [];
+    if (appleEnabled) {
+      const pipeline = walletRedis().pipeline();
+      for (const member of batch) pipeline.hlen(passKey(member.id));
+      counts = await pipeline.exec<number[]>();
+    }
     for (let i = 0; i < batch.length; i++) {
       const member = batch[i];
       const google = googleIds.size > 0 && googleIds.has(googleWalletObjectId(member.id));
-      if ((!Number.isFinite(counts[i]) || counts[i] <= 0) && !google) continue;
-      walletMembers++;
-      if (!member.marketingConsentAt || member.marketingWithdrawnAt) continue;
+      const apple = Number.isFinite(counts[i]) && counts[i] > 0 ? counts[i] : 0;
+      if (!apple && !google) continue;
+      const offersStatus = member.marketingWithdrawnAt ? "withdrawn" : member.marketingConsentAt ? "enabled" : "missing";
       const lastVisit = member.transactions[0]?.createdAt ?? null;
-      audience.push({ id: member.id, name: member.name, memberNumber: member.memberNumber, devices: (counts[i] || 0) + Number(google),
+      audience.push({ id: member.id, name: member.name, memberNumber: member.memberNumber, devices: apple + Number(google), offersStatus,
         lastVisitAt: lastVisit?.toISOString() ?? null, ...memberSegments(member.birthday, member.createdAt, lastVisit, now, timezone, Boolean(member.rewardEarnedAt) || member.stamps >= getLoyaltyProgressTarget(member.cafe)) });
     }
   }
-  return { totalMembers, walletMembers, members: audience };
+  return { totalMembers: members.length, walletMembers: audience.length, members: audience, googleUnavailable };
 }
 export async function saveCampaign(campaign: WalletCampaign) {
   await walletRedis().set(campaignKey(campaign.id), campaign, { ex: campaign.status === "draft" ? 600 : 30 * 86400 });
