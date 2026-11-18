@@ -74,14 +74,13 @@ export async function sendCampaign(campaign: WalletCampaign, eligibleIds: Set<st
       try {
         if (!eligibleIds.has(recipient.id)) { recipient.status = "skipped"; return; }
         // Recheck ownership and registration at send time (e.g. pass removed after preview).
-        const member = await prisma.customer.findFirst({ where: { id: recipient.id, cafeId: campaign.cafeId, marketingConsentAt: { not: null }, marketingWithdrawnAt: null }, select: { id: true, birthday: true, cafe: { select: { timezone: true } } } });
+        const member = await prisma.customer.findFirst({ where: { id: recipient.id, cafeId: campaign.cafeId, marketingConsentAt: { not: null }, marketingWithdrawnAt: null }, select: { cafe: { select: { timezone: true } } } });
         if (!member) { recipient.status = "skipped"; return; }
-        const birthday = campaign.segment === "birthday_today";
-        const now = new Date();
-        const year = new Intl.DateTimeFormat("en", { year: "numeric", timeZone: member.cafe.timezone }).format(now);
-        const cooldown = `${prefix()}cooldown:${campaign.cafeId}:${recipient.id}:${birthday ? `birthday:${year}` : "marketing"}`;
-        // Claim before contacting providers: ambiguous failures must not allow repeated notifications.
-        if (!await walletRedis().set(cooldown, campaign.id, { nx: true, ex: birthday ? 366 * 86400 : 86400 })) { recipient.status = "skipped"; return; }
+        if (campaign.segment === "birthday_today") {
+          const year = new Intl.DateTimeFormat("en", { year: "numeric", timeZone: member.cafe.timezone }).format(new Date());
+          const birthdayKey = `${prefix()}cooldown:${campaign.cafeId}:${recipient.id}:birthday:${year}`;
+          if (!await walletRedis().set(birthdayKey, campaign.id, { nx: true, ex: 366 * 86400 })) { recipient.status = "skipped"; return; }
+        }
         let accepted = 0, failed = 0;
         if (walletUpdatesEnabled() && await walletRedis().hlen(passKey(recipient.id)) && (await getWalletMessage(recipient.id))?.text !== campaign.message) {
           try {

@@ -13,11 +13,16 @@ export function walletRedis() {
   return new Redis({ url: process.env.UPSTASH_REDIS_REST_URL!, token: process.env.UPSTASH_REDIS_REST_TOKEN! });
 }
 
+const pendingUpdateKey = (serial: string) => `${passKey(serial)}:pending-update`;
+
 export async function registerWalletDevice(device: string, serial: string, pushToken: string) {
-  return Number(await walletRedis().eval(`
+  const [added, pending] = await walletRedis().eval<string[], [number, number]>(`
     local added = redis.call('SADD', KEYS[1], ARGV[1])
     redis.call('HSET', KEYS[2], ARGV[2], ARGV[3])
-    return added`, [deviceKey(device), passKey(serial)], [serial, device, pushToken]));
+    local pending = redis.call('DEL', KEYS[3])
+    return {added, pending}`, [deviceKey(device), passKey(serial), pendingUpdateKey(serial)], [serial, device, pushToken]);
+  if (pending) after(() => deliverWalletPush(serial, device, pushToken).then(() => undefined));
+  return added;
 }
 
 export async function unregisterWalletDevice(device: string, serial: string) {
@@ -54,24 +59,41 @@ async function pushToDevice(token: string): Promise<number> {
   });
 }
 
-export async function notifyWalletMember(serial: string) {
-  if (!walletUpdatesEnabled()) return;
-  const registrations = await walletRedis().hgetall<Record<string, string>>(passKey(serial));
-  if (!registrations) return;
-  // Few devices per member; cap concurrency without dropping registrations.
-  const entries = Object.entries(registrations);
-  let accepted = 0;
-  let failed = 0;
-  for (let i = 0; i < entries.length; i += 5) {
-    await Promise.all(entries.slice(i, i + 5).map(async ([device, token]) => {
-      try {
-        const status = await pushToDevice(token);
-        if (status === 200) accepted++; else failed++;
-        if (status === 410) await unregisterWalletDevice(device, serial);
-        else if (status !== 200) console.error("Wallet push rejected:", status);
-      } catch { failed++; console.error("Wallet push delivery failed; manual refresh remains available."); }
-    }));
+async function deliverWalletPush(serial: string, device: string, token: string): Promise<boolean> {
+  try {
+    const status = await pushToDevice(token);
+    if (status === 200) return true;
+    if (status === 410) await unregisterWalletDevice(device, serial);
+    else console.error("Wallet push rejected:", status);
+  } catch {
+    console.error("Wallet push delivery failed; manual refresh remains available.");
   }
+  return false;
+}
+
+export async function notifyWalletMember(serial: string, catchUpOnRegistration = false) {
+  if (!walletUpdatesEnabled()) return;
+  const redis = walletRedis();
+  let entries: [string, string][];
+  if (catchUpOnRegistration) {
+    // Atomically mark an update for registration if the first device has not registered yet.
+    const pairs = await redis.eval<[], string[]>(`
+      local registrations = redis.call('HGETALL', KEYS[1])
+      if #registrations == 0 then redis.call('SET', KEYS[2], '1', 'EX', 3600) end
+      return registrations`, [passKey(serial), pendingUpdateKey(serial)], []);
+    entries = [];
+    for (let i = 0; i < pairs.length; i += 2) entries.push([pairs[i], pairs[i + 1]]);
+  } else {
+    const registrations = await redis.hgetall<Record<string, string>>(passKey(serial));
+    entries = Object.entries(registrations ?? {});
+  }
+  if (!entries.length) return;
+  let accepted = 0;
+  for (let i = 0; i < entries.length; i += 5) {
+    const delivered = await Promise.all(entries.slice(i, i + 5).map(([device, token]) => deliverWalletPush(serial, device, token)));
+    accepted += delivered.filter(Boolean).length;
+  }
+  const failed = entries.length - accepted;
   console.info("Wallet push result", { registered: entries.length, accepted, failed });
   return { registered: entries.length, accepted, failed };
 }
@@ -79,9 +101,13 @@ export async function notifyWalletMember(serial: string) {
 export function scheduleWalletUpdate(serial: string) {
   if (!walletUpdatesEnabled() && !googleWalletEnabled()) return;
   after(async () => {
-    try { await syncGoogleWalletMember(serial); }
-    catch { console.error("Google Wallet sync failed; stamp transaction was already committed."); }
-    try { await notifyWalletMember(serial); }
-    catch { console.error("Wallet update scheduling failed; stamp transaction was already committed."); }
+    await Promise.all([
+      notifyWalletMember(serial, true).catch(() => {
+        console.error("Wallet update scheduling failed; stamp transaction was already committed.");
+      }),
+      syncGoogleWalletMember(serial).catch(() => {
+        console.error("Google Wallet sync failed; stamp transaction was already committed.");
+      }),
+    ]);
   });
 }
