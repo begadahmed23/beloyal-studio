@@ -18,6 +18,8 @@ import {
   X,
 } from "lucide-react";
 
+import MbVapeStamp from "@/components/brand/MbVapeStamp";
+import { isMbVape } from "@/lib/business/mb-vape";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
@@ -68,7 +70,7 @@ export default function MemberCard({
 }: Props) {
   const { theme, cafe } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
-  const LoyaltyIcon = isBarbershop ? Scissors : Coffee;
+  const LoyaltyIcon = isMbVape(cafe) ? MbVapeStamp : isBarbershop ? Scissors : Coffee;
   const personLabel = isBarbershop ? "client" : "member";
   const loyaltyUnit = isBarbershop ? "visit" : "stamp";
 
@@ -102,6 +104,11 @@ export default function MemberCard({
 
   const [loading, setLoading] =
     useState(false);
+
+  const [stampFeedback, setStampFeedback] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
   const paidStampTarget = getLoyaltyProgressTarget(cafe);
 
@@ -273,6 +280,7 @@ export default function MemberCard({
 
     try {
       setLoading(true);
+      setStampFeedback(null);
 
       const response = await fetch(
         "/api/customers/stamp",
@@ -327,21 +335,17 @@ export default function MemberCard({
 
       notifyDashboard();
 
-      showMessage(
-        isBarbershop ? "Visit recorded" : "Stamp added",
-        `The ${personLabel} card was updated successfully.`,
-      );
+      setStampFeedback({
+        type: "success",
+        text: isBarbershop ? "Visit recorded." : "Stamp added.",
+      });
     } catch (error) {
       console.error(error);
 
-      showMessage(
-        isBarbershop
-          ? "Could not record visit"
-          : "Could not add stamp",
-        error instanceof Error
-          ? error.message
-          : "Something went wrong.",
-      );
+      setStampFeedback({
+        type: "error",
+        text: error instanceof Error ? error.message : "Something went wrong.",
+      });
     } finally {
       setLoading(false);
     }
@@ -517,9 +521,10 @@ export default function MemberCard({
     <>
       <button
         type="button"
-        onClick={() =>
-          setProfileOpen(true)
-        }
+        onClick={() => {
+          setStampFeedback(null);
+          setProfileOpen(true);
+        }}
         className="group w-full border p-5 text-left transition duration-200 hover:-translate-y-0.5 hover:brightness-105"
         style={{
           borderColor: cardGlowsGreen
@@ -1077,52 +1082,41 @@ export default function MemberCard({
               onRedeemed={notifyDashboard}
             />
 
-            {rewardReady ? (
-              <button
-                type="button"
-                onClick={() =>
-                  setRedeemOpen(true)
-                }
-                disabled={loading}
-                className="flex h-12 w-full items-center justify-center gap-2 text-sm font-semibold transition hover:opacity-90 disabled:opacity-50"
-                style={{
-                  backgroundColor:
-                    theme.success,
-                  color: "#ffffff",
-                  borderRadius:
-                    theme.radiusMedium,
-                }}
-              >
-                <Gift size={18} />
-                Redeem{" "}
-                {cafe.rewardName}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={addStamp}
-                disabled={loading}
-                className="flex h-12 w-full items-center justify-center gap-2 text-sm font-semibold transition hover:opacity-90 disabled:opacity-50"
-                style={{
-                  backgroundColor:
-                    theme.accent,
-                  color:
-                    theme.buttonText,
-                  borderRadius:
-                    theme.radiusMedium,
-                }}
-              >
-                <LoyaltyIcon size={18} />
+          </div>
 
-                {loading
-                  ? isBarbershop
-                    ? "Recording Visit..."
-                    : "Adding Stamp..."
-                  : isBarbershop
-                    ? "Record Visit"
-                    : "Add Stamp"}
-              </button>
-            )}
+          <div
+            className="shrink-0 border-t px-4 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-6"
+            style={{ borderColor: theme.border }}
+          >
+            <button
+              type="button"
+              onClick={rewardReady ? () => setRedeemOpen(true) : addStamp}
+              disabled={loading}
+              aria-busy={loading}
+              className="flex h-12 w-full touch-manipulation items-center justify-center gap-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+              style={{
+                backgroundColor: rewardReady ? theme.success : theme.accent,
+                color: rewardReady ? "#ffffff" : theme.buttonText,
+                borderRadius: theme.radiusMedium,
+              }}
+            >
+              {rewardReady ? (
+                <><Gift size={18} aria-hidden="true" /> Redeem {cafe.rewardName}</>
+              ) : (
+                <><LoyaltyIcon size={18} aria-hidden="true" /> {isBarbershop ? "Record Visit" : "Add Stamp"}</>
+              )}
+            </button>
+            <p
+              role="status"
+              className="mt-1.5 h-8 overflow-y-auto text-xs leading-4"
+              style={{
+                color: stampFeedback?.type === "error" ? theme.danger : theme.textSecondary,
+              }}
+            >
+              {loading && !rewardReady
+                ? (isBarbershop ? "Recording visit…" : "Adding stamp…")
+                : stampFeedback?.text}
+            </p>
           </div>
         </DialogContent>
       </Dialog>

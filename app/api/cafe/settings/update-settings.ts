@@ -1,39 +1,18 @@
 import { prisma } from "@/lib/prisma";
 
-import { validateCafeSettings } from "./validation";
+import { validateCafeSettingsPatch } from "./validation";
 
 export async function updateCafeSettings(
   cafeId: string,
   body: Record<string, unknown>,
 ) {
-  const settings = validateCafeSettings(body);
+  const settings = validateCafeSettingsPatch(body);
 
   const cafe = await prisma.cafe.update({
     where: {
       id: cafeId,
     },
-    data: {
-      name: settings.name,
-      logoUrl: settings.logoUrl,
-      theme: settings.theme,
-
-      primaryColor: settings.primaryColor,
-      secondaryColor: settings.secondaryColor,
-      backgroundColor: settings.backgroundColor,
-
-      rewardTarget: settings.rewardTarget,
-      rewardName: settings.rewardName,
-      rewardDescription: settings.rewardDescription,
-      eligiblePurchaseDescription:
-        settings.eligiblePurchaseDescription,
-
-      minimumPurchaseAmount:
-        settings.minimumPurchaseAmount,
-
-      feedbackEnabled: settings.feedbackEnabled,
-      feedbackRewardEnabled: settings.feedbackRewardEnabled,
-      googleReviewUrl: settings.googleReviewUrl,
-    },
+    data: settings,
     select: {
       id: true,
       name: true,

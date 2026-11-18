@@ -13,6 +13,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
+import { getMbVapeBrandColors } from "@/lib/business/mb-vape";
 import {
   CafeThemeConfig,
   CafeThemeName,
@@ -286,9 +287,9 @@ export default function CafeThemeProvider({
     ) => {
       setCurrentCafe(updatedCafe);
       setSavedThemeName(updatedThemeName);
-      setPreviewThemeName(updatedThemeName);
+      setPreviewThemeName((current) => current === savedThemeName ? updatedThemeName : current);
     },
-    [],
+    [savedThemeName],
   );
 
   const theme = useMemo(
@@ -300,7 +301,7 @@ export default function CafeThemeProvider({
           : getBusinessTheme(
               previewThemeName,
               currentCafe.businessType,
-              previewThemeName === savedThemeName ? currentCafe : undefined,
+              previewThemeName === savedThemeName ? getMbVapeBrandColors({ ...currentCafe, theme: savedThemeName }) : undefined,
             ),
     [
       previewThemeName,

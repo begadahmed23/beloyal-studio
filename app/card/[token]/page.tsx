@@ -42,6 +42,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+import { getMbVapeBrandColors, isMbVape, MB_VAPE_LOGO_URL } from "@/lib/business/mb-vape";
 import { getBusinessBrandColors } from "@/lib/cafe-theme";
 
 type FeedbackResponse = {
@@ -78,7 +79,7 @@ function getLorettoPageTheme(theme: string): LoaderTheme {
 function getLoaderTheme(
   customer: Customer,
 ): LoaderTheme {
-  const cafe = customer.cafe;
+  const cafe = getMbVapeBrandColors(customer.cafe);
 
   const normalizedCafeName = cafe.name
     .normalize("NFD")
@@ -1368,6 +1369,7 @@ const progressPercentage = rewardReady
       unlockAt) *
     100;
 
+  const brand = getMbVapeBrandColors(customer.cafe);
   const [
     barberPrimaryColor,
     barberSecondaryColor,
@@ -1375,7 +1377,7 @@ const progressPercentage = rewardReady
   ] = getBusinessBrandColors(
     customer.cafe.theme,
     customer.cafe.businessType,
-    customer.cafe,
+    brand,
   );
 
   const primaryColor = normalizeHex(
@@ -1385,7 +1387,7 @@ const progressPercentage = rewardReady
       ? "#0B2343"
       : isBarbershop
         ? barberPrimaryColor
-        : customer.cafe.primaryColor,
+        : brand.primaryColor,
     "#2563EB",
   );
 
@@ -1397,7 +1399,7 @@ const progressPercentage = rewardReady
         ? "#5E7188"
         : isBarbershop
           ? barberSecondaryColor
-          : customer.cafe.secondaryColor,
+          : brand.secondaryColor,
       "#60A5FA",
     );
 
@@ -1409,7 +1411,7 @@ const progressPercentage = rewardReady
         ? "#F4F7FA"
         : isBarbershop
           ? barberBackgroundColor
-          : customer.cafe.backgroundColor,
+          : brand.backgroundColor,
       "#0B1220",
     );
 
@@ -1556,9 +1558,7 @@ const progressPercentage = rewardReady
 
   const rewardIvory = "#F7EFD9";
 
-  const logoUrl = getDirectLogoUrl(
-    customer.cafe.logoUrl,
-  );
+  const logoUrl = isMbVape(customer.cafe) ? MB_VAPE_LOGO_URL : getDirectLogoUrl(customer.cafe.logoUrl);
 
   const showLogo = Boolean(
     logoUrl &&

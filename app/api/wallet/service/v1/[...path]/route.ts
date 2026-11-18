@@ -1,3 +1,4 @@
+import { isMbVape } from "@/lib/business/mb-vape";
 import { getWalletNotificationSettings } from "@/lib/wallet/notification-settings";
 import { getWalletMessage } from "@/lib/wallet/messages";
 import { NextRequest, NextResponse } from "next/server";
@@ -14,6 +15,10 @@ const reply = (status: number) => new NextResponse(null, { status, headers });
 const identifier = (value: string) => /^[a-z0-9_-]{1,200}$/i.test(value);
 // Include current card artwork in update discovery for installed passes.
 const ARTWORK_VERSION = Date.UTC(2026, 10, 18, 19, 35);
+const MB_VAPE_ARTWORK_VERSION = Date.UTC(2026, 10, 18, 20, 50);
+function artworkVersion(cafe: Parameters<typeof isMbVape>[0]) {
+  return isMbVape(cafe) ? MB_VAPE_ARTWORK_VERSION : ARTWORK_VERSION;
+}
 const select = { id: true, publicToken: true, memberNumber: true, name: true, stamps: true,
   rewardEarnedAt: true, updatedAt: true,
   cafe: { select: { id: true, name: true, slug: true, theme: true, businessType: true,
@@ -41,9 +46,9 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
       const since = request.nextUrl.searchParams.get("passesUpdatedSince");
       if (since && !/^\d{1,16}$/.test(since)) return reply(400);
       const members = await prisma.customer.findMany({ where: { id: { in: ids }, cafe: { isActive: true } },
-        select: { id: true, updatedAt: true, cafe: { select: { updatedAt: true } } } });
+        select: { id: true, updatedAt: true, cafe: { select: { updatedAt: true, slug: true, businessType: true } } } });
       const messageVersions = new Map(await Promise.all(members.map(async (member) => [member.id, (await getWalletMessage(member.id))?.updatedAt ?? 0] as const)));
-      const version = (member: typeof members[number]) => Math.max(ARTWORK_VERSION, member.updatedAt.getTime(), member.cafe.updatedAt.getTime(), messageVersions.get(member.id) ?? 0);
+      const version = (member: typeof members[number]) => Math.max(artworkVersion(member.cafe), member.updatedAt.getTime(), member.cafe.updatedAt.getTime(), messageVersions.get(member.id) ?? 0);
       const changed = members.filter((member) => !since || version(member) > Number(since));
       if (!changed.length) return reply(204);
       return NextResponse.json({ serialNumbers: changed.map((member) => member.id),
@@ -78,7 +83,7 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
     }
     if (method !== "GET") return reply(405);
     const message = await getWalletMessage(member.id);
-    const modified = Math.max(ARTWORK_VERSION, member.updatedAt.getTime(), member.cafe.updatedAt.getTime(), message?.updatedAt ?? 0);
+    const modified = Math.max(artworkVersion(member.cafe), member.updatedAt.getTime(), member.cafe.updatedAt.getTime(), message?.updatedAt ?? 0);
     const since = Date.parse(request.headers.get("if-modified-since") ?? "");
     // Strict comparison avoids suppressing updates made in the same second.
     if (Number.isFinite(since) && modified < since) return reply(304);

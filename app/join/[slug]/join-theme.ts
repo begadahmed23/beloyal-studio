@@ -1,3 +1,4 @@
+import { getMbVapeBrandColors } from "@/lib/business/mb-vape";
 import type { BusinessType } from "@prisma/client";
 import { getBusinessBrandColors, getBusinessTheme, type CafeThemeName } from "@/lib/cafe-theme";
 import { getReadableText, isLightColor, mixColors } from "@/app/card/[token]/card-theme-utils";
@@ -20,7 +21,7 @@ export function getJoinTheme(cafe: JoinCafe) {
   const isKeka = !isLoretto && matches("keka");
   const isKato = !isLoretto && !isKeka && matches("kato");
   const base = getBusinessTheme(cafe.theme, cafe.businessType);
-  const [brandPrimary, brandSecondary, background] = getBusinessBrandColors(cafe.theme, cafe.businessType, cafe);
+  const [brandPrimary, brandSecondary, background] = getBusinessBrandColors(cafe.theme, cafe.businessType, getMbVapeBrandColors(cafe));
   const barber = cafe.businessType === "BARBERSHOP";
   const retail = cafe.businessType === "VAPE" || cafe.businessType === "OTHER";
   let primary = brandPrimary;

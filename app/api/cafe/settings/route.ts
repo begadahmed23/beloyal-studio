@@ -139,12 +139,12 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const cafe = await updateCafeSettings(
-      authData.cafeId,
-      body as Record<string, unknown>,
-    );
+    const settings = body as Record<string, unknown>;
+    const cafe = await updateCafeSettings(authData.cafeId, settings);
 
-    scheduleGoogleWalletBrandUpdate(cafe);
+    if (settings.section === undefined || settings.section === "general" || settings.section === "branding") {
+      scheduleGoogleWalletBrandUpdate(cafe);
+    }
 
     return NextResponse.json({
       message: "Settings saved successfully.",

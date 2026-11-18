@@ -1,4 +1,5 @@
 import { CafeTheme } from "@prisma/client";
+import type { DashboardSettingsSection } from "@/lib/business/settings-sections";
 
 export type CafeSettingsInput = {
   name: string;
@@ -156,9 +157,9 @@ function validateGoogleReviewUrl(
   return parsedUrl.toString();
 }
 
-export function validateCafeSettings(
-  body: Record<string, unknown>,
-): CafeSettingsInput {
+type SettingsBody = Record<string, unknown>;
+
+function validateGeneral(body: SettingsBody) {
   if (
     typeof body.name !== "string" ||
     body.name.trim().length < 2
@@ -168,6 +169,29 @@ export function validateCafeSettings(
     );
   }
 
+  return { name: (body.name as string).trim(), logoUrl: optionalText(body.logoUrl) };
+}
+
+function validateBranding(body: SettingsBody) {
+  if (typeof body.theme !== "string") {
+    throw new Error("Theme is required.");
+  }
+
+  const validThemes = Object.values(CafeTheme);
+
+  if (!validThemes.includes(body.theme as CafeTheme)) {
+    throw new Error("Invalid café theme.");
+  }
+
+  return {
+    theme: body.theme as CafeTheme,
+    ...("primaryColor" in body ? { primaryColor: validateColor(body.primaryColor, "#8e6045") } : {}),
+    ...("secondaryColor" in body ? { secondaryColor: validateColor(body.secondaryColor, "#d6b08c") } : {}),
+    ...("backgroundColor" in body ? { backgroundColor: validateColor(body.backgroundColor, "#0c0c0c") } : {}),
+  };
+}
+
+function validateLoyalty(body: SettingsBody) {
   if (
     typeof body.rewardName !== "string" ||
     body.rewardName.trim().length < 1
@@ -188,16 +212,6 @@ export function validateCafeSettings(
     throw new Error(
       "Reward target must be a whole number between 2 and 100.",
     );
-  }
-
-  if (typeof body.theme !== "string") {
-    throw new Error("Theme is required.");
-  }
-
-  const validThemes = Object.values(CafeTheme);
-
-  if (!validThemes.includes(body.theme as CafeTheme)) {
-    throw new Error("Invalid café theme.");
   }
 
   let minimumPurchaseAmount: number | null = null;
@@ -223,6 +237,66 @@ export function validateCafeSettings(
 
     minimumPurchaseAmount = parsedAmount;
   }
+
+  return {
+    rewardTarget,
+    rewardName: (body.rewardName as string).trim(),
+    rewardDescription: optionalText(body.rewardDescription),
+    eligiblePurchaseDescription: optionalText(body.eligiblePurchaseDescription),
+    minimumPurchaseAmount,
+  };
+}
+
+function validateFeedback(body: SettingsBody) {
+  return {
+    feedbackEnabled: booleanValue(body.feedbackEnabled, true),
+    feedbackRewardEnabled: booleanValue(body.feedbackRewardEnabled, true),
+  };
+}
+
+const validateSection = {
+  general: validateGeneral,
+  branding: validateBranding,
+  loyalty: validateLoyalty,
+  feedback: validateFeedback,
+  reviews: (body: SettingsBody) => ({ googleReviewUrl: validateGoogleReviewUrl(body.googleReviewUrl) }),
+} satisfies Record<DashboardSettingsSection, (body: SettingsBody) => Partial<CafeSettingsInput>>;
+
+export function validateCafeSettingsPatch(body: SettingsBody): Partial<CafeSettingsInput> {
+  if (body.section === undefined) {
+    // Allow the form from an older BeLoyal tab to keep submitting the whole form.
+    const settings = validateCafeSettings(body);
+    return {
+      name: settings.name,
+      logoUrl: settings.logoUrl,
+      theme: settings.theme,
+      primaryColor: settings.primaryColor,
+      secondaryColor: settings.secondaryColor,
+      backgroundColor: settings.backgroundColor,
+      rewardTarget: settings.rewardTarget,
+      rewardName: settings.rewardName,
+      rewardDescription: settings.rewardDescription,
+      eligiblePurchaseDescription: settings.eligiblePurchaseDescription,
+      minimumPurchaseAmount: settings.minimumPurchaseAmount,
+      feedbackEnabled: settings.feedbackEnabled,
+      feedbackRewardEnabled: settings.feedbackRewardEnabled,
+      googleReviewUrl: settings.googleReviewUrl,
+    };
+  }
+
+  if (typeof body.section !== "string" || !Object.hasOwn(validateSection, body.section)) {
+    throw new Error("Invalid settings section.");
+  }
+
+  return validateSection[body.section as DashboardSettingsSection](body);
+}
+
+function validateCafeSettings(body: SettingsBody): CafeSettingsInput {
+  const general = validateGeneral(body);
+  const branding = validateBranding(body);
+  const loyalty = validateLoyalty(body);
+  const feedback = validateFeedback(body);
+  const reviews = validateSection.reviews(body);
 
   const birthdayRewardsEnabled = booleanValue(
     body.birthdayRewardsEnabled,
@@ -289,54 +363,14 @@ export function validateCafeSettings(
   }
 
   return {
-    name: body.name.trim(),
-
-    logoUrl: optionalText(body.logoUrl),
-
-    theme: body.theme as CafeTheme,
-
-    primaryColor: validateColor(
-      body.primaryColor,
-      "#8e6045",
-    ),
-
-    secondaryColor: validateColor(
-      body.secondaryColor,
-      "#d6b08c",
-    ),
-
-    backgroundColor: validateColor(
-      body.backgroundColor,
-      "#0c0c0c",
-    ),
-
-    rewardTarget,
-
-    rewardName: body.rewardName.trim(),
-
-    rewardDescription: optionalText(
-      body.rewardDescription,
-    ),
-
-    eligiblePurchaseDescription: optionalText(
-      body.eligiblePurchaseDescription,
-    ),
-
-    minimumPurchaseAmount,
-
-    feedbackEnabled: booleanValue(
-      body.feedbackEnabled,
-      true,
-    ),
-
-    feedbackRewardEnabled: booleanValue(
-      body.feedbackRewardEnabled,
-      true,
-    ),
-
-    googleReviewUrl: validateGoogleReviewUrl(
-      body.googleReviewUrl,
-    ),
+    primaryColor: "#8e6045",
+    secondaryColor: "#d6b08c",
+    backgroundColor: "#0c0c0c",
+    ...general,
+    ...branding,
+    ...loyalty,
+    ...feedback,
+    ...reviews,
 
     timezone: validateTimezone(body.timezone),
 

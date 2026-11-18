@@ -5,6 +5,8 @@ import { walletCredential as credential, walletUpdatesEnabled, walletAuthToken }
 export { appleWalletEnabled } from "./config";
 import { businessCardArtwork } from "../business/card-artwork";
 import { getLoyaltyProgressTarget } from "../business/loyalty-target";
+import { getMbVapeBrandColors, isMbVape } from "../business/mb-vape";
+import { renderMbVapeAppleStrip, renderMbVapeLogo } from "./mb-vape-artwork";
 import { PKPass } from "passkit-generator";
 import sharp from "sharp";
 import path from "node:path";
@@ -34,20 +36,22 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
     throw new Error("Wallet site URL must use HTTPS.");
   }
   const cardUrl = new URL(`/card/${encodeURIComponent(member.publicToken)}`, site).href;
-  const { businessType } = member.cafe;
+  const cafe = getMbVapeBrandColors(member.cafe);
+  const { businessType } = cafe;
+  const mbVape = isMbVape(cafe);
   const barber = businessType === "BARBERSHOP";
   const walid = barber && member.cafe.slug === "walid-saad";
   const loretto = businessType === "CAFE" && /loretto/i.test(member.cafe.slug + member.cafe.name);
-  const background = loretto ? "#F3EBDD" : color(member.cafe.backgroundColor, "#111111");
+  const background = loretto ? "#F3EBDD" : color(cafe.backgroundColor, "#111111");
   const channels = [1, 3, 5].map((offset) => parseInt(background.slice(offset, offset + 2), 16));
   const light = channels[0] * 0.299 + channels[1] * 0.587 + channels[2] * 0.114 > 150;
   const foreground = walid ? "#F2EEE7" : loretto ? "#2E2A27" : light ? "#111111" : "#FFFFFF";
   const target = getLoyaltyProgressTarget(member.cafe);
   const stamps = Math.max(0, Math.min(member.stamps, target));
   const ready = Boolean(member.rewardEarnedAt) || member.stamps >= target;
-  const accent = loretto ? "#7E897F" : color(member.cafe.primaryColor, foreground);
+  const accent = loretto ? "#7E897F" : color(cafe.primaryColor, foreground);
   const artwork = loretto || walid ? "" : businessCardArtwork(
-    businessType, color(member.cafe.secondaryColor ?? "", accent), 0.26,
+    businessType, color(cafe.secondaryColor ?? "", accent), 0.26,
   );
   const escape = (value: string) => value.replace(/[&<>"\']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "\'": "&apos;" })[c]!);
   const fontfile = path.join(process.cwd(), "lib/wallet/fonts/DejaVuSans.ttf");
@@ -71,19 +75,20 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
     return marker + check;
   }).join("");
   // Wallet crops the sides of store-card strips; keep stamps within the safe centre.
-  const strip = await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1125" height="369" viewBox="0 0 375 123"><rect width="375" height="123" fill="${background}"/>${artwork}${circles}</svg>`))
+  const strip = mbVape ? await renderMbVapeAppleStrip(ready ? target : stamps, target) : await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1125" height="369" viewBox="0 0 375 123"><rect width="375" height="123" fill="${background}"/>${artwork}${circles}</svg>`))
     .composite([
       { input: await textImage(ready ? "YOUR REWARD IS READY" : walid ? "YOUR NEXT FREE HAIRCUT" : "A LITTLE CLOSER TO YOUR REWARD", 840, 35), left: 142, top: 30 },
       { input: await textImage(ready ? member.cafe.rewardName : `${stamps} of ${target} ${barber ? "visits" : "stamps"}`, 800, 44), left: 162, top: 292 },
     ]).png().toBuffer();
-  const logo = await sharp({ create: { width: 480, height: 150, channels: 4, background: "#00000000" } })
+  const logo = mbVape ? await renderMbVapeLogo(480, 150, background) : await sharp({ create: { width: 480, height: 150, channels: 4, background: "#00000000" } })
     .composite([
       { input: await textImage(loretto ? "LORETTO" : walid ? member.cafe.name.toUpperCase().slice(0,32) : member.cafe.name.slice(0, 32), 460, 85), left: 0, top: 8 },
       ...(walid ? [{ input: await textImage("BARBERSHOP", 320, 22), left: 0, top: 110 }] : []),
       ...(loretto ? [{ input: await textImage("ARTISAN COFFEE & BAKERY", 450, 22), left: 5, top: 110 }] : []),
     ]).png().toBuffer();
-  const icon = await sharp({ create: { width: 87, height: 87, channels: 4, background } })
+  const icon = mbVape ? await renderMbVapeLogo(87, 87, "#ffffff", 8) : await sharp({ create: { width: 87, height: 87, channels: 4, background } })
     .composite([{ input: await textImage(walid ? "WS" : "B", 54, 65), left: 16, top: 11 }]).png().toBuffer();
+  const stripHeight = mbVape ? 144 : 123;
   const locations = walletLocations(notificationSettings);
   const nearby = locations.length ? notificationSettings : null;
   const pass = new PKPass(
@@ -93,8 +98,8 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
       "logo.png": await sharp(logo).resize(160, 50).png().toBuffer(),
       "logo@2x.png": await sharp(logo).resize(320, 100).png().toBuffer(),
       "logo@3x.png": logo,
-      "strip.png": await sharp(strip).resize(375,123).png().toBuffer(),
-      "strip@2x.png": await sharp(strip).resize(750,246).png().toBuffer(),
+      "strip.png": await sharp(strip).resize(375, stripHeight).png().toBuffer(),
+      "strip@2x.png": await sharp(strip).resize(750, stripHeight * 2).png().toBuffer(),
       "strip@3x.png": strip },
     { signerCert: await credential("CERT"), signerKey: await credential("KEY"),
       wwdr: await credential("WWDR"), signerKeyPassphrase: process.env.APPLE_WALLET_KEY_PASSPHRASE },

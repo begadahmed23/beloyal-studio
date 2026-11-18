@@ -15,6 +15,8 @@ import {
   useState,
 } from "react";
  import BirthdayRewardAction from "@/components/customers/BirthdayRewardAction";
+import MbVapeStamp from "@/components/brand/MbVapeStamp";
+import { isMbVape } from "@/lib/business/mb-vape";
 import KatoMark from "@/components/brand/KatoMark";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
@@ -53,16 +55,18 @@ export default function CashierMemberList() {
   const isKato =
     cafe.slug.toLowerCase().includes("kato") ||
     normalizedCafeName.includes("kato");
+  const StampIcon = isMbVape(cafe) ? MbVapeStamp : Stamp;
   const unit = isBarbershop ? "visit" : "stamp";
 
   const [data, setData] =
     useState<CashierMembersResponse | null>(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] =
-    useState<string | null>(null);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [actions, setActions] = useState<Record<string, {
+    status: "pending" | "success" | "error";
+    text: string;
+  }>>({});
 
   const loadMembers = useCallback(async (searchValue = "") => {
     try {
@@ -129,11 +133,14 @@ export default function CashierMemberList() {
     memberId: string,
     endpoint: string,
   ) {
-    try {
-      setBusyId(memberId);
-      setMessage("");
-      setError("");
+    if (actions[memberId]?.status === "pending") return;
 
+    setActions((previous) => ({
+      ...previous,
+      [memberId]: { status: "pending", text: "Updating card…" },
+    }));
+
+    try {
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -154,19 +161,16 @@ export default function CashierMemberList() {
         );
       }
 
-      setMessage(
-        body.message || "Updated successfully.",
-      );
-
       await loadMembers(search);
+      setActions((previous) => ({
+        ...previous,
+        [memberId]: { status: "success", text: body.message || "Updated successfully." },
+      }));
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Action failed.",
-      );
-    } finally {
-      setBusyId(null);
+      setActions((previous) => ({
+        ...previous,
+        [memberId]: { status: "error", text: error instanceof Error ? error.message : "Action failed." },
+      }));
     }
   }
 
@@ -205,22 +209,17 @@ export default function CashierMemberList() {
 
   return (
     <div className="space-y-5">
-      {(error || message) && (
+      {error && (
         <div
+          role="status"
           className="rounded-[18px] border px-4 py-3 text-sm"
           style={{
-            borderColor: error
-              ? `${theme.danger}45`
-              : `${theme.success}45`,
-            backgroundColor: error
-              ? `${theme.danger}10`
-              : `${theme.success}10`,
-            color: error
-              ? theme.danger
-              : theme.success,
+            borderColor: `${theme.danger}45`,
+            backgroundColor: `${theme.danger}10`,
+            color: theme.danger,
           }}
         >
-          {error || message}
+          {error}
         </div>
       )}
 
@@ -251,7 +250,8 @@ export default function CashierMemberList() {
 
       <div className="grid gap-3 md:grid-cols-2">
         {filteredMembers.map((member) => {
-          const busy = busyId === member.id;
+          const action = actions[member.id];
+          const busy = action?.status === "pending";
 
           return (
             <div
@@ -409,7 +409,7 @@ export default function CashierMemberList() {
                             size={29}
                           />
                         ) : (
-                          <Stamp
+                          <StampIcon
                             size={17}
                             style={{
                               color: filled
@@ -442,6 +442,7 @@ export default function CashierMemberList() {
                 <button
                   type="button"
                   disabled={busy || member.rewardReady}
+                  aria-busy={busy}
                   onClick={() =>
                     runAction(
                       member.id,
@@ -455,14 +456,7 @@ export default function CashierMemberList() {
                     borderRadius: theme.radiusMedium,
                   }}
                 >
-                  {busy ? (
-                    <LoaderCircle
-                      size={16}
-                      className="animate-spin"
-                    />
-                  ) : (
-                    <Stamp size={16} />
-                  )}
+                  <StampIcon size={16} aria-hidden="true" />
                   Add {unit}
                 </button>
 
@@ -492,9 +486,14 @@ export default function CashierMemberList() {
                   <CheckCircle2 size={16} />
                   Redeem
                 </button>
-
-
               </div>
+              <p
+                role="status"
+                className="mt-1.5 h-8 overflow-y-auto text-xs leading-4"
+                style={{ color: action?.status === "error" ? theme.danger : theme.textSecondary }}
+              >
+                {action?.text}
+              </p>
             </div>
           );
         })}

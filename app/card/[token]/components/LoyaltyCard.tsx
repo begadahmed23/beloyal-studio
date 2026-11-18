@@ -3,6 +3,9 @@ import type { BusinessType } from "@prisma/client";
 import GoogleWalletButton from "./GoogleWalletButton";
 
 import AppleWalletButton from "./AppleWalletButton";
+import MbVapeLogo from "@/components/brand/MbVapeLogo";
+import MbVapeStamp from "@/components/brand/MbVapeStamp";
+import { isMbVape, MB_VAPE_WOOD_BACKGROUND } from "@/lib/business/mb-vape";
 import { businessCardBackground } from "@/lib/business/card-artwork";
 
 import {
@@ -220,8 +223,9 @@ export default function LoyaltyCard({
     customer.cafe.businessType === "BARBERSHOP";
   const isVape = customer.cafe.businessType === "VAPE";
   const isOther = customer.cafe.businessType === "OTHER";
-  const StampIcon = isVape ? Layers : isOther ? Store : Coffee;
-  const stampRadius = isOther ? "rounded-full" : isBarbershop || isVape ? "rounded-xl" : "rounded-2xl";
+  const mbVape = isMbVape(customer.cafe);
+  const StampIcon = mbVape ? MbVapeStamp : isVape ? Layers : isOther ? Store : Coffee;
+  const stampRadius = mbVape || isOther ? "rounded-full" : isBarbershop || isVape ? "rounded-xl" : "rounded-2xl";
   const isBrickBarber =
     isBarbershop && customer.cafe.theme === "COFFEE_CLASSIC";
   const normalizedCafeName = customer.cafe.name
@@ -352,6 +356,10 @@ export default function LoyaltyCard({
             borderColor: cardBorder,
           }}
         >
+          {mbVape && (
+            <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-[28%]"
+              style={{ background: MB_VAPE_WOOD_BACKGROUND, maskImage: "linear-gradient(90deg, transparent, black 55%)" }} />
+          )}
           {cardGlowsGreen ? (
             <>
               <div
@@ -401,7 +409,9 @@ export default function LoyaltyCard({
             <div className="flex items-start justify-between gap-3 sm:gap-4">
               <div className="min-w-0">
                 <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-                  {showLogo && logoUrl ? (
+                  {mbVape ? (
+                    <MbVapeLogo className="h-10 w-[54px] border border-black/10 p-1 sm:h-12 sm:w-[68px]" />
+                  ) : showLogo && logoUrl ? (
                     <img
                       src={logoUrl}
                       alt={`${customer.cafe.name} logo`}
@@ -584,7 +594,8 @@ export default function LoyaltyCard({
               className={
                 isBarbershop
                   ? "mx-auto mt-5 grid w-full max-w-[17rem] grid-cols-3 gap-3"
-                  : "mt-5 grid grid-cols-4 gap-2 min-[380px]:gap-3"
+                  : mbVape ? "mt-5 grid grid-cols-6 gap-1.5 sm:gap-2"
+                    : "mt-5 grid grid-cols-4 gap-2 min-[380px]:gap-3"
               }
             >
               {Array.from({
@@ -654,7 +665,7 @@ export default function LoyaltyCard({
                       />
                     ) : (
                       <StampIcon
-                        size={23}
+                        size={mbVape ? 20 : 23}
                         className={`transition-all duration-500 ${
                           isNewStamp
                             ? "rotate-12 scale-125"

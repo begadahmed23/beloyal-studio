@@ -2,6 +2,7 @@ import { createHash, sign } from "node:crypto";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+import { getMbVapeBrandColors, isMbVape, MB_VAPE_ARTWORK_PATH } from "../business/mb-vape";
 import { walletLocations } from "./notification-text";
 import type { WalletMember } from "./apple";
 
@@ -58,20 +59,36 @@ async function api(path: string, method: string, body?: object) {
     method, signal: AbortSignal.timeout(10000), headers: { Authorization: `Bearer ${await accessToken()}`, "Content-Type": "application/json" },
     ...(body ? { body: JSON.stringify(body) } : {}) });
 }
+function walletImage(url: URL, label: string) {
+  return { sourceUri: { uri: url.href }, contentDescription: { defaultValue: { language: "en-US", value: label } } };
+}
+
+function mbVapeHero(stamps: number, target: number) {
+  const url = new URL(MB_VAPE_ARTWORK_PATH, process.env.GOOGLE_WALLET_SITE_URL!);
+  const count = Math.min(target, 99);
+  url.searchParams.set("stamps", String(Math.min(stamps, count)));
+  url.searchParams.set("target", String(count));
+  return walletImage(url, `${stamps} of ${target} MB Vape stamps`);
+}
+
 export function googleWalletObject(member: WalletMember) {
   const target = getLoyaltyProgressTarget(member.cafe);
   const ready = Boolean(member.rewardEarnedAt) || member.stamps >= target;
+  const stamps = Math.max(0, Math.min(member.stamps, target));
   return { id: objectId(member.id), classId: classId(member.cafe.slug), state: "ACTIVE",
     accountId: member.memberNumber, accountName: member.name,
     barcode: { type: "QR_CODE", value: `BL:${member.publicToken}`, alternateText: member.memberNumber },
     loyaltyPoints: { label: ready ? "REWARD READY" : member.cafe.businessType === "BARBERSHOP" ? "VISITS" : "STAMPS",
-      balance: { string: `${Math.max(0, Math.min(member.stamps, target))}/${target}` } },
+      balance: { string: `${stamps}/${target}` } },
+    ...(isMbVape(member.cafe) ? { heroImage: mbVapeHero(ready ? target : stamps, target) } : {}),
     textModulesData: [{ id: "reward", header: "YOUR REWARD", body: member.cafe.rewardName }],
     linksModuleData: { uris: [{ id: "card", uri: new URL(`/card/${member.publicToken}`, process.env.GOOGLE_WALLET_SITE_URL!).href, description: "Open your BeLoyal card" }] } };
 }
 type GoogleBrand = WalletMember["cafe"] & { logoUrl?: string | null };
 type GoogleLocation = Parameters<typeof walletLocations>[0];
-export function googleClassBrand(cafe: GoogleBrand, settings?: GoogleLocation) {
+export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocation) {
+  const cafe = getMbVapeBrandColors(savedCafe);
+  const mbVape = isMbVape(cafe);
   const fallback = new URL(process.env.GOOGLE_WALLET_LOGO_URL!);
   let logo = fallback;
   try { if (cafe.logoUrl) { const candidate = new URL(cafe.logoUrl); if (candidate.protocol === "https:") logo = candidate; } } catch { /* use fallback */ }
@@ -80,12 +97,13 @@ export function googleClassBrand(cafe: GoogleBrand, settings?: GoogleLocation) {
   for (const [key, value] of Object.entries(colors)) {
     if (value && /^#[0-9a-f]{6}$/i.test(value)) artwork.searchParams.set(key, value.slice(1));
   }
-  const description = (value: string) => ({ defaultValue: { language: "en-US", value } });
+  const site = process.env.GOOGLE_WALLET_SITE_URL!;
+  if (mbVape) logo = new URL(MB_VAPE_ARTWORK_PATH + "?asset=icon", site);
   return {
     issuerName: cafe.name,
     programName: `${cafe.name} Rewards`,
-    programLogo: { sourceUri: { uri: logo.href }, contentDescription: description(cafe.name) },
-    heroImage: { sourceUri: { uri: artwork.href }, contentDescription: description(`${cafe.name} loyalty card artwork`) },
+    programLogo: walletImage(logo, cafe.name),
+    heroImage: mbVape ? mbVapeHero(0, getLoyaltyProgressTarget(cafe)) : walletImage(artwork, `${cafe.name} loyalty card artwork`),
     reviewStatus: "UNDER_REVIEW",
     hexBackgroundColor: /^#[0-9a-f]{6}$/i.test(cafe.backgroundColor) ? cafe.backgroundColor : "#111111",
     ...(settings ? { merchantLocations: walletLocations(settings).map(({ latitude, longitude }) => ({ latitude, longitude })) } : {}),

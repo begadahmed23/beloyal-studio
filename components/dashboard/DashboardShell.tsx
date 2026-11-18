@@ -6,8 +6,11 @@ import { usePathname } from "next/navigation";
 import { Settings } from "lucide-react";
 
 import LogoutButton from "@/components/auth/LogoutButton";
+import { isMbVape } from "@/lib/business/mb-vape";
+import MbVapeLogo from "@/components/brand/MbVapeLogo";
 import KatoMark from "@/components/brand/KatoMark";
 import DashboardMobileNavigation from "@/components/dashboard/DashboardMobileNavigation";
+import DashboardViewport from "@/components/dashboard/DashboardViewport";
 import MobileLogoutButton from "@/components/dashboard/MobileLogoutButton";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
@@ -26,6 +29,7 @@ export default function DashboardShell({
   const pathname = usePathname();
   const { theme, cafe, userRole } = useCafeTheme();
 
+  const mbVape = isMbVape(cafe);
   const normalizedCafeName = cafe.name
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -58,13 +62,7 @@ export default function DashboardShell({
       ?.label || "Overview";
 
   return (
-    <div
-      className="flex h-dvh min-w-0 flex-col overflow-hidden lg:block lg:h-auto lg:min-h-screen lg:overflow-visible"
-      style={{
-        backgroundColor: theme.pageBackground,
-        color: theme.textPrimary,
-      }}
-    >
+    <DashboardViewport>
       <aside
         className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r lg:flex lg:flex-col"
         style={{
@@ -79,7 +77,9 @@ export default function DashboardShell({
           }}
         >
           <div className="flex min-w-0 items-center gap-3">
-            {isKato ? (
+            {mbVape ? (
+              <MbVapeLogo className="h-11 w-14 border border-black/10 p-1" />
+            ) : isKato ? (
               <div
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
                 style={{
@@ -213,14 +213,13 @@ export default function DashboardShell({
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain scroll-pt-20 lg:min-h-screen lg:overflow-visible lg:overscroll-auto lg:pl-64">
         <header
-          className="sticky top-0 z-30 flex h-20 items-center justify-between border-b px-5 backdrop-blur-xl sm:px-7 lg:px-10"
-          style={{
-            borderColor: theme.border,
-            backgroundColor: `${theme.pageBackground}E8`,
-          }}
+          className="sticky top-0 z-30 flex h-20 items-center justify-between border-b bg-[var(--dashboard-chrome)] px-5 sm:px-7 lg:bg-[var(--dashboard-desktop-header)] lg:px-10 lg:backdrop-blur-xl"
+          style={{ borderColor: theme.border }}
         >
           <div className="flex min-w-0 items-center gap-3">
-            {isKato ? (
+            {mbVape ? (
+              <MbVapeLogo className="h-10 w-12 border border-black/10 p-1" />
+            ) : isKato ? (
               <div
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full lg:hidden"
                 style={{
@@ -307,6 +306,6 @@ export default function DashboardShell({
       </div>
 
       <DashboardMobileNavigation items={navigationItems} />
-    </div>
+    </DashboardViewport>
   );
 }

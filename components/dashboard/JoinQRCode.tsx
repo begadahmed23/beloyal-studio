@@ -9,12 +9,14 @@ import {
   ExternalLink,
 } from "lucide-react";
 
+import { isMbVape, MB_VAPE_LOGO_URL } from "@/lib/business/mb-vape";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 import { exportJoinPoster, POSTER_HEIGHT, POSTER_WIDTH } from "./export-join-poster";
 
 export default function JoinQRCode() {
   const { theme, cafe } = useCafeTheme();
+  const logoUrl = isMbVape(cafe) ? MB_VAPE_LOGO_URL : cafe.logoUrl;
   const isBarbershop = cafe.businessType === "BARBERSHOP";
 
   const tagline = isBarbershop ? "Sharp style. Loyal clients." : cafe.businessType === "CAFE" ? "Let coffee connect us" : "Member rewards";
@@ -290,7 +292,7 @@ export default function JoinQRCode() {
                   flexShrink: 0,
                 }}
               >
-                {cafe.logoUrl ? (
+                {logoUrl ? (
                   <>
                     <div
                       style={{
@@ -303,7 +305,7 @@ export default function JoinQRCode() {
                       }}
                     >
                       <img
-                        src={cafe.logoUrl}
+                        src={logoUrl}
                         alt={`${cafe.name} logo`}
                         crossOrigin="anonymous"
                         style={{
@@ -360,7 +362,7 @@ export default function JoinQRCode() {
 
                 <p
                   style={{
-                    margin: cafe.logoUrl
+                    margin: logoUrl
                       ? "9px 0 0"
                       : "4px 0 0",
                     color: "#737373",

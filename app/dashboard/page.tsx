@@ -14,6 +14,9 @@ import {
   Users,
 } from "lucide-react";
 
+import MbVapeLogo from "@/components/brand/MbVapeLogo";
+import MbVapeStamp from "@/components/brand/MbVapeStamp";
+import { isMbVape, MB_VAPE_WOOD_BACKGROUND } from "@/lib/business/mb-vape";
 import KatoMark from "@/components/brand/KatoMark";
 import AdminFeedbackPanel from "@/components/dashboard/AdminFeedbackPanel";
 import BirthdaySummary from "@/components/dashboard/BirthdaySummary";
@@ -53,7 +56,8 @@ function CafeDashboardHome() {
     normalizedCafeName.includes("keka");
 
   const isCafe = cafe.businessType === "CAFE";
-  const BusinessIcon = isCafe ? Coffee : cafe.businessType === "VAPE" ? Layers : Store;
+  const mbVape = isMbVape(cafe);
+  const BusinessIcon = mbVape ? MbVapeStamp : isCafe ? Coffee : cafe.businessType === "VAPE" ? Layers : Store;
   const actions = [
     {
       label: "Scan a card",
@@ -205,6 +209,11 @@ function CafeDashboardHome() {
 
           <div className="relative grid gap-7 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
+              {mbVape && (
+                <div className="mb-4 inline-flex rounded-[18px] p-2.5" style={{ background: MB_VAPE_WOOD_BACKGROUND }}>
+                  <MbVapeLogo className="h-12 w-[84px] p-1" />
+                </div>
+              )}
               <div
                 className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em]"
                 style={{ color: theme.accent }}

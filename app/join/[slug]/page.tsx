@@ -1,3 +1,5 @@
+import MbVapeLogo from "@/components/brand/MbVapeLogo";
+import { getMbVapeBrandColors, isMbVape } from "@/lib/business/mb-vape";
 import { businessCardBackground } from "@/lib/business/card-artwork";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
@@ -46,7 +48,9 @@ export default async function JoinPage({
     notFound();
   }
 
-  const businessTheme = getJoinTheme(cafe);
+  const mbVape = isMbVape(cafe);
+  const brand = getMbVapeBrandColors(cafe);
+  const businessTheme = getJoinTheme(brand);
   const { isLoretto, isKeka, isKato } = businessTheme;
   const primaryColor = businessTheme.primary;
   const secondaryColor = businessTheme.secondary;
@@ -231,7 +235,9 @@ export default async function JoinPage({
           ) : (
             <div className="bg-[length:auto_100%] bg-right-top bg-no-repeat px-5 pb-5 pt-8 text-center sm:px-8"
               style={{ backgroundImage: businessCardBackground(cafe.businessType, primaryColor) }}>
-              {cafe.logoUrl ? (
+              {mbVape ? (
+                <MbVapeLogo className="mx-auto mb-5 h-[72px] w-[112px] border border-black/10 p-1.5" />
+              ) : cafe.logoUrl ? (
                 <img
                   src={cafe.logoUrl}
                   alt={`${cafe.name} logo`}
@@ -293,7 +299,7 @@ export default async function JoinPage({
               themeName={cafe.theme}
               primaryColor={primaryColor}
               secondaryColor={secondaryColor}
-              backgroundColor={cafe.backgroundColor}
+              backgroundColor={brand.backgroundColor}
               rewardTarget={cafe.rewardTarget}
               rewardName={cafe.rewardName}
               isKato={isKato}

@@ -118,6 +118,10 @@ export async function POST(request: NextRequest) {
       },
     );
 
+    if (formData.get("draft") === "true") {
+      return NextResponse.json({ message: "Logo ready to save.", logoUrl: blob.url });
+    }
+
     const updatedCafe = await prisma.cafe.update({
       where: {
         id: cafe.id,

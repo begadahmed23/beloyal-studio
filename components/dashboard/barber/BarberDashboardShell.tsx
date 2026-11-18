@@ -10,6 +10,7 @@ import MobileLogoutButton from "@/components/dashboard/MobileLogoutButton";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 import DashboardMobileNavigation from "@/components/dashboard/DashboardMobileNavigation";
+import DashboardViewport from "@/components/dashboard/DashboardViewport";
 import { isDashboardCurrentPage } from "../cafe-navigation";
 import { barberNavigation } from "./barber-navigation";
 
@@ -31,13 +32,7 @@ export default function BarberDashboardShell({
     )?.label ?? "Overview";
 
   return (
-    <div
-      className="flex h-dvh min-w-0 flex-col overflow-hidden lg:block lg:h-auto lg:min-h-screen lg:overflow-visible transition-colors duration-300"
-      style={{
-        backgroundColor: theme.pageBackground,
-        color: theme.textPrimary,
-      }}
-    >
+    <DashboardViewport className="transition-colors duration-300">
       <aside
         className="fixed inset-y-0 left-0 z-40 hidden w-72 border-r lg:flex lg:flex-col"
         style={{
@@ -148,11 +143,8 @@ export default function BarberDashboardShell({
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain scroll-pt-20 lg:min-h-screen lg:overflow-visible lg:overscroll-auto lg:pl-72">
         <header
-          className="sticky top-0 z-30 flex h-20 items-center justify-between border-b px-5 backdrop-blur-xl sm:px-7 lg:px-10"
-          style={{
-            borderColor: theme.border,
-            backgroundColor: `${theme.pageBackground}E8`,
-          }}
+          className="sticky top-0 z-30 flex h-20 items-center justify-between border-b bg-[var(--dashboard-chrome)] px-5 sm:px-7 lg:bg-[var(--dashboard-desktop-header)] lg:px-10 lg:backdrop-blur-xl"
+          style={{ borderColor: theme.border }}
         >
           <div className="min-w-0">
             <p
@@ -190,6 +182,6 @@ export default function BarberDashboardShell({
       </div>
 
       <DashboardMobileNavigation items={navigationItems} />
-    </div>
+    </DashboardViewport>
   );
 }

@@ -311,3 +311,30 @@ test('the four business types have distinct pass strips and public Google artwor
   const invalid = await GET(new Request('https://example.com'), { params: Promise.resolve({ businessType: 'constructor' }) });
   assert.equal(invalid.status, 404);
 });
+
+
+test('MB Vape pass uses the brand logo and device stamps without changing the scanner barcode', async () => {
+  const { createAppleWalletPass } = load('lib/wallet/apple.ts');
+  const { GET } = load('app/api/wallet/artwork/[businessType]/route.ts');
+  const fixture = { ...member, stamps: 2, cafe: { ...member.cafe, name: 'MB Vape', slug: 'mb-vape',
+    businessType: 'VAPE', theme: 'COFFEE_CLASSIC', primaryColor: '#7B4F35', secondaryColor: '#6F4A35', backgroundColor: '#F3EDE5' } };
+  const pass = unzipSync(await createAppleWalletPass(fixture));
+  const metadata = JSON.parse(strFromU8(pass['pass.json']));
+  assert.equal(metadata.backgroundColor, 'rgb(247, 242, 233)');
+  assert.equal(metadata.storeCard.headerFields[0].value, '2/6');
+  assert.equal(metadata.barcodes[0].message, `BL:${member.publicToken}`);
+  assert.equal(pass['strip@3x.png'].readUInt32BE(20), 432);
+  const emptyPass = unzipSync(await createAppleWalletPass({ ...fixture, stamps: 0 }));
+  assert.notDeepEqual(pass['strip@3x.png'], emptyPass['strip@3x.png']);
+  const googleArt = async query => GET(new Request(`https://example.com/api/wallet/artwork/mb-vape?${query}`), {
+    params: Promise.resolve({ businessType: 'mb-vape' }),
+  });
+  const logo = Buffer.from(await (await googleArt('asset=icon')).arrayBuffer());
+  assert.equal(logo.readUInt32BE(16), 720);
+  assert.equal(logo.readUInt32BE(20), 720);
+  const artwork = Buffer.from(await (await googleArt('stamps=2&target=6')).arrayBuffer());
+  assert.equal(artwork.readUInt32BE(16), 1032);
+  assert.equal(artwork.readUInt32BE(20), 812);
+  assert.notDeepEqual(artwork, Buffer.from(await (await googleArt('stamps=3&target=6')).arrayBuffer()));
+  assert.equal((await googleArt('stamps=7&target=6')).status, 400);
+});

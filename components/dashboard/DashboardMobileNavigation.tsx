@@ -28,9 +28,8 @@ export default function DashboardMobileNavigation({
   return (
     <nav
       aria-label="Business dashboard navigation"
-      className="grid shrink-0 gap-0.5 border-t px-1.5 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] lg:hidden"
+      className="sticky bottom-0 z-20 grid shrink-0 gap-0.5 border-t bg-[var(--dashboard-chrome)] px-1.5 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] lg:hidden"
       style={{
-        backgroundColor: theme.surface,
         borderColor: theme.border,
         gridTemplateColumns: `repeat(${mobileItems.length}, minmax(0, 1fr))`,
       }}

@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { type CafeThemeName } from "@/lib/cafe-theme";
 import { getJoinTheme } from "./join-theme";
+import { isMbVape } from "@/lib/business/mb-vape";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 type JoinFormProps = {
@@ -42,6 +43,7 @@ export default function JoinForm({
   isKato = false,
 }: JoinFormProps) {
   const router = useRouter();
+  const mbVape = isMbVape({ slug: cafeSlug, businessType });
   const isBarbershop = businessType === "BARBERSHOP";
   const theme = getJoinTheme({
     name: cafeName,
@@ -513,7 +515,8 @@ export default function JoinForm({
               >
                 {isBarbershop
                   ? `Complete ${loyaltyTarget} paid visits, then redeem on your next visit: `
-                  : `Buy ${loyaltyTarget} and get 1 free: `}
+                  : mbVape ? `Collect ${loyaltyTarget} stamps, then redeem on your next visit: `
+                    : `Buy ${loyaltyTarget} and get 1 free: `}
                 <span
                   className="font-medium"
                   style={{ color: isKato ? katoTextPrimary : theme.textPrimary }}

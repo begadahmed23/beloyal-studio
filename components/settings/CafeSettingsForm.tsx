@@ -1,5 +1,8 @@
 "use client";
 
+import MbVapeLogo from "@/components/brand/MbVapeLogo";
+import { isMbVape } from "@/lib/business/mb-vape";
+import { dashboardSettingsSections, type DashboardSettingsSection } from "@/lib/business/settings-sections";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 import {
@@ -25,7 +28,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { useRouter } from "next/navigation";
 
 import {
   useCafeTheme,
@@ -85,8 +87,6 @@ function formatStatus(value: string) {
 export default function CafeSettingsForm({
   accountEmail,
 }: Props) {
-  const router = useRouter();
-
  const {
   theme,
   themeName,
@@ -96,6 +96,7 @@ export default function CafeSettingsForm({
   resetPreviewTheme,
   applySavedSettings,
 } = useCafeTheme();
+  const mbVape = isMbVape(cafe);
   const isBarbershop = cafe.businessType === "BARBERSHOP";
   const normalizedCafeName = cafe.name
     .normalize("NFD")
@@ -132,52 +133,28 @@ export default function CafeSettingsForm({
     googleReviewUrl: cafe.googleReviewUrl ?? "",
   });
 
-  const [form, setForm] =
-    useState<FormState>(createInitialState);
-
-  const [saving, setSaving] = useState(false);
-  const [uploadingLogo, setUploadingLogo] =
-    useState(false);
-  const [logoPreviewFailed, setLogoPreviewFailed] =
-    useState(false);
+  const [draft, setDraft] = useState<Partial<FormState>>({});
+  const form = { ...createInitialState(), ...draft };
+  const [saving, setSaving] = useState<DashboardSettingsSection | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoPreviewFailed, setLogoPreviewFailed] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const resetPreviewRef = useRef(resetPreviewTheme);
 
   const [message, setMessage] = useState<{
+    section: DashboardSettingsSection;
     type: "success" | "error";
     text: string;
   } | null>(null);
 
   useEffect(() => {
-    setForm(createInitialState());
-  }, [
-    cafe.name,
-    cafe.logoUrl,
-    cafe.rewardTarget,
-    cafe.rewardName,
-    cafe.rewardDescription,
-    cafe.eligiblePurchaseDescription,
-    cafe.minimumPurchaseAmount,
-    cafe.feedbackEnabled,
-    cafe.feedbackRewardEnabled,
-    cafe.googleReviewUrl,
-    savedThemeName,
-  ]);
-
-  useEffect(() => {
-    return () => {
-      resetPreviewTheme();
-    };
+    resetPreviewRef.current = resetPreviewTheme;
   }, [resetPreviewTheme]);
 
-  function updateField<K extends keyof FormState>(
-    field: K,
-    value: FormState[K]
-  ) {
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
+  useEffect(() => () => resetPreviewRef.current(), []);
 
+  function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
+    setDraft((current) => ({ ...current, [field]: value }));
     setMessage(null);
   }
 
@@ -186,12 +163,14 @@ export default function CafeSettingsForm({
     setPreviewTheme(newTheme);
   }
 
-  function resetForm() {
-    const originalState = createInitialState();
-
-    setForm(originalState);
-    setLogoPreviewFailed(false);
-    resetPreviewTheme();
+  function resetSection(section: DashboardSettingsSection) {
+    setDraft((current) => {
+      const next = { ...current };
+      for (const field of dashboardSettingsSections[section]) delete next[field];
+      return next;
+    });
+    if (section === "branding") resetPreviewTheme();
+    if (section === "general") setLogoPreviewFailed(false);
     setMessage(null);
   }
 
@@ -214,6 +193,7 @@ export default function CafeSettingsForm({
 
     if (!allowedTypes.includes(file.type)) {
       setMessage({
+        section: "general",
         type: "error",
         text: "Logo must be a PNG, JPG, or WebP image.",
       });
@@ -222,6 +202,7 @@ export default function CafeSettingsForm({
 
     if (file.size > 4 * 1024 * 1024) {
       setMessage({
+        section: "general",
         type: "error",
         text: "Logo must be smaller than 4 MB.",
       });
@@ -235,6 +216,7 @@ export default function CafeSettingsForm({
     try {
       const uploadData = new FormData();
       uploadData.append("logo", file);
+      uploadData.append("draft", "true");
 
       const response = await fetch("/api/cafe/logo", {
         method: "POST",
@@ -249,20 +231,20 @@ export default function CafeSettingsForm({
         );
       }
 
-      setForm((current) => ({
+      setDraft((current) => ({
         ...current,
         logoUrl: result.logoUrl,
       }));
 
       setMessage({
+        section: "general",
         type: "success",
         text:
-          result.message ?? "Logo uploaded successfully.",
+          "Logo ready. Select Save General to apply it.",
       });
-
-      router.refresh();
     } catch (error) {
       setMessage({
+        section: "general",
         type: "error",
         text:
           error instanceof Error
@@ -278,95 +260,80 @@ export default function CafeSettingsForm({
     updateField("logoUrl", "");
     setLogoPreviewFailed(false);
     setMessage({
+        section: "general",
       type: "success",
       text:
-        "Logo removed from the form. Press Save Changes to confirm.",
+        "Logo removed from the form. Select Save General to apply the change.",
     });
   }
 
-  async function handleSubmit(
-    event: FormEvent<HTMLFormElement>
-  ) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>, section: DashboardSettingsSection) {
     event.preventDefault();
+    if (saving || (section === "general" && uploadingLogo)) return;
 
-    setSaving(true);
+    setSaving(section);
     setMessage(null);
 
     try {
-      const [primaryColor, secondaryColor, backgroundColor] = getBusinessBrandColors(
-        form.theme, cafe.businessType, form.theme === savedThemeName ? cafe : undefined,
-      );
-      const response = await fetch(
-        "/api/cafe/settings",
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: form.name,
-            ...(isKato
-              ? {
-                  theme: form.theme,
-                }
-              : {
-                  logoUrl: form.logoUrl,
-                  theme: form.theme,
-                  primaryColor,
-                  secondaryColor,
-                  backgroundColor,
-                }),
-            rewardTarget: Number(
-              form.rewardTarget
-            ),
-            rewardName: form.rewardName,
-            rewardDescription:
-              form.rewardDescription,
-            eligiblePurchaseDescription:
-              form.eligiblePurchaseDescription,
-            minimumPurchaseAmount:
-              form.minimumPurchaseAmount,
-
-            feedbackEnabled: form.feedbackEnabled,
-            feedbackRewardEnabled: form.feedbackRewardEnabled,
-            googleReviewUrl: form.googleReviewUrl,
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(
-          result.error ??
-            "Unable to save café settings."
+      const fields = dashboardSettingsSections[section];
+      const input = Object.fromEntries(fields.map((field) => [field, form[field]]));
+      if (section === "branding" && !isKato && !isKeka) {
+        const [primaryColor, secondaryColor, backgroundColor] = getBusinessBrandColors(
+          form.theme, cafe.businessType, form.theme === savedThemeName ? cafe : undefined,
         );
+        Object.assign(input, { primaryColor, secondaryColor, backgroundColor });
       }
 
-    applySavedSettings(
-  result.cafe,
-  result.cafe.theme,
-);
-
-setMessage({
-  type: "success",
-  text:
-    result.message ??
-    "Settings saved successfully.",
-});
-
-router.refresh();
-    } catch (error) {
-      setMessage({
-        type: "error",
-        text:
-          error instanceof Error
-            ? error.message
-            : "Unable to save café settings.",
+      const response = await fetch("/api/cafe/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ section, ...input }),
       });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error ?? "Unable to save settings.");
+
+      applySavedSettings(result.cafe, result.cafe.theme);
+      setDraft((current) => {
+        const next = { ...current };
+        for (const field of fields) {
+          if (current[field] === form[field]) delete next[field];
+        }
+        return next;
+      });
+      setMessage({ section, type: "success", text: "Saved." });
+    } catch (error) {
+      setMessage({ section, type: "error", text: error instanceof Error ? error.message : "Unable to save settings." });
     } finally {
-      setSaving(false);
+      setSaving(null);
     }
+  }
+
+  function saveControls(section: DashboardSettingsSection, label: string) {
+    const pending = saving === section;
+    const disabled = Boolean(saving) || (section === "general" && uploadingLogo);
+    const dirty = dashboardSettingsSections[section].some((field) => field in draft);
+    return (
+      <div className="mt-6 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: theme.border }}>
+        <p role="status" className="text-sm" style={{ color: message?.type === "error" ? theme.danger : theme.textSecondary }}>
+          {message?.section === section ? message.text : ""}
+        </p>
+        <div className="flex flex-wrap justify-end gap-2 sm:ml-auto">
+          {dirty && (
+            <button type="button" disabled={disabled} onClick={() => resetSection(section)}
+              className="flex min-h-11 items-center gap-2 rounded-xl border px-4 text-sm font-medium disabled:opacity-50"
+              style={{ borderColor: theme.border, color: theme.textSecondary }}>
+              <RotateCcw size={16} aria-hidden="true" /> Reset
+            </button>
+          )}
+          <button type="submit" disabled={disabled}
+            className="flex min-h-11 items-center justify-center gap-2 px-4 text-sm font-semibold disabled:opacity-60"
+            style={{ backgroundColor: theme.accent, color: theme.accentText, borderRadius: theme.radiusMedium }}>
+            {pending ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : <Save size={16} aria-hidden="true" />}
+            {pending ? "Saving…" : label}
+          </button>
+        </div>
+      </div>
+    );
   }
 
   const cardStyle = {
@@ -384,7 +351,7 @@ router.refresh();
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <div>
       <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <p
@@ -397,7 +364,7 @@ router.refresh();
               ? "KATŌ configuration"
               : isBarbershop
                 ? "Barbershop configuration"
-                : "Café configuration"}
+                : cafe.businessType === "CAFE" ? "Café configuration" : "Business configuration"}
           </p>
 
           <h2
@@ -417,86 +384,15 @@ router.refresh();
           >
             {isKato
               ? "Manage KATŌ’s loyalty program, customer experience, and business controls."
-              : "Customize the loyalty experience for your business. Theme changes are previewed immediately and saved only when you press Save Changes."}
+              : "Customize your loyalty program. Each section saves independently."}
           </p>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <button
-            type="button"
-            onClick={resetForm}
-            disabled={saving || uploadingLogo}
-            className="flex h-11 items-center justify-center gap-2 border px-4 text-sm font-medium transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
-            style={{
-              borderColor: theme.border,
-              backgroundColor: theme.surface,
-              color: theme.textSecondary,
-              borderRadius: theme.radiusMedium,
-            }}
-          >
-            <RotateCcw size={16} />
-            Reset
-          </button>
-
-          <button
-            type="submit"
-            disabled={saving || uploadingLogo}
-            className="flex h-11 items-center justify-center gap-2 px-5 text-sm font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-            style={{
-              backgroundColor: theme.accent,
-              color: theme.buttonText,
-              borderRadius: theme.radiusMedium,
-            }}
-          >
-            {saving ? (
-              <Loader2
-                size={17}
-                className="animate-spin"
-              />
-            ) : (
-              <Save size={17} />
-            )}
-
-            {saving
-              ? "Saving..."
-              : "Save Changes"}
-          </button>
-        </div>
       </div>
-
-      {message && (
-        <div
-          className="mt-6 flex items-start gap-3 border px-4 py-3 text-sm"
-          style={{
-            borderColor:
-              message.type === "success"
-                ? theme.accent
-                : theme.danger,
-            color:
-              message.type === "success"
-                ? theme.textPrimary
-                : theme.danger,
-            backgroundColor: theme.surface,
-            borderRadius: theme.radiusMedium,
-          }}
-        >
-          {message.type === "success" && (
-            <Check
-              size={18}
-              className="mt-0.5 shrink-0"
-              style={{
-                color: theme.accent,
-              }}
-            />
-          )}
-
-          <p>{message.text}</p>
-        </div>
-      )}
 
       <div className="mt-8 grid gap-6">
         {!isKato && !isKeka && (
-        <section
+        <form onSubmit={(event) => handleSubmit(event, "general")}
           className="border p-5 sm:p-7"
           style={cardStyle}
         >
@@ -513,7 +409,7 @@ router.refresh();
             <Field
              theme={theme}
               label={
-                isBarbershop ? "Barbershop name" : "Café name"
+                isBarbershop ? "Barbershop name" : "Business name"
               }
               description="The business name shown to staff and customers."
             >
@@ -536,7 +432,7 @@ router.refresh();
             <Field
               theme={theme}
               label={
-                isBarbershop ? "Barbershop slug" : "Café slug"
+                isBarbershop ? "Barbershop slug" : "Business slug"
               }
               description="The permanent identifier used by the platform."
             >
@@ -549,11 +445,18 @@ router.refresh();
               />
             </Field>
 
+            {mbVape ? (
+              <div className="space-y-2 lg:col-span-2">
+                <p className="text-sm font-medium">Business logo</p>
+                <MbVapeLogo className="h-[78px] w-[114px] border border-black/10 p-1.5" />
+                <p className="text-xs" style={{ color: theme.textMuted }}>Used on the dashboard and MB Vape cards.</p>
+              </div>
+            ) : (
             <div className="lg:col-span-2">
               <Field
               theme={theme}
                 label={
-                  isBarbershop ? "Barbershop logo" : "Café logo"
+                  isBarbershop ? "Barbershop logo" : "Business logo"
                 }
                 description="Upload a permanent PNG, JPG, or WebP logo up to 4 MB. You can also paste a direct image URL."
               >
@@ -571,7 +474,7 @@ router.refresh();
                     onClick={() =>
                       logoInputRef.current?.click()
                     }
-                    disabled={uploadingLogo || saving}
+                    disabled={uploadingLogo || Boolean(saving)}
                     className="flex h-12 items-center justify-center gap-2 border px-5 text-sm font-semibold transition hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
                     style={{
                       borderColor: theme.accent,
@@ -652,7 +555,7 @@ router.refresh();
                   <button
                     type="button"
                     onClick={removeLogo}
-                    disabled={uploadingLogo || saving}
+                    disabled={uploadingLogo || Boolean(saving)}
                     className="flex h-10 shrink-0 items-center justify-center gap-2 border px-4 text-sm font-medium transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
                     style={{
                       borderColor: theme.danger,
@@ -667,12 +570,14 @@ router.refresh();
                 </div>
               )}
             </div>
+            )}
           </div>
-        </section>
+          {saveControls("general", "Save General")}
+        </form>
         )}
 
         {!isKato && !isKeka && (
-        <section
+        <form onSubmit={(event) => handleSubmit(event, "branding")}
           className="border p-5 sm:p-7"
           style={cardStyle}
         >
@@ -730,14 +635,15 @@ router.refresh();
               }}
             >
               You are previewing an unsaved theme.
-              Press Save Changes to keep it.
+              Select Save Branding to keep it.
             </p>
           )}
-        </section>
+          {saveControls("branding", "Save Branding")}
+        </form>
 
         )}
         {isKeka && (
-          <section
+          <form onSubmit={(event) => handleSubmit(event, "branding")}
             className="border p-5 sm:p-7"
             style={cardStyle}
           >
@@ -838,11 +744,12 @@ router.refresh();
                 );
               })}
             </div>
-          </section>
+            {saveControls("branding", "Save Card Appearance")}
+          </form>
         )}
 
         {isKato && (
-          <section
+          <form onSubmit={(event) => handleSubmit(event, "branding")}
             className="border p-5 sm:p-7"
             style={cardStyle}
           >
@@ -948,10 +855,11 @@ router.refresh();
                 );
               })}
             </div>
-          </section>
+            {saveControls("branding", "Save Card Appearance")}
+          </form>
         )}
 
-        <section
+        <form onSubmit={(event) => handleSubmit(event, "loyalty")}
           className="border p-5 sm:p-7"
           style={cardStyle}
         >
@@ -1190,9 +1098,10 @@ router.refresh();
               </div>
             </div>
           </div>
-        </section>
+          {saveControls("loyalty", "Save Loyalty Program")}
+        </form>
 
-        <section
+        <form onSubmit={(event) => handleSubmit(event, "feedback")}
           className="border p-5 sm:p-7"
           style={cardStyle}
         >
@@ -1315,9 +1224,10 @@ router.refresh();
               </button>
             </div>
           )}
-        </section>
+          {saveControls("feedback", "Save Feedback")}
+        </form>
 
-        <section
+        <form onSubmit={(event) => handleSubmit(event, "reviews")}
           className="border p-5 sm:p-7"
           style={cardStyle}
         >
@@ -1376,7 +1286,8 @@ router.refresh();
               </p>
             </div>
           </div>
-        </section>
+          {saveControls("reviews", "Save Google Reviews")}
+        </form>
 
         <section
           className="border p-5 sm:p-7"
@@ -1438,7 +1349,7 @@ router.refresh();
           </div>
         </section>
       </div>
-    </form>
+    </div>
   );
 
 
