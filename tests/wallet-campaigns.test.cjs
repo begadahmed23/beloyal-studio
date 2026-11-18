@@ -81,7 +81,8 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
   const records = new Map(); let pushes = 0;
   const redis = { set: async (key, value, opts) => { if (opts?.nx && records.has(key)) return null; records.set(key, structuredClone(value)); return 'OK'; }, get: async key => records.get(key),
     zadd: async () => 1, zremrangebyrank: async () => 0, hlen: async key => key.includes('removed') ? 0 : 1 };
-  const lib = loader({ '@/lib/prisma': { prisma: { customer: { findFirst: async ({ where }) => where.cafeId === 'cafe1' ? { id: where.id } : null } } },
+  const lib = loader({ '@/lib/prisma': { prisma: { customer: { findFirst: async ({ where }) => where.cafeId === 'cafe1' ? { cafe: { timezone: 'Africa/Cairo' } } : null } } },
+    './config': { walletUpdatesEnabled: () => true },
     './updates': { passKey: id => id, walletRedis: () => redis, notifyWalletMember: async () => { pushes++; return { accepted: 1, failed: 0 }; } },
     './messages': { getWalletMessage: async id => id === 'same' ? { text: 'Hello' } : null, setWalletMessage: async () => {} },
   })('lib/wallet/campaigns.ts');
@@ -94,6 +95,15 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
   const retry = await lib.sendCampaign(structuredClone(draft), eligible);
   assert.equal(pushes, 1);
   assert.equal(retry.status, 'complete');
+
+  const next = await lib.sendCampaign({ ...structuredClone(draft), id: 'second', message: 'A new offer' }, eligible);
+  assert.equal(next.recipients[0].status, 'accepted');
+  assert.equal(pushes, 3);
+
+  const birthday = { ...structuredClone(draft), id: 'birthday', segment: 'birthday_today', recipients: [structuredClone(draft.recipients[0])] };
+  assert.equal((await lib.sendCampaign(structuredClone(birthday), eligible)).recipients[0].status, 'accepted');
+  assert.equal((await lib.sendCampaign({ ...structuredClone(birthday), id: 'second-birthday' }, eligible)).recipients[0].status, 'skipped');
+  assert.equal(pushes, 4);
 });
 
  test('Loretto pilot gate uses the immutable business ID, not its name', () => {

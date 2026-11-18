@@ -182,12 +182,28 @@ process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
 test('push runs after response, removes expired device tokens, and contains delivery failures', async () => {
   const { EventEmitter } = require('node:events');
   const pending = [], removals = [], requests = [];
-  let registrations;
+  let registrations, missedUpdate = false;
   const update = loader({
     'next/server': { after: (callback) => pending.push(callback) },
     '@upstash/redis': { Redis: class {
       async hgetall() { return registrations; }
-      async eval(script, keys, args) { removals.push({ script, keys, args }); return 1; }
+      async eval(script, keys, args) {
+        if (script.includes("HGETALL")) {
+          const entries = Object.entries(registrations ?? {});
+          if (!entries.length) missedUpdate = true;
+          return entries.flat();
+        }
+        if (script.includes("SADD")) {
+          const pending = Number(missedUpdate);
+          missedUpdate = false;
+          registrations ??= {};
+          const added = Number(!registrations[args[1]]);
+          registrations[args[1]] = args[2];
+          return [added, pending];
+        }
+        removals.push({ script, keys, args });
+        return 1;
+      }
     } },
     'node:http2': { connect: (_url, credentials) => {
       assert.ok(credentials.cert.length); assert.ok(credentials.key.length);
@@ -220,6 +236,17 @@ test('push runs after response, removes expired device tokens, and contains deli
   process.env.APPLE_WALLET_WEB_SERVICE_URL = original;
   registrations = { broken: 'c'.repeat(64) };
   await assert.doesNotReject(() => update.notifyWalletMember(member.id));
+
+  // First stamp committed before the initial device registration.
+  registrations = {};
+  update.scheduleWalletUpdate(member.id);
+  await pending[1]();
+  assert.equal(missedUpdate, true);
+  assert.equal(await update.registerWalletDevice('first', member.id, 'd'.repeat(64)), 1);
+  assert.equal(await update.registerWalletDevice('first', member.id, 'd'.repeat(64)), 0);
+  assert.equal(pending.length, 3);
+  await pending[2]();
+  assert.ok(requests.at(-1)[':path'].endsWith('d'.repeat(64)));
 });
 
  test('Wallet test requires super-admin access before reading members or sending', async () => {

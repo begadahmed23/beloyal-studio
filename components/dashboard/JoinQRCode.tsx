@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "react-qr-code";
 import {
   Check,
@@ -11,16 +11,27 @@ import {
 
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
-const POSTER_WIDTH = 420;
-const POSTER_HEIGHT = 720;
+import { exportJoinPoster, POSTER_HEIGHT, POSTER_WIDTH } from "./export-join-poster";
 
 export default function JoinQRCode() {
   const { theme, cafe } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
 
+  const tagline = isBarbershop ? "Sharp style. Loyal clients." : "Let coffee connect us";
+  const progress = `Collect ${isBarbershop ? "visits" : "stamps"}.`;
+  const reward = isBarbershop
+    ? `Earn ${(cafe.rewardName || "Free Haircut").toLowerCase()}.`
+    : "Earn free drinks.";
+  const filename = `${cafe.slug}-${isBarbershop ? "barber" : "loyalty"}-qr.png`;
+
   const posterRef = useRef<HTMLDivElement>(null);
 
   const [copied, setCopied] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  useEffect(() => () => {
+    if (downloadUrl) URL.revokeObjectURL(downloadUrl);
+  }, [downloadUrl]);
+
   const [downloading, setDownloading] = useState(false);
   const [downloadMessage, setDownloadMessage] = useState<{
     type: "success" | "error";
@@ -49,104 +60,25 @@ export default function JoinQRCode() {
     }
   }
 
-  async function waitForImages(element: HTMLElement) {
-    const images = Array.from(
-      element.querySelectorAll("img")
-    );
-
-    await Promise.all(
-      images.map((image) => {
-        if (image.complete) {
-          return Promise.resolve();
-        }
-
-        return new Promise<void>((resolve) => {
-          image.onload = () => resolve();
-          image.onerror = () => resolve();
-        });
-      })
-    );
-  }
-
   async function downloadPoster() {
-    if (!posterRef.current) {
-      return;
-    }
+    if (!posterRef.current) return;
 
     setDownloading(true);
     setDownloadMessage(null);
-
     try {
-      const poster = posterRef.current;
-      const { toPng } = await import("html-to-image");
-
-      await waitForImages(poster);
-
-      if ("fonts" in document) {
-        await document.fonts.ready;
-      }
-
-      const image = await toPng(poster, {
-        cacheBust: false,
-        pixelRatio: 3,
-        backgroundColor: "#ffffff",
-        width: POSTER_WIDTH,
-        height: POSTER_HEIGHT,
-        style: {
-          width: `${POSTER_WIDTH}px`,
-          height: `${POSTER_HEIGHT}px`,
-          maxWidth: "none",
-          minWidth: `${POSTER_WIDTH}px`,
-          minHeight: `${POSTER_HEIGHT}px`,
-          margin: "0",
-          transform: "none",
-          boxShadow: "none",
-        },
-      });
-
-      const imageResponse = await fetch(image);
-      const imageBlob = await imageResponse.blob();
-      const objectUrl = URL.createObjectURL(imageBlob);
+      const blob = await exportJoinPoster(posterRef.current, cafe.name, tagline, progress, reward);
+      const url = URL.createObjectURL(blob);
+      setDownloadUrl(url);
       const link = document.createElement("a");
-      const isIOS =
-        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === "MacIntel" &&
-          navigator.maxTouchPoints > 1);
-
-      link.download = `${cafe.slug}-${
-        isBarbershop ? "barber" : "loyalty"
-      }-qr.png`;
-      link.href = objectUrl;
-
-      if (isIOS) {
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-      }
-
+      link.download = filename;
+      link.href = url;
       document.body.appendChild(link);
       link.click();
       link.remove();
-
-      window.setTimeout(() => {
-        URL.revokeObjectURL(objectUrl);
-      }, 10000);
-
-      setDownloadMessage({
-        type: "success",
-        text: isIOS
-          ? "Poster opened. Tap Share, then Save to Photos."
-          : "QR poster downloaded successfully.",
-      });
+      setDownloadMessage({ type: "success", text: "QR poster ready." });
     } catch (error) {
-      console.error(
-        "Could not download QR poster:",
-        error
-      );
-
-      setDownloadMessage({
-        type: "error",
-        text: "The QR poster could not be downloaded. Please try again.",
-      });
+      console.error("Could not download QR poster:", error);
+      setDownloadMessage({ type: "error", text: "The QR poster could not be downloaded. Please try again." });
     } finally {
       setDownloading(false);
     }
@@ -303,7 +235,12 @@ export default function JoinQRCode() {
                   <Check className="mt-0.5 shrink-0" size={17} />
                 ) : null}
 
-                <span>{downloadMessage.text}</span>
+                <span>
+                  {downloadMessage.text}
+                  {downloadMessage.type === "success" && downloadUrl && (
+                    <> <a className="underline" href={downloadUrl} download={filename}>Save PNG</a></>
+                  )}
+                </span>
               </div>
             ) : null}
           </div>
@@ -425,9 +362,7 @@ export default function JoinQRCode() {
                     textTransform: "uppercase",
                   }}
                 >
-                  {isBarbershop
-                    ? "Sharp style. Loyal clients."
-                    : "Let coffee connect us"}
+                  {tagline}
                 </p>
               </div>
 
@@ -481,7 +416,7 @@ export default function JoinQRCode() {
                       letterSpacing: "-0.025em",
                     }}
                   >
-                    Collect {isBarbershop ? "visits" : "stamps"}.
+                    {progress}
                   </p>
 
                   <p
@@ -494,9 +429,7 @@ export default function JoinQRCode() {
                       letterSpacing: "-0.025em",
                     }}
                   >
-                    {isBarbershop
-                      ? `Earn ${(cafe.rewardName || "Free Haircut").toLowerCase()}.`
-                      : "Earn free drinks."}
+                    {reward}
                   </p>
 
                   <p
