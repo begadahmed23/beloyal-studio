@@ -1,10 +1,14 @@
 "use client";
+import type { BusinessType } from "@prisma/client";
 import GoogleWalletButton from "./GoogleWalletButton";
 
 import AppleWalletButton from "./AppleWalletButton";
+import { businessCardBackground } from "@/lib/business/card-artwork";
 
 import {
   Coffee,
+  Layers,
+  Store,
   Gift,
   Heart,
   MessageCircle,
@@ -22,7 +26,7 @@ export type Cafe = {
   id: string;
   name: string;
   slug: string;
-  businessType: "CAFE" | "BARBERSHOP";
+  businessType: BusinessType;
   logoUrl: string | null;
   theme: string;
   primaryColor: string | null;
@@ -214,6 +218,10 @@ export default function LoyaltyCard({
 }: LoyaltyCardProps) {
   const isBarbershop =
     customer.cafe.businessType === "BARBERSHOP";
+  const isVape = customer.cafe.businessType === "VAPE";
+  const isOther = customer.cafe.businessType === "OTHER";
+  const StampIcon = isVape ? Layers : isOther ? Store : Coffee;
+  const stampRadius = isOther ? "rounded-full" : isBarbershop || isVape ? "rounded-xl" : "rounded-2xl";
   const isBrickBarber =
     isBarbershop && customer.cafe.theme === "COFFEE_CLASSIC";
   const normalizedCafeName = customer.cafe.name
@@ -303,6 +311,7 @@ export default function LoyaltyCard({
         style={{
           borderColor: cardBorder,
           background: `
+            ${businessCardBackground(customer.cafe.businessType, primaryColor)} right top / auto 160px no-repeat,
             radial-gradient(
               circle at 92% 4%,
               ${withAlpha(
@@ -591,7 +600,7 @@ export default function LoyaltyCard({
                   <div
                     key={index}
                     className={`flex aspect-square items-center justify-center border transition-all duration-500 ${
-                      isBarbershop ? "rounded-xl" : "rounded-2xl"
+                      stampRadius
                     } ${
                       isNewStamp
                         ? "scale-110"
@@ -644,7 +653,7 @@ export default function LoyaltyCard({
                         }
                       />
                     ) : (
-                      <Coffee
+                      <StampIcon
                         size={23}
                         className={`transition-all duration-500 ${
                           isNewStamp
@@ -657,7 +666,7 @@ export default function LoyaltyCard({
                               ? rewardIvory
                               : accentText
                             : emptyStampText,
-                          fill: filled
+                          fill: filled && !isVape && !isOther
                             ? cardGlowsGreen
                               ? rewardIvory
                               : accentText

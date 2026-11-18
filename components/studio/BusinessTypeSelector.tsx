@@ -1,6 +1,6 @@
 "use client";
 
-import { Coffee, Scissors } from "lucide-react";
+import { Coffee, Layers, Scissors, Store } from "lucide-react";
 
 import type { BusinessType } from "./studio-types";
 
@@ -23,6 +23,18 @@ const options = [
     description: "Visits and service rewards",
     icon: Scissors,
   },
+  {
+    value: "VAPE" as const,
+    label: "Vape shop",
+    description: "Ivory and walnut branding",
+    icon: Layers,
+  },
+  {
+    value: "OTHER" as const,
+    label: "Other business",
+    description: "A calm, flexible retail theme",
+    icon: Store,
+  },
 ];
 
 export default function BusinessTypeSelector({
@@ -31,7 +43,7 @@ export default function BusinessTypeSelector({
   disabled = false,
 }: Props) {
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid grid-cols-1 gap-2 min-[440px]:grid-cols-2 sm:gap-3">
       {options.map((option) => {
         const Icon = option.icon;
         const selected = value === option.value;

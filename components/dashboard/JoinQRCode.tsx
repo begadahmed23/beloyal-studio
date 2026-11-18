@@ -17,11 +17,9 @@ export default function JoinQRCode() {
   const { theme, cafe } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
 
-  const tagline = isBarbershop ? "Sharp style. Loyal clients." : "Let coffee connect us";
+  const tagline = isBarbershop ? "Sharp style. Loyal clients." : cafe.businessType === "CAFE" ? "Let coffee connect us" : "Member rewards";
   const progress = `Collect ${isBarbershop ? "visits" : "stamps"}.`;
-  const reward = isBarbershop
-    ? `Earn ${(cafe.rewardName || "Free Haircut").toLowerCase()}.`
-    : "Earn free drinks.";
+  const reward = `Earn ${(cafe.rewardName || "a reward").toLowerCase()}.`;
   const filename = `${cafe.slug}-${isBarbershop ? "barber" : "loyalty"}-qr.png`;
 
   const posterRef = useRef<HTMLDivElement>(null);

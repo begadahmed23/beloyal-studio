@@ -21,8 +21,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { getBusinessTerminology } from "@/lib/business/terminology";
-import { getBusinessThemeOptions } from "@/lib/cafe-theme";
+import { businessTypeLabels, getBusinessTerminology } from "@/lib/business/terminology";
+import { getBusinessThemeOptions, getDefaultBusinessTheme } from "@/lib/cafe-theme";
 
 import BusinessTypeSelector from "./BusinessTypeSelector";
 import type { BusinessType } from "./studio-types";
@@ -70,10 +70,7 @@ export default function CreateCafeDialog({
 
   const terminology =
     getBusinessTerminology(businessType);
-  const businessLabel =
-    businessType === "BARBERSHOP"
-      ? "Barbershop"
-      : "Café";
+  const businessLabel = businessTypeLabels[businessType];
   const availableThemes =
     getBusinessThemeOptions(businessType);
 
@@ -104,11 +101,7 @@ export default function CreateCafeDialog({
     setRewardTarget(
       nextBusinessType === "BARBERSHOP" ? "3" : "7",
     );
-    setTheme(
-      nextBusinessType === "BARBERSHOP"
-        ? "DARK_LUXURY"
-        : "COFFEE_CLASSIC",
-    );
+    setTheme(getDefaultBusinessTheme(nextBusinessType));
   }
 
   function generateSlug(value: string) {
@@ -294,9 +287,8 @@ export default function CreateCafeDialog({
                     handleCafeNameChange(event.target.value)
                   }
                   placeholder={
-                    businessType === "BARBERSHOP"
-                      ? "The Barber Club"
-                      : "Coffee Lab"
+                    businessType === "BARBERSHOP" ? "The Barber Club"
+                      : businessType === "CAFE" ? "Coffee Lab" : "Business name"
                   }
                   required
                   disabled={loading}

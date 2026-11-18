@@ -1,9 +1,10 @@
 "use client";
+import type { BusinessType } from "@prisma/client";
 
 import { Star } from "lucide-react";
 
 type GoogleReviewModalProps = {
-  businessType: "CAFE" | "BARBERSHOP";
+  businessType: BusinessType;
   selectedRating: number | null;
   googleReviewUrl: string | null;
   cardBorder: string;

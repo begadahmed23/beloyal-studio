@@ -1,4 +1,5 @@
 "use client";
+import type { BusinessType } from "@prisma/client";
 
 import {
   createContext,
@@ -22,8 +23,11 @@ export type CafeSettings = {
   id: string;
   name: string;
   slug: string;
-  businessType: "CAFE" | "BARBERSHOP";
+  businessType: BusinessType;
   logoUrl: string | null;
+  primaryColor: string | null;
+  secondaryColor: string | null;
+  backgroundColor: string | null;
 
   rewardTarget: number;
   rewardName: string;
@@ -296,9 +300,11 @@ export default function CafeThemeProvider({
           : getBusinessTheme(
               previewThemeName,
               currentCafe.businessType,
+              previewThemeName === savedThemeName ? currentCafe : undefined,
             ),
     [
       previewThemeName,
+      savedThemeName,
       currentCafe,
     ],
   );

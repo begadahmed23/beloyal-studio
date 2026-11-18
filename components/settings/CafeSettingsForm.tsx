@@ -32,7 +32,7 @@ import {
 } from "@/components/theme/CafeThemeProvider";
 import {
   getBusinessTheme,
-  getBusinessThemeColors,
+  getBusinessBrandColors,
   getBusinessThemeOptions,
   type BusinessThemeOption,
   type CafeThemeConfig,
@@ -284,16 +284,6 @@ export default function CafeSettingsForm({
     });
   }
 
-function getThemeColors(theme: CafeThemeName) {
-  const [primaryColor, secondaryColor, backgroundColor] =
-    getBusinessThemeColors(theme, cafe.businessType);
-
-  return {
-    primaryColor,
-    secondaryColor,
-    backgroundColor,
-  };
-}
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>
   ) {
@@ -303,7 +293,9 @@ function getThemeColors(theme: CafeThemeName) {
     setMessage(null);
 
     try {
-        const colors = getThemeColors(form.theme);
+      const [primaryColor, secondaryColor, backgroundColor] = getBusinessBrandColors(
+        form.theme, cafe.businessType, form.theme === savedThemeName ? cafe : undefined,
+      );
       const response = await fetch(
         "/api/cafe/settings",
         {
@@ -320,9 +312,9 @@ function getThemeColors(theme: CafeThemeName) {
               : {
                   logoUrl: form.logoUrl,
                   theme: form.theme,
-                  primaryColor: colors.primaryColor,
-                  secondaryColor: colors.secondaryColor,
-                  backgroundColor: colors.backgroundColor,
+                  primaryColor,
+                  secondaryColor,
+                  backgroundColor,
                 }),
             rewardTarget: Number(
               form.rewardTarget
@@ -513,7 +505,7 @@ router.refresh();
             icon={Store}
             title="General"
             description={`Basic information displayed throughout your ${
-              isBarbershop ? "barbershop" : "café"
+              isBarbershop ? "barbershop" : cafe.businessType === "CAFE" ? "café" : "business"
             } dashboard and customer loyalty card.`}
           />
 
@@ -689,7 +681,7 @@ router.refresh();
             icon={Palette}
             title="Branding"
             description={`Choose the visual identity used across the ${
-              isBarbershop ? "barbershop" : "café"
+              isBarbershop ? "barbershop" : cafe.businessType === "CAFE" ? "café" : "business"
             } dashboard and customer card.`}
           />
 
@@ -712,7 +704,7 @@ router.refresh();
                     cafe.name ||
                     (isBarbershop
                       ? "Your barbershop"
-                      : "Your café")
+                      : "Your business")
                   }
                   rewardTarget={getLoyaltyProgressTarget({
                     rewardTarget: Number(form.rewardTarget) || (isBarbershop ? 3 : 8),
@@ -721,7 +713,7 @@ router.refresh();
                     form.rewardName ||
                     (isBarbershop
                       ? "Free haircut"
-                      : "Free drink")
+                      : cafe.businessType === "CAFE" ? "Free drink" : "Member reward")
                   }
                   isBarbershop={isBarbershop}
                   onSelect={() => selectTheme(option.value)}
@@ -1343,7 +1335,7 @@ router.refresh();
               theme={theme}
               label="Google review URL"
               description={`Paste the direct Google review link for this ${
-                isBarbershop ? "barbershop" : "café"
+                isBarbershop ? "barbershop" : cafe.businessType === "CAFE" ? "café" : "business"
               }. Leave it empty to disable the review prompt.`}
             >
               <input

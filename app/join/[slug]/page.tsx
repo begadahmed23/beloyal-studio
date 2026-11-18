@@ -1,3 +1,4 @@
+import { businessCardBackground } from "@/lib/business/card-artwork";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
@@ -228,7 +229,8 @@ export default async function JoinPage({
               </p>
             </div>
           ) : (
-            <div className="px-6 pb-5 pt-8 text-center sm:px-8">
+            <div className="bg-[length:auto_100%] bg-right-top bg-no-repeat px-5 pb-5 pt-8 text-center sm:px-8"
+              style={{ backgroundImage: businessCardBackground(cafe.businessType, primaryColor) }}>
               {cafe.logoUrl ? (
                 <img
                   src={cafe.logoUrl}
@@ -251,11 +253,11 @@ export default async function JoinPage({
                 className="mb-2 text-xs font-semibold uppercase tracking-[0.28em]"
                 style={{ color: businessTheme.accent }}
               >
-                {isBarbershop ? "Barber Loyalty" : "Loyalty Club"}
+                {isBarbershop ? "Barber loyalty" : "Loyalty club"}
               </p>
 
               <h1
-                className="text-3xl font-semibold tracking-tight"
+                className="break-words text-3xl font-semibold tracking-tight"
                 style={{ color: businessTheme.textPrimary }}
               >
                 Join {cafe.name}

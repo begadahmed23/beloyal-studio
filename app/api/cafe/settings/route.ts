@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
 
 import { serializeCafeSettings } from "./serializer";
+import { scheduleGoogleWalletBrandUpdate } from "@/lib/wallet/google";
 import { updateCafeSettings } from "./update-settings";
 
 export async function GET(request: NextRequest) {
@@ -142,6 +143,8 @@ export async function PATCH(request: NextRequest) {
       authData.cafeId,
       body as Record<string, unknown>,
     );
+
+    scheduleGoogleWalletBrandUpdate(cafe);
 
     return NextResponse.json({
       message: "Settings saved successfully.",

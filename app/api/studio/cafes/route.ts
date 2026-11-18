@@ -6,8 +6,11 @@ import { prisma } from "@/lib/prisma";
 import { requireSuperAdmin } from "@/lib/require-super-admin";
 import {
   getBusinessThemeColors,
-  type CafeThemeName,
+  getBusinessThemeOptions,
+  getDefaultBusinessTheme,
 } from "@/lib/cafe-theme";
+
+import { getBusinessTerminology } from "@/lib/business/terminology";
 
 const TRIAL_DAYS = 14;
 
@@ -549,11 +552,7 @@ export async function POST(
           ? (body.businessType as BusinessType)
           : null;
 
-    const defaultRewardName =
-      businessType ===
-      BusinessType.BARBERSHOP
-        ? "Free Haircut"
-        : "Free Drink";
+    const defaultRewardName = businessType ? getBusinessTerminology(businessType).defaultRewardName : "";
 
     const rewardName =
       typeof body.rewardName === "string"
@@ -567,14 +566,6 @@ export async function POST(
     const monthlyPrice = Number(
       body.monthlyPrice,
     );
-
-    const theme =
-      typeof body.theme === "string"
-        ? body.theme
-        : businessType ===
-            BusinessType.BARBERSHOP
-          ? "DARK_LUXURY"
-          : "COFFEE_CLASSIC";
 
     if (!businessType) {
       return NextResponse.json(
@@ -734,24 +725,8 @@ export async function POST(
         TRIAL_DAYS,
     );
 
-    const savedTheme: CafeThemeName =
-      businessType ===
-      BusinessType.BARBERSHOP
-        ? theme ===
-              "MODERN_MINIMAL" ||
-            theme ===
-              "COFFEE_CLASSIC"
-          ? theme
-          : "DARK_LUXURY"
-        : theme ===
-              "MODERN_MINIMAL" ||
-            theme ===
-              "DARK_LUXURY" ||
-            theme ===
-              "MEDITERRANEAN_BLUE" ||
-            theme === "ORGANIC"
-          ? theme
-          : "COFFEE_CLASSIC";
+    const savedTheme = getBusinessThemeOptions(businessType)
+      .find(option => option.value === body.theme)?.value ?? getDefaultBusinessTheme(businessType);
 
     const [
       primaryColor,

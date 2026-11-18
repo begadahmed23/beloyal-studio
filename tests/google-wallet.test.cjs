@@ -53,6 +53,12 @@ test('private key copies support raw PEM, JSON strings and service-account JSON'
 test('business branding and nearby coordinates are scoped to the class', () => {
  const brand = wallet.googleClassBrand({...member.cafe, logoUrl:'https://example.com/cafe.png'}, {nearbyEnabled:true, nearbyLatitude:31.2, nearbyLongitude:29.9});
  assert.equal(brand.programLogo.sourceUri.uri,'https://example.com/cafe.png');
+ const artwork = new URL(wallet.googleClassBrand({
+   ...member.cafe, businessType: 'VAPE', primaryColor: '#71523d', secondaryColor: '#b49072',
+ }).heroImage.sourceUri.uri);
+ assert.equal(artwork.pathname, '/api/wallet/artwork/VAPE');
+ assert.equal(artwork.searchParams.get('primary'), '71523d');
+ assert.equal(artwork.searchParams.get('background'), '123456');
  assert.equal(brand.merchantLocations[0].latitude,31.2);
  assert.equal(wallet.googleClassBrand(member.cafe,{nearbyEnabled:false}).merchantLocations.length,0);
 });

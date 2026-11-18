@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
-import { walletCampaignsEnabledForCafe } from "@/lib/wallet/campaign-access";
+import { DEFAULT_WALLET_NOTIFICATIONS } from "@/lib/wallet/notification-text";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 import { getWalletNotificationSettings, saveWalletNotificationSettings } from "@/lib/wallet/notification-settings";
 import { updateGoogleWalletClass } from "@/lib/wallet/google";
@@ -43,14 +43,14 @@ async function handle(request: NextRequest) {
   if (Number(request.headers.get("content-length") ?? 0) > 16384) return json({ message: "Request too large." }, 413);
   const body = request.method === "POST" ? await request.json() : null;
   const cafeId = body?.cafeId ?? request.nextUrl.searchParams.get("cafeId");
-  if (typeof cafeId !== "string" || (!auth.isSuperAdmin && cafeId !== auth.cafeId) || !walletCampaignsEnabledForCafe(cafeId)) return json({ message: "Wallet notification settings are available to the Loretto pilot only." }, 403);
+  if (typeof cafeId !== "string" || (!auth.isSuperAdmin && cafeId !== auth.cafeId)) return json({ message: "Business access denied." }, 403);
   const cafe = await prisma.cafe.findFirst({ where: { id: cafeId, isActive: true },  });
   if (!cafe) return json({ message: "Active business not found." }, 404);
   if (request.method === "POST") {
     const parsed = schema.safeParse(body);
     if (!parsed.success) return json({ message: "Use up to 100 characters for each optional message. Only notification messages and nearby settings can be edited here." }, 400);
     if (!auth.isSuperAdmin && Object.keys(parsed.data).some(key => key.startsWith("nearby"))) return json({ message: "Location is managed by BeLoyal Studio." }, 403);
-    const current = await getWalletNotificationSettings(cafeId);
+    const current = await getWalletNotificationSettings(cafeId) ?? DEFAULT_WALLET_NOTIFICATIONS;
     const submitted = { ...parsed.data };
     Reflect.deleteProperty(submitted, "cafeId");
     let locations;
@@ -62,7 +62,7 @@ async function handle(request: NextRequest) {
     await saveWalletNotificationSettings(cafeId, settings);
     if (auth.isSuperAdmin && Object.keys(parsed.data).some(key => key.startsWith("nearby"))) await updateGoogleWalletClass(cafe, settings);
   }
-  return json({ settings: await getWalletNotificationSettings(cafeId), rewardName: cafe.rewardName, target: getLoyaltyProgressTarget(cafe) });
+  return json({ settings: await getWalletNotificationSettings(cafeId) ?? DEFAULT_WALLET_NOTIFICATIONS, rewardName: cafe.rewardName, target: getLoyaltyProgressTarget(cafe) });
 }
 async function respond(request: NextRequest) {
   try { return await handle(request); }

@@ -1,6 +1,7 @@
+import type { BusinessType } from "@prisma/client";
 type LoyaltyBusiness = {
   rewardTarget: number;
-  businessType?: "CAFE" | "BARBERSHOP";
+  businessType?: BusinessType;
 };
 
 // The configured visit is the redemption visit. Legacy targets of 1 still require one paid visit.

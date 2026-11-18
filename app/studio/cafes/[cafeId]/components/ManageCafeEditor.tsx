@@ -1,5 +1,6 @@
 "use client";
 
+import type { BusinessType } from "@prisma/client";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
@@ -25,23 +26,18 @@ import {
   useState,
 } from "react";
 
+import { getBusinessThemeColors, getBusinessThemeOptions, type CafeThemeName as CafeTheme } from "@/lib/cafe-theme";
 import StaffManagementPanel from "@/components/staff/StaffManagementPanel";
 import SubscriptionControlPanel, {
   type SubscriptionDraft,
   type SubscriptionStatus,
 } from "./SubscriptionControlPanel";
 
-type CafeTheme =
-  | "COFFEE_CLASSIC"
-  | "MODERN_MINIMAL"
-  | "DARK_LUXURY"
-  | "MEDITERRANEAN_BLUE"
-  | "ORGANIC";
-
 type Cafe = {
   id: string;
   name: string;
   slug: string;
+  businessType: BusinessType;
   logoUrl: string | null;
 
   theme: CafeTheme;
@@ -107,32 +103,6 @@ type Cafe = {
     };
   };
 };
-
-const themes: {
-  value: CafeTheme;
-  label: string;
-}[] = [
-  {
-    value: "COFFEE_CLASSIC",
-    label: "Coffee Classic",
-  },
-  {
-    value: "MODERN_MINIMAL",
-    label: "Modern Minimal",
-  },
-  {
-    value: "DARK_LUXURY",
-    label: "Dark Luxury",
-  },
-  {
-    value: "MEDITERRANEAN_BLUE",
-    label: "Mediterranean Blue",
-  },
-  {
-    value: "ORGANIC",
-    label: "Organic",
-  },
-];
 
 function dateToInputValue(value: string | null) {
   if (!value) return "";
@@ -822,16 +792,21 @@ export default function ManageCafeEditor() {
       <FormSection
         icon={Palette}
         title="Branding and theme"
-        description="Control the café card appearance."
+        description="Choose a preset or edit the colors used on the join page, dashboard, and loyalty cards."
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <SelectField
             label="Theme"
             value={theme}
-            onChange={(value) =>
-              setTheme(value as CafeTheme)
-            }
-            options={themes}
+            onChange={(value) => {
+              const nextTheme = value as CafeTheme;
+              const [primary, secondary, background] = getBusinessThemeColors(nextTheme, cafe.businessType);
+              setTheme(nextTheme);
+              setPrimaryColor(primary);
+              setSecondaryColor(secondary);
+              setBackgroundColor(background);
+            }}
+            options={getBusinessThemeOptions(cafe.businessType)}
           />
 
           <ColorField
@@ -1432,7 +1407,8 @@ function ColorField({
       <div className="flex h-12 items-center gap-3 rounded-xl border border-black/[0.09] bg-[#FAFAFB] px-3 transition hover:border-black/[0.18] focus-within:border-[#8E9197] focus-within:ring-2 focus-within:ring-black/[0.04]">
         <input
           type="color"
-          value={value}
+          aria-label={`${label} picker`}
+          value={/^#[0-9a-f]{6}$/i.test(value) ? value : "#000000"}
           onChange={(event) =>
             onChange(event.target.value)
           }
@@ -1440,11 +1416,11 @@ function ColorField({
         />
 
         <input
+          aria-label={label}
           value={value}
-          onChange={(event) =>
-            onChange(event.target.value)
-          }
-          className="min-w-0 flex-1 bg-transparent text-sm text-[#171719] outline-none"
+          pattern="#[0-9a-fA-F]{6}"
+          onChange={(event) => onChange(event.target.value)}
+          className="min-w-0 flex-1 bg-transparent text-base text-[#171719] outline-none sm:text-sm"
         />
       </div>
     </div>

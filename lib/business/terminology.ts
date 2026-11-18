@@ -32,6 +32,26 @@ const terminologyByBusinessType = {
     qualifyingAction: "eligible service",
     defaultRewardName: "Free Haircut",
   },
+  VAPE: {
+    businessSingular: "vape shop",
+    businessPlural: "vape shops",
+    staffSingular: "cashier",
+    staffPlural: "cashiers",
+    loyaltyUnitSingular: "stamp",
+    loyaltyUnitPlural: "stamps",
+    qualifyingAction: "eligible purchase",
+    defaultRewardName: "Member Reward",
+  },
+  OTHER: {
+    businessSingular: "business",
+    businessPlural: "businesses",
+    staffSingular: "staff member",
+    staffPlural: "staff",
+    loyaltyUnitSingular: "stamp",
+    loyaltyUnitPlural: "stamps",
+    qualifyingAction: "eligible purchase",
+    defaultRewardName: "Member Reward",
+  },
 } satisfies Record<
   BusinessType,
   BusinessTerminology
@@ -42,3 +62,9 @@ export function getBusinessTerminology(
 ): BusinessTerminology {
   return terminologyByBusinessType[businessType];
 }
+export const businessTypeLabels: Record<BusinessType, string> = {
+  CAFE: "Café",
+  BARBERSHOP: "Barbershop",
+  VAPE: "Vape shop",
+  OTHER: "Other business",
+};

@@ -1,5 +1,4 @@
 "use client";
-import { walletCampaignsEnabledForCafe } from "@/lib/wallet/campaign-access";
 
 import Link from "next/link";
 import {
@@ -18,7 +17,7 @@ import {
 export default function CafeMobileNavigation() {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, cafe, userRole } = useCafeTheme();
+  const { theme, userRole } = useCafeTheme();
   const [formControlFocused, setFormControlFocused] =
     useState(false);
   const [
@@ -78,11 +77,10 @@ export default function CafeMobileNavigation() {
             item.href === "/dashboard/scanner" ||
             item.href === "/dashboard/scanner/phone",
         )
-      : cafeNavigation.filter(item => item.href !== "/dashboard/campaigns" || walletCampaignsEnabledForCafe(cafe.id));
+      : cafeNavigation;
 
   useEffect(() => {
     for (const item of cafeNavigation) {
-      if (item.href === "/dashboard/campaigns" && !walletCampaignsEnabledForCafe(cafe.id)) continue;
       if (
         userRole === "CASHIER" &&
         item.href !== "/dashboard" &&
@@ -101,7 +99,7 @@ export default function CafeMobileNavigation() {
         "/dashboard/settings",
       );
     }
-  }, [router, userRole, cafe.id]);
+  }, [router, userRole]);
 
   if (formControlFocused) {
     return null;
@@ -109,13 +107,13 @@ export default function CafeMobileNavigation() {
 
   return (
     <nav
-      aria-label="Café dashboard navigation"
-      className="fixed inset-x-3 z-50 grid rounded-[22px] border p-2 shadow-[0_20px_60px_rgba(0,0,0,0.22)] backdrop-blur-xl lg:hidden"
+      aria-label="Business dashboard navigation"
+      className="fixed inset-x-3 z-50 grid overflow-x-auto rounded-[22px] border p-2 shadow-[0_20px_60px_rgba(0,0,0,0.22)] backdrop-blur-xl lg:hidden"
       style={{
         bottom: "max(0.75rem, env(safe-area-inset-bottom))",
         borderColor: theme.border,
         backgroundColor: `${theme.surface}F2`,
-        gridTemplateColumns: `repeat(${navigationItems.length}, minmax(0, 1fr))`,
+        gridTemplateColumns: `repeat(${navigationItems.length}, minmax(40px, 1fr))`,
       }}
     >
       {navigationItems.map((item) => {
@@ -174,7 +172,7 @@ export default function CafeMobileNavigation() {
             }}
           >
             <Icon size={18} />
-            <span className="truncate">
+            <span className="max-w-full truncate">
               {item.mobileLabel}
             </span>
           </Link>

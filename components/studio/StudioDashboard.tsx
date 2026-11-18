@@ -1,5 +1,7 @@
 "use client";
 
+import { businessTypeLabels } from "@/lib/business/terminology";
+
 import Link from "next/link";
 import {
   useCallback,
@@ -1137,10 +1139,7 @@ export default function StudioDashboard() {
                         </h3>
 
                         <span className="shrink-0 rounded-full border border-black/[0.07] bg-[#F3F4F6] px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#77777E]">
-                          {cafe.businessType ===
-                          "BARBERSHOP"
-                            ? "Barber"
-                            : "Café"}
+                          {businessTypeLabels[cafe.businessType]}
                         </span>
 
                         <span

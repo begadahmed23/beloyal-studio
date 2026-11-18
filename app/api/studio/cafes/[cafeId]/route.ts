@@ -7,6 +7,7 @@ import {
 
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdmin } from "@/lib/require-super-admin";
+import { scheduleGoogleWalletBrandUpdate } from "@/lib/wallet/google";
 
 type RouteContext = {
   params: Promise<{ cafeId: string }>;
@@ -18,6 +19,7 @@ const selectCafe = {
   slug: true,
   logoUrl: true,
   theme: true,
+  businessType: true,
   primaryColor: true,
   secondaryColor: true,
   backgroundColor: true,
@@ -593,6 +595,10 @@ export async function PATCH(
         { message: "Café could not be reloaded." },
         { status: 500 }
       );
+    }
+
+    if (["name", "logoUrl", "theme", "primaryColor", "secondaryColor", "backgroundColor"].some((field) => field in data)) {
+      scheduleGoogleWalletBrandUpdate(cafe);
     }
 
     return NextResponse.json({

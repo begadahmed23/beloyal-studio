@@ -74,7 +74,7 @@ test('audience lists saved cards with consent status and keeps Apple available o
   assert.deepEqual(fallback.members.map(member => member.id), ['installed', 'missing', 'withdrawn']);
 });
 function routeFor(auth, extra = {}) {
-  return loader({ '@/lib/wallet/campaign-access': { walletCampaignsEnabledForCafe: id => id === 'cafe1' }, '@/lib/require-auth': { requireAuth: async () => auth },
+  return loader({ '@/lib/require-auth': { requireAuth: async () => auth },
     '@/lib/require-active-cafe': { requireActiveCafe: async () => ({ allowed: true }) },
     '@/lib/wallet/config': { walletUpdatesEnabled: () => true },
     '@/lib/prisma': { prisma: { cafe: { findFirst: async () => ({ id: 'cafe1', name: 'Loretto', timezone: 'Africa/Cairo' }) } } },
@@ -131,17 +131,22 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
   assert.equal(pushes, 4);
 });
 
- test('Loretto pilot gate uses the immutable business ID, not its name', () => {
-  const access = loader()('lib/wallet/campaign-access.ts');
-  assert.equal(access.walletCampaignsEnabledForCafe(access.WALLET_CAMPAIGN_PILOT_CAFE_ID), true);
-  assert.equal(access.walletCampaignsEnabledForCafe('other-cafe'), false);
-  assert.equal(access.walletCampaignsEnabledForCafe(null), false);
- });
- test('non-pilot cafe admins cannot read or send campaigns, including their own business', async () => {
-  const route = routeFor({ ...admin, cafeId: 'other' });
-  assert.equal((await route.GET(new NextRequest('https://example.com/api/wallet/campaigns?cafeId=other'))).status, 403);
-  assert.equal((await route.POST(post({action: 'send', cafeId:'other', campaignId:'11111111-1111-4111-8111-111111111111'}))).status,403);
- });
+test('an active business can load campaign audiences scoped to its own business', async () => {
+  const route = routeFor({ ...admin, cafeId: 'other' }, {
+    '@/lib/prisma': { prisma: { cafe: { findFirst: async ({ where }) => {
+      assert.deepEqual(where, { id: 'other', isActive: true });
+      return { id: 'other', name: 'Other business', timezone: 'Africa/Cairo' };
+    } } } },
+    '@/lib/wallet/campaigns': {
+      walletAudience: async (id) => {
+        assert.equal(id, 'other');
+        return { members: [] };
+      },
+      campaignHistory: async () => [],
+    },
+  });
+  assert.equal((await route.GET(new NextRequest('https://example.com/api/wallet/campaigns?cafeId=other'))).status, 200);
+});
 
  test('reward-ready audience matches cafe/barber targets and excludes redeemed rewards', async () => {
   const base = {name:'Member',memberNumber:'1',birthday:new Date('2000-01-01'),createdAt:new Date('2020-01-01'),transactions:[],rewardEarnedAt:null};
@@ -176,7 +181,6 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
   function route(auth) { return loader({
     '@/lib/require-auth': {requireAuth: async()=>auth},
     '@/lib/require-active-cafe': {requireActiveCafe: async()=>({allowed:true})},
-    '@/lib/wallet/campaign-access': {walletCampaignsEnabledForCafe:id=>id==='cafe1'},
     '@/lib/wallet/config': {walletUpdatesEnabled:()=>true},
     '@/lib/prisma': {prisma:{cafe:{findFirst:async()=>({rewardName:'Free Cookie',rewardTarget:7,businessType:'CAFE'})}}},
     '@/lib/wallet/notification-settings': {getWalletNotificationSettings:async()=>({stampSuffix:'',rewardSuffix:''}),saveWalletNotificationSettings:async()=>{saved++}},
@@ -204,14 +208,29 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
   assert.ok(!text.walletProgressChangeMessage(false,'Free Cookie',settings,true).includes('Stamp earned!'));
  });
 
-test('existing saved stamp/reward extras gain the start-over default without being replaced', async () => {
+test('wallet notification settings remain scoped to each business', async (t) => {
+  const originalUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const originalToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+  process.env.UPSTASH_REDIS_REST_URL = 'https://example.com';
+  process.env.UPSTASH_REDIS_REST_TOKEN = 'mock';
+  t.after(() => {
+    if (originalUrl === undefined) delete process.env.UPSTASH_REDIS_REST_URL;
+    else process.env.UPSTASH_REDIS_REST_URL = originalUrl;
+    if (originalToken === undefined) delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    else process.env.UPSTASH_REDIS_REST_TOKEN = originalToken;
+  });
   const lib = loader({
-    './campaign-access': {walletCampaignsEnabledForCafe: id => id === 'pilot'},
-    './updates': {passKey: id => id, walletRedis: () => ({get:async()=>({stampSuffix:'Our original thank-you',rewardSuffix:'Our original reward note'})})},
+    './campaign-access': { WALLET_CAMPAIGN_PILOT_CAFE_ID: 'pilot' },
+    './updates': { passKey: id => id, walletRedis: () => ({
+      get: async key => key.endsWith(':other')
+        ? { stampSuffix: 'Our original thank-you', rewardSuffix: 'Our original reward note' }
+        : null,
+    }) },
   })('lib/wallet/notification-settings.ts');
-  const settings = await lib.getWalletNotificationSettings('pilot');
-  assert.equal(settings.stampSuffix,'Our original thank-you');
-  assert.equal(settings.rewardSuffix,'Our original reward note');
-  assert.equal(settings.resetSuffix,'A fresh start towards your next reward ✨');
-  assert.equal(await lib.getWalletNotificationSettings('other'),undefined);
+  const settings = await lib.getWalletNotificationSettings('other');
+  assert.equal(settings.stampSuffix, 'Our original thank-you');
+  assert.equal(settings.rewardSuffix, 'Our original reward note');
+  assert.equal(settings.resetSuffix, 'A fresh start towards your next reward ✨');
+  assert.equal(await lib.getWalletNotificationSettings('unconfigured'), undefined);
+  assert.equal((await lib.getWalletNotificationSettings('pilot')).resetSuffix, settings.resetSuffix);
 });

@@ -6,6 +6,8 @@ import Link from "next/link";
 import {
   ArrowRight,
   Coffee,
+  Layers,
+  Store,
   Monitor,
   ScanLine,
   UserPlus,
@@ -50,6 +52,8 @@ function CafeDashboardHome() {
     cafe.slug.toLowerCase().includes("keka") ||
     normalizedCafeName.includes("keka");
 
+  const isCafe = cafe.businessType === "CAFE";
+  const BusinessIcon = isCafe ? Coffee : cafe.businessType === "VAPE" ? Layers : Store;
   const actions = [
     {
       label: "Scan a card",
@@ -204,11 +208,11 @@ function CafeDashboardHome() {
                 className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em]"
                 style={{ color: theme.accent }}
               >
-                <Coffee size={14} />
-                Café command center
+                <BusinessIcon size={14} />
+                {isCafe ? "Café overview" : "Loyalty overview"}
               </div>
               <h2 className="mt-4 max-w-2xl text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
-                Turn every coffee run into another visit.
+                {isCafe ? "Turn every coffee run into another visit." : cafe.name}
               </h2>
               <p
                 className="mt-4 max-w-xl text-sm leading-6"
@@ -239,7 +243,7 @@ function CafeDashboardHome() {
                 className="mt-1 text-sm"
                 style={{ color: theme.textMuted }}
               >
-                then {cafe.rewardName || "Free Drink"}
+                then {cafe.rewardName || "Member reward"}
               </p>
             </div>
           </div>
@@ -259,7 +263,7 @@ function CafeDashboardHome() {
             className="mt-1 text-xs"
             style={{ color: theme.textMuted }}
           >
-            Fast actions for the daily café workflow.
+            Scan cards and manage members at checkout.
           </p>
         </div>
 

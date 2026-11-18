@@ -1,11 +1,12 @@
 "use client";
+import type { BusinessType } from "@prisma/client";
 
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import QRCode from "react-qr-code";
 
 type QrCodeModalProps = {
-  businessType: "CAFE" | "BARBERSHOP";
+  businessType: BusinessType;
   cafeName: string;
   cafeSlug?: string;
   cafeTheme?: string;

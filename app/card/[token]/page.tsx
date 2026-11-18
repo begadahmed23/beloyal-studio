@@ -42,7 +42,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
-import { getBusinessThemeColors } from "@/lib/cafe-theme";
+import { getBusinessBrandColors } from "@/lib/cafe-theme";
 
 type FeedbackResponse = {
   success?: boolean;
@@ -102,15 +102,17 @@ function getLoaderTheme(
 
   const isBrickBarber =
     isBarbershop &&
-    cafe.theme === "COFFEE_CLASSIC";
+    cafe.theme === "COFFEE_CLASSIC" &&
+    (!cafe.backgroundColor || cafe.backgroundColor.toUpperCase() === "#1B1815");
 
   const [
     barberPrimaryColor,
     barberSecondaryColor,
     barberBackgroundColor,
-  ] = getBusinessThemeColors(
+  ] = getBusinessBrandColors(
     cafe.theme,
     cafe.businessType,
+    cafe,
   );
 
   const primaryColor = normalizeHex(
@@ -1285,7 +1287,9 @@ export default function DigitalCardPage() {
 const isBarbershop =
   customer.cafe.businessType === "BARBERSHOP";
 const isBrickBarber =
-  isBarbershop && customer.cafe.theme === "COFFEE_CLASSIC";
+  isBarbershop && customer.cafe.theme === "COFFEE_CLASSIC" &&
+  (!customer.cafe.backgroundColor || customer.cafe.backgroundColor.toUpperCase() === "#1B1815");
+const isRetail = customer.cafe.businessType === "VAPE" || customer.cafe.businessType === "OTHER";
 
 const normalizedCafeName = customer.cafe.name
   .normalize("NFD")
@@ -1368,9 +1372,10 @@ const progressPercentage = rewardReady
     barberPrimaryColor,
     barberSecondaryColor,
     barberBackgroundColor,
-  ] = getBusinessThemeColors(
+  ] = getBusinessBrandColors(
     customer.cafe.theme,
     customer.cafe.businessType,
+    customer.cafe,
   );
 
   const primaryColor = normalizeHex(
@@ -1420,7 +1425,7 @@ const progressPercentage = rewardReady
       : mixColors(
         backgroundColor,
         primaryColor,
-        pageIsLight ? 0.78 : 0.7,
+        pageIsLight ? (isRetail ? 0.95 : 0.78) : 0.7,
       );
 
   const cardIsLight =

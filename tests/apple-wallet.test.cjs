@@ -284,3 +284,30 @@ test('push runs after response, removes expired device tokens, and contains deli
   const unconfigured = JSON.parse(unzipSync(await createAppleWalletPass(member,undefined,{...settings,nearbyLatitude:null}))['pass.json']);
   assert.equal(unconfigured.locations,undefined);
  });
+
+test('the four business types have distinct pass strips and public Google artwork', async () => {
+  const { createAppleWalletPass } = load('lib/wallet/apple.ts');
+  const { GET } = load('app/api/wallet/artwork/[businessType]/route.ts');
+  const apple = new Set();
+  const google = new Set();
+  for (const businessType of ['CAFE', 'BARBERSHOP', 'VAPE', 'OTHER']) {
+    const zip = unzipSync(await createAppleWalletPass({ ...member, cafe: {
+      ...member.cafe, slug: 'sample', name: 'Sample', businessType,
+      primaryColor: '#426453', secondaryColor: '#819788', backgroundColor: '#eef1e9',
+    }}));
+    apple.add(require('crypto').createHash('sha256').update(zip['strip@3x.png']).digest('hex'));
+    const response = await GET(new Request('https://example.com/api/wallet/artwork/' + businessType), {
+      params: Promise.resolve({ businessType }),
+    });
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('Content-Type'), 'image/png');
+    const png = Buffer.from(await response.arrayBuffer());
+    assert.equal(png.readUInt32BE(16), 1200);
+    assert.equal(png.readUInt32BE(20), 400);
+    google.add(require('crypto').createHash('sha256').update(png).digest('hex'));
+  }
+  assert.equal(apple.size, 4);
+  assert.equal(google.size, 4);
+  const invalid = await GET(new Request('https://example.com'), { params: Promise.resolve({ businessType: 'constructor' }) });
+  assert.equal(invalid.status, 404);
+});

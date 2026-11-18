@@ -1,7 +1,8 @@
 import { createHash, sign } from "node:crypto";
+import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
-import { walletLocations, type WalletNotificationSettings } from "./notification-text";
+import { walletLocations } from "./notification-text";
 import type { WalletMember } from "./apple";
 
 export class GoogleWalletError extends Error {
@@ -74,13 +75,38 @@ export function googleClassBrand(cafe: GoogleBrand, settings?: GoogleLocation) {
   const fallback = new URL(process.env.GOOGLE_WALLET_LOGO_URL!);
   let logo = fallback;
   try { if (cafe.logoUrl) { const candidate = new URL(cafe.logoUrl); if (candidate.protocol === "https:") logo = candidate; } } catch { /* use fallback */ }
-  return { issuerName: cafe.name, programName: `${cafe.name} Rewards`, programLogo: { sourceUri: { uri: logo.href }, contentDescription: { defaultValue: { language: "en-US", value: cafe.name } } }, reviewStatus: "UNDER_REVIEW", hexBackgroundColor: /^#[0-9a-f]{6}$/i.test(cafe.backgroundColor) ? cafe.backgroundColor : "#111111", ...(settings ? { merchantLocations: walletLocations(settings).map(({latitude, longitude}) => ({latitude, longitude})) } : {}) };
+  const artwork = new URL(`/api/wallet/artwork/${cafe.businessType}`, process.env.GOOGLE_WALLET_SITE_URL!);
+  const colors = { primary: cafe.primaryColor, secondary: cafe.secondaryColor, background: cafe.backgroundColor };
+  for (const [key, value] of Object.entries(colors)) {
+    if (value && /^#[0-9a-f]{6}$/i.test(value)) artwork.searchParams.set(key, value.slice(1));
+  }
+  const description = (value: string) => ({ defaultValue: { language: "en-US", value } });
+  return {
+    issuerName: cafe.name,
+    programName: `${cafe.name} Rewards`,
+    programLogo: { sourceUri: { uri: logo.href }, contentDescription: description(cafe.name) },
+    heroImage: { sourceUri: { uri: artwork.href }, contentDescription: description(`${cafe.name} loyalty card artwork`) },
+    reviewStatus: "UNDER_REVIEW",
+    hexBackgroundColor: /^#[0-9a-f]{6}$/i.test(cafe.backgroundColor) ? cafe.backgroundColor : "#111111",
+    ...(settings ? { merchantLocations: walletLocations(settings).map(({ latitude, longitude }) => ({ latitude, longitude })) } : {}),
+  };
 }
 export async function updateGoogleWalletClass(cafe: GoogleBrand, settings?: GoogleLocation) {
   if (!googleWalletEnabled()) return;
   const response = await api(`loyaltyClass/${classId(cafe.slug)}`, "PATCH", googleClassBrand(cafe, settings));
   if (!response.ok && response.status !== 404) throw new GoogleWalletError("class-update", response.status);
 }
+export function scheduleGoogleWalletBrandUpdate(cafe: GoogleBrand) {
+  if (!googleWalletEnabled()) return;
+  after(async () => {
+    try {
+      await updateGoogleWalletClass(cafe);
+    } catch (error) {
+      console.warn("Google Wallet branding update failed", error);
+    }
+  });
+}
+
 export async function googleWalletHasUsers(id: string) {
   if (!googleWalletEnabled()) return false;
   const response = await api(`loyaltyObject/${objectId(id)}`, "GET");

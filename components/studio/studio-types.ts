@@ -1,4 +1,6 @@
-export type BusinessType = "CAFE" | "BARBERSHOP";
+import type { BusinessType } from "@prisma/client";
+
+export type { BusinessType } from "@prisma/client";
 
 export type SubscriptionStatus =
   | "TRIAL"

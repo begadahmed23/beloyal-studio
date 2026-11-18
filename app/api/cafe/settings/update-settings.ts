@@ -39,6 +39,7 @@ export async function updateCafeSettings(
       name: true,
       slug: true,
       businessType: true,
+      updatedAt: true,
       logoUrl: true,
       theme: true,
 

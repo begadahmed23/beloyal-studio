@@ -1,5 +1,4 @@
 "use client";
-import { walletCampaignsEnabledForCafe } from "@/lib/wallet/campaign-access";
 
 import Link from "next/link";
 import {
@@ -27,7 +26,7 @@ function isCurrentPage(pathname: string, href: string) {
 export default function BarberMobileNavigation() {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, cafe, userRole } = useCafeTheme();
+  const { theme, userRole } = useCafeTheme();
   const [formControlFocused, setFormControlFocused] =
     useState(false);
   const [
@@ -80,26 +79,25 @@ export default function BarberMobileNavigation() {
 
   useEffect(() => {
     for (const item of barberNavigation) {
-      if (item.href === "/dashboard/campaigns" && (userRole === "CASHIER" || !walletCampaignsEnabledForCafe(cafe.id))) continue;
+      if (userRole === "CASHIER" && "adminOnly" in item) continue;
       router.prefetch(item.href);
     }
 
-    router.prefetch(
-      "/dashboard/settings",
-    );
-  }, [router, userRole, cafe.id]);
+  }, [router, userRole]);
 
   if (formControlFocused) {
     return null;
   }
 
-  const navigationItems = barberNavigation.filter(item => item.href !== "/dashboard/campaigns" || (userRole !== "CASHIER" && walletCampaignsEnabledForCafe(cafe.id)));
+  const navigationItems = barberNavigation.filter(item => userRole !== "CASHIER" || !("adminOnly" in item));
 
   return (
     <nav
-      className="fixed inset-x-3 bottom-3 z-50 grid  rounded-[22px] border p-2 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl lg:hidden"
+      aria-label="Business dashboard navigation"
+      className="fixed inset-x-3 z-50 grid overflow-x-auto rounded-[22px] border p-2 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl lg:hidden"
       style={{
-        gridTemplateColumns: `repeat(${navigationItems.length}, minmax(0, 1fr))`,
+        bottom: "max(0.75rem, env(safe-area-inset-bottom))",
+        gridTemplateColumns: `repeat(${navigationItems.length}, minmax(40px, 1fr))`,
         borderColor: theme.border,
         backgroundColor: `${theme.surface}F2`,
       }}
@@ -158,7 +156,7 @@ export default function BarberMobileNavigation() {
             }}
           >
             <Icon size={18} />
-            <span className="truncate">{item.label === "Campaigns" ? "Wallet" : item.label}</span>
+            <span className="max-w-full truncate">{item.label === "Campaigns" ? "Wallet" : item.label}</span>
           </Link>
         );
       })}

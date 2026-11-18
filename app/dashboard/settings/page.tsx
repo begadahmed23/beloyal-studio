@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import WalletNotificationSettings from "@/components/wallet/WalletNotificationSettings";
-import { walletCampaignsEnabledForCafe } from "@/lib/wallet/campaign-access";
 import BirthdayRewardsSettings from "@/components/settings/BirthdayRewardsSettings";
 import CafeSettingsForm from "@/components/settings/CafeSettingsForm";
 import StaffManagementPanel from "@/components/staff/StaffManagementPanel";
@@ -34,7 +33,19 @@ export default function SettingsPage() {
       <CafeSettingsForm
         accountEmail={accountEmail}
       />
-      {walletCampaignsEnabledForCafe(cafe.id) && <div className="min-w-0" style={{"--wallet-surface":theme.surface,"--wallet-raised":theme.surfaceRaised,"--wallet-border":theme.border,"--wallet-text":theme.textPrimary,"--wallet-secondary":theme.textSecondary,"--wallet-muted":theme.textMuted,"--wallet-accent":theme.accent,"--wallet-accent-text":theme.accentText,color:theme.textPrimary} as React.CSSProperties}><WalletNotificationSettings cafeId={cafe.id} /></div>}
+      <div className="min-w-0" style={{
+        "--wallet-surface": theme.surface,
+        "--wallet-raised": theme.surfaceRaised,
+        "--wallet-border": theme.border,
+        "--wallet-text": theme.textPrimary,
+        "--wallet-secondary": theme.textSecondary,
+        "--wallet-muted": theme.textMuted,
+        "--wallet-accent": theme.accent,
+        "--wallet-accent-text": theme.accentText,
+        color: theme.textPrimary,
+      } as React.CSSProperties}>
+        <WalletNotificationSettings cafeId={cafe.id} />
+      </div>
       <BirthdayRewardsSettings />
       <StaffManagementPanel
         endpoint="/api/cafe/staff"

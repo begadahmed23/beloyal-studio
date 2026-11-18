@@ -53,6 +53,9 @@ export default async function DashboardLayout({
         slug: cafe.slug,
         businessType: cafe.businessType,
         logoUrl: cafe.logoUrl,
+        primaryColor: cafe.primaryColor,
+        secondaryColor: cafe.secondaryColor,
+        backgroundColor: cafe.backgroundColor,
 
         rewardTarget: cafe.rewardTarget,
         rewardName: cafe.rewardName,

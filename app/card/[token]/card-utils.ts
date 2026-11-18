@@ -1,3 +1,4 @@
+import type { BusinessType } from "@prisma/client";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 export function calculateBirthdayCountdown(
@@ -35,7 +36,7 @@ export function getProgressMessage(
   stamps: number,
   rewardTarget: number,
   rewardName: string,
-  businessType: "CAFE" | "BARBERSHOP" = "CAFE",
+  businessType: BusinessType = "CAFE",
 ) {
   const isBarbershop = businessType === "BARBERSHOP";
   const safeRewardName =

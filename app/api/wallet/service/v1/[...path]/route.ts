@@ -12,12 +12,12 @@ export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" };
 const reply = (status: number) => new NextResponse(null, { status, headers });
 const identifier = (value: string) => /^[a-z0-9_-]{1,200}$/i.test(value);
-// Include the reward visit rule change in update discovery for installed passes.
-const ARTWORK_VERSION = Date.UTC(2026, 10, 18, 18, 52);
+// Include current card artwork in update discovery for installed passes.
+const ARTWORK_VERSION = Date.UTC(2026, 10, 18, 19, 35);
 const select = { id: true, publicToken: true, memberNumber: true, name: true, stamps: true,
   rewardEarnedAt: true, updatedAt: true,
   cafe: { select: { id: true, name: true, slug: true, theme: true, businessType: true,
-    rewardTarget: true, rewardName: true, primaryColor: true, backgroundColor: true, updatedAt: true } } } as const;
+    rewardTarget: true, rewardName: true, primaryColor: true, secondaryColor: true, backgroundColor: true, updatedAt: true } } } as const;
 
 async function handler(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   try {

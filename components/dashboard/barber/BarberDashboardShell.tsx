@@ -1,5 +1,4 @@
 "use client";
-import { walletCampaignsEnabledForCafe } from "@/lib/wallet/campaign-access";
 
 import type { ReactNode } from "react";
 import Link from "next/link";
@@ -35,7 +34,7 @@ export default function BarberDashboardShell({
   const pathname = usePathname();
   const { cafe, theme, userRole } = useCafeTheme();
 
-  const navigationItems = barberNavigation.filter(item => item.href !== "/dashboard/campaigns" || (userRole !== "CASHIER" && walletCampaignsEnabledForCafe(cafe.id)));
+  const navigationItems = barberNavigation.filter(item => userRole !== "CASHIER" || !("adminOnly" in item));
 
   const currentPage =
     navigationItems.find((item) =>

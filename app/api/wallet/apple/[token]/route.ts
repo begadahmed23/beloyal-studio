@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ tok
     const member = await prisma.customer.findFirst({
       where: { publicToken: token, cafe: { isActive: true } },
       select: { id: true, publicToken: true, memberNumber: true, name: true, stamps: true, rewardEarnedAt: true, updatedAt: true,
-        cafe: { select: { id: true, name: true, slug: true, theme: true, businessType: true, rewardTarget: true, rewardName: true, updatedAt: true, primaryColor: true, backgroundColor: true } } },
+        cafe: { select: { id: true, name: true, slug: true, theme: true, businessType: true, rewardTarget: true, rewardName: true, updatedAt: true, primaryColor: true, secondaryColor: true, backgroundColor: true } } },
     });
     if (!member) return NextResponse.json({ message: "Card not found." }, { status: 404, headers });
     const [message, notificationSettings] = walletUpdatesEnabled() ? await Promise.all([getWalletMessage(member.id), getWalletNotificationSettings(member.cafe.id)]) : [null, undefined];

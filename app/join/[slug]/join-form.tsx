@@ -1,4 +1,5 @@
 "use client";
+import type { BusinessType } from "@prisma/client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -9,7 +10,7 @@ import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 type JoinFormProps = {
   cafeSlug: string;
   cafeName: string;
-  businessType: "CAFE" | "BARBERSHOP";
+  businessType: BusinessType;
   themeName: CafeThemeName;
   primaryColor: string;
   secondaryColor: string;

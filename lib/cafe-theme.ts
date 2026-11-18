@@ -1,3 +1,4 @@
+import type { BusinessType } from "@prisma/client";
 export type CafeThemeName =
   | "COFFEE_CLASSIC"
   | "MODERN_MINIMAL"
@@ -5,7 +6,7 @@ export type CafeThemeName =
   | "MEDITERRANEAN_BLUE"
   | "ORGANIC";
 
-export type ThemeBusinessType = "CAFE" | "BARBERSHOP";
+export type ThemeBusinessType = BusinessType;
 
 export type BusinessThemeOption = {
   value: CafeThemeName;
@@ -339,32 +340,100 @@ export const barberThemeOptions: BusinessThemeOption[] = [
   },
 ];
 
-export function getBusinessThemeOptions(
-  businessType: ThemeBusinessType,
-) {
-  return businessType === "BARBERSHOP"
-    ? barberThemeOptions
-    : cafeThemeOptions;
+const retailThemeOptions: BusinessThemeOption[] = [
+  { value: "MODERN_MINIMAL", label: "Soft Ivory", description: "Clean ivory, ink, and warm neutrals." },
+  { value: "ORGANIC", label: "Soft Sage", description: "Sage green with oat and cream." },
+  { value: "MEDITERRANEAN_BLUE", label: "Mist Blue", description: "Dusty blue with pale stone." },
+  { value: "DARK_LUXURY", label: "Charcoal", description: "Deep charcoal with warm accents." },
+  { value: "COFFEE_CLASSIC", label: "Warm Sand", description: "Sand and muted terracotta." },
+];
+
+export function getDefaultBusinessTheme(businessType: ThemeBusinessType): CafeThemeName {
+  switch (businessType) {
+    case "BARBERSHOP": return "DARK_LUXURY";
+    case "VAPE": return "MODERN_MINIMAL";
+    case "OTHER": return "ORGANIC";
+    default: return "COFFEE_CLASSIC";
+  }
+}
+
+export function getBusinessThemeOptions(businessType: ThemeBusinessType) {
+  if (businessType === "BARBERSHOP") return barberThemeOptions;
+  if (businessType === "VAPE") return [
+    { value: "MODERN_MINIMAL", label: "Ivory & Walnut", description: "White surfaces with warm walnut accents." } as const,
+    ...retailThemeOptions.slice(1),
+  ];
+  return businessType === "OTHER" ? retailThemeOptions : cafeThemeOptions;
+}
+
+type BrandColors = { primaryColor?: string | null; secondaryColor?: string | null; backgroundColor?: string | null };
+
+export function getBusinessBrandColors(themeName: string, businessType: ThemeBusinessType, saved?: BrandColors): [string, string, string] {
+  const defaults = getBusinessThemeColors(themeName, businessType);
+  const color = (value: string | null | undefined, fallback: string) =>
+    value && /^#[0-9a-f]{6}$/i.test(value) ? value : fallback;
+  return [color(saved?.primaryColor, defaults[0]), color(saved?.secondaryColor, defaults[1]), color(saved?.backgroundColor, defaults[2])];
+}
+
+function colorLuma(hex: string) {
+  return [0.2126, 0.7152, 0.0722].reduce(
+    (sum, weight, i) => {
+      const channel = parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16) / 255;
+      return sum + weight * (channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4);
+    },
+    0,
+  );
 }
 
 export function getBusinessTheme(
   themeName: CafeThemeName | string,
   businessType: ThemeBusinessType,
+  saved?: BrandColors,
 ): CafeThemeConfig {
-  if (businessType === "BARBERSHOP") {
-    return (
-      barberThemes[themeName as CafeThemeName] ??
-      barberThemes.DARK_LUXURY!
-    );
-  }
+  const base = businessType === "BARBERSHOP"
+    ? barberThemes[themeName as CafeThemeName] ?? barberThemes.DARK_LUXURY!
+    : getCafeTheme(themeName);
+  const [accent, secondary, background] = getBusinessBrandColors(themeName, businessType, saved);
+  const defaults = getBusinessThemeColors(themeName, businessType);
+  const retail = businessType === "VAPE" || businessType === "OTHER";
+  if (!retail && [accent, secondary, background].every((value, i) => value.toLowerCase() === defaults[i].toLowerCase())) return base;
 
-  return getCafeTheme(themeName);
+  const light = colorLuma(background) > 0.32;
+  const ink = light ? "#23332c" : "#f7f4eb";
+  const accentedText = ((Math.max(colorLuma(accent), colorLuma(background)) + 0.05) /
+    (Math.min(colorLuma(accent), colorLuma(background)) + 0.05)) >= 4.5 ? accent : ink;
+  const accentText = colorLuma(accent) > 0.179 ? "#111111" : "#ffffff";
+  const surface = light ? "#fffefa" : "#242723";
+  return {
+    ...base,
+    pageBackground: background,
+    surface,
+    surfaceRaised: light ? "#f0eee8" : "#30342d",
+    border: light ? "#dedfd6" : "#464b40",
+    textPrimary: ink,
+    textSecondary: light ? "#46574d" : "#e0e2d8",
+    textMuted: light ? "#58675e" : "#b9c0b6",
+    accent: accentedText,
+    accentHover: secondary,
+    accentSoft: `${accent}1f`,
+    accentText: accentedText === accent ? accentText : light ? "#ffffff" : "#161a15",
+    buttonText: accentText,
+    inputBackground: surface,
+    inputBorder: light ? "#cbd0c5" : "#53594e",
+    cardShadow: light ? "0 16px 44px rgba(39,49,38,.09)" : "0 18px 50px rgba(0,0,0,.25)",
+  };
 }
 
 export function getBusinessThemeColors(
   themeName: CafeThemeName | string,
   businessType: ThemeBusinessType,
 ): [string, string, string] {
+  if (businessType === "VAPE" && themeName === "MODERN_MINIMAL") {
+    return ["#71523d", "#b49072", "#f8f5ef"];
+  }
+  if (businessType === "OTHER" && themeName === "ORGANIC") {
+    return ["#426453", "#819788", "#eef1e9"];
+  }
   if (businessType === "BARBERSHOP") {
     if (themeName === "MODERN_MINIMAL") {
       return ["#343A3C", "#A5AAAB", "#E7E5E0"];

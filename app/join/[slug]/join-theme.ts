@@ -1,12 +1,13 @@
-import { getBusinessTheme, getBusinessThemeColors, type CafeThemeName } from "@/lib/cafe-theme";
-import { getReadableText, isLightColor, mixColors, normalizeHex } from "@/app/card/[token]/card-theme-utils";
+import type { BusinessType } from "@prisma/client";
+import { getBusinessBrandColors, getBusinessTheme, type CafeThemeName } from "@/lib/cafe-theme";
+import { getReadableText, isLightColor, mixColors } from "@/app/card/[token]/card-theme-utils";
 import { withAlpha } from "@/app/card/[token]/card-utils";
 
 type JoinCafe = {
   name: string;
   slug: string;
   theme: CafeThemeName;
-  businessType: "CAFE" | "BARBERSHOP";
+  businessType: BusinessType;
   primaryColor?: string | null;
   secondaryColor?: string | null;
   backgroundColor?: string | null;
@@ -14,18 +15,20 @@ type JoinCafe = {
 
 export function getJoinTheme(cafe: JoinCafe) {
   const name = cafe.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const matches = (brand: string) => cafe.slug.toLowerCase().includes(brand) || name.includes(brand);
+  const matches = (brand: string) => cafe.businessType === "CAFE" && (cafe.slug.toLowerCase().includes(brand) || name.includes(brand));
   const isLoretto = matches("loretto");
   const isKeka = !isLoretto && matches("keka");
   const isKato = !isLoretto && !isKeka && matches("kato");
   const base = getBusinessTheme(cafe.theme, cafe.businessType);
-  const mapped = getBusinessThemeColors(cafe.theme, cafe.businessType);
+  const [brandPrimary, brandSecondary, background] = getBusinessBrandColors(cafe.theme, cafe.businessType, cafe);
   const barber = cafe.businessType === "BARBERSHOP";
-  let primary = normalizeHex(barber ? mapped[0] : cafe.primaryColor, "#2563EB");
-  let secondary = normalizeHex(barber ? mapped[1] : cafe.secondaryColor, "#60A5FA");
-  const background = normalizeHex(barber ? mapped[2] : cafe.backgroundColor, "#0B1220");
-  let surface = barber && cafe.theme === "COFFEE_CLASSIC" ? "#211D1A" : mixColors(background, primary, isLightColor(background) ? 0.78 : 0.7);
-  let pageBackground = `radial-gradient(circle at top,${withAlpha(primary, barber ? 0.2 : 0.42)} 0%,transparent 42%),${background}`;
+  const retail = cafe.businessType === "VAPE" || cafe.businessType === "OTHER";
+  let primary = brandPrimary;
+  let secondary = brandSecondary;
+  const backgroundWeight = isLightColor(background) ? (retail ? 0.95 : 0.78) : (retail ? 0.84 : 0.7);
+  const defaultBrick = barber && cafe.theme === "COFFEE_CLASSIC" && background.toUpperCase() === "#1B1815";
+  let surface = defaultBrick ? "#211D1A" : mixColors(background, primary, backgroundWeight);
+  let pageBackground = `radial-gradient(circle at top,${withAlpha(primary, barber || retail ? 0.19 : 0.42)} 0%,transparent 42%),${background}`;
   let shellBackground = surface;
   let foreground = getReadableText(surface);
 

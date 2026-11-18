@@ -41,13 +41,13 @@ export const cafeNavigation = [
   },
   {
     label: "Campaigns",
-    mobileLabel: "Campaigns",
+    mobileLabel: "Offers",
     href: "/dashboard/campaigns",
     icon: Bell,
   },
   {
     label: "Settings",
-    mobileLabel: "Settings",
+    mobileLabel: "Setup",
     href: "/dashboard/settings",
     icon: Settings,
   },
