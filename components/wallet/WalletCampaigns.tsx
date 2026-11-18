@@ -7,7 +7,7 @@ import WalletNotificationSettings from "./WalletNotificationSettings";
 import type { WalletCampaign } from "@/lib/wallet/campaigns";
 
 type Business = { id: string; name: string };
-type Audience = { cafe: Business & { timezone: string; rewardName: string }; totalMembers: number; walletMembers: number; members: CampaignMember[]; counts: Record<CampaignSegment, number>; history: WalletCampaign[] };
+type Audience = { cafe: Business & { timezone: string; rewardName: string }; totalMembers: number; walletMembers: number; googleUnavailable: boolean; members: CampaignMember[]; counts: Record<CampaignSegment, number>; history: WalletCampaign[] };
 const field = "w-full rounded-2xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] px-4 py-3 text-sm outline-none transition focus:border-[var(--wallet-accent,#18181b)] focus:ring-2 focus:ring-black/10 disabled:opacity-50";
 const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] px-4 py-2 text-sm font-medium transition hover:opacity-90 disabled:opacity-40";
 const primary = "inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--wallet-accent,#18181b)] px-5 py-3 text-sm font-medium text-[var(--wallet-accent-text,#ffffff)] transition hover:opacity-90 disabled:opacity-40";
@@ -37,8 +37,11 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
       .catch(reason => { if (reason.name !== "AbortError") setError(reason.message || "Could not load Wallet members."); });
     return () => controller.abort();
   }, [cafeId, revision]);
-  const eligible = useMemo(() => data?.members.filter(member => member.segments.includes(segment)) ?? [], [data, segment]);
-  const visible = useMemo(() => eligible.filter(member => `${member.name} ${member.memberNumber}`.toLowerCase().includes(search.toLowerCase())), [eligible, search]);
+  const members = useMemo(() => data?.members.filter(member => member.segments.includes(segment)) ?? [], [data, segment]);
+  const eligible = members.filter(member => member.offersStatus === "enabled");
+  const visible = members.filter(member => `${member.name} ${member.memberNumber}`.toLowerCase().includes(search.trim().toLowerCase()));
+  const shown = visible.slice(0, 200);
+  const selectable = shown.filter(member => member.offersStatus === "enabled");
   function resetReview() { setReview(null); setResult(null); setError(""); }
   function changeBusiness(id: string) { setCafeId(id); setData(null); setSelected([]); setMessage(""); setSearch(""); setSegment("all"); resetReview(); }
   function toggle(id: string) {
@@ -74,21 +77,32 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
     <div className="mt-7 grid grid-cols-1 gap-2 min-[380px]:grid-cols-3 sm:gap-4">{[
       { label: "Total members", value: data?.totalMembers, icon: Users },
       { label: "Wallet members", value: data?.walletMembers, icon: Wallet },
-      { label: "Selected", value: selected.length, icon: Check },
+      { label: "Can receive offers", value: data?.counts.all, icon: Check },
     ].map(stat => <div key={stat.label} className="rounded-2xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-3 sm:p-5"><stat.icon size={17} className="mb-3 text-[var(--wallet-muted,#71717a)]"/><p className="text-2xl font-semibold tracking-tight sm:text-3xl">{stat.value ?? "—"}</p><p className="mt-1 text-[11px] text-[var(--wallet-muted,#71717a)] sm:text-xs">{stat.label}</p></div>)}</div>
     <section className="mt-7 rounded-3xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-4 sm:p-6">
-      <div className="flex items-start gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--wallet-raised,#f4f4f5)] text-xs font-semibold">01</span><div><h2 className="font-semibold">Choose your people</h2><p className="mt-1 text-xs leading-5 text-[var(--wallet-muted,#71717a)]">Only Wallet members who agreed to marketing appear as eligible recipients.</p></div></div>
+      <div className="flex items-start gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--wallet-raised,#f4f4f5)] text-xs font-semibold">01</span><div><h2 className="font-semibold">Choose your people</h2><p className="mt-1 text-xs leading-5 text-[var(--wallet-muted,#71717a)]">Wallet members appear here once their pass is detected. Members who agreed to offers can be selected.</p></div></div>
       <div className="mt-5 grid grid-cols-2 gap-2 xl:grid-cols-3 xl:grid-cols-6">{campaignSegments.map(item => <button key={item.id} disabled={!!busy} aria-pressed={segment === item.id} onClick={() => { setSegment(item.id); setSelected([]); setSearch(""); resetReview(); }} className={`min-h-24 rounded-2xl border p-3 text-left transition disabled:opacity-50 ${segment === item.id ? "border-[var(--wallet-accent,#18181b)] bg-[var(--wallet-accent,#18181b)] text-[var(--wallet-accent-text,#ffffff)]" : "border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] hover:opacity-90"}`}><p className="text-2xl font-semibold">{data?.counts[item.id] ?? "—"}</p><p className={`mt-2 text-xs ${segment === item.id ? "text-[var(--wallet-accent-text,#ffffff)]" : "text-[var(--wallet-muted,#71717a)]"}`}>{item.label}</p></button>)}</div>
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-[var(--wallet-muted,#71717a)]">{chosenSegment.description}</p>
         <button type="button" disabled={!!busy} onClick={() => { setData(null); setSelected([]); resetReview(); setRevision(value => value + 1); }} className="min-h-11 text-xs font-medium underline underline-offset-4">Refresh audience & history</button></div>
+      {data?.googleUnavailable && <p role="status" className="mt-3 text-sm text-[var(--wallet-secondary,#52525b)]">Google Wallet members are temporarily unavailable. Apple Wallet members are shown below.</p>}
       <div className="mt-3 flex flex-col gap-3 sm:flex-row"><div className="relative flex-1"><Search size={16} className="absolute left-3 top-3.5 text-[var(--wallet-muted,#71717a)]"/><input aria-label="Search Wallet members" className={`${field} pl-10`} placeholder="Search by name or member number" value={search} disabled={!!busy} onChange={event => setSearch(event.target.value)}/></div>
-        <button disabled={!!busy || !visible.length} className={secondary} onClick={() => { resetReview(); setSelected(visible.slice(0, MAX_CAMPAIGN_RECIPIENTS).map(member => member.id)); }}>Select {Math.min(visible.length, MAX_CAMPAIGN_RECIPIENTS)} shown</button>
+        <button disabled={!!busy || !selectable.length} className={secondary} onClick={() => { resetReview(); setSelected(selectable.slice(0, MAX_CAMPAIGN_RECIPIENTS).map(member => member.id)); }}>Select {Math.min(selectable.length, MAX_CAMPAIGN_RECIPIENTS)} shown</button>
         {!!selected.length && <button disabled={!!busy} className={secondary} onClick={() => { setSelected([]); resetReview(); }}>Clear</button>}</div>
       <p className="mt-3 text-xs text-[var(--wallet-muted,#71717a)]">{eligible.length} eligible · {selected.length}/{MAX_CAMPAIGN_RECIPIENTS} selected per campaign. The 30+ day group is also included in 14+ days.</p>
       <div className="mt-3 max-h-80 overflow-y-auto rounded-2xl border border-[var(--wallet-border,#e4e4e7)]">
         {!data && !error && <p className="flex items-center gap-2 p-5 text-sm text-[var(--wallet-muted,#71717a)]"><Loader2 size={16} className="animate-spin"/> Checking Wallet members…</p>}
-        {data && !visible.length && <div className="p-7 text-center"><Wallet size={24} className="mx-auto text-[var(--wallet-muted,#71717a)]"/><p className="mt-3 text-sm font-medium">No eligible recipients in this group yet</p><p className="mt-1 text-xs leading-5 text-[var(--wallet-muted,#71717a)]">Members must have a registered Wallet card and marketing consent to appear here. Try another group or refresh the audience.</p></div>}
-        {visible.slice(0, 200).map(member => <label key={member.id} className="flex min-h-20 cursor-pointer items-center gap-3 border-b border-[var(--wallet-border,#e4e4e7)] p-4 last:border-0 hover:opacity-90"><input type="checkbox" className="h-4 w-4 shrink-0 accent-[var(--wallet-accent,#18181b)]" checked={selected.includes(member.id)} disabled={!!busy || (!selected.includes(member.id) && selected.length >= MAX_CAMPAIGN_RECIPIENTS)} onChange={() => toggle(member.id)}/><span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{member.name}</span><span className="mt-1 block text-xs text-[var(--wallet-muted,#71717a)]">{member.memberNumber} · {member.lastVisitAt ? `${member.inactiveDays}d since last visit` : `No visit recorded · joined ${member.inactiveDays}d ago`}</span></span><span className="flex shrink-0 items-center gap-1 rounded-full bg-[#edf2ee] px-2 py-1 text-[10px] font-medium text-[#46624d]"><Wallet size={12}/> Wallet</span></label>)}
+        {data && !visible.length && <div className="p-7 text-center"><Wallet size={24} className="mx-auto text-[var(--wallet-muted,#71717a)]"/><p className="mt-3 text-sm font-medium">{search.trim() ? "No Wallet members match your search" : "No Wallet members in this group yet"}</p><p className="mt-1 text-xs leading-5 text-[var(--wallet-muted,#71717a)]">Try another group or refresh the audience after a member saves their pass.</p></div>}
+        {shown.map(member => {
+          const canSelect = member.offersStatus === "enabled";
+          const checked = selected.includes(member.id);
+          return <label key={member.id} className="flex min-h-20 items-center gap-3 border-b border-[var(--wallet-border,#e4e4e7)] p-4 last:border-0">
+            <input type="checkbox" className="h-4 w-4 shrink-0 accent-[var(--wallet-accent,#18181b)]" checked={checked} disabled={!canSelect || !!busy || (!checked && selected.length >= MAX_CAMPAIGN_RECIPIENTS)} onChange={() => toggle(member.id)}/>
+            <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{member.name}</span><span className="mt-1 block text-xs text-[var(--wallet-muted,#71717a)]">{member.memberNumber} · {member.lastVisitAt ? `${member.inactiveDays}d since last visit` : `No visit recorded · joined ${member.inactiveDays}d ago`}</span></span>
+            <span className={`rounded-full px-2 py-1 text-center text-[10px] font-medium ${canSelect ? "bg-[#edf2ee] text-[#46624d]" : "bg-[var(--wallet-raised,#f4f4f5)] text-[var(--wallet-secondary,#52525b)]"}`}>
+              {canSelect ? "Offers enabled" : member.offersStatus === "withdrawn" ? "Opted out" : "Consent needed"}
+            </span>
+          </label>;
+        })}
       </div>
       {visible.length > 200 && <p className="mt-3 text-xs text-[var(--wallet-muted,#71717a)]">Showing the first 200 matches. Search by name or member number to narrow the list.</p>}
       <p className="mt-3 text-[11px] leading-5 text-[var(--wallet-muted,#71717a)]">Visits use recorded stamps and redemptions, excluding feedback bonuses. For members without a visit, inactivity starts from joining. Birthdays use {data?.cafe.timezone ?? "the business’s timezone"}.</p>

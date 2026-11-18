@@ -1,5 +1,5 @@
 export const campaignSegments = [
-  { id: "all", label: "All Wallet members", description: "Everyone with a registered eligible Wallet card." },
+  { id: "all", label: "All Wallet members", description: "Members with a detected Wallet card." },
   { id: "birthday_today", label: "Birthdays today", description: "Celebrate today, in your business’s timezone." },
   { id: "birthday_week", label: "Birthdays · next 7 days", description: "Today and the following six days." },
   { id: "reward_ready", label: "Reward ready", description: "Members with a currently available, unredeemed loyalty reward." },
@@ -10,6 +10,7 @@ export type CampaignSegment = typeof campaignSegments[number]["id"];
 export const MAX_CAMPAIGN_RECIPIENTS = 50;
 export type CampaignMember = {
   id: string; name: string; memberNumber: string; devices: number;
+  offersStatus: "enabled" | "missing" | "withdrawn";
   lastVisitAt: string | null; inactiveDays: number; birthdayInDays: number;
   segments: CampaignSegment[];
 };

@@ -38,19 +38,40 @@ test('inactivity boundaries use visits, or joining for members with no visit', (
   assert.ok(!get(1, null).segments.includes('inactive_14'));
   assert.ok(get(30, null).segments.includes('inactive_30'));
 });
-test('audience excludes unregistered cards and scopes query to business', async () => {
-  let query;
+test('audience lists saved cards with consent status and keeps Apple available on Google failure', async () => {
+  let query, failGoogle = false;
   const base = { stamps: 0, rewardEarnedAt: null, cafe: { businessType: 'CAFE', rewardTarget: 7 }, birthday: new Date('2000-01-01'), createdAt: new Date('2020-01-01'), transactions: [], name: 'Member', memberNumber: '1' };
-  const lib = loader({ '@/lib/prisma': { prisma: { customer: { findMany: async q => { query = q; return [{ ...base, id: 'installed' }, { ...base, id: 'removed' }]; } } } },
-    './updates': { passKey: x => x, walletRedis: () => ({ pipeline: () => ({ hlen() {}, exec: async () => [2, 0] }) }) },
+  const rows = [
+    { ...base, id: 'installed', marketingConsentAt: new Date() },
+    { ...base, id: 'missing' },
+    { ...base, id: 'withdrawn', marketingConsentAt: new Date(), marketingWithdrawnAt: new Date() },
+    { ...base, id: 'google', marketingConsentAt: new Date() },
+    { ...base, id: 'removed' },
+  ];
+  const lib = loader({
+    '@/lib/prisma': { prisma: { customer: { findMany: async q => { query = q; return rows; } }, cafe: { findUnique: async () => ({ slug: 'loretto' }) } } },
+    './config': { walletUpdatesEnabled: () => true },
+    './google': { googleWalletObjectId: id => id, googleWalletSavedObjects: async () => {
+      if (failGoogle) throw new Error('unavailable');
+      return new Set(['google']);
+    } },
+    './updates': { passKey: x => x, walletRedis: () => ({ pipeline: () => ({ hlen() {}, exec: async () => [2, 1, 1, 0, 0] }) }) },
   })('lib/wallet/campaigns.ts');
   const result = await lib.walletAudience('cafe1', 'Africa/Cairo');
   assert.equal(query.where.cafeId, 'cafe1');
   assert.equal(query.select.transactions.take, 1);
   assert.match(JSON.stringify(query.select.transactions.where), /Feedback/);
-  assert.equal(result.totalMembers, 2);
-  assert.deepEqual(result.members.map(m => m.id), ['installed']);
+  assert.equal(result.totalMembers, 5);
+  assert.equal(result.walletMembers, 4);
+  assert.equal(result.googleUnavailable, false);
+  assert.deepEqual(result.members.map(({ id, offersStatus }) => [id, offersStatus]), [
+    ['installed', 'enabled'], ['missing', 'missing'], ['withdrawn', 'withdrawn'], ['google', 'enabled'],
+  ]);
   assert.equal(result.members[0].devices, 2);
+  failGoogle = true;
+  const fallback = await lib.walletAudience('cafe1', 'Africa/Cairo');
+  assert.equal(fallback.googleUnavailable, true);
+  assert.deepEqual(fallback.members.map(member => member.id), ['installed', 'missing', 'withdrawn']);
 });
 function routeFor(auth, extra = {}) {
   return loader({ '@/lib/wallet/campaign-access': { walletCampaignsEnabledForCafe: id => id === 'cafe1' }, '@/lib/require-auth': { requireAuth: async () => auth },
@@ -69,9 +90,13 @@ test('cashiers and cross-business access are rejected before audience access', a
 });
 test('preview rejects stale/unregistered selections; preview never sends a push', async () => {
   let previews = 0;
-  const route = routeFor(admin, { '@/lib/wallet/campaigns': { walletAudience: async () => ({ members: [{ id: 'yes', name: 'Begad', memberNumber: '1', segments: ['all'] }] }),
+  const route = routeFor(admin, { '@/lib/wallet/campaigns': { walletAudience: async () => ({ members: [
+      { id: 'yes', name: 'Begad', memberNumber: '1', offersStatus: 'enabled', segments: ['all'] },
+      { id: 'no', name: 'Test', memberNumber: '2', offersStatus: 'missing', segments: ['all'] },
+    ] }),
     createCampaign: async data => { previews++; return data; }, sendCampaign: () => { throw Error('Preview sent a notification'); } } });
   assert.equal((await route.POST(post({ action: 'preview', cafeId: 'cafe1', segment: 'all', message: 'Hello', customerIds: ['removed'] }))).status, 409);
+  assert.equal((await route.POST(post({ action: 'preview', cafeId: 'cafe1', segment: 'all', message: 'Hello', customerIds: ['no'] }))).status, 409);
   assert.equal(previews, 0);
   assert.equal((await route.POST(post({ action: 'preview', cafeId: 'cafe1', segment: 'all', message: 'Hello', customerIds: ['yes'] }))).status, 200);
   assert.equal(previews, 1);
@@ -128,7 +153,8 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
     {...base,id:'redeemed',cafe,stamps:0},
     {...base,id:'barber2',cafe:barber,stamps:2}, {...base,id:'barber3',cafe:barber,stamps:3},
   ];
-  const lib = loader({ '@/lib/prisma': {prisma:{customer:{findMany:async()=>rows}}},
+  const lib = loader({ '@/lib/prisma': {prisma:{customer:{findMany:async()=>rows},cafe:{findUnique:async()=>null}}},
+    './config': {walletUpdatesEnabled:()=>true},
     './updates':{passKey:id=>id,walletRedis:()=>({pipeline:()=>({hlen(){},exec:async()=>rows.map(()=>1)})})}
   })('lib/wallet/campaigns.ts');
   const audience = await lib.walletAudience('cafe1','Africa/Cairo');
