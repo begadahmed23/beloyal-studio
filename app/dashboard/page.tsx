@@ -78,6 +78,7 @@ function CafeDashboardHome() {
       label: "Counter scanner",
       helper: "Use the USB scanner",
       href: "/dashboard/scanner",
+      desktopOnly: true,
       icon: Monitor,
     },
   ];
@@ -275,7 +276,8 @@ function CafeDashboardHome() {
               <Link
                 key={action.label}
                 href={action.href}
-                className="group flex min-h-32 items-center justify-between rounded-[22px] border p-5 transition hover:-translate-y-0.5"
+                prefetch={action.desktopOnly ? false : undefined}
+                className={`group ${action.desktopOnly ? "hidden lg:flex" : "flex"} min-h-32 items-center justify-between rounded-[22px] border p-5 transition hover:-translate-y-0.5`}
                 style={{
                   borderColor: action.primary
                     ? theme.accent

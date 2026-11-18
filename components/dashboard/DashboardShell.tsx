@@ -7,13 +7,13 @@ import { Settings } from "lucide-react";
 
 import LogoutButton from "@/components/auth/LogoutButton";
 import KatoMark from "@/components/brand/KatoMark";
-import CafeMobileNavigation from "@/components/dashboard/CafeMobileNavigation";
+import DashboardMobileNavigation from "@/components/dashboard/DashboardMobileNavigation";
 import MobileLogoutButton from "@/components/dashboard/MobileLogoutButton";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 import {
   cafeNavigation,
-  isCafeCurrentPage,
+  isDashboardCurrentPage,
 } from "./cafe-navigation";
 
 type Props = {
@@ -50,7 +50,7 @@ export default function DashboardShell({
       : cafeNavigation;
 
   function isActive(href: string) {
-    return isCafeCurrentPage(pathname, href);
+    return isDashboardCurrentPage(pathname, href);
   }
 
   const currentPage =
@@ -59,7 +59,7 @@ export default function DashboardShell({
 
   return (
     <div
-      className="min-h-screen"
+      className="flex h-dvh min-w-0 flex-col overflow-hidden lg:block lg:h-auto lg:min-h-screen lg:overflow-visible"
       style={{
         backgroundColor: theme.pageBackground,
         color: theme.textPrimary,
@@ -211,7 +211,7 @@ export default function DashboardShell({
         </div>
       </aside>
 
-      <div className="min-h-screen lg:pl-64">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain scroll-pt-20 lg:min-h-screen lg:overflow-visible lg:overscroll-auto lg:pl-64">
         <header
           className="sticky top-0 z-30 flex h-20 items-center justify-between border-b px-5 backdrop-blur-xl sm:px-7 lg:px-10"
           style={{
@@ -301,12 +301,12 @@ export default function DashboardShell({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1500px] px-4 pb-28 pt-6 sm:px-7 lg:px-10 lg:pb-10 lg:pt-9">
+        <main className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-7 lg:px-10 lg:pb-10 lg:pt-9">
           {children}
         </main>
       </div>
 
-      <CafeMobileNavigation />
+      <DashboardMobileNavigation items={navigationItems} />
     </div>
   );
 }

@@ -401,10 +401,11 @@ export default function PhoneScannerPage() {
     <div className="mx-auto w-full max-w-xl">
       <Link
         href="/dashboard/scanner"
-        className="inline-flex items-center gap-2 text-sm opacity-60 transition hover:opacity-100"
+        prefetch={false}
+        className="hidden lg:inline-flex items-center gap-2 text-sm opacity-60 transition hover:opacity-100"
       >
         <ArrowLeft size={16} />
-        Back to scanner
+        USB scanner
       </Link>
 
       <div className="mt-6">

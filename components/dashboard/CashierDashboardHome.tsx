@@ -99,6 +99,7 @@ export default function CashierDashboardHome() {
       label: "USB scanner",
       helper: "Use the counter scanner",
       href: "/dashboard/scanner",
+      desktopOnly: true,
       icon: Monitor,
     },
   ];
@@ -235,7 +236,8 @@ export default function CashierDashboardHome() {
               <Link
                 key={action.href}
                 href={action.href}
-                className="group flex min-h-36 items-center justify-between rounded-[22px] border p-5 transition hover:-translate-y-0.5"
+                prefetch={action.desktopOnly ? false : undefined}
+                className={`group ${action.desktopOnly ? "hidden lg:flex" : "flex"} min-h-36 items-center justify-between rounded-[22px] border p-5 transition hover:-translate-y-0.5`}
                 style={{
                   borderColor: action.primary
                     ? theme.accent

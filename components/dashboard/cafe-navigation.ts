@@ -30,12 +30,13 @@ export const cafeNavigation = [
   {
     label: "USB Scanner",
     mobileLabel: "USB",
+    desktopOnly: true,
     href: "/dashboard/scanner",
     icon: Monitor,
   },
   {
     label: "Phone Scanner",
-    mobileLabel: "Phone",
+    mobileLabel: "Scan",
     href: "/dashboard/scanner/phone",
     icon: Smartphone,
   },
@@ -53,7 +54,7 @@ export const cafeNavigation = [
   },
 ] as const;
 
-export function isCafeCurrentPage(
+export function isDashboardCurrentPage(
   pathname: string,
   href: string,
 ) {

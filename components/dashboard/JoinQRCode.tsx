@@ -22,7 +22,21 @@ export default function JoinQRCode() {
   const reward = `Earn ${(cafe.rewardName || "a reward").toLowerCase()}.`;
   const filename = `${cafe.slug}-${isBarbershop ? "barber" : "loyalty"}-qr.png`;
 
+  const previewRef = useRef<HTMLDivElement>(null);
   const posterRef = useRef<HTMLDivElement>(null);
+  const [previewScale, setPreviewScale] = useState(0);
+
+  useEffect(() => {
+    const preview = previewRef.current;
+    if (!preview) return;
+
+    const observer = new ResizeObserver(([entry]) => {
+      setPreviewScale(entry.contentRect.width / POSTER_WIDTH);
+    });
+    observer.observe(preview);
+
+    return () => observer.disconnect();
+  }, []);
 
   const [copied, setCopied] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
@@ -84,15 +98,15 @@ export default function JoinQRCode() {
 
   return (
     <section
-      className="overflow-hidden border"
+      className="min-w-0 overflow-hidden border"
       style={{
         borderColor: theme.border,
         backgroundColor: theme.surface,
         borderRadius: theme.radiusMedium,
       }}
     >
-      <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_500px]">
-        <div className="flex flex-col justify-between p-6 sm:p-8">
+      <div className="grid lg:grid-cols-2">
+        <div className="flex min-w-0 flex-col justify-between p-4 sm:p-8">
           <div>
             <p
               className="text-sm font-medium"
@@ -118,16 +132,12 @@ export default function JoinQRCode() {
                 color: theme.textMuted,
               }}
             >
-              Download this branded QR poster, print it,
-              and place it near the {isBarbershop
-                ? "front desk"
-                : "cashier"}. {isBarbershop
-                ? "Clients"
-                : "Customers"} can scan it to create their loyalty card.
+              Share the join link or download the poster to print.
+              {isBarbershop ? " Clients" : " Customers"} can scan the code to create their loyalty card.
             </p>
           </div>
 
-          <div className="mt-7">
+          <div className="mt-5 sm:mt-7">
             <div
               className="overflow-hidden border"
               style={{
@@ -164,7 +174,7 @@ export default function JoinQRCode() {
                   aria-label={`Open ${
                     isBarbershop ? "client" : "customer"
                   } join page`}
-                  className="flex h-10 w-10 shrink-0 items-center justify-center border transition hover:opacity-80"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center border transition hover:opacity-80"
                   style={{
                     borderColor: theme.border,
                     backgroundColor: theme.surface,
@@ -177,11 +187,11 @@ export default function JoinQRCode() {
               </div>
             </div>
 
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:mt-4 sm:gap-3">
               <button
                 type="button"
                 onClick={copyJoinLink}
-                className="flex h-11 items-center justify-center gap-2 border px-4 text-sm font-medium transition hover:opacity-80"
+                className="flex min-h-11 min-w-0 items-center justify-center gap-1.5 border px-2 text-sm font-medium transition hover:opacity-80"
                 style={{
                   borderColor: theme.border,
                   backgroundColor: theme.surfaceRaised,
@@ -202,7 +212,7 @@ export default function JoinQRCode() {
                 type="button"
                 onClick={downloadPoster}
                 disabled={downloading}
-                className="flex h-11 items-center justify-center gap-2 px-4 text-sm font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                className="flex min-h-11 min-w-0 items-center justify-center gap-1.5 px-2 text-sm font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 style={{
                   backgroundColor: theme.accent,
                   color: theme.accentText,
@@ -212,7 +222,7 @@ export default function JoinQRCode() {
                 <Download size={17} />
 
                 {downloading
-                  ? "Preparing poster..."
+                  ? "Preparing…"
                   : "Download PNG"}
               </button>
             </div>
@@ -245,26 +255,27 @@ export default function JoinQRCode() {
         </div>
 
         <div
-          className="overflow-x-auto border-t p-5 sm:p-7 lg:border-l lg:border-t-0"
+          className="min-w-0 border-t p-3 sm:p-7 lg:border-l lg:border-t-0"
           style={{
             borderColor: theme.border,
             backgroundColor: theme.pageBackground,
           }}
         >
-          <div className="mx-auto w-fit">
+          <div
+            ref={previewRef}
+            className="relative mx-auto w-full overflow-hidden rounded-[18px] bg-white shadow-[0_12px_32px_rgba(0,0,0,0.14)] sm:rounded-[28px]"
+            style={{ maxWidth: POSTER_WIDTH, aspectRatio: `${POSTER_WIDTH} / ${POSTER_HEIGHT}` }}
+          >
             <div
               ref={posterRef}
-              className="flex shrink-0 flex-col bg-white text-center"
+              className="absolute top-0 left-0 flex origin-top-left flex-col bg-white text-center"
               style={{
                 width: `${POSTER_WIDTH}px`,
                 height: `${POSTER_HEIGHT}px`,
-                minWidth: `${POSTER_WIDTH}px`,
-                minHeight: `${POSTER_HEIGHT}px`,
+                transform: `scale(${previewScale})`,
+                visibility: previewScale ? undefined : "hidden",
                 padding: "44px 42px 34px",
                 color: "#111111",
-                borderRadius: "28px",
-                boxShadow:
-                  "0 24px 70px rgba(0, 0, 0, 0.14)",
                 fontFamily:
                   "Inter, Arial, Helvetica, sans-serif",
                 boxSizing: "border-box",
@@ -393,6 +404,7 @@ export default function JoinQRCode() {
                   <QRCode
                     value={joinUrl}
                     size={210}
+                    title="Loyalty signup QR code"
                     bgColor="#FFFFFF"
                     fgColor="#111111"
                     level="H"

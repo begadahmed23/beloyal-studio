@@ -31,6 +31,7 @@ export const barberNavigation = [
   {
     label: "USB Scanner",
     mobileLabel: "USB",
+    desktopOnly: true,
     href: "/dashboard/scanner",
     icon: Monitor,
   },

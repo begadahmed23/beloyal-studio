@@ -9,24 +9,13 @@ import LogoutButton from "@/components/auth/LogoutButton";
 import MobileLogoutButton from "@/components/dashboard/MobileLogoutButton";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
-import BarberMobileNavigation from "./BarberMobileNavigation";
+import DashboardMobileNavigation from "@/components/dashboard/DashboardMobileNavigation";
+import { isDashboardCurrentPage } from "../cafe-navigation";
 import { barberNavigation } from "./barber-navigation";
 
 type Props = {
   children: ReactNode;
 };
-
-function isCurrentPage(pathname: string, href: string) {
-  if (href === "/dashboard") {
-    return pathname === href;
-  }
-
-  if (href === "/dashboard/scanner") {
-    return pathname === href;
-  }
-
-  return pathname.startsWith(href);
-}
 
 export default function BarberDashboardShell({
   children,
@@ -38,12 +27,12 @@ export default function BarberDashboardShell({
 
   const currentPage =
     navigationItems.find((item) =>
-      isCurrentPage(pathname, item.href)
+      isDashboardCurrentPage(pathname, item.href)
     )?.label ?? "Overview";
 
   return (
     <div
-      className="min-h-screen transition-colors duration-300"
+      className="flex h-dvh min-w-0 flex-col overflow-hidden lg:block lg:h-auto lg:min-h-screen lg:overflow-visible transition-colors duration-300"
       style={{
         backgroundColor: theme.pageBackground,
         color: theme.textPrimary,
@@ -86,7 +75,7 @@ export default function BarberDashboardShell({
         <nav className="flex-1 space-y-1.5 p-4">
           {navigationItems.map((item) => {
             const Icon = item.icon;
-            const active = isCurrentPage(pathname, item.href);
+            const active = isDashboardCurrentPage(pathname, item.href);
 
             return (
               <Link
@@ -157,7 +146,7 @@ export default function BarberDashboardShell({
         </div>
       </aside>
 
-      <div className="min-h-screen lg:pl-72">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain scroll-pt-20 lg:min-h-screen lg:overflow-visible lg:overscroll-auto lg:pl-72">
         <header
           className="sticky top-0 z-30 flex h-20 items-center justify-between border-b px-5 backdrop-blur-xl sm:px-7 lg:px-10"
           style={{
@@ -195,12 +184,12 @@ export default function BarberDashboardShell({
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1500px] px-4 pb-28 pt-6 sm:px-7 lg:px-10 lg:pb-10 lg:pt-9">
+        <main className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-7 lg:px-10 lg:pb-10 lg:pt-9">
           {children}
         </main>
       </div>
 
-      <BarberMobileNavigation />
+      <DashboardMobileNavigation items={navigationItems} />
     </div>
   );
 }
