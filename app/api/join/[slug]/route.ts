@@ -340,16 +340,16 @@ export async function POST(
     const phone = normalizePhone(
       validationResult.data.phone ?? ""
     );
-    const instagram = normalizeInstagram(
-      validationResult.data.instagram ?? ""
-    );
+    const instagram = action === "join"
+      ? normalizeInstagram(validationResult.data.instagram ?? "")
+      : "";
 
     const hasPhone = phone.length > 0;
     const hasInstagram = instagram.length > 0;
 
     if (!hasPhone && !hasInstagram) {
       return jsonResponse(
-        { error: "Please enter a phone number or Instagram username." },
+        { error: action === "recover" ? "Please enter your phone number." : "Please enter a phone number or Instagram username." },
         400
       );
     }
@@ -391,6 +391,15 @@ export async function POST(
       );
     }
 
+    async function openExistingCard(customer: { id: string; publicToken: string | null; phone: string | null }) {
+      if (!hasPhone || customer.phone !== phone) {
+        return jsonResponse({ error: "A card already exists. To open it, use the phone number on your card or ask the business for your card link." }, 409);
+      }
+
+      const token = await ensureCustomerToken(customer.id, customer.publicToken);
+      return cardResponse({ success: true, existingCustomer: true, token }, slug, token);
+    }
+
     const existingCustomer =
       await prisma.customer.findFirst({
         where: {
@@ -403,58 +412,14 @@ export async function POST(
         select: {
           id: true,
           publicToken: true,
+          phone: true,
         },
       });
 
-    /*
-     * Recovery only opens an existing card.
-     */
+    if (existingCustomer) return await openExistingCard(existingCustomer);
+
     if (action === "recover") {
-      if (!existingCustomer) {
-        return jsonResponse(
-          {
-            error:
-              "We could not find a loyalty card with those details.",
-          },
-          404
-        );
-      }
-
-      const token = await ensureCustomerToken(
-        existingCustomer.id,
-        existingCustomer.publicToken
-      );
-
-      return cardResponse(
-        {
-          success: true,
-          existingCustomer: true,
-          token,
-        },
-        slug,
-        token
-      );
-    }
-
-    /*
-     * Registering with an existing phone opens the
-     * customer's existing card.
-     */
-    if (existingCustomer) {
-      const token = await ensureCustomerToken(
-        existingCustomer.id,
-        existingCustomer.publicToken
-      );
-
-      return cardResponse(
-        {
-          success: true,
-          existingCustomer: true,
-          token,
-        },
-        slug,
-        token
-      );
+      return jsonResponse({ error: "We could not find a loyalty card with that phone number." }, 404);
     }
 
     if (validationResult.data.privacyAccepted !== true) return jsonResponse({ error: "Please acknowledge the privacy notice." }, 400);
@@ -546,24 +511,12 @@ export async function POST(
               select: {
                 id: true,
                 publicToken: true,
+                phone: true,
               },
             });
 
           if (customerCreatedByAnotherRequest) {
-            const token = await ensureCustomerToken(
-              customerCreatedByAnotherRequest.id,
-              customerCreatedByAnotherRequest.publicToken
-            );
-
-            return cardResponse(
-              {
-                success: true,
-                existingCustomer: true,
-                token,
-              },
-              slug,
-              token
-            );
+            return await openExistingCard(customerCreatedByAnotherRequest);
           }
 
           continue;

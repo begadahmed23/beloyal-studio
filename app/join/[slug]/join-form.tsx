@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { type CafeThemeName } from "@/lib/cafe-theme";
 import { getJoinTheme } from "./join-theme";
@@ -74,10 +74,30 @@ export default function JoinForm({
   const [privacyAccepted, setPrivacyAccepted] = useState(true);
   const [marketingConsent, setMarketingConsent] = useState(false);
   const [error, setError] = useState("");
+  const [showConsentError, setShowConsentError] = useState(false);
+  const consentAlert = useRef<HTMLDivElement>(null);
+  const consentError =
+    mode === "join" && showConsentError && (!privacyAccepted || !marketingConsent)
+      ? !privacyAccepted && !marketingConsent
+        ? "Check both boxes to create your card."
+        : !privacyAccepted
+          ? "Check the membership box to create your card."
+          : "Check the offers box to create your card."
+      : "";
+
+  useEffect(() => {
+    if (consentError) consentAlert.current?.scrollIntoView({ block: "nearest" });
+  }, [consentError]);
+
+  function handleConsentInvalid(event: FormEvent<HTMLInputElement>) {
+    event.preventDefault();
+    setShowConsentError(true);
+  }
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function changeMode(nextMode: FormMode) {
     setMode(nextMode);
+    setShowConsentError(false);
     setError("");
   }
 
@@ -92,10 +112,12 @@ export default function JoinForm({
     setError("");
 
     const cleanPhone = phone.replace(/\D/g, "");
-    const cleanInstagram = instagram
-      .trim()
-      .replace(/^@+/, "")
-      .toLowerCase();
+    const cleanInstagram = mode === "join" ? instagram.trim().replace(/^@+/, "").toLowerCase() : "";
+
+    if (mode === "recover" && !cleanPhone) {
+      setError("Enter the phone number you used to create your card.");
+      return;
+    }
 
     if (!cleanPhone && !cleanInstagram) {
       setError("Please enter your phone number or Instagram username.");
@@ -142,8 +164,10 @@ export default function JoinForm({
         return;
       }
 
-      if (!privacyAccepted) { setError("Please acknowledge the privacy notice."); return; }
-      if (!marketingConsent) { setError("Please confirm that you agree to receive offers."); return; }
+      if (!privacyAccepted || !marketingConsent) {
+        setShowConsentError(true);
+        return;
+      }
       requestBody.privacyAccepted = privacyAccepted;
       requestBody.marketingConsent = marketingConsent;
       requestBody.name = cleanName;
@@ -276,7 +300,7 @@ export default function JoinForm({
             ? `Join ${cafeName} and start collecting ${
                 isBarbershop ? "visits" : "stamps"
               }.`
-            : "Enter the phone number or Instagram username used when you created your card."}
+            : "Enter the phone number you used to create your card."}
         </p>
       </div>
 
@@ -314,7 +338,7 @@ export default function JoinForm({
             className="mb-2 block text-sm font-medium"
             style={{ color: isKato ? katoTextSecondary : theme.textSecondary }}
           >
-            Phone number <span style={{ color: isKato ? katoTextMuted : theme.textMuted }}>(optional)</span>
+            Phone number{mode === "join" && <span style={{ color: isKato ? katoTextMuted : theme.textMuted }}> (optional)</span>}
           </label>
 
           <input
@@ -331,6 +355,7 @@ export default function JoinForm({
               mode === "recover" ? "go" : "next"
             }
             placeholder="01XXXXXXXXX"
+            required={mode === "recover"}
             minLength={11}
             maxLength={11}
             className={inputClassName}
@@ -345,39 +370,41 @@ export default function JoinForm({
           </p>
         </div>
 
-        <div>
-          <label
-            htmlFor="customer-instagram"
-            className="mb-2 block text-sm font-medium"
-            style={{ color: isKato ? katoTextSecondary : theme.textSecondary }}
-          >
-            Instagram <span style={{ color: isKato ? katoTextMuted : theme.textMuted }}>(optional)</span>
-          </label>
+        {mode === "join" && (
+          <div>
+            <label
+              htmlFor="customer-instagram"
+              className="mb-2 block text-sm font-medium"
+              style={{ color: isKato ? katoTextSecondary : theme.textSecondary }}
+            >
+              Instagram <span style={{ color: isKato ? katoTextMuted : theme.textMuted }}>(optional)</span>
+            </label>
 
-          <input
-            id="customer-instagram"
-            name="instagram"
-            type="text"
-            value={instagram}
-            onChange={(event) =>
-              setInstagram(event.target.value.slice(0, 31))
-            }
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            enterKeyHint={mode === "recover" ? "go" : "next"}
-            placeholder="@username"
-            className={inputClassName}
-            style={inputStyle}
-          />
+            <input
+              id="customer-instagram"
+              name="instagram"
+              type="text"
+              value={instagram}
+              onChange={(event) =>
+                setInstagram(event.target.value.slice(0, 31))
+              }
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="next"
+              placeholder="@username"
+              className={inputClassName}
+              style={inputStyle}
+            />
 
-          <p
-            className="mt-2 text-xs"
-            style={{ color: isKato ? katoTextMuted : theme.textMuted }}
-          >
-            You only need one contact method: phone or Instagram.
-          </p>
-        </div>
+            <p
+              className="mt-2 text-xs"
+              style={{ color: isKato ? katoTextMuted : theme.textMuted }}
+            >
+              Phone or Instagram can be used to sign up. Add your phone number to reopen your card later.
+            </p>
+          </div>
+        )}
 
         {mode === "join" && (
           <div>
@@ -413,10 +440,30 @@ export default function JoinForm({
           </div>
         )}
 
-        {mode === "join" && <div className="space-y-2 text-xs leading-5" style={{borderColor: theme.border, color: theme.textSecondary}}>
-          <label className="flex items-start gap-3"><input type="checkbox" required checked={privacyAccepted} onChange={e => setPrivacyAccepted(e.target.checked)} className="mt-1 h-4 w-4 shrink-0"/> <span>I agree to the <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">Privacy Policy</a> and use of my data for loyalty membership.</span></label>
-          <label className="flex items-start gap-3"><input type="checkbox" required checked={marketingConsent} onChange={e => setMarketingConsent(e.target.checked)} className="mt-1 h-4 w-4 shrink-0"/> <span>I agree to receive offers from {cafeName}.</span></label>
-        </div>}
+        {mode === "join" && (
+          <div className="space-y-2 text-sm leading-5" style={{ color: theme.textSecondary }}>
+            <label className="flex min-h-11 items-start gap-3 py-1.5">
+              <input type="checkbox" required checked={privacyAccepted} onChange={event => setPrivacyAccepted(event.target.checked)}
+                onInvalid={handleConsentInvalid} aria-invalid={Boolean(consentError) && !privacyAccepted}
+                aria-describedby={consentError && !privacyAccepted ? "join-consent-error" : undefined}
+                className="mt-0.5 h-5 w-5 shrink-0" />
+              <span>I agree to the <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">Privacy Policy</a> and use of my data for loyalty membership.</span>
+            </label>
+            <label className="flex min-h-11 items-start gap-3 py-1.5">
+              <input type="checkbox" required checked={marketingConsent} onChange={event => setMarketingConsent(event.target.checked)}
+                onInvalid={handleConsentInvalid} aria-invalid={Boolean(consentError) && !marketingConsent}
+                aria-describedby={consentError && !marketingConsent ? "join-consent-error" : undefined}
+                className="mt-0.5 h-5 w-5 shrink-0" />
+              <span>I agree to receive offers from {cafeName}.</span>
+            </label>
+            {consentError && (
+              <div id="join-consent-error" ref={consentAlert} role="alert"
+                className={`scroll-m-4 rounded-xl border px-3 py-2.5 text-sm font-medium leading-5 ${theme.light ? "border-rose-200 bg-rose-50 text-rose-900" : "border-rose-300/35 bg-rose-950 text-rose-100"}`}>
+                {consentError}
+              </div>
+            )}
+          </div>
+        )}
         {error && (
           <div className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3">
             <p className={`text-sm leading-5 ${theme.light ? "text-red-800" : "text-red-200"}`}>
@@ -488,8 +535,7 @@ export default function JoinForm({
             className="text-center text-xs leading-5"
             style={{ color: isKato ? katoTextMuted : theme.textMuted }}
           >
-            Your phone number or Instagram username is only used to locate your
-            existing {` ${cafeName} `}loyalty card.
+            Signed up without a phone number? Ask {cafeName} for your card link.
           </p>
         )}
       </form>
