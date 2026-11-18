@@ -61,13 +61,13 @@ export function renderMbVapeAppleStrip(stamps: number, target: number) {
 
 export function renderMbVapeGoogleArtwork(stamps: number, target: number) {
   const columns = target <= 30 ? 6 : 10;
-  const size = Math.min(96, 492 / (Math.ceil(target / columns) * 1.31));
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1032" height="812">
-    ${walnut(1032, 812)}
-    <path d="M0 0h430C168 148 120 374 204 554L0 615z" fill="#EADBCD" opacity=".84"/>
-    <path d="M1032 812H711c190-106 260-259 244-420l77-58z" fill="#B78C70" opacity=".45"/>
-    <rect x="92" y="102" width="848" height="608" rx="52" fill="#3E291E" stroke="#D2AD93" stroke-width="2"/>
-    ${stampGrid(stamps, target, 1032, 406, columns, size)}
+  const size = Math.min(116, 392 / (Math.ceil(target / columns) * 1.31));
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1032" height="620">
+    ${walnut(1032, 620)}
+    <path d="M0 0h430C168 113 120 284 204 420L0 470z" fill="#EADBCD" opacity=".84"/>
+    <path d="M1032 620H711c190-82 260-198 244-321l77-44z" fill="#B78C70" opacity=".45"/>
+    <rect x="92" y="78" width="848" height="464" rx="44" fill="#3E291E" stroke="#D2AD93" stroke-width="2"/>
+    ${stampGrid(stamps, target, 1032, 310, columns, size)}
   </svg>`;
   return sharp(Buffer.from(svg)).png().toBuffer();
 }

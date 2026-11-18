@@ -71,9 +71,9 @@ test('MB Vape branding keeps the uploaded mark and updates artwork with stamp pr
  assert.equal(brand.programLogo.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?asset=icon');
  assert.equal(brand.hexBackgroundColor, '#F7F2E9');
  const card = wallet.googleWalletObject({ ...member, cafe, stamps: 2 });
- assert.equal(card.heroImage.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?stamps=2&target=6');
+ assert.equal(card.heroImage.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?stamps=2&target=6&v=compact');
  assert.equal(card.loyaltyPoints.balance.string, '2/6');
  assert.equal(wallet.googleWalletObject({ ...member, cafe, rewardEarnedAt: new Date() }).heroImage.sourceUri.uri,
-   'https://example.com/api/wallet/artwork/mb-vape?stamps=6&target=6');
+   'https://example.com/api/wallet/artwork/mb-vape?stamps=6&target=6&v=compact');
  assert.equal(wallet.googleWalletObject({ ...member, cafe: { ...cafe, slug: 'other-vape' } }).heroImage, undefined);
 });

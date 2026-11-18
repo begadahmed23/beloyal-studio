@@ -68,6 +68,7 @@ function mbVapeHero(stamps: number, target: number) {
   const count = Math.min(target, 99);
   url.searchParams.set("stamps", String(Math.min(stamps, count)));
   url.searchParams.set("target", String(count));
+  url.searchParams.set("v", "compact");
   return walletImage(url, `${stamps} of ${target} MB Vape stamps`);
 }
 

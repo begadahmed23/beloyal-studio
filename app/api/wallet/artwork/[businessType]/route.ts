@@ -1,7 +1,7 @@
 import sharp from "sharp";
 import { businessCardArtwork, isArtworkBusinessType } from "@/lib/business/card-artwork";
 import { getBusinessBrandColors, getDefaultBusinessTheme } from "@/lib/cafe-theme";
-import { renderMbVapeGoogleArtwork, renderMbVapeLogo } from "@/lib/wallet/mb-vape-artwork";
+import { renderMbVapeAppleStrip, renderMbVapeGoogleArtwork, renderMbVapeLogo } from "@/lib/wallet/mb-vape-artwork";
 
 export const runtime = "nodejs";
 
@@ -20,7 +20,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ busi
     const asset = colors.get("asset");
     if (asset === "logo") return imageResponse(await renderMbVapeLogo(696, 485));
     if (asset === "icon") return imageResponse(await renderMbVapeLogo(720, 720, "#ffffff", 112));
-    if (asset !== null) return new Response(null, { status: 404 });
+    if (asset !== null && asset !== "strip") return new Response(null, { status: 404 });
 
     const targetText = colors.get("target") ?? "6";
     const stampsText = colors.get("stamps") ?? "0";
@@ -30,7 +30,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ busi
     if (!validCount.test(targetText) || !validCount.test(stampsText) || target === 0 || stamps > target) {
       return new Response(null, { status: 400 });
     }
-    return imageResponse(await renderMbVapeGoogleArtwork(stamps, target));
+    const render = asset === "strip" ? renderMbVapeAppleStrip : renderMbVapeGoogleArtwork;
+    return imageResponse(await render(stamps, target));
   }
 
   if (!isArtworkBusinessType(businessType)) return new Response(null, { status: 404 });

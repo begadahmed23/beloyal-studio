@@ -334,7 +334,9 @@ test('MB Vape pass uses the brand logo and device stamps without changing the sc
   assert.equal(logo.readUInt32BE(20), 720);
   const artwork = Buffer.from(await (await googleArt('stamps=2&target=6')).arrayBuffer());
   assert.equal(artwork.readUInt32BE(16), 1032);
-  assert.equal(artwork.readUInt32BE(20), 812);
+  assert.equal(artwork.readUInt32BE(20), 620);
+  const webStrip = Buffer.from(await (await googleArt('asset=strip&stamps=2&target=6')).arrayBuffer());
+  assert.deepEqual(webStrip, pass['strip@3x.png']);
   assert.notDeepEqual(artwork, Buffer.from(await (await googleArt('stamps=3&target=6')).arrayBuffer()));
   assert.equal((await googleArt('stamps=7&target=6')).status, 400);
 });
