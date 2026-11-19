@@ -71,8 +71,9 @@ export function googleWalletObject(member: WalletMember) {
   const mbVape = isMbVape(member.cafe);
   const artTarget = Math.min(target, 99);
   const artStamps = ready ? artTarget : Math.min(stamps, artTarget);
+  const progress = ready ? "Reward ready" : `${stamps}/${target} stamps`;
   const heroImage = mbVape
-    ? walletImage(new URL(`${MB_VAPE_ARTWORK_PATH}?stamps=${artStamps}&target=${artTarget}&v=2`, site),
+    ? walletImage(new URL(`${MB_VAPE_ARTWORK_PATH}?asset=strip&stamps=${artStamps}&target=${artTarget}`, site),
         ready ? "All stamps collected. Reward ready." : `${stamps} of ${target} stamps collected.`)
     : undefined;
   return { id: objectId(member.id), classId: classId(member.cafe.slug), state: "ACTIVE",
@@ -81,7 +82,10 @@ export function googleWalletObject(member: WalletMember) {
     loyaltyPoints: { label: ready ? "REWARD READY" : member.cafe.businessType === "BARBERSHOP" ? "VISITS" : "STAMPS",
       balance: { string: `${stamps}/${target}` } },
     ...(heroImage ? { heroImage } : {}),
-    textModulesData: [{ id: "reward", header: "YOUR REWARD", body: member.cafe.rewardName }],
+    textModulesData: [
+      { id: "reward", header: "YOUR REWARD", body: member.cafe.rewardName },
+      ...(mbVape ? [{ id: "progress", header: "STAMPS", body: progress }] : []),
+    ],
     linksModuleData: { uris: [{ id: "card", uri: new URL(`/card/${member.publicToken}`, site).href, description: "Open your BeLoyal card" }] } };
 }
 type GoogleBrand = WalletMember["cafe"] & { logoUrl?: string | null };
@@ -99,9 +103,12 @@ export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocati
     programName: mbVape ? cafe.name : `${cafe.name} Rewards`,
     programLogo: walletImage(logo, cafe.name),
     ...(mbVape ? {
-      wideProgramLogo: walletImage(new URL(`${MB_VAPE_ARTWORK_PATH}?asset=wide-logo`, site), cafe.name),
+      wideProgramLogo: walletImage(new URL(`${MB_VAPE_ARTWORK_PATH}?asset=google-logo`, site), cafe.name),
       accountNameLabel: "MEMBER",
       classTemplateInfo: {
+        cardBarcodeSectionDetails: {
+          firstTopDetail: { fieldSelector: { fields: [{ fieldPath: "object.textModulesData['progress']" }] } },
+        },
         cardTemplateOverride: {
           cardRowTemplateInfos: [{
             twoItems: {

@@ -334,9 +334,17 @@ test('MB Vape pass uses the brand logo and device stamps without changing the sc
   const logo = Buffer.from(await (await googleArt('asset=icon')).arrayBuffer());
   assert.equal(logo.readUInt32BE(16), 720);
   assert.equal(logo.readUInt32BE(20), 720);
-  const wideLogo = Buffer.from(await (await googleArt('asset=wide-logo')).arrayBuffer());
-  assert.equal(wideLogo.readUInt32BE(16), 1280);
-  assert.equal(wideLogo.readUInt32BE(20), 400);
+  const wideLogo = Buffer.from(await (await googleArt('asset=google-logo')).arrayBuffer());
+  const { data, info } = await require('sharp')(wideLogo).raw().toBuffer({ resolveWithObject: true });
+  assert.equal(info.width, 1280);
+  assert.equal(info.height, 400);
+  assert.equal(info.channels, 4);
+  assert.equal(data[3], 0);
+  const opaqueColumns = new Set();
+  for (let i = 3; i < data.length; i += 4) {
+    if (data[i] > 128) opaqueColumns.add(((i - 3) / 4) % info.width);
+  }
+  assert.ok(Math.abs((Math.min(...opaqueColumns) + Math.max(...opaqueColumns)) / 2 - info.width / 2) < 12);
   const artwork = Buffer.from(await (await googleArt('stamps=2&target=6')).arrayBuffer());
   assert.equal(artwork.readUInt32BE(16), 1032);
   assert.equal(artwork.readUInt32BE(20), 812);

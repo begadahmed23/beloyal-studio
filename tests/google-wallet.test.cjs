@@ -71,10 +71,10 @@ test('MB Vape keeps its logo and refreshes the matching stamp artwork on save an
  const brand = wallet.googleClassBrand(cafe);
  assert.equal(brand.programLogo.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?asset=icon');
  assert.equal(brand.programName, 'MB Vape');
- assert.equal(brand.wideProgramLogo.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?asset=wide-logo');
+ assert.equal(brand.wideProgramLogo.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?asset=google-logo');
  assert.equal(brand.hexBackgroundColor, '#F7F2E9');
  assert.equal(brand.heroImage, undefined);
- const imageUrl = stamps => `https://example.com/api/wallet/artwork/mb-vape?stamps=${stamps}&target=6&v=2`;
+ const imageUrl = stamps => `https://example.com/api/wallet/artwork/mb-vape?asset=strip&stamps=${stamps}&target=6`;
  patchStatus = 200;
  calls.length = 0;
  await wallet.createGoogleWalletLink({ ...member, cafe, stamps: 2 });
@@ -82,11 +82,13 @@ test('MB Vape keeps its logo and refreshes the matching stamp artwork on save an
  const displayedFields = patchedClass.classTemplateInfo.cardTemplateOverride.cardRowTemplateInfos[0].twoItems;
  assert.equal(displayedFields.startItem.firstValue.fields[0].fieldPath, 'object.accountName');
  assert.equal(displayedFields.endItem.firstValue.fields[0].fieldPath, "object.textModulesData['reward']");
+ assert.equal(patchedClass.classTemplateInfo.cardBarcodeSectionDetails.firstTopDetail.fieldSelector.fields[0].fieldPath, "object.textModulesData['progress']");
  const created = JSON.parse(calls.find(call => call.method === 'POST' && call.url.endsWith('/loyaltyObject')).body);
  const patched = JSON.parse(calls.find(call => call.method === 'PATCH' && call.url.includes('/loyaltyObject/')).body);
  assert.equal(created.heroImage.sourceUri.uri, imageUrl(2));
  assert.equal(patched.heroImage.sourceUri.uri, imageUrl(2));
  assert.equal(patched.loyaltyPoints.balance.string, '2/6');
+ assert.equal(patched.textModulesData.find(field => field.id === 'progress').body, '2/6 stamps');
  assert.equal(patched.barcode.value, `BL:${member.publicToken}`);
  const ready = wallet.googleWalletObject({ ...member, cafe, rewardEarnedAt: new Date() });
  assert.equal(ready.loyaltyPoints.label, 'REWARD READY');

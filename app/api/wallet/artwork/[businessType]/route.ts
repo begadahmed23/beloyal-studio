@@ -1,7 +1,7 @@
 import sharp from "sharp";
 import { businessCardArtwork, isArtworkBusinessType } from "@/lib/business/card-artwork";
 import { getBusinessBrandColors, getDefaultBusinessTheme } from "@/lib/cafe-theme";
-import { renderMbVapeAppleStrip, renderMbVapeGoogleArtwork, renderMbVapeLogo } from "@/lib/wallet/mb-vape-artwork";
+import { renderMbVapeAppleStrip, renderMbVapeGoogleArtwork, renderMbVapeGoogleLogo, renderMbVapeLogo } from "@/lib/wallet/mb-vape-artwork";
 
 export const runtime = "nodejs";
 
@@ -21,6 +21,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ busi
     if (asset === "logo") return imageResponse(await renderMbVapeLogo(696, 485));
     if (asset === "icon") return imageResponse(await renderMbVapeLogo(720, 720, "#ffffff", 112));
     if (asset === "wide-logo") return imageResponse(await renderMbVapeLogo(1280, 400, "transparent"));
+    if (asset === "google-logo") return imageResponse(await renderMbVapeGoogleLogo());
     if (asset !== null && asset !== "strip") return new Response(null, { status: 404 });
 
     const targetText = colors.get("target") ?? "6";

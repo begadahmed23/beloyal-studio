@@ -4,14 +4,36 @@ import sharp from "sharp";
 import { MB_VAPE_IVORY, MB_VAPE_STAMP_PATH, MB_VAPE_WALNUT } from "../business/mb-vape";
 
 const originalLogo = path.join(process.cwd(), "public/brands/mb-vape/logo.png");
+const logoBounds = { left: 197, top: 310, width: 733, height: 500 };
 
 export function renderMbVapeLogo(width: number, height: number, background = "#ffffff", padding = 0) {
   return sharp(originalLogo)
-    .extract({ left: 197, top: 310, width: 733, height: 500 })
+    .extract(logoBounds)
     .resize(width - 2 * padding, height - 2 * padding, {
       fit: "contain", background, position: width > height * 2 ? "left" : "centre",
     })
     .extend({ top: padding, bottom: padding, left: padding, right: padding, background })
+    .png()
+    .toBuffer();
+}
+
+export async function renderMbVapeGoogleLogo() {
+  const width = 1280;
+  const height = 400;
+  const padding = 32;
+  // Turn the white background of the supplied monochrome mark into transparency.
+  const alpha = await sharp(originalLogo)
+    .extract(logoBounds)
+    .flatten({ background: "white" })
+    .resize(width, height - padding * 2, { fit: "contain", background: "white" })
+    .extend({ top: padding, bottom: padding, left: 0, right: 0, background: "white" })
+    .negate()
+    .toColourspace("b-w")
+    .raw()
+    .toBuffer();
+
+  return sharp({ create: { width, height, channels: 3, background: "black" } })
+    .joinChannel(alpha, { raw: { width, height, channels: 1 } })
     .png()
     .toBuffer();
 }
