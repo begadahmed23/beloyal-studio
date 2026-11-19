@@ -8,9 +8,9 @@ import type { WalletCampaign } from "@/lib/wallet/campaigns";
 
 type Business = { id: string; name: string };
 type Audience = { cafe: Business & { timezone: string; rewardName: string }; totalMembers: number; walletMembers: number; googleUnavailable: boolean; members: CampaignMember[]; counts: Record<CampaignSegment, number>; history: WalletCampaign[] };
-const field = "w-full rounded-2xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] px-4 py-3 text-sm outline-none transition focus:border-[var(--wallet-accent,#18181b)] focus:ring-2 focus:ring-black/10 disabled:opacity-50";
-const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] px-4 py-2 text-sm font-medium transition hover:opacity-90 disabled:opacity-40";
-const primary = "inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--wallet-accent,#18181b)] px-5 py-3 text-sm font-medium text-[var(--wallet-accent-text,#ffffff)] transition hover:opacity-90 disabled:opacity-40";
+const field = "w-full rounded-2xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] px-4 py-3 text-base outline-none transition focus:border-[var(--wallet-accent,#18181b)] focus:ring-2 focus:ring-black/10 disabled:opacity-50 sm:text-sm";
+const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] px-4 py-2 text-sm font-medium transition active:opacity-80 disabled:opacity-40 pointer-fine:hover:opacity-90";
+const primary = "inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--wallet-accent,#18181b)] px-5 py-3 text-sm font-medium text-[var(--wallet-accent-text,#ffffff)] transition active:opacity-80 disabled:opacity-40 pointer-fine:hover:opacity-90";
 function totals(campaign: WalletCampaign) {
   return { accepted: campaign.recipients.filter(r => r.status === "accepted").length, failed: campaign.recipients.filter(r => r.status === "failed").length,
     skipped: campaign.recipients.filter(r => r.status === "skipped").length, pending: campaign.recipients.filter(r => r.status === "pending").length };
@@ -28,6 +28,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
   const [busy, setBusy] = useState<"preview" | "send" | null>(null);
   const [revision, setRevision] = useState(0);
   const reviewRef = useRef<HTMLDivElement>(null);
+  const requestInFlight = useRef(false);
   useEffect(() => {
     if (!cafeId) return;
     const controller = new AbortController();
@@ -37,6 +38,9 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
       .catch(reason => { if (reason.name !== "AbortError") setError(reason.message || "Could not load Wallet members."); });
     return () => controller.abort();
   }, [cafeId, revision]);
+  useEffect(() => {
+    if (review) reviewRef.current?.scrollIntoView({ block: "nearest" });
+  }, [review]);
   const members = useMemo(() => data?.members.filter(member => member.segments.includes(segment)) ?? [], [data, segment]);
   const eligible = members.filter(member => member.offersStatus === "enabled");
   const visible = members.filter(member => `${member.name} ${member.memberNumber}`.toLowerCase().includes(search.trim().toLowerCase()));
@@ -49,6 +53,8 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
     setSelected(previous => previous.includes(id) ? previous.filter(value => value !== id) : previous.length < MAX_CAMPAIGN_RECIPIENTS ? [...previous, id] : previous);
   }
   async function request(action: "preview" | "send") {
+    if (requestInFlight.current || result || (action === "send" && !review)) return;
+    requestInFlight.current = true;
     setBusy(action); setError("");
     try {
       const response = await fetch("/api/wallet/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(action === "preview"
@@ -56,10 +62,10 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
         : { action, cafeId, campaignId: review?.id }) });
       const body = await response.json();
       if (!response.ok) throw new Error(body.message);
-      if (action === "preview") { setReview(body.campaign); setTimeout(() => reviewRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 50); }
-      else { setResult(body.campaign); setReview(null); setSelected([]); setRevision(value => value + 1); }
+      if (action === "preview") setReview(body.campaign);
+      else { setResult(body.campaign); setRevision(value => value + 1); }
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Request failed. Refresh history before trying again."); }
-    finally { setBusy(null); }
+    finally { requestInFlight.current = false; setBusy(null); }
   }
   const chosenSegment = campaignSegments.find(value => value.id === segment)!;
   const business = data?.cafe.name ?? businesses.find(value => value.id === cafeId)?.name ?? "Your business";
@@ -113,13 +119,40 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
         <div className="mt-2 flex justify-between gap-4 text-xs text-[var(--wallet-muted,#71717a)]"><span>Appears on the Wallet card and can trigger a notification.</span><span className="shrink-0">{message.length}/180</span></div>
         <div className="mt-4 flex flex-wrap gap-2">{segment === "reward_ready" && data && <button className={secondary} disabled={!!busy} onClick={() => { setMessage(`Your reward is ready: ${data.cafe.rewardName}! Visit ${business} to redeem it.`.slice(0,180)); resetReview(); }}><Gift size={15}/> Reward reminder</button>}<button className={secondary} disabled={!!busy} onClick={() => { setMessage(`Happy birthday! Thanks for being part of ${business}.`.slice(0,180)); resetReview(); }}><Cake size={15}/> Birthday wish</button><button className={secondary} disabled={!!busy} onClick={() => { setMessage(`We miss you! Your ${business} loyalty card is ready for your next visit.`.slice(0,180)); resetReview(); }}><Clock3 size={15}/> Welcome back</button></div>
         <p className="mt-4 text-xs leading-5 text-[var(--wallet-muted,#71717a)]">This updates the card’s message. Stamps and reward eligibility stay the same.</p>
-        <button className={`${primary} mt-5 w-full sm:w-auto`} disabled={!!busy || !selected.length || !message.trim() || !data} onClick={() => request("preview")}>{busy === "preview" ? <Loader2 size={16} className="animate-spin"/> : <ArrowRight size={16}/>} Review {selected.length || "your"} recipient{selected.length === 1 ? "" : "s"}</button>
+        <button className={`${primary} mt-5 w-full sm:w-auto`} disabled={!!busy || !!result || !selected.length || !message.trim() || !data} onClick={() => request("preview")}>{busy === "preview" ? <Loader2 size={16} className="animate-spin"/> : <ArrowRight size={16}/>} Review {selected.length || "your"} recipient{selected.length === 1 ? "" : "s"}</button>
       </div>
       <div className="flex flex-col justify-center rounded-3xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-raised,#eaeaec)] p-6 sm:p-8"><p className="mb-5 text-xs font-medium uppercase tracking-[0.15em] text-[var(--wallet-muted,#71717a)]">Notification preview</p><div className="rounded-3xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.06)]"><div className="flex items-center gap-2 text-xs text-[var(--wallet-muted,#71717a)]"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--wallet-accent,#18181b)] text-[var(--wallet-accent-text,#ffffff)]"><Wallet size={17}/></span> Wallet<span className="ml-auto">now</span></div><p className="mt-4 text-sm font-semibold">{business}</p><p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">{message.trim() || "Your message will appear here."}</p></div><p className="mt-5 flex items-start gap-2 text-xs leading-5 text-[var(--wallet-muted,#71717a)]"><Smartphone size={17} className="mt-0.5 shrink-0"/> Appearance and delivery timing vary by device. Updates may take a few minutes; Provider acceptance doesn’t confirm the customer saw a notification.</p></div>
     </section>
-    {error && <p role="alert" className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</p>}
-    {review && <div ref={reviewRef} className="mt-5 rounded-3xl border-2 border-[var(--wallet-accent,#18181b)] bg-[var(--wallet-surface,#ffffff)] p-5 sm:p-7"><p className="text-xs font-medium uppercase tracking-wider text-[var(--wallet-muted,#71717a)]">03 · Final review</p><h2 className="mt-3 text-xl font-semibold">Send to {review.recipients.length} Wallet member{review.recipients.length === 1 ? "" : "s"}?</h2><p className="mt-2 text-sm text-[var(--wallet-muted,#71717a)]">{review.business} · {chosenSegment.label}</p><p className="mt-4 whitespace-pre-wrap break-words rounded-2xl bg-[var(--wallet-raised,#f4f4f5)] p-4 text-sm leading-6">{review.message}</p><p className="mt-3 max-h-24 overflow-y-auto text-xs leading-6 text-[var(--wallet-muted,#71717a)]">{review.recipients.map(member => `${member.name} (${member.memberNumber})`).join(", ")}</p><div className="mt-5 flex flex-col gap-3 sm:flex-row"><button disabled={!!busy} className={primary} onClick={() => request("send")}>{busy === "send" ? <Loader2 size={16} className="animate-spin"/> : <Send size={16}/>} {busy === "send" ? "Sending… keep this page open" : `Send to ${review.recipients.length} Wallet members`}</button><button disabled={!!busy} className={secondary} onClick={() => setReview(null)}>Back to editing</button></div><p className="mt-3 text-xs text-[var(--wallet-muted,#71717a)]">This preview expires in 10 minutes. Removed cards, members who no longer match the group, will be skipped. Unchanged Apple messages are also skipped.</p></div>}
-    {result && <div role="status" className="mt-5 rounded-3xl border border-[#c9d8cc] bg-[#eef4ef] p-5"><p className="flex items-center gap-2 font-semibold"><Check size={18}/> {result.status === "complete" ? "Campaign processed" : "Campaign in progress"}</p><p className="mt-2 text-sm">{totals(result).accepted} accepted by Wallet provider · {totals(result).failed} failed · {totals(result).skipped} skipped{totals(result).pending ? ` · ${totals(result).pending} awaiting processing` : ""}.</p><p className="mt-2 text-xs text-[var(--wallet-secondary,#52525b)]">These are update requests, not confirmed notification views. Check history for the latest result.</p></div>}
+    {error && !review && <p role="alert" className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</p>}
+    {review && (
+      <div ref={reviewRef} className="mt-5 scroll-mt-24 rounded-3xl border-2 border-[var(--wallet-accent,#18181b)] bg-[var(--wallet-surface,#ffffff)] p-5 sm:p-7">
+        <p className="text-xs font-medium uppercase tracking-wider text-[var(--wallet-muted,#71717a)]">03 · Final review</p>
+        <h2 className="mt-3 text-xl font-semibold">Send to {review.recipients.length} Wallet member{review.recipients.length === 1 ? "" : "s"}?</h2>
+        <p className="mt-2 text-sm text-[var(--wallet-muted,#71717a)]">{review.business} · {chosenSegment.label}</p>
+        <p className="mt-4 whitespace-pre-wrap break-words rounded-2xl bg-[var(--wallet-raised,#f4f4f5)] p-4 text-sm leading-6">{review.message}</p>
+        <p className="mt-3 max-h-24 overflow-y-auto text-xs leading-6 text-[var(--wallet-muted,#71717a)]">{review.recipients.map(member => `${member.name} (${member.memberNumber})`).join(", ")}</p>
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+          <button type="button" disabled={!!busy || !!result} aria-busy={busy === "send"} className={primary} onClick={() => request("send")}>
+            {busy === "send" ? <Loader2 size={16} className="shrink-0 motion-safe:animate-spin" aria-hidden="true"/> : <Send size={16} className="shrink-0" aria-hidden="true"/>}
+            Send to {review.recipients.length} Wallet member{review.recipients.length === 1 ? "" : "s"}
+          </button>
+          <button type="button" disabled={!!busy} className={secondary} onClick={() => {
+            if (result) { setSelected([]); setMessage(""); }
+            resetReview();
+          }}>{result ? "Done" : "Back to editing"}</button>
+        </div>
+        {error && <p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}
+        <div role="status" className="mt-3 min-h-5 text-sm">
+          {busy === "send" && "Sending… Keep this page open."}
+          {result && <>
+            <p className="flex items-center gap-2 font-semibold"><Check size={16} aria-hidden="true"/> {result.status === "complete" ? "Campaign processed" : "Campaign in progress"}</p>
+            <p className="mt-1 text-xs">{totals(result).accepted} accepted by Wallet provider · {totals(result).failed} failed · {totals(result).skipped} skipped{totals(result).pending ? ` · ${totals(result).pending} awaiting processing` : ""}.</p>
+            <p className="mt-1 text-xs text-[var(--wallet-secondary,#52525b)]">Check history for the latest result.</p>
+          </>}
+        </div>
+        {!result && <p className="mt-2 text-xs text-[var(--wallet-muted,#71717a)]">This preview expires in 10 minutes. Removed cards and members who no longer match the group will be skipped. Unchanged Apple messages are also skipped.</p>}
+      </div>
+    )}
     <WalletNotificationSettings key={cafeId} cafeId={cafeId} manageLocation={studio} />
     <section className="mt-7"><h2 className="flex items-center gap-2 text-lg font-semibold"><Bell size={18}/> Recent campaigns</h2><p className="mt-2 text-xs text-[var(--wallet-muted,#71717a)]">Last 10 campaigns · history kept for 30 days. Pending results after an interruption need review before creating another campaign.</p><div className="mt-4 space-y-3">{data?.history.length ? data.history.map(campaign => { const count = totals(campaign); return <article key={campaign.id} className="rounded-2xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-5"><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-medium text-[var(--wallet-muted,#71717a)]">{new Intl.DateTimeFormat("en-GB", { timeZone: data.cafe.timezone, dateStyle: "medium", timeStyle: "short" }).format(new Date(campaign.sentAt ?? campaign.createdAt))}</p><span className="rounded-full bg-[var(--wallet-raised,#f4f4f5)] px-2 py-1 text-[10px] uppercase tracking-wide">{campaign.status === "sending" ? "Processing / check status" : "Processed"}</span></div><p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6">{campaign.message}</p><p className="mt-3 text-xs text-[var(--wallet-muted,#71717a)]">{campaign.recipients.length} members · {count.accepted} accepted by Wallet provider · {count.failed} failed · {count.skipped} skipped{count.pending ? ` · ${count.pending} pending` : ""}</p></article>; }) : <p className="rounded-2xl border border-dashed border-[var(--wallet-border,#e4e4e7)] p-6 text-sm text-[var(--wallet-muted,#71717a)]">Your first campaign will appear here after you send it.</p>}</div></section>
   </div>;

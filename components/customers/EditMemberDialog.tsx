@@ -412,7 +412,7 @@ export default function EditMemberDialog({
                 touch-manipulation
                 transition
                 duration-150
-                active:scale-[0.98]
+                active:opacity-80
                 hover:border-white/[0.14]
                 hover:bg-white/[0.075]
                 hover:text-white
@@ -443,7 +443,7 @@ export default function EditMemberDialog({
                 transition
                 duration-150
                 hover:bg-[#e9e9e9]
-                active:scale-[0.98]
+                active:opacity-80
                 disabled:cursor-not-allowed
                 disabled:opacity-50
               "

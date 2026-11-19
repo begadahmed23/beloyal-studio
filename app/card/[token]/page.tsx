@@ -2056,7 +2056,8 @@ const progressPercentage = rewardReady
                       .trim()
                       .length < 10
                   }
-                  className="mt-6 flex h-13 min-h-13 w-full items-center justify-center rounded-2xl px-5 text-sm font-semibold transition hover:brightness-105 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-busy={feedbackSubmitting}
+                  className="relative mt-6 flex h-13 min-h-13 w-full items-center justify-center rounded-2xl px-5 text-sm font-semibold transition hover:brightness-105 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
                     backgroundColor:
                       feedbackPrimary,
@@ -2068,17 +2069,10 @@ const progressPercentage = rewardReady
                     )}`,
                   }}
                 >
-                  {feedbackSubmitting ? (
-                    <>
-                      <LoaderCircle
-                        size={17}
-                        className="mr-2 animate-spin"
-                      />
-                      Sending...
-                    </>
-                  ) : (
-                    "Send feedback"
+                  {feedbackSubmitting && (
+                    <LoaderCircle size={17} aria-hidden="true" className="absolute left-4 motion-safe:animate-spin" />
                   )}
+                  Send feedback
                 </button>
 
                 {customer.cafe.feedbackRewardEnabled &&

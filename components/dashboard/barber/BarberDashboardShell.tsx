@@ -163,7 +163,7 @@ export default function BarberDashboardShell({
               href="/dashboard/settings"
               prefetch
               aria-label="Open settings"
-              className="flex h-10 w-10 touch-manipulation items-center justify-center rounded-xl border transition duration-150 active:scale-[0.96] hover:opacity-80"
+              className="flex h-10 w-10 touch-manipulation items-center justify-center rounded-xl border transition duration-150 active:opacity-80 hover:opacity-80"
               style={{
                 borderColor: theme.border,
                 backgroundColor: theme.surface,

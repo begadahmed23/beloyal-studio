@@ -151,7 +151,7 @@ export default function NewCustomerDialog() {
           setError("");
           setOpen(true);
         }}
-        className="flex h-11 w-full touch-manipulation items-center justify-center gap-2 px-5 text-sm font-semibold transition duration-150 active:scale-[0.98] hover:opacity-90 sm:w-auto"
+        className="flex h-11 w-full touch-manipulation items-center justify-center gap-2 px-5 text-sm font-semibold transition duration-150 active:opacity-80 hover:opacity-90 sm:w-auto"
         style={{
           backgroundColor: theme.accent,
           color: theme.buttonText,
@@ -231,7 +231,7 @@ export default function NewCustomerDialog() {
                   }}
                   disabled={loading}
                   aria-label={`Close new ${personLabel} dialog`}
-                  className="flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full border transition duration-150 active:scale-95 hover:opacity-80 disabled:opacity-50"
+                  className="flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full border transition duration-150 active:opacity-80 hover:opacity-80 disabled:opacity-50"
                   style={{
                     borderColor: theme.border,
                     backgroundColor: theme.surface,
@@ -434,7 +434,7 @@ export default function NewCustomerDialog() {
               type="button"
               onClick={createMember}
               disabled={loading}
-              className="flex h-12 w-full touch-manipulation items-center justify-center gap-2 text-sm font-semibold transition duration-150 active:scale-[0.98] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-12 w-full touch-manipulation items-center justify-center gap-2 text-sm font-semibold transition duration-150 active:opacity-80 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               style={{
                 backgroundColor: theme.accent,
                 color: theme.buttonText,

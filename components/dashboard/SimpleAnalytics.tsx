@@ -445,7 +445,7 @@ export default function SimpleAnalytics() {
             return (
               <article
                 key={card.label}
-                className="border p-4 transition duration-200 hover:-translate-y-0.5 sm:p-5"
+                className="border p-4 transition duration-200 pointer-fine:motion-safe:hover:-translate-y-0.5 sm:p-5"
                 style={{
                   borderColor:
                     theme.border,

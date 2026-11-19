@@ -643,7 +643,7 @@ export default function StudioDashboard() {
           return (
             <article
               key={card.label}
-              className="group rounded-[24px] border border-black/[0.08] bg-white/90 p-5 shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-0.5 hover:border-black/[0.14] hover:bg-[#F8F8F9]"
+              className="group rounded-[24px] border border-black/[0.08] bg-white/90 p-5 shadow-[0_16px_45px_rgba(15,23,42,0.06)] transition duration-300 pointer-fine:motion-safe:hover:-translate-y-0.5 hover:border-black/[0.14] hover:bg-[#F8F8F9]"
             >
               <div className="flex items-start justify-between">
                 <div

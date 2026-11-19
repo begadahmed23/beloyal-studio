@@ -256,7 +256,7 @@ function ActionButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-3 rounded-[18px] border p-4 text-left transition active:scale-[0.99] ${
+      className={`flex items-center gap-3 rounded-[18px] border p-4 text-left transition active:opacity-80 ${
         danger
           ? "border-red-200 bg-red-50 hover:bg-red-100"
           : "border-black/[0.08] bg-white hover:border-black/[0.14] hover:bg-[#F8F8F9]"

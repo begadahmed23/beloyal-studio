@@ -437,7 +437,7 @@ export default function AdminCustomerDatabase() {
             type="button"
             onClick={exportFiltered}
             disabled={filteredCustomers.length === 0}
-            className="flex h-11 w-full touch-manipulation items-center justify-center gap-2 px-4 text-sm font-semibold transition duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 xl:w-auto"
+            className="flex h-11 w-full touch-manipulation items-center justify-center gap-2 px-4 text-sm font-semibold transition duration-150 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-40 xl:w-auto"
             style={{
               backgroundColor: theme.accent,
               color: theme.buttonText,

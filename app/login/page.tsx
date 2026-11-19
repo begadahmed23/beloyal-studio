@@ -249,7 +249,7 @@ export default function Home() {
             <Button
               type="submit"
               disabled={loading}
-              className="h-13 w-full rounded-2xl bg-[#111111] text-sm font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.15)] transition hover:bg-[#2c2c2e] hover:shadow-[0_14px_35px_rgba(0,0,0,0.18)] active:scale-[0.99] disabled:opacity-50"
+              className="h-13 w-full rounded-2xl bg-[#111111] text-sm font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.15)] transition hover:bg-[#2c2c2e] hover:shadow-[0_14px_35px_rgba(0,0,0,0.18)] active:opacity-80 disabled:opacity-50"
             >
               {loading ? (
                 <>

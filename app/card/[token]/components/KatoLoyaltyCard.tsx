@@ -281,7 +281,7 @@ export default function KatoLoyaltyCard({
         <button
           type="button"
           onClick={() => setBirthdayOpen((current) => !current)}
-          className="mt-5 flex w-full items-center gap-4 rounded-[24px] border px-4 py-4 text-left transition hover:-translate-y-0.5 active:translate-y-0 min-[390px]:px-5"
+          className="mt-5 flex w-full items-center gap-4 rounded-[24px] border px-4 py-4 text-left transition pointer-fine:motion-safe:hover:-translate-y-0.5 active:opacity-80 min-[390px]:px-5"
           style={{
             borderColor: border,
             backgroundColor: soft,
@@ -382,7 +382,7 @@ export default function KatoLoyaltyCard({
         <button
           type="button"
           onClick={onShowQrCode}
-          className="mt-4 flex h-14 w-full items-center justify-center gap-2.5 rounded-[22px] text-[15px] font-semibold text-white shadow-[0_14px_34px_rgba(16,43,73,0.22)] transition hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
+          className="mt-4 flex h-14 w-full items-center justify-center gap-2.5 rounded-[22px] text-[15px] font-semibold text-white shadow-[0_14px_34px_rgba(16,43,73,0.22)] transition pointer-fine:motion-safe:hover:-translate-y-0.5 hover:brightness-110 active:opacity-80"
           style={{
             backgroundColor: qrBackground,
             color: qrText,
@@ -403,7 +403,7 @@ export default function KatoLoyaltyCard({
             <button
               type="button"
               onClick={onShowFeedback}
-              className="flex w-full items-center justify-between rounded-[22px] border px-4 py-3.5 text-left transition hover:-translate-y-0.5 active:translate-y-0"
+              className="flex w-full items-center justify-between rounded-[22px] border px-4 py-3.5 text-left transition pointer-fine:motion-safe:hover:-translate-y-0.5 active:opacity-80"
               style={{
                 borderColor: border,
                 backgroundColor: isDark ? "#0D2744" : "#F7F9FB",

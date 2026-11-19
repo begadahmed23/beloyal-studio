@@ -286,7 +286,7 @@ export default function MemberList() {
               type="button"
               onClick={() => setBirthdaysFirst((current) => !current)}
               aria-pressed={birthdaysFirst}
-              className="flex h-9 touch-manipulation items-center gap-2 border px-3 text-xs font-semibold transition duration-150 hover:opacity-85 active:scale-[0.98]"
+              className="flex h-9 touch-manipulation items-center gap-2 border px-3 text-xs font-semibold transition duration-150 hover:opacity-85 active:opacity-80"
               style={{
                 borderColor: birthdaysFirst ? `${theme.accent}75` : theme.inputBorder,
                 backgroundColor: birthdaysFirst ? theme.accentSoft : theme.inputBackground,
@@ -316,7 +316,7 @@ export default function MemberList() {
                   current === "newest" ? "recently-stamped" : "newest",
                 )
               }
-              className="flex h-9 touch-manipulation items-center gap-2 border px-3 text-xs font-medium transition duration-150 hover:opacity-80 active:scale-[0.98]"
+              className="flex h-9 touch-manipulation items-center gap-2 border px-3 text-xs font-medium transition duration-150 hover:opacity-80 active:opacity-80"
               style={{
                 borderColor: theme.inputBorder,
                 backgroundColor: theme.inputBackground,

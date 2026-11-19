@@ -314,9 +314,6 @@ export default function CafeSettingsForm({
     const dirty = dashboardSettingsSections[section].some((field) => field in draft);
     return (
       <div className="mt-6 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: theme.border }}>
-        <p role="status" className="text-sm" style={{ color: message?.type === "error" ? theme.danger : theme.textSecondary }}>
-          {message?.section === section ? message.text : ""}
-        </p>
         <div className="flex flex-wrap justify-end gap-2 sm:ml-auto">
           {dirty && (
             <button type="button" disabled={disabled} onClick={() => resetSection(section)}
@@ -325,13 +322,16 @@ export default function CafeSettingsForm({
               <RotateCcw size={16} aria-hidden="true" /> Reset
             </button>
           )}
-          <button type="submit" disabled={disabled}
+          <button type="submit" disabled={disabled} aria-busy={pending}
             className="flex min-h-11 items-center justify-center gap-2 px-4 text-sm font-semibold disabled:opacity-60"
             style={{ backgroundColor: theme.accent, color: theme.accentText, borderRadius: theme.radiusMedium }}>
-            {pending ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : <Save size={16} aria-hidden="true" />}
-            {pending ? "Saving…" : label}
+            {pending ? <Loader2 size={16} className="motion-safe:animate-spin" aria-hidden="true" /> : <Save size={16} aria-hidden="true" />}
+            {label}
           </button>
         </div>
+        <p role="status" className="min-h-5 text-sm sm:order-first" style={{ color: message?.type === "error" ? theme.danger : theme.textSecondary }}>
+          {pending ? "Saving…" : message?.section === section ? message.text : ""}
+        </p>
       </div>
     );
   }
@@ -680,7 +680,7 @@ export default function CafeSettingsForm({
                     key={option.value}
                     type="button"
                     onClick={() => selectTheme(option.value)}
-                    className="overflow-hidden border p-3 text-left transition hover:-translate-y-0.5"
+                    className="overflow-hidden border p-3 text-left transition pointer-fine:motion-safe:hover:-translate-y-0.5"
                     style={{
                       borderColor: selected ? theme.accent : theme.border,
                       backgroundColor: theme.surface,
@@ -786,7 +786,7 @@ export default function CafeSettingsForm({
                     key={option.value}
                     type="button"
                     onClick={() => selectTheme(option.value)}
-                    className="overflow-hidden border p-4 text-left transition hover:-translate-y-0.5"
+                    className="overflow-hidden border p-4 text-left transition pointer-fine:motion-safe:hover:-translate-y-0.5"
                     style={{
                       borderColor: selected
                         ? "#102B49"
@@ -1394,7 +1394,7 @@ function ThemePreviewOption({
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      className="group relative overflow-hidden border p-3 text-left transition duration-300 hover:-translate-y-1"
+      className="group relative overflow-hidden border p-3 text-left transition duration-300 pointer-fine:motion-safe:hover:-translate-y-1"
       style={{
         borderColor: selected ? previewTheme.accent : previewTheme.border,
         backgroundColor: previewTheme.surface,
@@ -1418,7 +1418,7 @@ function ThemePreviewOption({
       )}
 
       <div
-        className="relative min-h-56 overflow-hidden border p-5 transition duration-300 group-hover:scale-[1.01]"
+        className="relative min-h-56 overflow-hidden border p-5 transition duration-300 pointer-fine:motion-safe:group-hover:scale-[1.01]"
         style={{
           borderColor: previewTheme.border,
           borderRadius: previewTheme.radiusMedium,

@@ -137,6 +137,12 @@
   }
 }
 
+@media (pointer: coarse) {
+  :where(button, a[href], [role="button"], summary) {
+    touch-action: manipulation;
+  }
+}
+
 /* Native fragment navigation uses the same measured offset as landing links. */
 .landing-page {
   --landing-header-height: 121px;

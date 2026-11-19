@@ -1228,7 +1228,7 @@ function SummaryCard({
   value: string;
 }) {
   return (
-    <article className="group rounded-[24px] border border-black/[0.07] bg-white p-5 shadow-[0_16px_45px_rgba(15,23,42,0.055)] transition hover:-translate-y-0.5 hover:border-black/[0.13] hover:bg-[#FCFCFD]">
+    <article className="group rounded-[24px] border border-black/[0.07] bg-white p-5 shadow-[0_16px_45px_rgba(15,23,42,0.055)] transition pointer-fine:motion-safe:hover:-translate-y-0.5 hover:border-black/[0.13] hover:bg-[#FCFCFD]">
       <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/[0.07] bg-gradient-to-br from-white to-[#E4E6EA] text-[#4E5055] shadow-sm transition group-hover:to-[#D8DADE]">
         <Icon size={18} />
       </div>

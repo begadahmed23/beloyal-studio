@@ -237,7 +237,7 @@ export default function CashierDashboardHome() {
                 key={action.href}
                 href={action.href}
                 prefetch={action.desktopOnly ? false : undefined}
-                className={`group ${action.desktopOnly ? "hidden lg:flex" : "flex"} min-h-36 items-center justify-between rounded-[22px] border p-5 transition hover:-translate-y-0.5`}
+                className={`group ${action.desktopOnly ? "hidden lg:flex" : "flex"} min-h-36 items-center justify-between rounded-[22px] border p-5 transition pointer-fine:motion-safe:hover:-translate-y-0.5`}
                 style={{
                   borderColor: action.primary
                     ? theme.accent
@@ -279,7 +279,7 @@ export default function CashierDashboardHome() {
 
                 <ArrowRight
                   size={17}
-                  className="transition group-hover:translate-x-1"
+                  className="transition pointer-fine:motion-safe:group-hover:translate-x-1"
                 />
               </Link>
             );

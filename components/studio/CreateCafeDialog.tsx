@@ -210,7 +210,7 @@ export default function CreateCafeDialog({
       }}
     >
       <DialogTrigger
-        className="flex h-11 items-center justify-center gap-2 rounded-xl border border-[#C8CBD0] bg-gradient-to-b from-white to-[#E9EAEC] px-5 text-sm font-semibold text-[#202124] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_5px_14px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:border-[#B5B8BE] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_8px_20px_rgba(15,23,42,0.11)]"
+        className="flex h-11 items-center justify-center gap-2 rounded-xl border border-[#C8CBD0] bg-gradient-to-b from-white to-[#E9EAEC] px-5 text-sm font-semibold text-[#202124] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_5px_14px_rgba(15,23,42,0.08)] transition pointer-fine:motion-safe:hover:-translate-y-0.5 hover:border-[#B5B8BE] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_8px_20px_rgba(15,23,42,0.11)]"
       >
         <Plus size={17} />
         Create Business
@@ -577,7 +577,7 @@ export default function CreateCafeDialog({
             <button
               type="submit"
               disabled={loading || success}
-              className="flex h-11 items-center justify-center gap-2 rounded-xl border border-[#BFC2C7] bg-gradient-to-b from-[#303237] to-[#191A1D] px-5 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_7px_16px_rgba(15,23,42,0.14)] transition hover:-translate-y-0.5 hover:from-[#3B3D42] hover:to-[#202125] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-11 items-center justify-center gap-2 rounded-xl border border-[#BFC2C7] bg-gradient-to-b from-[#303237] to-[#191A1D] px-5 text-sm font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_7px_16px_rgba(15,23,42,0.14)] transition pointer-fine:motion-safe:hover:-translate-y-0.5 hover:from-[#3B3D42] hover:to-[#202125] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (
                 <>

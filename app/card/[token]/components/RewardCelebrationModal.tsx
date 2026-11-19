@@ -126,7 +126,7 @@ export default function RewardCelebrationModal({
           <button
             type="button"
             onClick={onClose}
-            className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-[18px] bg-[#2E2A27] text-sm font-semibold text-[#F6F0E5] shadow-[0_14px_36px_rgba(46,42,39,0.18)] transition hover:brightness-110 active:scale-[0.99]"
+            className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-[18px] bg-[#2E2A27] text-sm font-semibold text-[#F6F0E5] shadow-[0_14px_36px_rgba(46,42,39,0.18)] transition hover:brightness-110 active:opacity-80"
           >
             Continue
           </button>
@@ -210,7 +210,7 @@ export default function RewardCelebrationModal({
 
           <p className="mt-7 font-serif text-sm italic text-[#F4E5C6]/55">Little Rituals, Big Comfort</p>
 
-          <button type="button" onClick={onClose} className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#F4E5C6] text-sm font-semibold text-[#4A0D10] shadow-[0_14px_40px_rgba(244,229,198,0.16)] transition hover:brightness-105 active:scale-[0.99]">
+          <button type="button" onClick={onClose} className="mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#F4E5C6] text-sm font-semibold text-[#4A0D10] shadow-[0_14px_40px_rgba(244,229,198,0.16)] transition hover:brightness-105 active:opacity-80">
             <Sparkles size={17} />
             Continue
           </button>
@@ -320,7 +320,7 @@ export default function RewardCelebrationModal({
           <button
             type="button"
             onClick={onClose}
-            className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-white text-sm font-semibold text-[#0B2343] shadow-[0_14px_40px_rgba(255,255,255,0.16)] transition hover:brightness-95 active:scale-[0.99]"
+            className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-white text-sm font-semibold text-[#0B2343] shadow-[0_14px_40px_rgba(255,255,255,0.16)] transition hover:brightness-95 active:opacity-80"
           >
             Continue
           </button>
@@ -489,7 +489,7 @@ export default function RewardCelebrationModal({
         <button
           type="button"
           onClick={onClose}
-          className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#D8BE82] text-sm font-semibold text-[#102A24] shadow-[0_12px_35px_rgba(216,190,130,0.22)] transition hover:bg-[#E3CC98] active:scale-[0.99]"
+          className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#D8BE82] text-sm font-semibold text-[#102A24] shadow-[0_12px_35px_rgba(216,190,130,0.22)] transition hover:bg-[#E3CC98] active:opacity-80"
         >
           <Sparkles size={17} />
           Continue

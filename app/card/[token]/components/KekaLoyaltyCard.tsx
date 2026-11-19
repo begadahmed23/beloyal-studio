@@ -302,7 +302,7 @@ export default function KekaLoyaltyCard({
         <button
           type="button"
           onClick={onShowQrCode}
-          className="mt-4 flex h-14 w-full items-center justify-center gap-2.5 rounded-[20px] text-[15px] font-semibold transition hover:brightness-105 active:scale-[0.99]"
+          className="mt-4 flex h-14 w-full items-center justify-center gap-2.5 rounded-[20px] text-[15px] font-semibold transition hover:brightness-105 active:opacity-80"
           style={{ backgroundColor: isCreamTheme ? burgundy : cream, color: isCreamTheme ? creamSoft : burgundyDeep, boxShadow: "0 14px 30px rgba(42,3,5,0.2)" }}
         >
           <QrCode size={19} />

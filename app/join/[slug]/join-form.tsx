@@ -478,7 +478,7 @@ export default function JoinForm({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex h-14 w-full items-center justify-center rounded-2xl px-5 text-base font-semibold transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-14 w-full items-center justify-center rounded-2xl px-5 text-base font-semibold transition hover:brightness-110 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
           style={{
             background: isKato
               ? katoAccent

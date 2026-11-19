@@ -821,7 +821,7 @@ function DefaultLoyaltyCard({
             <button
               type="button"
               onClick={onShowQrCode}
-              className="flex h-12 w-full items-center justify-center gap-2.5 rounded-2xl border px-5 text-sm font-semibold transition duration-200 hover:-translate-y-0.5 hover:opacity-85 active:translate-y-0 active:scale-[0.99]"
+              className="flex h-12 w-full items-center justify-center gap-2.5 rounded-2xl border px-5 text-sm font-semibold transition duration-200 pointer-fine:motion-safe:hover:-translate-y-0.5 hover:opacity-85 active:opacity-80 active:opacity-80"
               style={{
                 borderColor: cardBorder,
                 backgroundColor: surfaceColor,
@@ -840,7 +840,7 @@ function DefaultLoyaltyCard({
               <button
                 type="button"
                 onClick={onShowFeedback}
-                className="flex min-h-14 w-full items-center justify-between gap-4 rounded-2xl border px-4 py-3.5 text-left transition duration-200 hover:-translate-y-0.5 hover:opacity-90 active:translate-y-0 active:scale-[0.99]"
+                className="flex min-h-14 w-full items-center justify-between gap-4 rounded-2xl border px-4 py-3.5 text-left transition duration-200 pointer-fine:motion-safe:hover:-translate-y-0.5 hover:opacity-90 active:opacity-80 active:opacity-80"
                 style={{
                   borderColor: primaryBorder,
                   backgroundColor: primarySoft,

@@ -81,7 +81,7 @@ export default function RatingModal({
                 onBlur={() => onHoveredRatingChange(null)}
                 onClick={() => onRatingSelect(rating)}
                 aria-label={`${rating} star${rating === 1 ? "" : "s"}`}
-                className="rounded-full p-1 transition hover:scale-110 active:scale-95 disabled:cursor-wait disabled:opacity-60"
+                className="rounded-full p-1 transition pointer-fine:motion-safe:hover:scale-110 active:opacity-80 disabled:cursor-wait disabled:opacity-60"
               >
                 <Star
                   size={38}

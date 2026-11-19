@@ -614,7 +614,7 @@ export default function StaffManagementPanel({
           type="button"
           onClick={createAccount}
           disabled={saving}
-          className={`mt-3 flex h-11 w-full touch-manipulation items-center justify-center gap-2 px-4 text-sm font-semibold transition active:scale-[0.98] disabled:opacity-50 sm:w-auto ${
+          className={`mt-3 flex h-11 w-full touch-manipulation items-center justify-center gap-2 px-4 text-sm font-semibold transition active:opacity-80 disabled:opacity-50 sm:w-auto ${
             themed
               ? ""
               : "rounded-xl bg-[#1D1D1F] text-white"

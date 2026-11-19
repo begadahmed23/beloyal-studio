@@ -525,7 +525,7 @@ export default function MemberCard({
           setStampFeedback(null);
           setProfileOpen(true);
         }}
-        className="group w-full border p-5 text-left transition duration-200 hover:-translate-y-0.5 hover:brightness-105"
+        className="group w-full border p-5 text-left transition duration-200 pointer-fine:motion-safe:hover:-translate-y-0.5 hover:brightness-105"
         style={{
           borderColor: cardGlowsGreen
             ? `${theme.success}90`
@@ -720,7 +720,7 @@ export default function MemberCard({
                 type="button"
                 onClick={() => setProfileOpen(false)}
                 aria-label="Close customer details"
-                className="flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full border transition duration-150 active:scale-95 hover:opacity-80"
+                className="flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full border transition duration-150 active:opacity-80 hover:opacity-80"
                 style={{
                   borderColor: theme.border,
                   backgroundColor: theme.surface,
@@ -735,7 +735,7 @@ export default function MemberCard({
               <button
                 type="button"
                 onClick={openEditDialog}
-                className="flex h-10 flex-1 touch-manipulation items-center justify-center gap-2 border text-sm font-semibold transition duration-150 active:scale-[0.98] hover:opacity-90"
+                className="flex h-10 flex-1 touch-manipulation items-center justify-center gap-2 border text-sm font-semibold transition duration-150 active:opacity-80 hover:opacity-90"
                 style={{
                   borderColor: `${theme.accent}45`,
                   backgroundColor: theme.accentSoft,
@@ -751,7 +751,7 @@ export default function MemberCard({
                 type="button"
                 onClick={() => setDeleteOpen(true)}
                 aria-label={`Delete ${personLabel}`}
-                className="flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center border transition duration-150 active:scale-95 hover:opacity-80"
+                className="flex h-10 w-10 shrink-0 touch-manipulation items-center justify-center border transition duration-150 active:opacity-80 hover:opacity-80"
                 style={{
                   borderColor: `${theme.danger}35`,
                   backgroundColor: `${theme.danger}0D`,

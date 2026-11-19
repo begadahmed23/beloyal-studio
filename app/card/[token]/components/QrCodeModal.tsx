@@ -367,7 +367,7 @@ export default function QrCodeModal({
           <button
             type="button"
             onClick={onClose}
-            className="mt-5 h-12 w-full rounded-2xl text-sm font-semibold transition hover:opacity-90 active:scale-[0.99]"
+            className="mt-5 h-12 w-full rounded-2xl text-sm font-semibold transition hover:opacity-90 active:opacity-80"
             style={{
               backgroundColor: modalPrimary,
               color: modalAccentText,

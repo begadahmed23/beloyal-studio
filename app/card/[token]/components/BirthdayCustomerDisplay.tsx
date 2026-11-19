@@ -343,7 +343,7 @@ export default function BirthdayCustomerDisplay({
         type="button"
         onClick={() => interactive && setOpen(true)}
         disabled={!interactive}
-        className="flex w-full items-center gap-4 rounded-2xl border p-4 text-left transition enabled:hover:-translate-y-0.5 enabled:hover:opacity-90 disabled:cursor-default"
+        className="flex w-full items-center gap-4 rounded-2xl border p-4 text-left transition pointer-fine:motion-safe:enabled:hover:-translate-y-0.5 enabled:hover:opacity-90 disabled:cursor-default"
         style={{
           borderColor: highlighted ? primaryBorder : cardBorder,
           backgroundColor: highlighted ? primarySoft : surfaceColor,
