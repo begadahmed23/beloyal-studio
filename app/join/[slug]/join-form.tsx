@@ -446,7 +446,7 @@ export default function JoinForm({
           }}
         >
           {cardReady ? <Check size={18} aria-hidden /> : isSubmitting ? <LoaderCircle size={18} aria-hidden className="motion-safe:animate-spin" /> : null}
-          <span role="status">{cardReady
+          <span aria-live="polite">{cardReady
             ? arabic ? "الكارت جاهز" : "Card ready"
             : isSubmitting
             ? mode === "join"
