@@ -11,6 +11,7 @@ import {
   useState,
 } from "react";
 
+import FeedbackTabs from "./FeedbackTabs";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type RatingRow = {
@@ -66,13 +67,10 @@ export default function AdminFeedbackPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] =
-    useState<"RATINGS" | "COMMENTS">("RATINGS");
+    useState<"ratings" | "comments">("ratings");
 
   const load = useCallback(async () => {
     try {
-      setLoading(true);
-      setError("");
-
       const response = await fetch("/api/admin/feedback", {
         cache: "no-store",
       });
@@ -102,7 +100,8 @@ export default function AdminFeedbackPanel() {
   }, []);
 
   useEffect(() => {
-    void load();
+    const initialLoad = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(initialLoad);
   }, [load]);
 
   return (
@@ -208,55 +207,17 @@ export default function AdminFeedbackPanel() {
         </p>
       ) : data ? (
         <div className="mt-5">
-          <div
-            className="inline-flex rounded-[16px] border p-1"
-            style={{
-              borderColor: theme.border,
-              backgroundColor: theme.surfaceRaised,
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setActiveTab("RATINGS")}
-              className="rounded-[12px] px-4 py-2 text-xs font-semibold transition"
-              style={{
-                backgroundColor:
-                  activeTab === "RATINGS"
-                    ? theme.accent
-                    : "transparent",
-                color:
-                  activeTab === "RATINGS"
-                    ? theme.buttonText
-                    : theme.textSecondary,
-              }}
-            >
-              Ratings ({data.summary.ratingCount})
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("COMMENTS")}
-              className="rounded-[12px] px-4 py-2 text-xs font-semibold transition"
-              style={{
-                backgroundColor:
-                  activeTab === "COMMENTS"
-                    ? theme.accent
-                    : "transparent",
-                color:
-                  activeTab === "COMMENTS"
-                    ? theme.buttonText
-                    : theme.textSecondary,
-              }}
-            >
-              Comments ({data.summary.commentCount})
-            </button>
-          </div>
+          <FeedbackTabs
+            value={activeTab}
+            onChange={setActiveTab}
+            counts={{ ratings: data.summary.ratingCount, comments: data.summary.commentCount }}
+          />
 
           <div
             className="mt-4 overflow-hidden rounded-[20px] border"
             style={{ borderColor: theme.border }}
           >
-            {activeTab === "RATINGS" ? (
+            {activeTab === "ratings" ? (
               <div className="max-h-[360px] overflow-y-auto">
                 {data.ratings.length === 0 ? (
                   <p

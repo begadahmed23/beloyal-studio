@@ -1,17 +1,17 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Eye,
   EyeOff,
-  LoaderCircle,
+  ArrowRight,
   LockKeyhole,
   Mail,
 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
-import { Button } from "@/components/ui/button";
+import { ActionButton } from "@/components/ui/action-button";
 import { Input } from "@/components/ui/input";
 
 export default function Home() {
@@ -25,11 +25,13 @@ export default function Home() {
     useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const requestInFlight = useRef(false);
 
   async function handleLogin(
     event: FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
+    if (requestInFlight.current) return;
 
     const cleanEmail = email.trim().toLowerCase();
 
@@ -38,6 +40,7 @@ export default function Home() {
       return;
     }
 
+    requestInFlight.current = true;
     try {
       setLoading(true);
       setError("");
@@ -105,6 +108,7 @@ export default function Home() {
         "Something went wrong. Please try again."
       );
     } finally {
+      requestInFlight.current = false;
       setLoading(false);
     }
   }
@@ -246,20 +250,15 @@ export default function Home() {
               </div>
             )}
 
-            <Button
+            <ActionButton
               type="submit"
-              disabled={loading}
-              className="h-13 w-full rounded-2xl bg-[#111111] text-sm font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.15)] transition hover:bg-[#2c2c2e] hover:shadow-[0_14px_35px_rgba(0,0,0,0.18)] active:opacity-80 disabled:opacity-50"
+              pending={loading}
+              icon={<ArrowRight size={17} />}
+              className="flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-[#111111] text-sm font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.15)] hover:bg-[#2c2c2e] active:opacity-80 disabled:opacity-60"
             >
-              {loading ? (
-                <>
-                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                "Sign in"
-              )}
-            </Button>
+              Sign in
+            </ActionButton>
+            <p role="status" className="sr-only">{loading ? "Signing in…" : ""}</p>
 
             <div className="pt-1 text-center">
               <a

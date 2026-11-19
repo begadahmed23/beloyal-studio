@@ -22,6 +22,7 @@ import {
   Users,
 } from "lucide-react";
 
+import FeedbackTabs from "./FeedbackTabs";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type RatingBreakdown = {
@@ -178,7 +179,7 @@ export default function SimpleAnalytics() {
   );
 
   useEffect(() => {
-    loadAnalytics();
+    const initialLoad = window.setTimeout(() => void loadAnalytics(), 0);
 
     function handleMembersUpdated() {
       loadAnalytics(true);
@@ -190,6 +191,7 @@ export default function SimpleAnalytics() {
     );
 
     return () => {
+      window.clearTimeout(initialLoad);
       window.removeEventListener(
         "members-updated",
         handleMembersUpdated,
@@ -358,10 +360,6 @@ export default function SimpleAnalytics() {
 
   const hasMoreComments =
     recentFeedback.length > 5;
-
-  function changeTab(tab: ActivityTab) {
-    setActiveTab(tab);
-  }
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -787,69 +785,7 @@ export default function SimpleAnalytics() {
               </p>
             </div>
 
-            <div
-              className="grid w-full grid-cols-2 gap-1 border p-1 sm:w-auto sm:min-w-[240px]"
-              style={{
-                borderColor:
-                  theme.border,
-                backgroundColor:
-                  theme.surfaceRaised,
-                borderRadius:
-                  theme.radiusMedium,
-              }}
-            >
-              <button
-                type="button"
-                onClick={() =>
-                  changeTab("ratings")
-                }
-                className="flex h-9 items-center justify-center gap-2 px-4 text-sm font-medium transition"
-                style={{
-                  backgroundColor:
-                    activeTab ===
-                    "ratings"
-                      ? theme.accentSoft
-                      : "transparent",
-                  color:
-                    activeTab ===
-                    "ratings"
-                      ? theme.accent
-                      : theme.textMuted,
-                  borderRadius:
-                    theme.radiusMedium,
-                }}
-              >
-                <Star size={14} />
-                Ratings
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  changeTab("comments")
-                }
-                className="flex h-9 items-center justify-center gap-2 px-4 text-sm font-medium transition"
-                style={{
-                  backgroundColor:
-                    activeTab ===
-                    "comments"
-                      ? theme.accentSoft
-                      : "transparent",
-                  color:
-                    activeTab ===
-                    "comments"
-                      ? theme.accent
-                      : theme.textMuted,
-                  borderRadius:
-                    theme.radiusMedium,
-                }}
-              >
-                <MessageCircle
-                  size={14}
-                />
-                Comments
-              </button>
-            </div>
+            <FeedbackTabs value={activeTab} onChange={setActiveTab} />
           </div>
 
           {activeTab === "ratings" ? (

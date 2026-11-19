@@ -23,6 +23,7 @@ export const cafeNavigation = [
   },
   {
     label: "Customers",
+    adminOnly: true,
     mobileLabel: "Data",
     href: "/dashboard/customers",
     icon: Database,
@@ -42,12 +43,14 @@ export const cafeNavigation = [
   },
   {
     label: "Campaigns",
+    adminOnly: true,
     mobileLabel: "Offers",
     href: "/dashboard/campaigns",
     icon: Bell,
   },
   {
     label: "Settings",
+    adminOnly: true,
     mobileLabel: "Setup",
     href: "/dashboard/settings",
     icon: Settings,
@@ -66,5 +69,5 @@ export function isDashboardCurrentPage(
     return pathname === href;
   }
 
-  return pathname.startsWith(href);
+  return pathname === href || pathname.startsWith(`${href}/`);
 }

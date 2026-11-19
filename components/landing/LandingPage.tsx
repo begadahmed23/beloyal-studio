@@ -17,6 +17,36 @@ import ArabicLanding from "./ArabicLanding";
 export default function LandingPage() {
   const [arabic, setArabic] = useState(false);
   const pageRef = useRef<HTMLElement>(null);
+  const [activeSection, setActiveSection] = useState("");
+
+  useEffect(() => {
+    const page = pageRef.current;
+    if (!page) return;
+
+    let frame = 0;
+    function update() {
+      if (!page) return;
+      const threshold = (page.querySelector("header")?.getBoundingClientRect().height ?? 120) + 64;
+      let active = "";
+      for (const section of page.querySelectorAll<HTMLElement>("section[id]")) {
+        if (section.getBoundingClientRect().top <= threshold) active = section.id;
+      }
+      setActiveSection(active);
+      frame = 0;
+    }
+    function schedule() {
+      if (!frame) frame = requestAnimationFrame(update);
+    }
+
+    schedule();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
+  }, [arabic]);
   function navigateToSection(event: MouseEvent<HTMLElement>) {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
     const link = (event.target as Element).closest<HTMLAnchorElement>('a[href^="#"]');
@@ -32,6 +62,7 @@ export default function LandingPage() {
       // Align the content, not the padded section boundary.
       const content = section.firstElementChild ?? section;
       const top = window.scrollY + content.getBoundingClientRect().top - header.getBoundingClientRect().height - 24;
+      setActiveSection(id);
       window.history.pushState(null, "", `#${id}`);
       window.scrollTo({ top: Math.max(0, top), behavior: "instant" });
     });
@@ -56,9 +87,9 @@ export default function LandingPage() {
   }
   return (
     <main ref={pageRef} onClick={navigateToSection} lang={arabic ? "ar" : "en"} dir={arabic ? "rtl" : "ltr"} style={{ colorScheme: "light", fontFamily: arabic ? 'Tahoma, Arial, sans-serif' : 'Arial, Helvetica, sans-serif' }} className="landing-page min-h-screen bg-white text-neutral-950">
-      <Navbar arabic={arabic} onLanguageChange={changeLanguage} />
+      <Navbar arabic={arabic} active={activeSection} onLanguageChange={changeLanguage} />
       {arabic ? <ArabicLanding /> : <><Hero /><Features /><WalletStory /><HowItWorks /><Insights /><Pricing /><FAQ /><Contact /><Footer /></>}
-      <MobileNavigation arabic={arabic} />
+      <MobileNavigation arabic={arabic} active={activeSection} />
     </main>
   );
 }

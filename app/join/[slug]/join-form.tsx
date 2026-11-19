@@ -2,6 +2,9 @@
 import type { BusinessType } from "@prisma/client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { ArrowRight } from "lucide-react";
+import { ActionButton } from "@/components/ui/action-button";
+import { SlidingSelection } from "@/components/ui/sliding-selection";
 import { useRouter } from "next/navigation";
 import { type CafeThemeName } from "@/lib/cafe-theme";
 import { getJoinTheme } from "./join-theme";
@@ -97,6 +100,7 @@ export default function JoinForm({
     setShowConsentError(true);
   }
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const requestInFlight = useRef(false);
 
   function changeMode(nextMode: FormMode) {
     setMode(nextMode);
@@ -112,6 +116,7 @@ export default function JoinForm({
     event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
+    if (requestInFlight.current) return;
     setError("");
 
     const cleanPhone = phone.replace(/\D/g, "");
@@ -177,6 +182,7 @@ export default function JoinForm({
       requestBody.birthday = birthday;
     }
 
+    requestInFlight.current = true;
     setIsSubmitting(true);
 
     try {
@@ -214,6 +220,7 @@ export default function JoinForm({
         "We could not connect to the server. Please check your internet connection.",
       );
     } finally {
+      requestInFlight.current = false;
       setIsSubmitting(false);
     }
   }
@@ -229,61 +236,38 @@ export default function JoinForm({
 
   return (
     <div>
-      <div
-        className="grid grid-cols-2 rounded-2xl border p-1"
+      <SlidingSelection
+        value={mode}
+        role="group"
+        aria-label="Loyalty card options"
+        indicatorColor={isKato ? katoAccent : theme.accent}
+        className="grid grid-cols-2 gap-1 rounded-2xl border p-1"
         style={{
           borderColor: isKato ? katoBorder : theme.border,
           backgroundColor: isKato ? katoSurface : theme.surfaceRaised,
         }}
       >
-        <button
-          type="button"
-          onClick={() => changeMode("join")}
-          className="min-h-12 rounded-xl px-3 text-sm font-semibold transition"
-          style={{
-            background:
-              mode === "join"
-                ? isKato
-                  ? katoAccent
-                  : `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`
-                : "transparent",
-            color:
-              mode === "join"
-                ? isKato
-                  ? katoAccentText
-                  : theme.buttonText
-                : isKato
-                  ? katoTextMuted
-                  : theme.textMuted,
-          }}
-        >
-          Create a card
-        </button>
-
-        <button
-          type="button"
-          onClick={() => changeMode("recover")}
-          className="min-h-12 rounded-xl px-3 text-sm font-semibold transition"
-          style={{
-            background:
-              mode === "recover"
-                ? isKato
-                  ? katoAccent
-                  : `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`
-                : "transparent",
-            color:
-              mode === "recover"
-                ? isKato
-                  ? katoAccentText
-                  : theme.buttonText
-                : isKato
-                  ? katoTextMuted
-                  : theme.textMuted,
-          }}
-        >
-          I have a card
-        </button>
-      </div>
+        {([
+          { value: "join", label: "Create a card" },
+          { value: "recover", label: "Find my card" },
+        ] as const).map((option) => {
+          const selected = mode === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              disabled={isSubmitting}
+              aria-pressed={selected}
+              data-selection={selected ? "active" : undefined}
+              onClick={() => changeMode(option.value)}
+              className="min-h-12 rounded-xl px-2 text-sm font-semibold motion-safe:transition-colors"
+              style={{ color: selected ? (isKato ? katoAccentText : theme.buttonText) : (isKato ? katoTextMuted : theme.textSecondary) }}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </SlidingSelection>
 
       <div className="mb-6 mt-5">
         <h1
@@ -475,9 +459,10 @@ export default function JoinForm({
           </div>
         )}
 
-        <button
+        <ActionButton
           type="submit"
-          disabled={isSubmitting}
+          pending={isSubmitting}
+          icon={<ArrowRight size={17} />}
           className="flex h-14 w-full items-center justify-center rounded-2xl px-5 text-base font-semibold transition hover:brightness-110 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
           style={{
             background: isKato
@@ -491,14 +476,11 @@ export default function JoinForm({
             color: isKato ? katoAccentText : theme.buttonText,
           }}
         >
-          {isSubmitting
-            ? mode === "join"
-              ? "Creating your card..."
-              : "Finding your card..."
-            : mode === "join"
-              ? "Agree and create my card"
-              : "Open my loyalty card"}
-        </button>
+          {mode === "join" ? "Agree and create my card" : "Open my loyalty card"}
+        </ActionButton>
+        <p role="status" className="sr-only">
+          {isSubmitting ? (mode === "join" ? "Creating your card…" : "Finding your card…") : ""}
+        </p>
 
         {mode === "join" ? (
           <>
@@ -527,12 +509,6 @@ export default function JoinForm({
               </p>
             </div>
 
-            <p
-              className="text-center text-xs leading-5"
-              style={{ color: isKato ? katoTextMuted : theme.textMuted }}
-            >
-              
-            </p>
           </>
         ) : (
           <p

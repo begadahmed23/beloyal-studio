@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
   CheckCircle2,
@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 
+import { ActionButton } from "@/components/ui/action-button";
 import MbVapeStamp from "@/components/brand/MbVapeStamp";
 import { isMbVape } from "@/lib/business/mb-vape";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
@@ -102,8 +103,9 @@ export default function MemberCard({
   const [messageText, setMessageText] =
     useState("");
 
-  const [loading, setLoading] =
-    useState(false);
+  const [pendingAction, setPendingAction] = useState<"stamp" | "redeem" | "delete" | null>(null);
+  const requestInFlight = useRef(false);
+  const loading = pendingAction !== null;
 
   const [stampFeedback, setStampFeedback] = useState<{
     type: "success" | "error";
@@ -274,12 +276,14 @@ export default function MemberCard({
   }
 
   async function addStamp() {
-    if (loading || rewardReady) {
+    if (requestInFlight.current || rewardReady) {
       return;
     }
 
+    requestInFlight.current = true;
+    setPendingAction("stamp");
+
     try {
-      setLoading(true);
       setStampFeedback(null);
 
       const response = await fetch(
@@ -347,17 +351,20 @@ export default function MemberCard({
         text: error instanceof Error ? error.message : "Something went wrong.",
       });
     } finally {
-      setLoading(false);
+      requestInFlight.current = false;
+      setPendingAction(null);
     }
   }
 
   async function redeemReward() {
-    if (loading || !rewardReady) {
+    if (requestInFlight.current || !rewardReady) {
       return;
     }
 
+    requestInFlight.current = true;
+    setPendingAction("redeem");
+
     try {
-      setLoading(true);
 
       const response = await fetch(
         "/api/customers/redeem",
@@ -422,17 +429,20 @@ export default function MemberCard({
           : "Something went wrong.",
       );
     } finally {
-      setLoading(false);
+      requestInFlight.current = false;
+      setPendingAction(null);
     }
   }
 
   async function deleteMember() {
-    if (loading) {
+    if (requestInFlight.current) {
       return;
     }
 
+    requestInFlight.current = true;
+    setPendingAction("delete");
+
     try {
-      setLoading(true);
 
       const response = await fetch(
         `/api/customers/${customer.id}`,
@@ -479,7 +489,8 @@ export default function MemberCard({
           : "Something went wrong.",
       );
     } finally {
-      setLoading(false);
+      requestInFlight.current = false;
+      setPendingAction(null);
     }
   }
 
@@ -1088,24 +1099,20 @@ export default function MemberCard({
             className="shrink-0 border-t px-4 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-6"
             style={{ borderColor: theme.border }}
           >
-            <button
-              type="button"
+            <ActionButton
               onClick={rewardReady ? () => setRedeemOpen(true) : addStamp}
               disabled={loading}
-              aria-busy={loading}
-              className="flex h-12 w-full touch-manipulation items-center justify-center gap-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+              pending={pendingAction === "stamp"}
+              icon={rewardReady ? <Gift size={18} /> : <LoyaltyIcon size={18} />}
+              className="flex min-h-12 w-full items-center justify-center gap-2 px-3 py-2.5 text-sm font-semibold pointer-fine:hover:opacity-90 active:opacity-80 disabled:opacity-75"
               style={{
                 backgroundColor: rewardReady ? theme.success : theme.accent,
                 color: rewardReady ? "#ffffff" : theme.buttonText,
                 borderRadius: theme.radiusMedium,
               }}
             >
-              {rewardReady ? (
-                <><Gift size={18} aria-hidden="true" /> Redeem {cafe.rewardName}</>
-              ) : (
-                <><LoyaltyIcon size={18} aria-hidden="true" /> {isBarbershop ? "Record Visit" : "Add Stamp"}</>
-              )}
-            </button>
+              {rewardReady ? `Redeem ${cafe.rewardName}` : isBarbershop ? "Record Visit" : "Add Stamp"}
+            </ActionButton>
             <p
               role="status"
               className="mt-1.5 h-8 overflow-y-auto text-xs leading-4"
@@ -1113,7 +1120,7 @@ export default function MemberCard({
                 color: stampFeedback?.type === "error" ? theme.danger : theme.textSecondary,
               }}
             >
-              {loading && !rewardReady
+              {pendingAction === "stamp"
                 ? (isBarbershop ? "Recording visit…" : "Adding stamp…")
                 : stampFeedback?.text}
             </p>

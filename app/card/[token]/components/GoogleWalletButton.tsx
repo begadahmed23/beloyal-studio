@@ -1,14 +1,16 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import WalletButtonStatus from "./WalletButtonStatus";
 
 export default function GoogleWalletButton({ token, enabled }: { token: string; enabled: boolean }) {
   const [busy, setBusy] = useState(false);
+  const requestInFlight = useRef(false);
   const [error, setError] = useState("");
   const [opening, setOpening] = useState(false);
   useEffect(() => {
     function resume(event: PageTransitionEvent) {
       if (event.persisted) {
+        requestInFlight.current = false;
         setBusy(false);
         setOpening(false);
       }
@@ -18,6 +20,8 @@ export default function GoogleWalletButton({ token, enabled }: { token: string; 
   }, []);
   if (!enabled) return null;
   async function save() {
+    if (requestInFlight.current) return;
+    requestInFlight.current = true;
     setBusy(true);
     setError("");
     try {
@@ -30,6 +34,7 @@ export default function GoogleWalletButton({ token, enabled }: { token: string; 
       setOpening(true);
     } catch (caught) {
       setError(caught instanceof Error && caught.name !== "TimeoutError" ? caught.message : "Google Wallet took too long. Try again.");
+      requestInFlight.current = false;
       setBusy(false);
     }
   }

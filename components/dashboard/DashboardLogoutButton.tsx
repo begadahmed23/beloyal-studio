@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
-export default function MobileLogoutButton() {
+export default function DashboardLogoutButton({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const { theme } = useCafeTheme();
   const [loading, setLoading] = useState(false);
@@ -32,7 +32,7 @@ export default function MobileLogoutButton() {
       disabled={loading}
       aria-label={loading ? "Signing out" : "Sign out"}
       title="Sign out"
-      className="flex h-10 w-10 items-center justify-center rounded-xl border transition hover:opacity-80 disabled:opacity-50 lg:hidden"
+      className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border text-sm font-medium transition-opacity hover:opacity-80 disabled:opacity-70 ${compact ? "w-11" : "w-full px-3"}`}
       style={{
         borderColor: theme.border,
         backgroundColor: theme.surface,
@@ -40,10 +40,11 @@ export default function MobileLogoutButton() {
       }}
     >
       {loading ? (
-        <LoaderCircle size={17} className="animate-spin" />
+        <LoaderCircle size={17} className="motion-safe:animate-spin" aria-hidden="true" />
       ) : (
-        <LogOut size={17} />
+        <LogOut size={17} aria-hidden="true" />
       )}
+      {!compact && "Sign out"}
     </button>
   );
 }

@@ -379,7 +379,7 @@ export default function CafeSettingsForm({
           >
             {isKato
               ? "Manage KATŌ’s loyalty program, customer experience, and business controls."
-              : "Customize your loyalty program. Each section saves independently."}
+              : "Use the Save button in each section to keep your changes."}
           </p>
         </div>
 
@@ -429,7 +429,7 @@ export default function CafeSettingsForm({
               label={
                 isBarbershop ? "Barbershop slug" : "Business slug"
               }
-              description="The permanent identifier used by the platform."
+              description="This is part of the link customers use to join."
             >
               <input
                 type="text"
@@ -453,7 +453,7 @@ export default function CafeSettingsForm({
                 label={
                   isBarbershop ? "Barbershop logo" : "Business logo"
                 }
-                description="Upload a permanent PNG, JPG, or WebP logo up to 4 MB. You can also paste a direct image URL."
+                description="Upload a PNG, JPG, or WebP (up to 4 MB), or paste a link to your logo."
               >
                 <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
                   <input
@@ -580,7 +580,7 @@ export default function CafeSettingsForm({
               theme={theme}
             icon={Palette}
             title="Branding"
-            description={`Choose the visual identity used across the ${
+            description={`Choose colors for your ${
               isBarbershop ? "barbershop" : cafe.businessType === "CAFE" ? "café" : "business"
             } dashboard and customer card.`}
           />
@@ -595,7 +595,7 @@ export default function CafeSettingsForm({
 
           {draft.theme && (
             <p role="status" className="mt-4 text-sm" style={{ color: theme.textSecondary }}>
-              Previewing this palette. Save Branding to apply it.
+              You’re previewing these colors. Tap Save Branding to use them.
             </p>
           )}
           {saveControls("branding", "Save Branding")}
@@ -829,8 +829,8 @@ export default function CafeSettingsForm({
             title="Loyalty program"
             description={
               isBarbershop
-                ? "Control how clients earn visits and what they receive after completing their card."
-                : "Control how customers earn stamps and what they receive after completing their card."
+                ? "Choose which visits count and what clients earn."
+                : "Choose how customers earn stamps and what reward they get."
             }
           />
 
@@ -838,7 +838,7 @@ export default function CafeSettingsForm({
             <Field
               theme={theme}
               label="Reward visit"
-              description="A target of 7 means 6 paid visits, then the reward on visit 7."
+              description="Example: enter 7 to give a reward on visit 7, after 6 paid visits."
             >
               <input
                 type="number"
@@ -861,7 +861,7 @@ export default function CafeSettingsForm({
             <Field
               theme={theme}
               label="Reward name"
-              description="The short reward title shown to customers."
+              description="Name the reward. Example: Free coffee."
             >
               <input
                 type="text"
@@ -885,7 +885,7 @@ export default function CafeSettingsForm({
             <Field
               theme={theme}
               label="Reward description"
-              description="Additional details about the completed reward."
+              description="Tell customers what the reward includes."
             >
               <textarea
                 value={form.rewardDescription}
@@ -947,8 +947,8 @@ export default function CafeSettingsForm({
               }
               description={
                 isBarbershop
-                  ? "Optional minimum service amount needed to record a visit."
-                  : "Optional minimum order amount needed to earn a stamp."
+                  ? "Enter the minimum spend for a visit to count. Leave it blank if there’s no minimum."
+                  : "Enter the minimum spend to earn a stamp. Leave it blank if there’s no minimum."
               }
             >
               <div className="relative">
@@ -1069,7 +1069,7 @@ export default function CafeSettingsForm({
             theme={theme}
             icon={MessageCircle}
             title="Customer feedback"
-            description="Choose whether customers can privately share written feedback from their loyalty card."
+            description="Let customers send you private feedback from their card."
           />
 
           <div
@@ -1257,7 +1257,7 @@ export default function CafeSettingsForm({
               theme={theme}
             icon={UserRound}
             title="Account and subscription"
-            description="These details are managed by the platform administrator and cannot be changed here."
+            description="Contact BeLoyal to change your account or subscription."
           />
 
           <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
