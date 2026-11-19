@@ -105,7 +105,7 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
         className={cardFrame}
         style={{ backgroundColor: cardBackground, borderColor: cardBorder, color: textPrimary, colorScheme: cardIsLight ? "light" : "dark" }}
       >
-        <CardBrandHeader business={cafe} target={rewardTarget} stamps={visibleStamps} ready={rewardReady}
+        <CardBrandHeader business={cafe} progress={{ target: rewardTarget, stamps: visibleStamps, ready: rewardReady }}
           logoUrl={props.showLogo ? props.logoUrl : null}
           onLogoError={props.logoUrl ? () => props.onLogoError(props.logoUrl!) : undefined} />
         <CardStampStrip business={cafe} target={rewardTarget} stamps={visibleStamps} accent={props.primaryColor}

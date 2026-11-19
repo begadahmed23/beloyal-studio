@@ -1,5 +1,4 @@
-import { CardBrandHeader, CardStampStrip, cardFrame } from "@/components/loyalty/CardBrand";
-import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+import { CardBrandHeader, cardFrame } from "@/components/loyalty/CardBrand";
 import { getMbVapeBrandColors } from "@/lib/business/mb-vape";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
@@ -52,7 +51,6 @@ export default async function JoinPage({
   const { isKato } = businessTheme;
   const primaryColor = businessTheme.primary;
   const secondaryColor = businessTheme.secondary;
-  const target = getLoyaltyProgressTarget(cafe);
 
   /*
    * Check whether this device already has a remembered
@@ -100,10 +98,9 @@ export default async function JoinPage({
           background: businessTheme.shellBackground,
           color: businessTheme.textPrimary,
         }}>
-          <CardBrandHeader business={cafe} target={target} stamps={0} logoUrl={cafe.logoUrl} />
-          <CardStampStrip business={cafe} target={target} stamps={0} accent={primaryColor}
-            background={businessTheme.surface} ink={businessTheme.textPrimary} />
-          <div className="px-4 pb-6 pt-5 min-[380px]:px-5 sm:px-6">
+          <CardBrandHeader business={cafe} logoUrl={cafe.logoUrl} />
+          <div className="border-t px-4 pb-6 pt-5 min-[380px]:px-5 sm:px-6"
+            style={{ borderColor: businessTheme.border }}>
             <JoinForm
               cafeSlug={cafe.slug}
               cafeName={cafe.name}

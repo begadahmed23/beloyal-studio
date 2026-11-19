@@ -12,11 +12,9 @@ export const cardFrame = "w-full overflow-hidden rounded-[26px] border shadow-[0
 type Brand = { name: string; slug: string; businessType: BusinessType };
 const stampIcons = { CAFE: Coffee, BARBERSHOP: Scissors, VAPE: Layers, OTHER: Store };
 
-export function CardBrandHeader({ business, target, stamps, ready, logoUrl, onLogoError }: {
+export function CardBrandHeader({ business, progress, logoUrl, onLogoError }: {
   business: Brand;
-  target: number;
-  stamps: number;
-  ready?: boolean;
+  progress?: { target: number; stamps: number; ready: boolean };
   logoUrl?: string | null;
   onLogoError?: () => void;
 }) {
@@ -25,11 +23,15 @@ export function CardBrandHeader({ business, target, stamps, ready, logoUrl, onLo
   const namedCafe = (name: string) => business.businessType === "CAFE" && identity.includes(name);
 
   return (
-    <header className="flex min-h-24 items-center justify-between gap-3 px-4 py-3.5 min-[380px]:px-5"
+    <header className={progress
+      ? "flex min-h-24 items-center justify-between gap-3 px-4 py-3.5 min-[380px]:px-5"
+      : "grid min-h-20 place-items-center px-4 py-3 text-center"}
       style={mbVape ? { backgroundColor: "#fff", color: "#432B1D" } : undefined}>
-      <div className="min-w-0 flex-1">
+      <div className={progress ? "min-w-0 flex-1" : "grid min-w-0 max-w-full place-items-center"}>
         {mbVape ? (
-          <MbVapeLogo className="h-auto w-[clamp(8.75rem,43vw,11.75rem)] max-w-full" />
+          <MbVapeLogo className={progress
+            ? "h-auto w-[clamp(8.75rem,43vw,11.75rem)] max-w-full"
+            : "h-16 w-auto max-w-full"} />
         ) : logoUrl ? (
           // Logos can come from an existing business's external image host.
           // eslint-disable-next-line @next/next/no-img-element
@@ -48,14 +50,16 @@ export function CardBrandHeader({ business, target, stamps, ready, logoUrl, onLo
           </span>
         )}
       </div>
-      <div className="shrink-0 text-right">
-        <p className="text-[0.68rem] font-semibold uppercase tracking-[0.10em]">
-          {ready ? "Reward ready" : business.businessType === "BARBERSHOP" ? "Visits" : "Stamps"}
-        </p>
-        <p className="mt-1 text-[1.7rem] font-semibold leading-none tabular-nums min-[380px]:text-3xl" aria-live="polite">
-          {stamps}<span className="mx-0.5 opacity-50">/</span>{target}
-        </p>
-      </div>
+      {progress && (
+        <div className="shrink-0 text-right">
+          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.10em]">
+            {progress.ready ? "Reward ready" : business.businessType === "BARBERSHOP" ? "Visits" : "Stamps"}
+          </p>
+          <p className="mt-1 text-[1.7rem] font-semibold leading-none tabular-nums min-[380px]:text-3xl" aria-live="polite">
+            {progress.stamps}<span className="mx-0.5 opacity-50">/</span>{progress.target}
+          </p>
+        </div>
+      )}
     </header>
   );
 }
