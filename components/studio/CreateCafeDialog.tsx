@@ -72,7 +72,7 @@ export default function CreateCafeDialog({
     getBusinessTerminology(businessType);
   const businessLabel = businessTypeLabels[businessType];
   const availableThemes =
-    getBusinessThemeOptions(businessType);
+    getBusinessThemeOptions();
 
   function resetForm() {
     setBusinessType("CAFE");

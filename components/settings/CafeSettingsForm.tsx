@@ -36,7 +36,6 @@ import {
   getBusinessTheme,
   getBusinessBrandColors,
   getBusinessThemeOptions,
-  type BusinessThemeOption,
   type CafeThemeConfig,
   type CafeThemeName,
 } from "@/lib/cafe-theme";
@@ -89,7 +88,6 @@ export default function CafeSettingsForm({
 }: Props) {
  const {
   theme,
-  themeName,
   savedThemeName,
   cafe,
   setPreviewTheme,
@@ -109,9 +107,6 @@ export default function CafeSettingsForm({
     cafe.slug.toLowerCase().includes("keka") ||
     normalizedCafeName.includes("keka");
 
-  const themeOptions = getBusinessThemeOptions(
-    cafe.businessType,
-  );
   const PreviewIcon = isBarbershop ? Scissors : Coffee;
 
   const createInitialState = (): FormState => ({
@@ -277,9 +272,9 @@ export default function CafeSettingsForm({
     try {
       const fields = dashboardSettingsSections[section];
       const input = Object.fromEntries(fields.map((field) => [field, form[field]]));
-      if (section === "branding" && !isKato && !isKeka) {
+      if (section === "branding" && !isKato && !isKeka && draft.theme) {
         const [primaryColor, secondaryColor, backgroundColor] = getBusinessBrandColors(
-          form.theme, cafe.businessType, form.theme === savedThemeName ? cafe : undefined,
+          form.theme,
         );
         Object.assign(input, { primaryColor, secondaryColor, backgroundColor });
       }
@@ -293,6 +288,7 @@ export default function CafeSettingsForm({
       if (!response.ok) throw new Error(result.error ?? "Unable to save settings.");
 
       applySavedSettings(result.cafe, result.cafe.theme);
+      if (section === "branding") resetPreviewTheme();
       setDraft((current) => {
         const next = { ...current };
         for (const field of fields) {
@@ -590,52 +586,15 @@ export default function CafeSettingsForm({
             } dashboard and customer card.`}
           />
 
-          <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {themeOptions.map((option) => {
-              const selected = form.theme === option.value;
-              const previewTheme = getBusinessTheme(
-                option.value,
-                cafe.businessType,
-              );
+          <BrandingThemePicker
+            selectedTheme={form.theme}
+            disabled={saving !== null}
+            onSelect={selectTheme}
+          />
 
-              return (
-                <ThemePreviewOption
-                  key={option.value}
-                  option={option}
-                  selected={selected}
-                  previewTheme={previewTheme}
-                  cafeName={
-                    form.name ||
-                    cafe.name ||
-                    (isBarbershop
-                      ? "Your barbershop"
-                      : "Your business")
-                  }
-                  rewardTarget={getLoyaltyProgressTarget({
-                    rewardTarget: Number(form.rewardTarget) || (isBarbershop ? 3 : 8),
-                  })}
-                  rewardName={
-                    form.rewardName ||
-                    (isBarbershop
-                      ? "Free haircut"
-                      : cafe.businessType === "CAFE" ? "Free drink" : "Member reward")
-                  }
-                  isBarbershop={isBarbershop}
-                  onSelect={() => selectTheme(option.value)}
-                />
-              );
-            })}
-          </div>
-
-          {themeName !== savedThemeName && (
-            <p
-              className="mt-5 text-sm"
-              style={{
-                color: theme.accent,
-              }}
-            >
-              You are previewing an unsaved theme.
-              Select Save Branding to keep it.
+          {draft.theme && (
+            <p role="status" className="mt-4 text-sm" style={{ color: theme.textSecondary }}>
+              Previewing this palette. Save Branding to apply it.
             </p>
           )}
           {saveControls("branding", "Save Branding")}
@@ -1355,188 +1314,102 @@ export default function CafeSettingsForm({
 
 }
 
-type ThemeOption = BusinessThemeOption;
 
 type ThemedComponentProps = {
   theme: CafeThemeConfig;
 };
 
-function ThemePreviewOption({
-  option,
-  selected,
-  previewTheme,
-  cafeName,
-  rewardTarget,
-  rewardName,
-  isBarbershop,
+function BrandingThemePicker({
+  selectedTheme,
+  disabled,
   onSelect,
 }: {
-  option: ThemeOption;
-  selected: boolean;
-  previewTheme: CafeThemeConfig;
-  cafeName: string;
-  rewardTarget: number;
-  rewardName: string;
-  isBarbershop: boolean;
-  onSelect: () => void;
+  selectedTheme: CafeThemeName;
+  disabled: boolean;
+  onSelect: (theme: CafeThemeName) => void;
 }) {
-  const previewStampCount = Math.min(
-    isBarbershop ? 2 : 5,
-    rewardTarget,
-  );
-  const visibleStampTotal = isBarbershop
-    ? Math.min(Math.max(rewardTarget, 1), 6)
-    : Math.min(Math.max(rewardTarget, 6), 8);
-  const LoyaltyIcon = isBarbershop ? Scissors : Coffee;
+  const options = getBusinessThemeOptions();
+  const option = options.find(({ value }) => value === selectedTheme);
+  const preview = getBusinessTheme(selectedTheme);
+  const swatches = [
+    { label: "Page", color: preview.pageBackground },
+    { label: "Card", color: preview.surface },
+    { label: "Secondary", color: preview.surfaceRaised },
+    { label: "Border", color: preview.border },
+    { label: "Primary", color: preview.accent },
+  ];
 
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={selected}
-      className="group relative overflow-hidden border p-3 text-left transition duration-300 pointer-fine:motion-safe:hover:-translate-y-1"
-      style={{
-        borderColor: selected ? previewTheme.accent : previewTheme.border,
-        backgroundColor: previewTheme.surface,
-        borderRadius: previewTheme.radiusLarge,
-        boxShadow: selected
-          ? `0 22px 55px ${withAlpha(previewTheme.accent, "24")}`
-          : previewTheme.cardShadow,
-      }}
-    >
-      {selected && (
-        <span
-          className="absolute right-5 top-5 z-20 flex h-8 w-8 items-center justify-center rounded-full border"
-          style={{
-            backgroundColor: previewTheme.accent,
-            borderColor: withAlpha(previewTheme.buttonText, "33"),
-            color: previewTheme.buttonText,
-          }}
-        >
-          <Check size={16} strokeWidth={2.5} />
-        </span>
-      )}
+    <div className="mt-6 grid min-w-0 gap-4 lg:grid-cols-[minmax(12rem,0.85fr)_minmax(0,1.6fr)]">
+      <div role="group" aria-label="Theme palettes" className="grid content-start gap-2 sm:grid-cols-2 lg:grid-cols-1">
+        {options.map(({ value, label }) => {
+          const palette = getBusinessTheme(value);
+          const selected = value === selectedTheme;
+
+          return (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={selected}
+              disabled={disabled}
+              onClick={() => onSelect(value)}
+              className="flex min-h-12 min-w-0 items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm font-semibold outline-none focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-60 motion-safe:transition-[background-color,border-color,box-shadow] motion-safe:duration-150"
+              style={{
+                color: palette.textPrimary,
+                backgroundColor: selected ? palette.accentSoft : palette.surface,
+                borderColor: selected ? palette.accent : palette.border,
+                outlineColor: palette.accent,
+                boxShadow: selected ? "inset 0 0 0 1px currentColor" : undefined,
+              }}
+            >
+              <span aria-hidden="true" className="grid size-7 shrink-0 grid-cols-2 overflow-hidden rounded-md border" style={{ borderColor: palette.border }}>
+                <span style={{ backgroundColor: palette.accent }} />
+                <span style={{ backgroundColor: palette.pageBackground }} />
+                <span style={{ backgroundColor: palette.surface }} />
+                <span style={{ backgroundColor: palette.surfaceRaised }} />
+              </span>
+              <span className="min-w-0 flex-1 break-words">{label}</span>
+              <span className="grid size-4 shrink-0 place-items-center" aria-hidden="true">
+                {selected && <Check size={16} />}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
       <div
-        className="relative min-h-56 overflow-hidden border p-5 transition duration-300 pointer-fine:motion-safe:group-hover:scale-[1.01]"
-        style={{
-          borderColor: previewTheme.border,
-          borderRadius: previewTheme.radiusMedium,
-          background: `radial-gradient(circle at top right, ${withAlpha(
-            previewTheme.accent,
-            "24"
-          )} 0%, ${previewTheme.surfaceRaised} 42%, ${previewTheme.pageBackground} 100%)`,
-        }}
+        className="min-w-0 rounded-2xl border p-3 motion-safe:transition-colors motion-safe:duration-150 sm:p-5"
+        style={{ backgroundColor: preview.pageBackground, borderColor: preview.border, color: preview.textPrimary }}
       >
         <div
-          className="absolute -right-10 -top-12 h-32 w-32 rounded-full blur-3xl"
-          style={{ backgroundColor: withAlpha(previewTheme.accent, "2b") }}
-        />
-
-        <div className="relative flex min-h-46 flex-col">
-          <div className="pr-10">
-            <p
-              className="truncate text-[10px] font-semibold uppercase tracking-[0.22em]"
-              style={{ color: previewTheme.textMuted }}
-            >
-              {isBarbershop
-                ? "Barber loyalty card"
-                : "Digital loyalty card"}
-            </p>
-
-            <p
-              className="mt-2 truncate text-xl font-semibold tracking-tight"
-              style={{ color: previewTheme.textPrimary }}
-            >
-              {cafeName}
-            </p>
+          className="overflow-hidden rounded-xl border"
+          style={{ backgroundColor: preview.surface, borderColor: preview.border, boxShadow: preview.cardShadow }}
+        >
+          <div className="flex items-center gap-3 border-b px-4 py-4 sm:px-5" style={{ borderColor: preview.border }}>
+            <span className="size-9 shrink-0 rounded-lg" style={{ backgroundColor: preview.accent }} aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="text-base font-semibold">{option?.label}</p>
+              <p className="text-sm" style={{ color: preview.textSecondary }}>{option?.description}</p>
+            </div>
           </div>
-
-          <div
-            className={`mt-7 grid gap-2 ${
-              isBarbershop ? "grid-cols-3" : "grid-cols-4"
-            }`}
-          >
-            {Array.from({ length: visibleStampTotal }).map((_, index) => {
-              const filled = index < previewStampCount;
-
-              return (
-                <span
-                  key={index}
-                  className="flex aspect-square items-center justify-center border"
-                  style={{
-                    borderColor: filled
-                      ? withAlpha(previewTheme.accent, "66")
-                      : previewTheme.border,
-                    backgroundColor: filled
-                      ? previewTheme.accentSoft
-                      : previewTheme.surface,
-                    borderRadius: previewTheme.radiusMedium,
-                  }}
-                >
-                  <LoyaltyIcon
-                    size={15}
-                    style={{
-                      color: filled
-                        ? previewTheme.accent
-                        : previewTheme.textMuted,
-                      fill:
-                        isBarbershop || !filled
-                          ? "transparent"
-                          : previewTheme.accent,
-                    }}
-                  />
-                </span>
-              );
-            })}
-          </div>
-
-          <div className="mt-auto pt-6">
-            <div className="flex items-end justify-between gap-3">
-              <div className="min-w-0">
-                <p
-                  className="text-[10px] uppercase tracking-[0.16em]"
-                  style={{ color: previewTheme.textMuted }}
-                >
-                  Your reward
-                </p>
-                <p
-                  className="mt-1 truncate text-sm font-semibold"
-                  style={{ color: previewTheme.accent }}
-                >
-                  {rewardName}
-                </p>
-              </div>
-
-              <span
-                className="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold"
-                style={{
-                  backgroundColor: previewTheme.accent,
-                  color: previewTheme.buttonText,
-                }}
-              >
-                {previewStampCount}/{rewardTarget}
-              </span>
+          <div className="grid gap-5 px-4 py-4 sm:px-5">
+            <div className="grid grid-cols-3 gap-x-2 gap-y-3 sm:grid-cols-5">
+              {swatches.map(({ label, color }) => (
+                <div key={label} className="min-w-0">
+                  <div className="h-7 rounded-md border" style={{ backgroundColor: color, borderColor: preview.inputBorder }} />
+                  <p className="mt-1 text-xs" style={{ color: preview.textSecondary }}>{label}</p>
+                </div>
+              ))}
+            </div>
+            <div aria-hidden="true" className="flex flex-wrap gap-2 border-t pt-4 text-xs font-medium" style={{ borderColor: preview.border }}>
+              <span className="rounded-lg px-3 py-2" style={{ backgroundColor: preview.accent, color: preview.accentText }}>Primary</span>
+              <span className="rounded-lg px-3 py-2" style={{ backgroundColor: preview.surfaceRaised, color: preview.textPrimary }}>Secondary</span>
+              <span className="rounded-lg border px-3 py-2" style={{ borderColor: preview.inputBorder, color: preview.textPrimary }}>Outline</span>
             </div>
           </div>
         </div>
       </div>
-
-      <div className="px-2 pb-2 pt-5">
-        <p
-          className="font-semibold"
-          style={{ color: previewTheme.textPrimary }}
-        >
-          {option.label}
-        </p>
-        <p
-          className="mt-2 text-sm leading-5"
-          style={{ color: previewTheme.textMuted }}
-        >
-          {option.description}
-        </p>
-      </div>
-    </button>
+    </div>
   );
 }
 
@@ -1641,11 +1514,4 @@ function ReadOnlyItem({
       </p>
     </div>
   );
-}
-
-function withAlpha(color: string, alpha: string) {
-  const cleanColor = color.replace("#", "");
-  return /^[0-9a-fA-F]{6}$/.test(cleanColor)
-    ? `#${cleanColor}${alpha}`
-    : color;
 }

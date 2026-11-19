@@ -111,7 +111,6 @@ function getLoaderTheme(
     barberBackgroundColor,
   ] = getBusinessBrandColors(
     cafe.theme,
-    cafe.businessType,
     cafe,
   );
 
@@ -1340,7 +1339,6 @@ const visibleStamps = rewardReady
     barberBackgroundColor,
   ] = getBusinessBrandColors(
     customer.cafe.theme,
-    customer.cafe.businessType,
     brand,
   );
 

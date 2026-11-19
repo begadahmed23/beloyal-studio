@@ -201,16 +201,21 @@ export default function CafeThemeProvider({
     useState<CafeThemeName>(themeName);
 
   const [previewThemeName, setPreviewThemeName] =
-    useState<CafeThemeName>(themeName);
+    useState<CafeThemeName | null>(null);
 
-  useEffect(() => {
+  const [receivedCafe, setReceivedCafe] = useState(cafe);
+  const [receivedThemeName, setReceivedThemeName] = useState(themeName);
+
+  if (receivedCafe !== cafe) {
+    setReceivedCafe(cafe);
     setCurrentCafe(cafe);
-  }, [cafe]);
+  }
 
-  useEffect(() => {
+  if (receivedThemeName !== themeName) {
+    setReceivedThemeName(themeName);
     setSavedThemeName(themeName);
-    setPreviewThemeName(themeName);
-  }, [themeName]);
+    setPreviewThemeName(null);
+  }
 
   useEffect(() => {
     const refreshAppData = () => {
@@ -277,8 +282,8 @@ export default function CafeThemeProvider({
   );
 
   const resetPreviewTheme = useCallback(() => {
-    setPreviewThemeName(savedThemeName);
-  }, [savedThemeName]);
+    setPreviewThemeName(null);
+  }, []);
 
   const applySavedSettings = useCallback(
     (
@@ -287,9 +292,8 @@ export default function CafeThemeProvider({
     ) => {
       setCurrentCafe(updatedCafe);
       setSavedThemeName(updatedThemeName);
-      setPreviewThemeName((current) => current === savedThemeName ? updatedThemeName : current);
     },
-    [savedThemeName],
+    [],
   );
 
   const theme = useMemo(
@@ -299,9 +303,8 @@ export default function CafeThemeProvider({
         : isKekaCafe(currentCafe)
           ? KEKA_DASHBOARD_THEME
           : getBusinessTheme(
-              previewThemeName,
-              currentCafe.businessType,
-              previewThemeName === savedThemeName ? getMbVapeBrandColors({ ...currentCafe, theme: savedThemeName }) : undefined,
+              previewThemeName ?? savedThemeName,
+              previewThemeName === null ? getMbVapeBrandColors({ ...currentCafe, theme: savedThemeName }) : undefined,
             ),
     [
       previewThemeName,
@@ -312,7 +315,7 @@ export default function CafeThemeProvider({
 
   const contextValue = useMemo(
     () => ({
-      themeName: previewThemeName,
+      themeName: previewThemeName ?? savedThemeName,
       userRole,
       accountEmail,
       savedThemeName,

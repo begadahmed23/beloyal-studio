@@ -725,17 +725,14 @@ export async function POST(
         TRIAL_DAYS,
     );
 
-    const savedTheme = getBusinessThemeOptions(businessType)
+    const savedTheme = getBusinessThemeOptions()
       .find(option => option.value === body.theme)?.value ?? getDefaultBusinessTheme(businessType);
 
     const [
       primaryColor,
       secondaryColor,
       backgroundColor,
-    ] = getBusinessThemeColors(
-      savedTheme,
-      businessType,
-    );
+    ] = getBusinessThemeColors(savedTheme);
 
     const cafe =
       await prisma.cafe.create({

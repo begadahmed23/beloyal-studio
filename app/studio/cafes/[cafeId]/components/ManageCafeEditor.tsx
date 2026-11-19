@@ -800,13 +800,13 @@ export default function ManageCafeEditor() {
             value={theme}
             onChange={(value) => {
               const nextTheme = value as CafeTheme;
-              const [primary, secondary, background] = getBusinessThemeColors(nextTheme, cafe.businessType);
+              const [primary, secondary, background] = getBusinessThemeColors(nextTheme);
               setTheme(nextTheme);
               setPrimaryColor(primary);
               setSecondaryColor(secondary);
               setBackgroundColor(background);
             }}
-            options={getBusinessThemeOptions(cafe.businessType)}
+            options={getBusinessThemeOptions()}
           />
 
           <ColorField
