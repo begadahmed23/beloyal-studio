@@ -67,13 +67,22 @@ export function googleWalletObject(member: WalletMember) {
   const target = getLoyaltyProgressTarget(member.cafe);
   const ready = Boolean(member.rewardEarnedAt) || member.stamps >= target;
   const stamps = Math.max(0, Math.min(member.stamps, target));
+  const site = process.env.GOOGLE_WALLET_SITE_URL!;
+  const mbVape = isMbVape(member.cafe);
+  const artTarget = Math.min(target, 99);
+  const artStamps = ready ? artTarget : Math.min(stamps, artTarget);
+  const heroImage = mbVape
+    ? walletImage(new URL(`${MB_VAPE_ARTWORK_PATH}?stamps=${artStamps}&target=${artTarget}&v=2`, site),
+        ready ? "All stamps collected. Reward ready." : `${stamps} of ${target} stamps collected.`)
+    : undefined;
   return { id: objectId(member.id), classId: classId(member.cafe.slug), state: "ACTIVE",
     accountId: member.memberNumber, accountName: member.name,
     barcode: { type: "QR_CODE", value: `BL:${member.publicToken}`, alternateText: member.memberNumber },
     loyaltyPoints: { label: ready ? "REWARD READY" : member.cafe.businessType === "BARBERSHOP" ? "VISITS" : "STAMPS",
       balance: { string: `${stamps}/${target}` } },
+    ...(heroImage ? { heroImage } : {}),
     textModulesData: [{ id: "reward", header: "YOUR REWARD", body: member.cafe.rewardName }],
-    linksModuleData: { uris: [{ id: "card", uri: new URL(`/card/${member.publicToken}`, process.env.GOOGLE_WALLET_SITE_URL!).href, description: "Open your BeLoyal card" }] } };
+    linksModuleData: { uris: [{ id: "card", uri: new URL(`/card/${member.publicToken}`, site).href, description: "Open your BeLoyal card" }] } };
 }
 type GoogleBrand = WalletMember["cafe"] & { logoUrl?: string | null };
 type GoogleLocation = Parameters<typeof walletLocations>[0];
@@ -87,8 +96,22 @@ export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocati
   if (mbVape) logo = new URL(MB_VAPE_ARTWORK_PATH + "?asset=icon", site);
   return {
     issuerName: cafe.name,
-    programName: `${cafe.name} Rewards`,
+    programName: mbVape ? cafe.name : `${cafe.name} Rewards`,
     programLogo: walletImage(logo, cafe.name),
+    ...(mbVape ? {
+      wideProgramLogo: walletImage(new URL(`${MB_VAPE_ARTWORK_PATH}?asset=wide-logo`, site), cafe.name),
+      accountNameLabel: "MEMBER",
+      classTemplateInfo: {
+        cardTemplateOverride: {
+          cardRowTemplateInfos: [{
+            twoItems: {
+              startItem: { firstValue: { fields: [{ fieldPath: "object.accountName" }] } },
+              endItem: { firstValue: { fields: [{ fieldPath: "object.textModulesData['reward']" }] } },
+            },
+          }],
+        },
+      },
+    } : {}),
     reviewStatus: "UNDER_REVIEW",
     hexBackgroundColor: /^#[0-9a-f]{6}$/i.test(cafe.backgroundColor) ? cafe.backgroundColor : "#111111",
     ...(settings ? { merchantLocations: walletLocations(settings).map(({ latitude, longitude }) => ({ latitude, longitude })) } : {}),
@@ -134,7 +157,7 @@ export async function createGoogleWalletLink(member: WalletMember & { cafe: Goog
   const object = googleWalletObject(member);
   const createdObject = await api("loyaltyObject", "POST", object);
   if (createdObject.status === 409) {
-    const updated = await api(`loyaltyObject/${object.id}`, "PATCH", { ...object, heroImage: null });
+    const updated = await api(`loyaltyObject/${object.id}`, "PATCH", { ...object, heroImage: object.heroImage ?? null });
     if (!updated.ok) throw new GoogleWalletError("card-update", updated.status);
   } else if (!createdObject.ok) throw new GoogleWalletError("card-create", createdObject.status);
   return `https://pay.google.com/gp/v/save/${jwt({ iss: process.env.GOOGLE_WALLET_CLIENT_EMAIL, aud: "google", typ: "savetowallet", iat: Math.floor(Date.now() / 1000), origins: [site.origin], payload: { loyaltyObjects: [{ id: object.id }] } })}`;
@@ -145,7 +168,7 @@ export async function syncGoogleWalletMember(id: string) {
   if (!member) return;
   // Do not create passes for customers who have never requested one.
   const object = googleWalletObject(member);
-  const response = await api(`loyaltyObject/${object.id}`, "PATCH", { ...object, heroImage: null });
+  const response = await api(`loyaltyObject/${object.id}`, "PATCH", { ...object, heroImage: object.heroImage ?? null });
   if (!response.ok && response.status !== 404) throw new Error("Google Wallet balance sync failed.");
 }
 

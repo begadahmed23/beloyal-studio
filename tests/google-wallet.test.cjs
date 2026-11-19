@@ -9,6 +9,7 @@ Object.assign(process.env, { GOOGLE_WALLET_ENABLED: 'true', GOOGLE_WALLET_ISSUER
 const member = { id: 'one', publicToken: 'a'.repeat(48), name: 'Test', memberNumber: 'BL-1', stamps: 3, rewardEarnedAt: null, cafe: { slug: 'cafe', name: 'Cafe', businessType: 'CAFE', rewardTarget: 7, rewardName: 'Cookie', backgroundColor: '#123456' } };
 const calls = [];
 let patchStatus = 200;
+let savedMember = member;
 const compile = filename => ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
@@ -19,7 +20,7 @@ function loadPureModule(filename) {
 }
 const source = compile('lib/wallet/google.ts');
 const moduleObject = { exports: {} };
-vm.runInNewContext(source, { exports: moduleObject.exports, require: id => id === '@/lib/prisma' ? { prisma: { customer: { findUnique: async () => member } } } : id.includes('loyalty-target') ? loadPureModule('lib/business/loyalty-target.ts') : id === '../business/mb-vape' ? loadPureModule('lib/business/mb-vape.ts') : id === './notification-text' ? loadPureModule('lib/wallet/notification-text.ts') : require(id), Buffer, URL, URLSearchParams, AbortSignal, process, console,
+vm.runInNewContext(source, { exports: moduleObject.exports, require: id => id === '@/lib/prisma' ? { prisma: { customer: { findUnique: async () => savedMember } } } : id.includes('loyalty-target') ? loadPureModule('lib/business/loyalty-target.ts') : id === '../business/mb-vape' ? loadPureModule('lib/business/mb-vape.ts') : id === './notification-text' ? loadPureModule('lib/wallet/notification-text.ts') : require(id), Buffer, URL, URLSearchParams, AbortSignal, process, console,
   fetch: async (url, options) => { calls.push({ url, ...options }); if (url.includes('oauth2')) return { ok: true, json: async () => ({ access_token: 'test', expires_in: 3600 }) }; const status = options.method === 'PATCH' ? patchStatus : 409; return { ok: status === 200, status }; } });
 const wallet = moduleObject.exports;
 test('save flow signs a verifiable JWT and handles existing classes and objects', async () => {
@@ -57,21 +58,43 @@ test('business branding and nearby coordinates are scoped to the class', () => {
  const brand = wallet.googleClassBrand({...member.cafe, logoUrl:'https://example.com/cafe.png'}, {nearbyEnabled:true, nearbyLatitude:31.2, nearbyLongitude:29.9});
  assert.equal(brand.programLogo.sourceUri.uri,'https://example.com/cafe.png');
  assert.equal(brand.heroImage, undefined);
+ assert.equal(brand.classTemplateInfo, undefined);
  assert.equal(brand.hexBackgroundColor, "#123456");
  assert.equal(brand.merchantLocations[0].latitude,31.2);
  assert.equal(wallet.googleClassBrand(member.cafe,{nearbyEnabled:false}).merchantLocations.length,0);
 });
 
 
-test('MB Vape branding keeps the uploaded mark, native stamp count and compact face', () => {
+test('MB Vape keeps its logo and refreshes the matching stamp artwork on save and sync', async () => {
  const cafe = { ...member.cafe, slug: 'mb-vape', name: 'MB Vape', businessType: 'VAPE', theme: 'COFFEE_CLASSIC',
    primaryColor: '#7B4F35', secondaryColor: '#6F4A35', backgroundColor: '#F3EDE5' };
  const brand = wallet.googleClassBrand(cafe);
  assert.equal(brand.programLogo.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?asset=icon');
+ assert.equal(brand.programName, 'MB Vape');
+ assert.equal(brand.wideProgramLogo.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?asset=wide-logo');
  assert.equal(brand.hexBackgroundColor, '#F7F2E9');
- const card = wallet.googleWalletObject({ ...member, cafe, stamps: 2 });
- assert.equal(card.heroImage, undefined);
  assert.equal(brand.heroImage, undefined);
- assert.equal(card.loyaltyPoints.balance.string, '2/6');
- assert.equal(wallet.googleWalletObject({ ...member, cafe, rewardEarnedAt: new Date() }).loyaltyPoints.label, 'REWARD READY');
+ const imageUrl = stamps => `https://example.com/api/wallet/artwork/mb-vape?stamps=${stamps}&target=6&v=2`;
+ patchStatus = 200;
+ calls.length = 0;
+ await wallet.createGoogleWalletLink({ ...member, cafe, stamps: 2 });
+ const patchedClass = JSON.parse(calls.find(call => call.method === 'PATCH' && call.url.includes('/loyaltyClass/')).body);
+ const displayedFields = patchedClass.classTemplateInfo.cardTemplateOverride.cardRowTemplateInfos[0].twoItems;
+ assert.equal(displayedFields.startItem.firstValue.fields[0].fieldPath, 'object.accountName');
+ assert.equal(displayedFields.endItem.firstValue.fields[0].fieldPath, "object.textModulesData['reward']");
+ const created = JSON.parse(calls.find(call => call.method === 'POST' && call.url.endsWith('/loyaltyObject')).body);
+ const patched = JSON.parse(calls.find(call => call.method === 'PATCH' && call.url.includes('/loyaltyObject/')).body);
+ assert.equal(created.heroImage.sourceUri.uri, imageUrl(2));
+ assert.equal(patched.heroImage.sourceUri.uri, imageUrl(2));
+ assert.equal(patched.loyaltyPoints.balance.string, '2/6');
+ assert.equal(patched.barcode.value, `BL:${member.publicToken}`);
+ const ready = wallet.googleWalletObject({ ...member, cafe, rewardEarnedAt: new Date() });
+ assert.equal(ready.loyaltyPoints.label, 'REWARD READY');
+ assert.equal(ready.heroImage.sourceUri.uri, imageUrl(6));
+ for (const stamps of [3, 0]) {
+   calls.length = 0;
+   savedMember = { ...member, cafe, stamps };
+   await wallet.syncGoogleWalletMember(member.id);
+   assert.equal(JSON.parse(calls[0].body).heroImage.sourceUri.uri, imageUrl(stamps));
+ }
 });

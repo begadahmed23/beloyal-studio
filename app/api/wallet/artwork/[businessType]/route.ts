@@ -20,6 +20,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ busi
     const asset = colors.get("asset");
     if (asset === "logo") return imageResponse(await renderMbVapeLogo(696, 485));
     if (asset === "icon") return imageResponse(await renderMbVapeLogo(720, 720, "#ffffff", 112));
+    if (asset === "wide-logo") return imageResponse(await renderMbVapeLogo(1280, 400, "transparent"));
     if (asset !== null && asset !== "strip") return new Response(null, { status: 404 });
 
     const targetText = colors.get("target") ?? "6";
