@@ -1,6 +1,7 @@
 "use client";
 
 import MbVapeLogo from "@/components/brand/MbVapeLogo";
+import BusinessThemeGallery from "@/components/theme/BusinessThemeGallery";
 import { isMbVape } from "@/lib/business/mb-vape";
 import { dashboardSettingsSections, type DashboardSettingsSection } from "@/lib/business/settings-sections";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
@@ -33,9 +34,7 @@ import {
   useCafeTheme,
 } from "@/components/theme/CafeThemeProvider";
 import {
-  getBusinessTheme,
   getBusinessBrandColors,
-  getBusinessThemeOptions,
   type CafeThemeConfig,
   type CafeThemeName,
 } from "@/lib/cafe-theme";
@@ -586,11 +585,13 @@ export default function CafeSettingsForm({
             } dashboard and customer card.`}
           />
 
-          <BrandingThemePicker
-            selectedTheme={form.theme}
-            disabled={saving !== null}
-            onSelect={selectTheme}
-          />
+          <div className="mt-6">
+            <BusinessThemeGallery
+              value={form.theme}
+              disabled={saving !== null}
+              onChange={selectTheme}
+            />
+          </div>
 
           {draft.theme && (
             <p role="status" className="mt-4 text-sm" style={{ color: theme.textSecondary }}>
@@ -1318,100 +1319,6 @@ export default function CafeSettingsForm({
 type ThemedComponentProps = {
   theme: CafeThemeConfig;
 };
-
-function BrandingThemePicker({
-  selectedTheme,
-  disabled,
-  onSelect,
-}: {
-  selectedTheme: CafeThemeName;
-  disabled: boolean;
-  onSelect: (theme: CafeThemeName) => void;
-}) {
-  const options = getBusinessThemeOptions();
-  const option = options.find(({ value }) => value === selectedTheme);
-  const preview = getBusinessTheme(selectedTheme);
-  const swatches = [
-    { label: "Page", color: preview.pageBackground },
-    { label: "Card", color: preview.surface },
-    { label: "Secondary", color: preview.surfaceRaised },
-    { label: "Border", color: preview.border },
-    { label: "Primary", color: preview.accent },
-  ];
-
-  return (
-    <div className="mt-6 grid min-w-0 gap-4 lg:grid-cols-[minmax(12rem,0.85fr)_minmax(0,1.6fr)]">
-      <div role="group" aria-label="Theme palettes" className="grid content-start gap-2 sm:grid-cols-2 lg:grid-cols-1">
-        {options.map(({ value, label }) => {
-          const palette = getBusinessTheme(value);
-          const selected = value === selectedTheme;
-
-          return (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={selected}
-              disabled={disabled}
-              onClick={() => onSelect(value)}
-              className="flex min-h-12 min-w-0 items-center gap-3 rounded-lg border px-3 py-2.5 text-left text-sm font-semibold outline-none focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-60 motion-safe:transition-[background-color,border-color,box-shadow] motion-safe:duration-150"
-              style={{
-                color: palette.textPrimary,
-                backgroundColor: selected ? palette.accentSoft : palette.surface,
-                borderColor: selected ? palette.accent : palette.border,
-                outlineColor: palette.accent,
-                boxShadow: selected ? "inset 0 0 0 1px currentColor" : undefined,
-              }}
-            >
-              <span aria-hidden="true" className="grid size-7 shrink-0 grid-cols-2 overflow-hidden rounded-md border" style={{ borderColor: palette.border }}>
-                <span style={{ backgroundColor: palette.accent }} />
-                <span style={{ backgroundColor: palette.pageBackground }} />
-                <span style={{ backgroundColor: palette.surface }} />
-                <span style={{ backgroundColor: palette.surfaceRaised }} />
-              </span>
-              <span className="min-w-0 flex-1 break-words">{label}</span>
-              <span className="grid size-4 shrink-0 place-items-center" aria-hidden="true">
-                {selected && <Check size={16} />}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div
-        className="min-w-0 rounded-2xl border p-3 motion-safe:transition-colors motion-safe:duration-150 sm:p-5"
-        style={{ backgroundColor: preview.pageBackground, borderColor: preview.border, color: preview.textPrimary }}
-      >
-        <div
-          className="overflow-hidden rounded-xl border"
-          style={{ backgroundColor: preview.surface, borderColor: preview.border, boxShadow: preview.cardShadow }}
-        >
-          <div className="flex items-center gap-3 border-b px-4 py-4 sm:px-5" style={{ borderColor: preview.border }}>
-            <span className="size-9 shrink-0 rounded-lg" style={{ backgroundColor: preview.accent }} aria-hidden="true" />
-            <div className="min-w-0">
-              <p className="text-base font-semibold">{option?.label}</p>
-              <p className="text-sm" style={{ color: preview.textSecondary }}>{option?.description}</p>
-            </div>
-          </div>
-          <div className="grid gap-5 px-4 py-4 sm:px-5">
-            <div className="grid grid-cols-3 gap-x-2 gap-y-3 sm:grid-cols-5">
-              {swatches.map(({ label, color }) => (
-                <div key={label} className="min-w-0">
-                  <div className="h-7 rounded-md border" style={{ backgroundColor: color, borderColor: preview.inputBorder }} />
-                  <p className="mt-1 text-xs" style={{ color: preview.textSecondary }}>{label}</p>
-                </div>
-              ))}
-            </div>
-            <div aria-hidden="true" className="flex flex-wrap gap-2 border-t pt-4 text-xs font-medium" style={{ borderColor: preview.border }}>
-              <span className="rounded-lg px-3 py-2" style={{ backgroundColor: preview.accent, color: preview.accentText }}>Primary</span>
-              <span className="rounded-lg px-3 py-2" style={{ backgroundColor: preview.surfaceRaised, color: preview.textPrimary }}>Secondary</span>
-              <span className="rounded-lg border px-3 py-2" style={{ borderColor: preview.inputBorder, color: preview.textPrimary }}>Outline</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function SectionHeader({
   theme,

@@ -26,7 +26,8 @@ import {
   useState,
 } from "react";
 
-import { getBusinessThemeColors, getBusinessThemeOptions, type CafeThemeName as CafeTheme } from "@/lib/cafe-theme";
+import { getBusinessThemeColors, type CafeThemeName as CafeTheme } from "@/lib/cafe-theme";
+import BusinessThemeGallery from "@/components/theme/BusinessThemeGallery";
 import StaffManagementPanel from "@/components/staff/StaffManagementPanel";
 import SubscriptionControlPanel, {
   type SubscriptionDraft,
@@ -795,19 +796,19 @@ export default function ManageCafeEditor() {
         description="Choose a preset or edit the colors used on the join page, dashboard, and loyalty cards."
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <SelectField
-            label="Theme"
-            value={theme}
-            onChange={(value) => {
-              const nextTheme = value as CafeTheme;
-              const [primary, secondary, background] = getBusinessThemeColors(nextTheme);
-              setTheme(nextTheme);
-              setPrimaryColor(primary);
-              setSecondaryColor(secondary);
-              setBackgroundColor(background);
-            }}
-            options={getBusinessThemeOptions()}
-          />
+          <div className="sm:col-span-2">
+            <BusinessThemeGallery
+              value={theme}
+              disabled={saving}
+              onChange={(nextTheme) => {
+                const [primary, secondary, background] = getBusinessThemeColors(nextTheme);
+                setTheme(nextTheme);
+                setPrimaryColor(primary);
+                setSecondaryColor(secondary);
+                setBackgroundColor(background);
+              }}
+            />
+          </div>
 
           <ColorField
             label="Primary color"
@@ -1345,46 +1346,6 @@ function TextAreaField({
         rows={4}
         className="w-full resize-none rounded-xl border border-black/[0.09] bg-[#FAFAFB] px-4 py-3 text-sm text-[#171719] outline-none transition placeholder:text-[#A1A1A7] hover:border-black/[0.18] focus:border-[#8E9197] focus:ring-2 focus:ring-black/[0.04]"
       />
-    </div>
-  );
-}
-
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: {
-    value: string;
-    label: string;
-  }[];
-}) {
-  return (
-    <div>
-      <label className="mb-2 block text-sm font-medium text-[#45454A]">
-        {label}
-      </label>
-
-      <select
-        value={value}
-        onChange={(event) =>
-          onChange(event.target.value)
-        }
-        className="h-12 w-full rounded-xl border border-black/[0.09] bg-[#FAFAFB] px-4 text-sm text-[#171719] outline-none transition hover:border-black/[0.18] focus:border-[#8E9197] focus:ring-2 focus:ring-black/[0.04]"
-      >
-        {options.map((option) => (
-          <option
-            key={option.value}
-            value={option.value}
-          >
-            {option.label}
-          </option>
-        ))}
-      </select>
     </div>
   );
 }

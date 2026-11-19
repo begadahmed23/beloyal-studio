@@ -26,13 +26,13 @@ const options = [
   {
     value: "VAPE" as const,
     label: "Vape shop",
-    description: "Ivory and walnut branding",
+    description: "Stamps and shop rewards",
     icon: Layers,
   },
   {
     value: "OTHER" as const,
     label: "Other business",
-    description: "A calm, flexible retail theme",
+    description: "Flexible rewards for any business",
     icon: Store,
   },
 ];
