@@ -82,6 +82,7 @@ function routeFor(auth, extra = {}) {
   })('app/api/wallet/campaigns/route.ts');
 }
 const admin = { user: { id: 'admin1', role: 'CAFE_ADMIN' }, cafeId: 'cafe1', isSuperAdmin: false, isCashier: false };
+const studioAdmin = { ...admin, isSuperAdmin: true, user: { id: 'studio1', role: 'SUPER_ADMIN' } };
 const post = body => new NextRequest('https://example.com/api/wallet/campaigns', { method: 'POST', headers: { origin: 'https://example.com', 'content-type': 'application/json' }, body: JSON.stringify(body) });
 test('cashiers and cross-business access are rejected before audience access', async () => {
   assert.equal((await routeFor({ ...admin, isCashier: true }).GET(new NextRequest('https://example.com/api/wallet/campaigns?cafeId=cafe1'))).status, 403);
@@ -90,7 +91,7 @@ test('cashiers and cross-business access are rejected before audience access', a
 });
 test('preview rejects stale/unregistered selections; preview never sends a push', async () => {
   let previews = 0;
-  const route = routeFor(admin, { '@/lib/wallet/campaigns': { walletAudience: async () => ({ members: [
+  const route = routeFor(studioAdmin, { '@/lib/wallet/campaigns': { walletAudience: async () => ({ members: [
       { id: 'yes', name: 'Begad', memberNumber: '1', offersStatus: 'enabled', segments: ['all'] },
       { id: 'no', name: 'Test', memberNumber: '2', offersStatus: 'missing', segments: ['all'] },
     ] }),
@@ -131,21 +132,50 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
   assert.equal(pushes, 4);
 });
 
-test('an active business can load campaign audiences scoped to its own business', async () => {
+test('a business admin can read its own history but only Studio can manage campaigns', async () => {
   const route = routeFor({ ...admin, cafeId: 'other' }, {
     '@/lib/prisma': { prisma: { cafe: { findFirst: async ({ where }) => {
       assert.deepEqual(where, { id: 'other', isActive: true });
       return { id: 'other', name: 'Other business', timezone: 'Africa/Cairo' };
     } } } },
     '@/lib/wallet/campaigns': {
-      walletAudience: async (id) => {
+      walletAudience: async () => { throw new Error('Business dashboard should only load history'); },
+      campaignHistory: async (id) => {
         assert.equal(id, 'other');
-        return { members: [] };
+        return [{ id: 'sent' }];
       },
-      campaignHistory: async () => [],
     },
   });
-  assert.equal((await route.GET(new NextRequest('https://example.com/api/wallet/campaigns?cafeId=other'))).status, 200);
+  const response = await route.GET(new NextRequest('https://example.com/api/wallet/campaigns?cafeId=other'));
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).history, [{ id: 'sent' }]);
+  for (const action of ['preview', 'send', 'delete']) {
+    assert.equal((await route.POST(post({ action, cafeId: 'other' }))).status, 403);
+  }
+});
+
+test('Studio can delete completed history entries for the selected business', async () => {
+  const id = 'bcf5013e-ca92-432d-b70e-816720568e53';
+  const operations = [];
+  let campaign = { id, cafeId: 'other', status: 'complete' };
+  const transaction = {
+    zrem: (...args) => { operations.push(args); return transaction; },
+    del: (...args) => { operations.push(args); return transaction; },
+    exec: async () => { campaign = null; },
+  };
+  const route = routeFor(studioAdmin, {
+    '@/lib/prisma': { prisma: { cafe: { findFirst: async ({ where }) => ({ id: where.id, name: 'Business', timezone: 'Africa/Cairo' }) } } },
+    './updates': { passKey: key => key, walletRedis: () => ({ get: async () => campaign, multi: () => transaction }) },
+  });
+  const remove = cafeId => route.POST(post({ action: 'delete', cafeId, campaignId: id }));
+  assert.equal((await remove('cafe1')).status, 404);
+  campaign.status = 'sending';
+  assert.equal((await remove('other')).status, 409);
+  assert.deepEqual(operations, []);
+  campaign.status = 'complete';
+  assert.equal((await remove('other')).status, 200);
+  assert.deepEqual(operations, [['campaigns:history:other', id], ['campaigns:item:' + id]]);
+  assert.equal((await remove('other')).status, 404);
 });
 
  test('reward-ready audience matches cafe/barber targets and excludes redeemed rewards', async () => {

@@ -7,7 +7,7 @@ import { googleWalletEnabled } from "@/lib/wallet/google";
 import { walletUpdatesEnabled } from "@/lib/wallet/config";
 import { walletRedis, passKey } from "@/lib/wallet/updates";
 import { campaignSegments, MAX_CAMPAIGN_RECIPIENTS, type CampaignMember, type CampaignSegment } from "@/lib/wallet/campaign-segments";
-import { walletAudience, campaignHistory, createCampaign, getCampaign, sendCampaign } from "@/lib/wallet/campaigns";
+import { walletAudience, campaignHistory, createCampaign, deleteCampaignHistoryEntry, getCampaign, sendCampaign } from "@/lib/wallet/campaigns";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,15 +22,16 @@ const previewSchema = z.object({ action: z.literal("preview"), cafeId: z.string(
 const eligibleFor = (member: CampaignMember, segment: CampaignSegment) =>
   member.offersStatus === "enabled" && member.segments.includes(segment);
 const sendSchema = z.object({ action: z.literal("send"), cafeId: z.string().min(1).max(100), campaignId: z.string().uuid() });
+const deleteSchema = sendSchema.extend({ action: z.literal("delete") });
 
 async function handle(request: NextRequest) {
   const auth = await requireAuth(request.headers);
   if (!auth || auth.isCashier || (auth.user.role !== "SUPER_ADMIN" && auth.user.role !== "CAFE_ADMIN")) return json({ message: "Administrator access required." }, 403);
+  if (request.method === "POST" && !auth.isSuperAdmin) return json({ message: "Manage campaigns in BeLoyal Studio." }, 403);
   if (!auth.isSuperAdmin) {
     const access = await requireActiveCafe(request.headers);
     if (!access.allowed) return json({ message: access.message }, access.status);
   }
-  if (!walletUpdatesEnabled() && !(googleWalletEnabled() && process.env.GOOGLE_WALLET_CAMPAIGNS_ENABLED === "true")) return json({ message: "Wallet messaging is not configured in this environment." }, 503);
   if (request.method === "POST" && request.headers.get("origin") !== request.nextUrl.origin) return json({ message: "Invalid request origin." }, 403);
   if (request.method === "POST" && Number(request.headers.get("content-length") ?? 0) > 16384) return json({ message: "Request too large." }, 413);
   const body = request.method === "POST" ? await request.json() : null;
@@ -39,6 +40,20 @@ async function handle(request: NextRequest) {
   if (!auth.isSuperAdmin && auth.cafeId !== cafeId) return json({ message: "Business access denied." }, 403);
   const cafe = await prisma.cafe.findFirst({ where: { id: cafeId, isActive: true }, select: { id: true, name: true, timezone: true, rewardName: true } });
   if (!cafe) return json({ message: "Active business not found." }, 404);
+  if (body?.action === "delete") {
+    const parsed = deleteSchema.safeParse(body);
+    if (!parsed.success) return json({ message: "Invalid campaign request." }, 400);
+    const outcome = await deleteCampaignHistoryEntry(cafeId, parsed.data.campaignId);
+    if (outcome === "missing") return json({ message: "Message history entry not found." }, 404);
+    if (outcome === "unfinished") return json({ message: "Only completed sends can be deleted." }, 409);
+    return json({ deleted: true });
+  }
+  if (request.method === "GET" && !auth.isSuperAdmin) {
+    const counts = Object.fromEntries(campaignSegments.map(segment => [segment.id, 0]));
+    return json({ cafe, members: [], history: await campaignHistory(cafeId), totalMembers: 0, walletMembers: 0,
+      googleUnavailable: false, counts, maxRecipients: MAX_CAMPAIGN_RECIPIENTS });
+  }
+  if (!walletUpdatesEnabled() && !(googleWalletEnabled() && process.env.GOOGLE_WALLET_CAMPAIGNS_ENABLED === "true")) return json({ message: "Wallet messaging is not configured in this environment." }, 503);
   if (request.method === "GET") {
     const [audience, history] = await Promise.all([walletAudience(cafeId, cafe.timezone), campaignHistory(cafeId)]);
     const counts = Object.fromEntries(campaignSegments.map(segment => [segment.id, audience.members.filter(member => eligibleFor(member, segment.id)).length]));

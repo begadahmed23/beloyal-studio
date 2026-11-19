@@ -73,6 +73,17 @@ export async function campaignHistory(cafeId: string) {
   const records = await walletRedis().mget<(WalletCampaign | null)[]>(...ids.map(campaignKey));
   return records.filter((value): value is WalletCampaign => Boolean(value));
 }
+export async function deleteCampaignHistoryEntry(cafeId: string, id: string) {
+  const campaign = await getCampaign(id);
+  if (!campaign || campaign.cafeId !== cafeId) return "missing";
+  if (campaign.status !== "complete") return "unfinished";
+
+  await walletRedis().multi()
+    .zrem(historyKey(cafeId), id)
+    .del(campaignKey(id))
+    .exec();
+  return "deleted";
+}
 export async function sendCampaign(campaign: WalletCampaign, eligibleIds: Set<string>) {
   // Persistent claim: a repeat click or HTTP retry cannot send this campaign twice.
   if (!await walletRedis().set(`${campaignKey(campaign.id)}:claimed`, "1", { nx: true, ex: 30 * 86400 })) return getCampaign(campaign.id);

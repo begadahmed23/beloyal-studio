@@ -2,7 +2,7 @@
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Bell, Cake, Check, Clock3, Gift, Loader2, Search, Send, Smartphone, Users, Wallet } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bell, Cake, Check, Clock3, Gift, Loader2, Search, Send, Smartphone, Trash2, Users, Wallet } from "lucide-react";
 import { campaignSegments, MAX_CAMPAIGN_RECIPIENTS, type CampaignMember, type CampaignSegment } from "@/lib/wallet/campaign-segments";
 import { ActionButton } from "@/components/ui/action-button";
 import { SlidingSelection } from "@/components/ui/sliding-selection";
@@ -10,7 +10,7 @@ import WalletNotificationSettings from "./WalletNotificationSettings";
 import type { WalletCampaign } from "@/lib/wallet/campaigns";
 
 type Business = { id: string; name: string };
-type Audience = { cafe: Business & { timezone: string; rewardName: string }; totalMembers: number; walletMembers: number; googleUnavailable: boolean; members: CampaignMember[]; counts: Record<CampaignSegment, number>; history: WalletCampaign[] };
+type Audience = { cafe: Business & { timezone: string; rewardName: string }; members: CampaignMember[]; history: WalletCampaign[]; totalMembers?: number; walletMembers?: number; googleUnavailable?: boolean; counts?: Record<CampaignSegment, number> };
 const field = "w-full rounded-2xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] px-4 py-3 text-base outline-none transition focus:border-[var(--wallet-accent,#18181b)] focus:ring-2 focus:ring-black/10 disabled:opacity-50 sm:text-sm";
 const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] px-4 py-2 text-sm font-medium transition active:opacity-80 disabled:opacity-40 pointer-fine:hover:opacity-90";
 const primary = "inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--wallet-accent,#18181b)] px-5 py-3 text-sm font-medium text-[var(--wallet-accent-text,#ffffff)] active:opacity-80 disabled:opacity-60 pointer-fine:hover:opacity-90";
@@ -30,7 +30,9 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
   const [result, setResult] = useState<WalletCampaign | null>(null);
   const [error, setError] = useState("");
   const [audienceError, setAudienceError] = useState("");
-  const [busy, setBusy] = useState<"preview" | "send" | null>(null);
+  const [busy, setBusy] = useState<"preview" | "send" | "delete" | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [historyFeedback, setHistoryFeedback] = useState<{ message: string; failed?: boolean } | null>(null);
   const [revision, setRevision] = useState(0);
   const reviewRef = useRef<HTMLDivElement>(null);
   const requestInFlight = useRef(false);
@@ -52,7 +54,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
   const shown = visible.slice(0, 200);
   const selectable = shown.filter(member => member.offersStatus === "enabled");
   function resetReview() { setReview(null); setResult(null); setError(""); }
-  function changeBusiness(id: string) { setCafeId(id); setData(null); setAudienceError(""); setSelected([]); setMessage(""); setSearch(""); setSegment("all"); resetReview(); }
+  function changeBusiness(id: string) { setCafeId(id); setData(null); setAudienceError(""); setSelected([]); setMessage(""); setSearch(""); setSegment("all"); setDeleteId(null); setHistoryFeedback(null); resetReview(); }
   function toggle(id: string) {
     resetReview();
     setSelected(previous => previous.includes(id) ? previous.filter(value => value !== id) : previous.length < MAX_CAMPAIGN_RECIPIENTS ? [...previous, id] : previous);
@@ -72,6 +74,29 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
     } catch (reason) { setError(reason instanceof Error ? reason.message : t("Request failed. Refresh history before trying again.")); }
     finally { requestInFlight.current = false; setBusy(null); }
   }
+  async function deleteHistoryEntry(campaignId: string) {
+    if (!studio || requestInFlight.current) return;
+    requestInFlight.current = true;
+    setBusy("delete");
+    setHistoryFeedback(null);
+    try {
+      const response = await fetch("/api/wallet/campaigns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", cafeId, campaignId }),
+      });
+      if (!response.ok) throw new Error((await response.json()).message);
+      setData(current => current && { ...current, history: current.history.filter(campaign => campaign.id !== campaignId) });
+      setDeleteId(null);
+      setHistoryFeedback({ message: "Message removed from history." });
+      setRevision(value => value + 1);
+    } catch (reason) {
+      setHistoryFeedback({ message: reason instanceof Error ? reason.message : "Could not delete the message.", failed: true });
+    } finally {
+      requestInFlight.current = false;
+      setBusy(null);
+    }
+  }
   const chosenSegment = campaignSegments.find(value => value.id === segment)!;
   const Heading = branded ? "h2" : "h1";
   const business = data?.cafe.name ?? businesses.find(value => value.id === cafeId)?.name ?? "Your business";
@@ -80,16 +105,17 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
     <header className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
       <div>
         <Heading className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("Wallet campaigns")}</Heading>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--wallet-secondary,#52525b)]">Choose who gets the message, write it, then review before sending.</p>
+        <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--wallet-secondary,#52525b)]">{studio ? "Choose who gets the message, write it, then review before sending." : t("View message history and manage automatic Wallet updates.")}</p>
       </div>
       {studio && <div className="w-full sm:w-64"><label htmlFor="campaign-business" className="mb-2 block text-xs font-medium text-[var(--wallet-secondary,#52525b)]">Business</label>
         <select id="campaign-business" className={field} value={cafeId} disabled={!!busy} onChange={event => changeBusiness(event.target.value)}>{businesses.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>}
     </header>
+    {studio && <>
     {!businesses.length && <p className="mt-8 text-sm">Create an active business to start a Wallet campaign.</p>}
     <div className="mt-7 grid grid-cols-1 gap-2 min-[380px]:grid-cols-3 sm:gap-4">{[
       { label: "Total members", value: data?.totalMembers, icon: Users },
       { label: t("Wallet members"), value: data?.walletMembers, icon: Wallet },
-      { label: t("Agreed to offers"), value: data?.counts.all, icon: Check },
+      { label: t("Agreed to offers"), value: data?.counts?.all, icon: Check },
     ].map(stat => <div key={stat.label} className="rounded-2xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-3 sm:p-5"><stat.icon size={17} className="mb-3 text-[var(--wallet-muted,#71717a)]"/><p className="text-2xl font-semibold tracking-tight sm:text-3xl">{stat.value ?? "—"}</p><p className="mt-1 text-[11px] text-[var(--wallet-muted,#71717a)] sm:text-xs">{stat.label}</p></div>)}</div>
     <section className="mt-7 rounded-3xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-4 sm:p-6">
       <h2 className="font-semibold">{t("Who should get the message?")}</h2>
@@ -121,7 +147,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
                 className={`flex min-h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 text-xs font-semibold focus-visible:outline-2 focus-visible:outline-offset-[-2px] motion-safe:transition-colors ${active ? "text-[var(--wallet-accent-text,#ffffff)]" : "text-[var(--wallet-secondary,#52525b)]"}`}
               >
                 {t(label)}
-                <span className="min-w-4 text-center tabular-nums">{data?.counts[id] ?? "—"}</span>
+                <span className="min-w-4 text-center tabular-nums">{data?.counts?.[id] ?? "—"}</span>
               </button>
             );
           })}
@@ -205,7 +231,47 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
         {!result && <p className="mt-2 text-xs text-[var(--wallet-muted,#71717a)]">Review expires in 10 minutes. BeLoyal skips removed cards, members who no longer match the group, and repeat Apple Wallet messages.</p>}
       </div>
     )}
+    </>}
     <WalletNotificationSettings key={cafeId} cafeId={cafeId} manageLocation={studio} />
-    <section className="mt-7"><h2 className="flex items-center gap-2 text-lg font-semibold"><Bell size={18}/> {t("Message history")}</h2><p className="mt-2 text-xs text-[var(--wallet-muted,#71717a)]">See your last 10 sends from the past 30 days. If sending was interrupted, check here before trying again.</p><div className="mt-4 space-y-3">{data?.history.length ? data.history.map(campaign => { const count = totals(campaign); return <article key={campaign.id} className="rounded-2xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-5"><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs font-medium text-[var(--wallet-muted,#71717a)]">{new Intl.DateTimeFormat("en-GB", { timeZone: data.cafe.timezone, dateStyle: "medium", timeStyle: "short" }).format(new Date(campaign.sentAt ?? campaign.createdAt))}</p><span className="rounded-full bg-[var(--wallet-raised,#f4f4f5)] px-2 py-1 text-[10px] uppercase tracking-wide">{campaign.status === "sending" ? "Still sending" : "Processed"}</span></div><p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6">{campaign.message}</p><p className="mt-3 text-xs text-[var(--wallet-muted,#71717a)]">{campaign.recipients.length} members · {count.accepted} accepted by Wallet · {count.failed} failed · {count.skipped} skipped{count.pending ? ` · ${count.pending} pending` : ""}</p></article>; }) : <p className="rounded-2xl border border-dashed border-[var(--wallet-border,#e4e4e7)] p-6 text-sm text-[var(--wallet-muted,#71717a)]">{t("Sent messages will appear here.")}</p>}</div></section>
+    <section className="mt-7">
+      <h2 className="flex items-center gap-2 text-lg font-semibold"><Bell size={18} aria-hidden="true" /> {t("Message history")}</h2>
+      <p className="mt-2 text-xs text-[var(--wallet-muted,#71717a)]">{t("See your last 10 sends from the past 30 days.")}</p>
+      {audienceError && !studio && <p role="alert" className="mt-3 text-sm">{t(audienceError)}</p>}
+      {historyFeedback && <p role={historyFeedback.failed ? "alert" : "status"} className="mt-3 text-sm">{t(historyFeedback.message)}</p>}
+      <div className="mt-4 space-y-3">
+        {data?.history.length ? data.history.map(campaign => {
+          const count = totals(campaign);
+          return <article key={campaign.id} className="rounded-2xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-medium text-[var(--wallet-muted,#71717a)]">{new Intl.DateTimeFormat(arabic ? "ar-EG" : "en-GB", { timeZone: data.cafe.timezone, dateStyle: "medium", timeStyle: "short" }).format(new Date(campaign.sentAt ?? campaign.createdAt))}</p>
+              <span className="rounded-full bg-[var(--wallet-raised,#f4f4f5)] px-2 py-1 text-[10px] uppercase tracking-wide">{t(campaign.status === "sending" ? "Still sending" : "Processed")}</span>
+            </div>
+            <p dir="auto" className="mt-3 whitespace-pre-wrap break-words text-sm leading-6">{campaign.message}</p>
+            <p className="mt-3 flex flex-wrap gap-x-2 text-xs text-[var(--wallet-muted,#71717a)]">
+              <span>{campaign.recipients.length} {t("Members")}</span>
+              <span>· {count.accepted} {t("Accepted by Wallet")}</span>
+              <span>· {count.failed} {t("Failed")}</span>
+              <span>· {count.skipped} {t("Skipped")}</span>
+              {count.pending > 0 && <span>· {count.pending} {t("Pending")}</span>}
+            </p>
+            {studio && campaign.status === "complete" && (deleteId === campaign.id ? (
+              <div className="mt-4 rounded-xl bg-[var(--wallet-raised,#f4f4f5)] p-3">
+                <p className="text-sm">{t("Remove this message from BeLoyal history? Customers may still see it in Wallet.")}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <ActionButton className={primary} icon={<Trash2 size={16} />} pending={busy === "delete"} disabled={!!busy} onClick={() => deleteHistoryEntry(campaign.id)}>
+                    {t("Delete from history")}
+                  </ActionButton>
+                  <button type="button" className={secondary} disabled={!!busy} onClick={() => setDeleteId(null)}>{t("Cancel")}</button>
+                </div>
+              </div>
+            ) : (
+              <button type="button" className={`${secondary} mt-4`} disabled={!!busy} onClick={() => { setHistoryFeedback(null); setDeleteId(campaign.id); }}>
+                {t("Delete from history")}
+              </button>
+            ))}
+          </article>;
+        }) : <p className="rounded-2xl border border-dashed border-[var(--wallet-border,#e4e4e7)] p-6 text-sm text-[var(--wallet-muted,#71717a)]">{t(data ? "Sent messages will appear here." : audienceError ? "Message history is unavailable." : "Loading message history…")}</p>}
+      </div>
+    </section>
   </div>;
 }
