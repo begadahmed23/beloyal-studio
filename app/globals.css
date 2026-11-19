@@ -162,3 +162,24 @@
   .landing-page #features article > div:last-child { margin-top: 24px; }
   .landing-page #how-it-works article { padding-top: 24px; padding-bottom: 24px; }
 }
+
+/* Keep press feedback visible on touch and keyboard without shifting the layout. */
+:where([data-dashboard-viewport], [data-loyalty-join], [data-slot="dialog-content"], [data-slot="alert-dialog-content"])
+  :is(button, [role="button"]):not(:disabled, [disabled], [aria-disabled="true"]):active {
+  filter: brightness(.9);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :where([data-dashboard-viewport], [data-loyalty-join], [data-slot="dialog-content"], [data-slot="alert-dialog-content"])
+    :is(button, [role="button"]):not(:disabled, [disabled], [aria-disabled="true"]) {
+    transition-property: scale, filter, color, background-color, border-color, opacity, box-shadow;
+    transition-duration: 140ms;
+    transition-timing-function: ease-out;
+  }
+
+  :where([data-dashboard-viewport], [data-loyalty-join], [data-slot="dialog-content"], [data-slot="alert-dialog-content"])
+    :is(button, [role="button"]):not(:disabled, [disabled], [aria-disabled="true"]):active {
+    scale: .975;
+    transition-duration: 55ms;
+  }
+}

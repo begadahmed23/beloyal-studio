@@ -28,7 +28,7 @@ type SummaryResponse = {
 
 export default function CashierDashboardHome() {
   const { t } = useBeLoyalLanguage();
-  const { cafe, theme, themeName, savedThemeName } = useCafeTheme();
+  const { cafe, theme } = useCafeTheme();
   const isBarbershop =
     cafe.businessType === "BARBERSHOP";
 
@@ -38,7 +38,7 @@ export default function CashierDashboardHome() {
     .toLowerCase();
 
   const isKato =
-    !cafe.hasDashboardPalette && themeName === savedThemeName &&
+    cafe.businessType === "CAFE" &&
     (cafe.slug.toLowerCase().includes("kato") || normalizedCafeName.includes("kato"));
 
   const [summary, setSummary] = useState({
@@ -109,26 +109,26 @@ export default function CashierDashboardHome() {
   return (
     <div className="space-y-7">
       {isKato ? (
-        <section className="overflow-hidden rounded-[28px] border border-[#DCE3EA] bg-white p-5 shadow-[0_20px_55px_rgba(16,43,73,0.08)] sm:p-6">
+        <section className="overflow-hidden rounded-[28px] border border-border bg-card p-5 shadow-[0_20px_55px_rgba(16,43,73,0.08)] sm:p-6">
           <div className="flex items-start justify-between gap-5">
             <div>
-              <p className="text-[2rem] font-light leading-none tracking-[-0.07em] text-[#102B49]">
+              <p className="text-[2rem] font-light leading-none tracking-[-0.07em] text-foreground">
                 KATŌ
               </p>
-              <p className="mt-2 text-[9px] font-semibold uppercase tracking-[0.32em] text-[#7F8DA0]">
+              <p className="mt-2 text-[9px] font-semibold uppercase tracking-[0.32em] text-muted-foreground">
                 Counter
               </p>
 
-              <h2 className="mt-7 text-2xl font-semibold tracking-[-0.035em] text-[#0A223E]">
+              <h2 className="mt-7 text-2xl font-semibold tracking-[-0.035em] text-foreground">
                 Ready for the next customer.
               </h2>
 
-              <p className="mt-2 text-sm text-[#7F8DA0]">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Search members, add stamps, and redeem rewards.
               </p>
             </div>
 
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#102B49] text-[#E9E6D8]">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
               <KatoMark size={40} />
             </div>
           </div>

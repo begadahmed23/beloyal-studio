@@ -12,11 +12,12 @@ export const cardFrame = "w-full overflow-hidden rounded-[26px] border shadow-[0
 type Brand = { name: string; slug: string; businessType: BusinessType };
 const stampIcons = { CAFE: Coffee, BARBERSHOP: Scissors, VAPE: Layers, OTHER: Store };
 
-export function CardBrandHeader({ business, progress, logoUrl, onLogoError }: {
+export function CardBrandHeader({ business, progress, logoUrl, onLogoError, inheritColors = false }: {
   business: Brand;
   progress?: { target: number; stamps: number; label: string };
   logoUrl?: string | null;
   onLogoError?: () => void;
+  inheritColors?: boolean;
 }) {
   const mbVape = isMbVape(business);
   const identity = (business.slug + business.name).normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
@@ -26,7 +27,7 @@ export function CardBrandHeader({ business, progress, logoUrl, onLogoError }: {
     <header className={progress
       ? "flex min-h-24 items-center justify-between gap-3 px-4 py-3.5 min-[380px]:px-5"
       : "grid min-h-20 place-items-center px-4 py-3 text-center"}
-      style={business.businessType === "VAPE" ? { backgroundColor: "#fff", color: "#432B1D" } : undefined}>
+      style={!inheritColors && business.businessType === "VAPE" ? { backgroundColor: "#fff", color: "#432B1D" } : undefined}>
       <div className={progress ? "min-w-0 flex-1" : "grid min-w-0 max-w-full place-items-center"}>
         {mbVape ? (
           <MbVapeLogo className={progress

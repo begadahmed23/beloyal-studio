@@ -173,7 +173,7 @@ export default function CashierMemberList() {
       await loadMembers(search);
       setActions((previous) => ({
         ...previous,
-        [memberId]: { status: "success", text: body.message || (operation === "redeem" ? "Reward redeemed." : "Card updated.") },
+        [memberId]: { status: "success", operation, text: body.message || (operation === "redeem" ? "Reward redeemed." : "Card updated.") },
       }));
     } catch (error) {
       setActions((previous) => ({
@@ -398,8 +398,8 @@ export default function CashierMemberList() {
                           isKato
                             ? {
                                 color: filled
-                                  ? "#102B49"
-                                  : "rgba(16,43,73,0.24)",
+                                  ? theme.accent
+                                  : theme.textMuted,
                                 filter: "none",
                               }
                             : {
@@ -452,7 +452,7 @@ export default function CashierMemberList() {
                   type="button"
                   disabled={busy || member.rewardReady}
                   pending={busy && action?.operation === "stamp"}
-                  icon={<StampIcon size={16} />}
+                  icon={action?.status === "success" && action.operation === "stamp" ? <CheckCircle2 size={16} /> : <StampIcon size={16} />}
                   onClick={() =>
                     runAction(
                       member.id,
@@ -498,7 +498,7 @@ export default function CashierMemberList() {
               <p
                 role="status"
                 className="mt-1.5 h-8 overflow-y-auto text-xs leading-4"
-                style={{ color: action?.status === "error" ? theme.danger : theme.textSecondary }}
+                style={{ color: action?.status === "error" ? theme.danger : action?.status === "success" ? theme.success : theme.textSecondary }}
               >
                 {action && t(action.text)}
               </p>

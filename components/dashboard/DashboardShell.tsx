@@ -25,7 +25,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     mark = <MbVapeLogo className="h-10 w-11 shrink-0 border border-black/10 p-1" />;
   } else if (isKato) {
     mark = (
-      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#102B49] text-[#E9E6D8]" aria-hidden="true">
+      <span className="grid size-10 shrink-0 place-items-center rounded-full" style={{ backgroundColor: theme.accent, color: theme.buttonText }} aria-hidden="true">
         <KatoMark size={25} />
       </span>
     );

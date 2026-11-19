@@ -183,11 +183,11 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
         <div className="mt-5 flex flex-col gap-3 sm:flex-row">
           <ActionButton
             className={primary}
-            icon={<Send size={16} />}
+            icon={result?.status === "complete" ? <Check size={16} /> : <Send size={16} />}
             pending={busy === "send"}
             disabled={!!busy || !!result}
             onClick={() => request("send")}
-          >{t("Send message")}</ActionButton>
+          >{t(result?.status === "complete" ? "Done" : "Send message")}</ActionButton>
           <button type="button" disabled={!!busy} className={secondary} onClick={() => {
             if (result) { setSelected([]); setMessage(""); }
             resetReview();

@@ -42,7 +42,7 @@ export default function DashboardPage() {
 
 function CafeDashboardHome() {
   const { t } = useBeLoyalLanguage();
-  const { cafe, theme, themeName, savedThemeName } = useCafeTheme();
+  const { cafe, theme } = useCafeTheme();
 
   const normalizedCafeName = cafe.name
     .normalize("NFD")
@@ -50,10 +50,10 @@ function CafeDashboardHome() {
     .toLowerCase();
 
   const isKato =
-    !cafe.hasDashboardPalette && themeName === savedThemeName &&
+    cafe.businessType === "CAFE" &&
     (cafe.slug.toLowerCase().includes("kato") || normalizedCafeName.includes("kato"));
   const isKeka =
-    !cafe.hasDashboardPalette && themeName === savedThemeName &&
+    cafe.businessType === "CAFE" &&
     (cafe.slug.toLowerCase().includes("keka") || normalizedCafeName.includes("keka"));
 
   const isCafe = cafe.businessType === "CAFE";
@@ -91,8 +91,8 @@ function CafeDashboardHome() {
   return (
     <div className="space-y-7">
       {isKeka ? (
-        <section className="relative overflow-hidden rounded-[26px] border border-[#F4E5C6]/15 bg-[linear-gradient(135deg,#7F2023_0%,#741A1D_58%,#5A1013_100%)] px-5 py-6 text-[#FFF6E6] shadow-[0_18px_50px_rgba(32,3,5,0.2)] sm:rounded-[30px] sm:px-8 sm:py-7">
-          <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-[#F4E5C6]/10 blur-3xl" />
+        <section className="relative overflow-hidden rounded-[26px] border border-border bg-card px-5 py-6 text-foreground shadow-[0_18px_50px_rgba(32,3,5,0.2)] sm:rounded-[30px] sm:px-8 sm:py-7">
+          <div className="pointer-events-none absolute -right-12 -top-16 h-44 w-44 rounded-full bg-accent blur-3xl" />
           <div className="relative flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div className="max-w-2xl">
               <div className="flex items-center gap-3">
@@ -104,75 +104,75 @@ function CafeDashboardHome() {
                   />
                 ) : null}
                 <div>
-                  <p className="font-serif text-xl font-semibold text-[#F4E5C6] sm:text-2xl">
+                  <p className="font-serif text-xl font-semibold text-foreground sm:text-2xl">
                     Keka
                   </p>
-                  <p className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.24em] text-[#F4E5C6]/55">
+                  <p className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
                     Little Rituals, Big Comfort
                   </p>
                 </div>
               </div>
 
-              <h2 className="mt-6 text-2xl font-semibold tracking-[-0.04em] text-[#FFF6E6] sm:text-3xl">
+              <h2 className="mt-6 text-2xl font-semibold tracking-[-0.04em] text-foreground sm:text-3xl">
                 Little rituals · bigger days
               </h2>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-[#F4E5C6]/65">
+              <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
                 Your Keka loyalty workspace — members, rewards, birthdays, and returning visits.
               </p>
             </div>
 
-            <div className="flex min-w-0 items-center gap-4 rounded-[20px] border border-[#F4E5C6]/12 bg-[#3D080B]/25 px-4 py-3.5 sm:min-w-[245px] sm:px-5">
+            <div className="flex min-w-0 items-center gap-4 rounded-[20px] border border-border bg-secondary px-4 py-3.5 sm:min-w-[245px] sm:px-5">
               <div className="min-w-0 flex-1">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-[#F4E5C6]/50">
+                <p className="text-[9px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
                   The ritual
                 </p>
-                <p className="mt-1 text-lg font-semibold text-[#FFF6E6]">
+                <p className="mt-1 text-lg font-semibold text-foreground">
                   {getLoyaltyProgressTarget(cafe)} visits
                 </p>
               </div>
-              <div className="h-9 w-px bg-[#F4E5C6]/15" />
-              <p className="max-w-[110px] text-xs leading-5 text-[#F4E5C6]/65">
+              <div className="h-9 w-px bg-border" />
+              <p className="max-w-[110px] text-xs leading-5 text-muted-foreground">
                 then {cafe.rewardName || "a Keka reward"}
               </p>
             </div>
           </div>
         </section>
       ) : isKato ? (
-        <section className="relative overflow-hidden rounded-[30px] border border-[#DCE3EA] bg-white p-6 shadow-[0_22px_60px_rgba(16,43,73,0.09)] sm:p-8">
+        <section className="relative overflow-hidden rounded-[30px] border border-border bg-card p-6 shadow-[0_22px_60px_rgba(16,43,73,0.09)] sm:p-8">
           <div className="grid gap-7 lg:grid-cols-[1fr_320px] lg:items-stretch">
             <div>
               <div className="flex items-start justify-between gap-5">
                 <div>
-                  <p className="text-[2.2rem] font-light leading-none tracking-[-0.07em] text-[#102B49] sm:text-[2.7rem]">
+                  <p className="text-[2.2rem] font-light leading-none tracking-[-0.07em] text-foreground sm:text-[2.7rem]">
                     KATŌ
                   </p>
-                  <p className="mt-2 text-[9px] font-semibold uppercase tracking-[0.34em] text-[#7F8DA0]">
+                  <p className="mt-2 text-[9px] font-semibold uppercase tracking-[0.34em] text-muted-foreground">
                     Specialty Coffee
                   </p>
                 </div>
 
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#102B49] text-[#E9E6D8]">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                   <KatoMark size={40} />
                 </div>
               </div>
 
-              <p className="mt-8 text-sm font-medium text-[#7F8DA0]">
+              <p className="mt-8 text-sm font-medium text-muted-foreground">
                 Loyalty overview
               </p>
 
-              <h2 className="mt-2 max-w-2xl text-3xl font-semibold tracking-[-0.045em] text-[#0A223E] sm:text-4xl">
+              <h2 className="mt-2 max-w-2xl text-3xl font-semibold tracking-[-0.045em] text-foreground sm:text-4xl">
                 Keep every visit moving smoothly.
               </h2>
 
-              <p className="mt-4 max-w-xl text-sm leading-6 text-[#7F8DA0]">
+              <p className="mt-4 max-w-xl text-sm leading-6 text-muted-foreground">
                 Track members, rewards, birthdays, and daily loyalty activity from one clean workspace.
               </p>
             </div>
 
-            <div className="relative overflow-hidden rounded-[26px] bg-[linear-gradient(145deg,#16395C_0%,#102B49_58%,#0A223E_100%)] p-6 text-white shadow-[0_18px_42px_rgba(16,43,73,0.18)]">
-              <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-white/[0.05] blur-3xl" />
+            <div className="relative overflow-hidden rounded-[26px] bg-primary p-6 text-primary-foreground shadow-[0_18px_42px_rgba(16,43,73,0.18)]">
+              <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-primary-foreground/5 blur-3xl" />
 
-              <p className="relative text-[10px] font-semibold uppercase tracking-[0.24em] text-white/55">
+              <p className="relative text-[10px] font-semibold uppercase tracking-[0.24em] text-primary-foreground/80">
                 Loyalty rule
               </p>
 
@@ -180,15 +180,15 @@ function CafeDashboardHome() {
                 Buy {getLoyaltyProgressTarget(cafe)}
               </p>
 
-              <p className="relative mt-1 text-sm text-white/65">
+              <p className="relative mt-1 text-sm text-primary-foreground/85">
                 & get 1 {cafe.rewardName || "reward"}
               </p>
 
-              <div className="relative mt-7 h-[3px] overflow-hidden rounded-full bg-white/10">
-                <div className="h-full w-full rounded-full bg-[#E9E6D8]/80" />
+              <div className="relative mt-7 h-[3px] overflow-hidden rounded-full bg-primary-foreground/10">
+                <div className="h-full w-full rounded-full bg-primary-foreground/80" />
               </div>
 
-              <p className="relative mt-4 text-xs text-white/55">
+              <p className="relative mt-4 text-xs text-primary-foreground/80">
                 Customer card settings update automatically.
               </p>
             </div>

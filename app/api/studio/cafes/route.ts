@@ -8,6 +8,7 @@ import { requireSuperAdmin } from "@/lib/require-super-admin";
 import {
   getBusinessThemeColors,
   dashboardThemeOptions,
+  DEFAULT_DASHBOARD_THEME,
   getDashboardThemeColors,
   getDefaultBusinessTheme,
 } from "@/lib/cafe-theme";
@@ -730,9 +731,9 @@ export async function POST(
     );
 
     const savedTheme = dashboardThemeOptions
-      .find(option => option.value === body.theme)?.value ?? getDefaultBusinessTheme(businessType);
+      .find(option => option.value === body.theme)?.value ?? DEFAULT_DASHBOARD_THEME;
 
-    const cardTheme = businessType === "VAPE" ? getDefaultBusinessTheme(businessType) : savedTheme;
+    const cardTheme = getDefaultBusinessTheme(businessType);
     const [primaryColor, secondaryColor, backgroundColor] = getBusinessThemeColors(cardTheme, businessType);
 
     const [dashboardPrimaryColor, dashboardSecondaryColor, dashboardBackgroundColor] = getDashboardThemeColors(savedTheme);

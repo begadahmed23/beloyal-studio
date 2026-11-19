@@ -5,21 +5,17 @@ import type { BusinessType } from "@prisma/client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { type CafeThemeName } from "@/lib/cafe-theme";
-import { getJoinTheme } from "./join-theme";
+import type { JoinTheme } from "./join-theme";
+import { Check, LoaderCircle } from "lucide-react";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 type JoinFormProps = {
   cafeSlug: string;
   cafeName: string;
   businessType: BusinessType;
-  themeName: CafeThemeName;
-  primaryColor: string;
-  secondaryColor: string;
-  backgroundColor?: string | null;
+  theme: JoinTheme;
   rewardTarget: number;
   rewardName: string;
-  isKato?: boolean;
 };
 
 type FormMode = "join" | "recover";
@@ -35,42 +31,18 @@ export default function JoinForm({
   cafeSlug,
   cafeName,
   businessType,
-  themeName,
-  primaryColor,
-  secondaryColor,
-  backgroundColor,
+  theme,
   rewardTarget,
   rewardName,
-  isKato = false,
 }: JoinFormProps) {
   const { t, dir, lang, arabic } = useBeLoyalLanguage();
   const router = useRouter();
   const vapeShop = businessType === "VAPE";
   const isBarbershop = businessType === "BARBERSHOP";
-  const theme = getJoinTheme({
-    name: cafeName,
-    slug: cafeSlug,
-    theme: themeName,
-    businessType,
-    primaryColor,
-    secondaryColor,
-    backgroundColor,
-  });
   const loyaltyTarget = getLoyaltyProgressTarget({
     businessType,
     rewardTarget,
   });
-  const isKatoDark = isKato && themeName === "DARK_LUXURY";
-  const katoTextPrimary = isKatoDark ? "#F5F3EC" : "#0A223E";
-  const katoTextSecondary = isKatoDark ? "#C1C8CF" : "#43536A";
-  const katoTextMuted = isKatoDark ? "#8F9AA6" : "#7F8DA0";
-  const katoBorder = isKatoDark
-    ? "rgba(233,230,216,0.12)"
-    : "rgba(16,43,73,0.12)";
-  const katoSurface = isKatoDark ? "#0D2744" : "#F7F9FB";
-  const katoAccent = isKatoDark ? "#E9E6D8" : "#102B49";
-  const katoAccentText = isKatoDark ? "#0A223E" : "#FFFFFF";
-
   const [mode, setMode] = useState<FormMode>("join");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -99,6 +71,8 @@ export default function JoinForm({
     setShowConsentError(true);
   }
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [cardReady, setCardReady] = useState(false);
+  const formBusy = isSubmitting || cardReady;
   const submitting = useRef(false);
 
   function changeMode(nextMode: FormMode) {
@@ -115,7 +89,7 @@ export default function JoinForm({
     event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
-    if (submitting.current) return;
+    if (submitting.current || cardReady) return;
     setError("");
 
     const cleanPhone = phoneDigits(phone);
@@ -208,6 +182,7 @@ export default function JoinForm({
           ? "?welcome=1"
           : "";
 
+      setCardReady(true);
       router.push(`/card/${data.token}${welcomeQuery}`);
     } catch (requestError) {
       console.error(
@@ -228,9 +203,9 @@ export default function JoinForm({
     theme.light ? "placeholder:text-black/40" : "placeholder:text-white/40"
   }`;
   const inputStyle = {
-    borderColor: isKato ? katoBorder : theme.inputBorder,
-    backgroundColor: isKato ? katoSurface : theme.inputBackground,
-    color: isKato ? katoTextPrimary : theme.textPrimary,
+    borderColor: theme.inputBorder,
+    backgroundColor: theme.inputBackground,
+    color: theme.textPrimary,
   };
 
   return (
@@ -239,55 +214,41 @@ export default function JoinForm({
       <div
         className="grid grid-cols-2 rounded-2xl border p-1"
         style={{
-          borderColor: isKato ? katoBorder : theme.border,
-          backgroundColor: isKato ? katoSurface : theme.surfaceRaised,
+          borderColor: theme.border,
+          backgroundColor: theme.surfaceRaised,
         }}
       >
         <button
           type="button"
-          disabled={isSubmitting}
+          disabled={formBusy}
           aria-pressed={mode === "join"}
           onClick={() => changeMode("join")}
           className="min-h-12 rounded-xl px-3 text-sm font-semibold transition"
           style={{
             background:
               mode === "join"
-                ? isKato
-                  ? katoAccent
-                  : `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`
+                ? theme.primary
                 : "transparent",
             color:
               mode === "join"
-                ? isKato
-                  ? katoAccentText
-                  : theme.buttonText
-                : isKato
-                  ? katoTextMuted
-                  : theme.textMuted,
+                ? theme.buttonText : theme.textMuted,
           }}
         >{t("Create a card")}</button>
 
         <button
           type="button"
-          disabled={isSubmitting}
+          disabled={formBusy}
           aria-pressed={mode === "recover"}
           onClick={() => changeMode("recover")}
           className="min-h-12 rounded-xl px-3 text-sm font-semibold transition"
           style={{
             background:
               mode === "recover"
-                ? isKato
-                  ? katoAccent
-                  : `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`
+                ? theme.primary
                 : "transparent",
             color:
               mode === "recover"
-                ? isKato
-                  ? katoAccentText
-                  : theme.buttonText
-                : isKato
-                  ? katoTextMuted
-                  : theme.textMuted,
+                ? theme.buttonText : theme.textMuted,
           }}
         >{t("I have a card")}</button>
       </div>
@@ -295,7 +256,7 @@ export default function JoinForm({
       <div className="mb-6 mt-5">
         <h1
           className="text-lg font-semibold"
-          style={{ color: isKato ? katoTextPrimary : theme.textPrimary }}
+          style={{ color: theme.textPrimary }}
         >
           {mode === "join"
             ? t("Create your loyalty card")
@@ -304,7 +265,7 @@ export default function JoinForm({
 
         <p
           className="mt-1 text-sm leading-6"
-          style={{ color: isKato ? katoTextMuted : theme.textMuted }}
+          style={{ color: theme.textMuted }}
         >
           {mode === "join"
             ? arabic
@@ -320,7 +281,7 @@ export default function JoinForm({
             <label
               htmlFor="customer-name"
               className="mb-2 block text-sm font-medium"
-              style={{ color: isKato ? katoTextSecondary : theme.textSecondary }}
+              style={{ color: theme.textSecondary }}
             >{t("Full name")}</label>
 
             <input
@@ -344,8 +305,8 @@ export default function JoinForm({
           <label
             htmlFor="customer-phone"
             className="mb-2 block text-sm font-medium"
-            style={{ color: isKato ? katoTextSecondary : theme.textSecondary }}
-          >{t("Phone number")}{mode === "join" && <span style={{ color: isKato ? katoTextMuted : theme.textMuted }}>{" " + t("(optional)")}</span>}
+            style={{ color: theme.textSecondary }}
+          >{t("Phone number")}{mode === "join" && <span style={{ color: theme.textMuted }}>{" " + t("(optional)")}</span>}
           </label>
 
           <input
@@ -372,7 +333,7 @@ export default function JoinForm({
 
           <p
             className="mt-2 text-xs"
-            style={{ color: isKato ? katoTextMuted : theme.textMuted }}
+            style={{ color: theme.textMuted }}
           >{t("Enter your 11-digit Egyptian phone number.")}</p>
         </div>
 
@@ -381,9 +342,9 @@ export default function JoinForm({
             <label
               htmlFor="customer-instagram"
               className="mb-2 block text-sm font-medium"
-              style={{ color: isKato ? katoTextSecondary : theme.textSecondary }}
+              style={{ color: theme.textSecondary }}
             >
-              Instagram <span style={{ color: isKato ? katoTextMuted : theme.textMuted }}>{t("(optional)")}</span>
+              Instagram <span style={{ color: theme.textMuted }}>{t("(optional)")}</span>
             </label>
 
             <input
@@ -406,7 +367,7 @@ export default function JoinForm({
 
             <p
               className="mt-2 text-xs"
-              style={{ color: isKato ? katoTextMuted : theme.textMuted }}
+              style={{ color: theme.textMuted }}
             >{t("Phone or Instagram can be used to sign up. Add your phone number to reopen your card later.")}</p>
           </div>
         )}
@@ -416,7 +377,7 @@ export default function JoinForm({
             <label
               htmlFor="customer-birthday"
               className="mb-2 block text-sm font-medium"
-              style={{ color: isKato ? katoTextSecondary : theme.textSecondary }}
+              style={{ color: theme.textSecondary }}
             >{t("Birthday")}</label>
 
             <input
@@ -435,7 +396,7 @@ export default function JoinForm({
 
             <p
               className="mt-2 text-xs"
-              style={{ color: isKato ? katoTextMuted : theme.textMuted }}
+              style={{ color: theme.textMuted }}
             >
               {arabic ? <>تاريخ ميلادك بيساعد <bdi>{cafeName}</bdi> يقدّم لك مكافأة عيد الميلاد.</> : <>Your birthday helps {cafeName} provide birthday rewards.</>}
             </p>
@@ -476,40 +437,37 @@ export default function JoinForm({
 
         <button
           type="submit"
-          disabled={isSubmitting}
-          className="flex h-14 w-full items-center justify-center rounded-2xl px-5 text-base font-semibold transition hover:brightness-110 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={formBusy}
+          aria-busy={isSubmitting}
+          className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl px-5 text-base font-semibold transition hover:brightness-110 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
           style={{
-            background: isKato
-              ? katoAccent
-              : `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
-            boxShadow: isKato
-              ? isKatoDark
-                ? "0 14px 35px rgba(0,0,0,0.24)"
-                : "0 14px 35px rgba(16,43,73,0.18)"
-              : `0 14px 35px ${primaryColor}30`,
-            color: isKato ? katoAccentText : theme.buttonText,
+            background: theme.primary,
+            color: theme.buttonText,
           }}
         >
-          {isSubmitting
+          {cardReady ? <Check size={18} aria-hidden /> : isSubmitting ? <LoaderCircle size={18} aria-hidden className="motion-safe:animate-spin" /> : null}
+          <span role="status">{cardReady
+            ? arabic ? "الكارت جاهز" : "Card ready"
+            : isSubmitting
             ? mode === "join"
               ? t("Creating your card...")
               : t("Finding your card...")
             : mode === "join"
               ? t("Agree and create my card")
-              : t("Open my loyalty card")}
+              : t("Open my loyalty card")}</span>
         </button>
 
         {mode === "join" ? (
             <div
               className="rounded-2xl border px-4 py-4"
               style={{
-                borderColor: isKato ? katoBorder : theme.border,
-                backgroundColor: isKato ? katoSurface : theme.accentSoft,
+                borderColor: theme.border,
+                backgroundColor: theme.accentSoft,
               }}
             >
               <p
                 className="text-center text-sm leading-6"
-                style={{ color: isKato ? katoTextSecondary : theme.textSecondary }}
+                style={{ color: theme.textSecondary }}
               >
                 {arabic
                   ? `${isBarbershop ? "سجّل" : "اجمع"} ${loyaltyTarget} ${isBarbershop ? "زيارات مدفوعة" : "أختام"} واستلم المكافأة في زيارتك الجاية `
@@ -519,7 +477,7 @@ export default function JoinForm({
                     : `Buy ${loyaltyTarget} and get 1 free: `}
                 <span
                   className="font-medium"
-                  style={{ color: isKato ? katoTextPrimary : theme.textPrimary }}
+                  style={{ color: theme.textPrimary }}
                 >
                   <bdi>{rewardName}</bdi>
                 </span>
@@ -530,7 +488,7 @@ export default function JoinForm({
         ) : (
           <p
             className="text-center text-xs leading-5"
-            style={{ color: isKato ? katoTextMuted : theme.textMuted }}
+            style={{ color: theme.textMuted }}
           >
             {arabic ? <>سجّلت من غير رقم موبايل؟ اطلب رابط الكارت من <bdi>{cafeName}</bdi>.</> : <>Signed up without a phone number? Ask {cafeName} for your card link.</>}
           </p>

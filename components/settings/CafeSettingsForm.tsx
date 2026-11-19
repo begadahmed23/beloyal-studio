@@ -8,6 +8,7 @@ import ThemeGallery from "@/components/theme/ThemeGallery";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 import {
+  Check,
   Coffee,
   Gift,
   ImagePlus,
@@ -38,10 +39,6 @@ import {
   type CafeThemeConfig,
   type CafeThemeName,
 } from "@/lib/cafe-theme";
-
-type Props = {
-  accountEmail: string;
-};
 
 type FormState = {
   name: string;
@@ -82,9 +79,7 @@ function formatStatus(value: string) {
     .join(" ");
 }
 
-export default function CafeSettingsForm({
-  accountEmail,
-}: Props) {
+export default function CafeSettingsForm() {
   const { t } = useBeLoyalLanguage();
  const {
   theme,
@@ -310,6 +305,7 @@ export default function CafeSettingsForm({
     const pending = saving === section;
     const disabled = Boolean(saving) || (section === "general" && uploadingLogo);
     const dirty = dashboardSettingsSections[section].some((field) => field in draft);
+    const saved = !pending && !dirty && message?.section === section && message.type === "success";
     return (
       <div className="mt-6 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: theme.border }}>
         <div className="flex flex-wrap justify-end gap-2 sm:ms-auto">
@@ -323,11 +319,11 @@ export default function CafeSettingsForm({
           <button type="submit" disabled={disabled} aria-busy={pending}
             className="flex min-h-11 items-center justify-center gap-2 px-4 text-sm font-semibold disabled:opacity-60"
             style={{ backgroundColor: theme.accent, color: theme.accentText, borderRadius: theme.radiusMedium }}>
-            {pending ? <Loader2 size={16} className="motion-safe:animate-spin" aria-hidden="true" /> : <Save size={16} aria-hidden="true" />}
-            {t(label)}
+            {pending ? <Loader2 size={16} className="motion-safe:animate-spin" aria-hidden="true" /> : saved ? <Check size={16} aria-hidden="true" /> : <Save size={16} aria-hidden="true" />}
+            {saved ? t("Saved.").replace(/\.$/, "") : t(label)}
           </button>
         </div>
-        <p role="status" className="min-h-5 text-sm sm:order-first" style={{ color: message?.type === "error" ? theme.danger : theme.textSecondary }}>
+        <p role="status" className="min-h-5 text-sm sm:order-first" style={{ color: message?.section !== section ? theme.textSecondary : message.type === "error" ? theme.danger : theme.success }}>
           {t(pending ? "Saving…" : message?.section === section ? message.text : "")}
         </p>
       </div>
@@ -1013,71 +1009,74 @@ export default function CafeSettingsForm({
           </div>
           {saveControls("reviews", "Save Google Reviews")}
         </form>
-
-        <section
-          className="border p-5 sm:p-7"
-          style={cardStyle}
-        >
-          <SectionHeader
-              theme={theme}
-            icon={UserRound}
-            title="Account and subscription"
-            description="These details are managed by the platform administrator and cannot be changed here."
-          />
-
-          <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <ReadOnlyItem
-              theme={theme}
-              label="Account email"
-              value={accountEmail}
-            />
-
-            <ReadOnlyItem
-            theme={theme}
-              label="Subscription status"
-              value={formatStatus(
-                cafe.subscriptionStatus
-              )}
-            />
-
-            <ReadOnlyItem
-              theme={theme}
-              label="Monthly price"
-              value={
-                cafe.monthlyPrice
-                  ? `${cafe.monthlyPrice} EGP`
-                  : "Not set"
-              }
-            />
-
-            <ReadOnlyItem
-              theme={theme}
-              label="Trial started"
-              value={formatDate(
-                cafe.trialStartedAt
-              )}
-            />
-
-            <ReadOnlyItem
-              theme={theme}
-              label="Trial ends"
-              value={formatDate(cafe.trialEndsAt)}
-            />
-
-            <ReadOnlyItem
-              theme={theme}
-              label="Subscription ends"
-              value={formatDate(
-                cafe.subscriptionEndsAt
-              )}
-            />
-          </div>
-        </section>
       </div>
     </div>
   );
+}
 
+export function AccountSubscriptionSettings() {
+  const { cafe, theme, accountEmail } = useCafeTheme();
+  return (
+    <section
+      className="border p-5 sm:p-7"
+      style={{ borderColor: theme.border, backgroundColor: theme.surface, borderRadius: theme.radiusLarge }}
+    >
+      <SectionHeader
+        theme={theme}
+        icon={UserRound}
+        title="Account and subscription"
+        description="These details are managed by the platform administrator and cannot be changed here."
+      />
 
+      <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <ReadOnlyItem
+          theme={theme}
+          label="Account email"
+          value={accountEmail}
+        />
+
+        <ReadOnlyItem
+          theme={theme}
+          label="Subscription status"
+          value={formatStatus(
+            cafe.subscriptionStatus
+          )}
+        />
+
+        <ReadOnlyItem
+          theme={theme}
+          label="Monthly price"
+          value={
+            cafe.monthlyPrice
+              ? `${cafe.monthlyPrice} EGP`
+              : "Not set"
+          }
+        />
+
+        <ReadOnlyItem
+          theme={theme}
+          label="Trial started"
+          value={formatDate(
+            cafe.trialStartedAt
+          )}
+        />
+
+        <ReadOnlyItem
+          theme={theme}
+          label="Trial ends"
+          value={formatDate(cafe.trialEndsAt)}
+        />
+
+        <ReadOnlyItem
+          theme={theme}
+          label="Subscription ends"
+          value={formatDate(
+            cafe.subscriptionEndsAt
+          )}
+        />
+      </div>
+    </section>
+  );
 }
 
 type ThemedComponentProps = {

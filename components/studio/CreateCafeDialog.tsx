@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { businessTypeLabels, getBusinessTerminology } from "@/lib/business/terminology";
 import ThemeGallery from "@/components/theme/ThemeGallery";
-import { getDefaultBusinessTheme } from "@/lib/cafe-theme";
+import { DEFAULT_DASHBOARD_THEME } from "@/lib/cafe-theme";
 
 import BusinessTypeSelector from "./BusinessTypeSelector";
 import type { BusinessType } from "./studio-types";
@@ -67,7 +67,7 @@ export default function CreateCafeDialog({
   const [monthlyPrice, setMonthlyPrice] =
     useState("1000");
   const [theme, setTheme] =
-    useState("COFFEE_CLASSIC");
+    useState<string>(DEFAULT_DASHBOARD_THEME);
 
   const terminology =
     getBusinessTerminology(businessType);
@@ -83,7 +83,7 @@ export default function CreateCafeDialog({
     setRewardName("Free Drink");
     setRewardTarget("7");
     setMonthlyPrice("1000");
-    setTheme("COFFEE_CLASSIC");
+    setTheme(DEFAULT_DASHBOARD_THEME);
     setError("");
     setSuccess(false);
     setShowPassword(false);
@@ -100,7 +100,6 @@ export default function CreateCafeDialog({
     setRewardTarget(
       nextBusinessType === "BARBERSHOP" ? "3" : "7",
     );
-    setTheme(getDefaultBusinessTheme(nextBusinessType));
   }
 
   function generateSlug(value: string) {

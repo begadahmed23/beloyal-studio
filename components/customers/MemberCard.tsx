@@ -1101,7 +1101,7 @@ export default function MemberCard({
               onClick={rewardReady ? () => setRedeemOpen(true) : addStamp}
               disabled={loading}
               pending={pendingAction === "stamp"}
-              icon={rewardReady ? <Gift size={18} /> : <LoyaltyIcon size={18} />}
+              icon={rewardReady ? <Gift size={18} /> : stampFeedback?.type === "success" ? <CheckCircle2 size={18} /> : <LoyaltyIcon size={18} />}
               className="flex min-h-12 w-full items-center justify-center gap-2 px-3 py-2.5 text-sm font-semibold pointer-fine:hover:opacity-90 active:opacity-80 disabled:opacity-75"
               style={{
                 backgroundColor: rewardReady ? theme.success : theme.accent,
@@ -1115,7 +1115,7 @@ export default function MemberCard({
               role="status"
               className="mt-1.5 h-8 overflow-y-auto text-xs leading-4"
               style={{
-                color: stampFeedback?.type === "error" ? theme.danger : theme.textSecondary,
+                color: stampFeedback?.type === "error" ? theme.danger : stampFeedback?.type === "success" ? theme.success : theme.textSecondary,
               }}
             >
               {pendingAction === "stamp"
@@ -1179,7 +1179,7 @@ export default function MemberCard({
               style={{
                 backgroundColor:
                   theme.success,
-                color: "#ffffff",
+                color: getReadableText(theme.success),
               }}
             >
               {loading

@@ -1,6 +1,6 @@
 import { getMbVapeBrandColors } from "@/lib/business/mb-vape";
 import type { BusinessType } from "@prisma/client";
-import { getBusinessBrandColors, getBusinessTheme, type CafeThemeName } from "@/lib/cafe-theme";
+import { getBusinessBrandColors, getBusinessTheme, getDashboardTheme, type CafeThemeName } from "@/lib/cafe-theme";
 import { getReadableText, isLightColor, mixColors } from "@/app/card/[token]/card-theme-utils";
 import { withAlpha } from "@/app/card/[token]/card-utils";
 
@@ -12,9 +12,21 @@ type JoinCafe = {
   primaryColor?: string | null;
   secondaryColor?: string | null;
   backgroundColor?: string | null;
+  hasDashboardPalette?: boolean;
 };
 
 export function getJoinTheme(cafe: JoinCafe) {
+  if (cafe.hasDashboardPalette) {
+    const palette = getDashboardTheme(cafe.theme, cafe);
+    return {
+      ...palette,
+      primary: palette.accent,
+      secondary: palette.accentHover,
+      light: isLightColor(palette.surface),
+      shellBackground: palette.surface,
+    };
+  }
+
   const name = cafe.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const matches = (brand: string) => cafe.businessType === "CAFE" && (cafe.slug.toLowerCase().includes(brand) || name.includes(brand));
   const isLoretto = matches("loretto");
@@ -65,7 +77,7 @@ export function getJoinTheme(cafe: JoinCafe) {
   const inputBackground = light ? "rgba(255,255,255,.38)" : "rgba(0,0,0,.16)";
   return {
     ...base,
-    isLoretto, isKeka, isKato, light,
+    light,
     primary, secondary, pageBackground, shellBackground,
     surface,
     surfaceRaised: light ? "rgba(255,255,255,.25)" : "rgba(0,0,0,.12)",
@@ -87,3 +99,5 @@ export function getJoinTheme(cafe: JoinCafe) {
     } : {}),
   };
 }
+
+export type JoinTheme = ReturnType<typeof getJoinTheme>;

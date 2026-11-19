@@ -1,5 +1,6 @@
 import { CardBrandHeader, cardFrame } from "@/components/loyalty/CardBrand";
-import { getMbVapeBrandColors } from "@/lib/business/mb-vape";
+import { dashboardPaletteSelect, getDashboardPalette } from "@/lib/business/dashboard-palette";
+import { dashboardThemeVariables } from "@/lib/cafe-theme";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 
@@ -36,6 +37,7 @@ export default async function JoinPage({
       primaryColor: true,
       secondaryColor: true,
       backgroundColor: true,
+      ...dashboardPaletteSelect,
       rewardTarget: true,
       rewardName: true,
       isActive: true,
@@ -46,11 +48,7 @@ export default async function JoinPage({
     notFound();
   }
 
-  const brand = getMbVapeBrandColors(cafe);
-  const businessTheme = getJoinTheme(brand);
-  const { isKato } = businessTheme;
-  const primaryColor = businessTheme.primary;
-  const secondaryColor = businessTheme.secondary;
+  const businessTheme = getJoinTheme({ ...cafe, ...getDashboardPalette(cafe) });
 
   /*
    * Check whether this device already has a remembered
@@ -90,28 +88,24 @@ export default async function JoinPage({
   }
 
   return (
-    <main className="min-h-dvh px-3 py-4 min-[380px]:px-4 sm:px-6 sm:py-10"
-      style={{ background: businessTheme.pageBackground }}>
+    <main data-loyalty-join className="min-h-dvh px-3 py-4 min-[380px]:px-4 sm:px-6 sm:py-10"
+      style={{ ...dashboardThemeVariables(businessTheme), background: businessTheme.pageBackground, accentColor: businessTheme.accent }}>
       <div className="mx-auto max-w-md">
         <section className={cardFrame} style={{
           borderColor: businessTheme.border,
           background: businessTheme.shellBackground,
           color: businessTheme.textPrimary,
         }}>
-          <CardBrandHeader business={cafe} logoUrl={cafe.logoUrl} />
+          <CardBrandHeader business={cafe} logoUrl={cafe.logoUrl} inheritColors />
           <div className="border-t px-4 pb-6 pt-5 min-[380px]:px-5 sm:px-6"
             style={{ borderColor: businessTheme.border }}>
             <JoinForm
               cafeSlug={cafe.slug}
               cafeName={cafe.name}
               businessType={cafe.businessType}
-              themeName={cafe.theme}
-              primaryColor={primaryColor}
-              secondaryColor={secondaryColor}
-              backgroundColor={brand.backgroundColor}
+              theme={businessTheme}
               rewardTarget={cafe.rewardTarget}
               rewardName={cafe.rewardName}
-              isKato={isKato}
             />
           </div>
         </section>
