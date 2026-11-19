@@ -1,4 +1,5 @@
 "use client";
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
@@ -22,6 +23,7 @@ import {
   Users,
 } from "lucide-react";
 
+import FeedbackTabs from "./FeedbackTabs";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type RatingBreakdown = {
@@ -89,6 +91,7 @@ function formatRatingDate(value: string) {
 }
 
 export default function SimpleAnalytics() {
+  const { t } = useBeLoyalLanguage();
   const { theme } = useCafeTheme();
 
   const [data, setData] =
@@ -178,7 +181,7 @@ export default function SimpleAnalytics() {
   );
 
   useEffect(() => {
-    loadAnalytics();
+    const initialLoad = window.setTimeout(() => void loadAnalytics(), 0);
 
     function handleMembersUpdated() {
       loadAnalytics(true);
@@ -190,6 +193,7 @@ export default function SimpleAnalytics() {
     );
 
     return () => {
+      window.clearTimeout(initialLoad);
       window.removeEventListener(
         "members-updated",
         handleMembersUpdated,
@@ -284,9 +288,7 @@ export default function SimpleAnalytics() {
               theme.radiusMedium,
           }}
         >
-          <RefreshCw size={15} />
-          Try again
-        </button>
+          <RefreshCw size={15} />{t("Try again")}</button>
       </div>
     );
   }
@@ -299,7 +301,7 @@ export default function SimpleAnalytics() {
       icon: Users,
     },
     {
-      label: "New today",
+      label: t("New today"),
       value: data.newMembersToday,
       helper:
         "Members who joined today",
@@ -359,10 +361,6 @@ export default function SimpleAnalytics() {
   const hasMoreComments =
     recentFeedback.length > 5;
 
-  function changeTab(tab: ActivityTab) {
-    setActiveTab(tab);
-  }
-
   return (
     <div className="space-y-5 sm:space-y-6">
       <section
@@ -384,9 +382,7 @@ export default function SimpleAnalytics() {
                   theme.textSecondary,
               }}
             >
-              <CircleGauge size={15} />
-              Overview
-            </div>
+              <CircleGauge size={15} />{t("Overview")}</div>
 
             <h2
               className="mt-2 text-xl font-semibold tracking-tight"
@@ -787,69 +783,7 @@ export default function SimpleAnalytics() {
               </p>
             </div>
 
-            <div
-              className="grid w-full grid-cols-2 gap-1 border p-1 sm:w-auto sm:min-w-[240px]"
-              style={{
-                borderColor:
-                  theme.border,
-                backgroundColor:
-                  theme.surfaceRaised,
-                borderRadius:
-                  theme.radiusMedium,
-              }}
-            >
-              <button
-                type="button"
-                onClick={() =>
-                  changeTab("ratings")
-                }
-                className="flex h-9 items-center justify-center gap-2 px-4 text-sm font-medium transition"
-                style={{
-                  backgroundColor:
-                    activeTab ===
-                    "ratings"
-                      ? theme.accentSoft
-                      : "transparent",
-                  color:
-                    activeTab ===
-                    "ratings"
-                      ? theme.accent
-                      : theme.textMuted,
-                  borderRadius:
-                    theme.radiusMedium,
-                }}
-              >
-                <Star size={14} />
-                Ratings
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  changeTab("comments")
-                }
-                className="flex h-9 items-center justify-center gap-2 px-4 text-sm font-medium transition"
-                style={{
-                  backgroundColor:
-                    activeTab ===
-                    "comments"
-                      ? theme.accentSoft
-                      : "transparent",
-                  color:
-                    activeTab ===
-                    "comments"
-                      ? theme.accent
-                      : theme.textMuted,
-                  borderRadius:
-                    theme.radiusMedium,
-                }}
-              >
-                <MessageCircle
-                  size={14}
-                />
-                Comments
-              </button>
-            </div>
+            <FeedbackTabs value={activeTab} onChange={setActiveTab} />
           </div>
 
           {activeTab === "ratings" ? (

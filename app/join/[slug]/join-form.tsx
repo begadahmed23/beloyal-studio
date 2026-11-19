@@ -1,11 +1,12 @@
 "use client";
+import { phoneDigits } from "@/lib/business/phone-digits";
+import LanguageToggle, { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 import type { BusinessType } from "@prisma/client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { type CafeThemeName } from "@/lib/cafe-theme";
 import { getJoinTheme } from "./join-theme";
-import { isMbVape } from "@/lib/business/mb-vape";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 type JoinFormProps = {
@@ -42,8 +43,9 @@ export default function JoinForm({
   rewardName,
   isKato = false,
 }: JoinFormProps) {
+  const { t, dir, lang, arabic } = useBeLoyalLanguage();
   const router = useRouter();
-  const mbVape = isMbVape({ slug: cafeSlug, businessType });
+  const vapeShop = businessType === "VAPE";
   const isBarbershop = businessType === "BARBERSHOP";
   const theme = getJoinTheme({
     name: cafeName,
@@ -82,10 +84,10 @@ export default function JoinForm({
   const consentError =
     mode === "join" && showConsentError && (!privacyAccepted || !marketingConsent)
       ? !privacyAccepted && !marketingConsent
-        ? "Check both boxes to create your card."
+        ? t("Check both boxes to create your card.")
         : !privacyAccepted
-          ? "Check the membership box to create your card."
-          : "Check the offers box to create your card."
+          ? t("Check the membership box to create your card.")
+          : t("Check the offers box to create your card.")
       : "";
 
   useEffect(() => {
@@ -97,6 +99,7 @@ export default function JoinForm({
     setShowConsentError(true);
   }
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitting = useRef(false);
 
   function changeMode(nextMode: FormMode) {
     setMode(nextMode);
@@ -105,30 +108,31 @@ export default function JoinForm({
   }
 
   function handlePhoneChange(value: string) {
-    setPhone(value.replace(/\D/g, "").slice(0, 11));
+    setPhone(phoneDigits(value).slice(0, 11));
   }
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
+    if (submitting.current) return;
     setError("");
 
-    const cleanPhone = phone.replace(/\D/g, "");
+    const cleanPhone = phoneDigits(phone);
     const cleanInstagram = mode === "join" ? instagram.trim().replace(/^@+/, "").toLowerCase() : "";
 
     if (mode === "recover" && !cleanPhone) {
-      setError("Enter the phone number you used to create your card.");
+      setError(t("Enter the phone number you used to create your card."));
       return;
     }
 
     if (!cleanPhone && !cleanInstagram) {
-      setError("Please enter your phone number or Instagram username.");
+      setError(t("Please enter your phone number or Instagram username."));
       return;
     }
 
     if (cleanPhone && cleanPhone.length !== 11) {
-      setError("Please enter a valid 11-digit phone number.");
+      setError(t("Please enter a valid 11-digit phone number."));
       return;
     }
 
@@ -136,7 +140,7 @@ export default function JoinForm({
       cleanInstagram &&
       !/^[a-z0-9._]{1,30}$/.test(cleanInstagram)
     ) {
-      setError("Please enter a valid Instagram username.");
+      setError(t("Please enter a valid Instagram username."));
       return;
     }
 
@@ -158,12 +162,12 @@ export default function JoinForm({
       const cleanName = name.trim();
 
       if (cleanName.length < 2) {
-        setError("Please enter your full name.");
+        setError(t("Please enter your full name."));
         return;
       }
 
       if (!birthday) {
-        setError("Please select your birthday.");
+        setError(t("Please select your birthday."));
         return;
       }
 
@@ -177,6 +181,7 @@ export default function JoinForm({
       requestBody.birthday = birthday;
     }
 
+    submitting.current = true;
     setIsSubmitting(true);
 
     try {
@@ -193,7 +198,7 @@ export default function JoinForm({
       if (!response.ok || !data.token) {
         setError(
           data.error ||
-            "Something went wrong. Please try again.",
+            t("Something went wrong. Please try again."),
         );
         return;
       }
@@ -211,9 +216,10 @@ export default function JoinForm({
       );
 
       setError(
-        "We could not connect to the server. Please check your internet connection.",
+        t("We could not connect to the server. Please check your internet connection."),
       );
     } finally {
+      submitting.current = false;
       setIsSubmitting(false);
     }
   }
@@ -228,7 +234,8 @@ export default function JoinForm({
   };
 
   return (
-    <div>
+    <div lang={lang} dir={dir}>
+      <div className="mb-3 flex justify-end"><LanguageToggle /></div>
       <div
         className="grid grid-cols-2 rounded-2xl border p-1"
         style={{
@@ -238,6 +245,8 @@ export default function JoinForm({
       >
         <button
           type="button"
+          disabled={isSubmitting}
+          aria-pressed={mode === "join"}
           onClick={() => changeMode("join")}
           className="min-h-12 rounded-xl px-3 text-sm font-semibold transition"
           style={{
@@ -256,12 +265,12 @@ export default function JoinForm({
                   ? katoTextMuted
                   : theme.textMuted,
           }}
-        >
-          Create a card
-        </button>
+        >{t("Create a card")}</button>
 
         <button
           type="button"
+          disabled={isSubmitting}
+          aria-pressed={mode === "recover"}
           onClick={() => changeMode("recover")}
           className="min-h-12 rounded-xl px-3 text-sm font-semibold transition"
           style={{
@@ -280,9 +289,7 @@ export default function JoinForm({
                   ? katoTextMuted
                   : theme.textMuted,
           }}
-        >
-          I have a card
-        </button>
+        >{t("I have a card")}</button>
       </div>
 
       <div className="mb-6 mt-5">
@@ -291,8 +298,8 @@ export default function JoinForm({
           style={{ color: isKato ? katoTextPrimary : theme.textPrimary }}
         >
           {mode === "join"
-            ? "Create your loyalty card"
-            : "Open your existing card"}
+            ? t("Create your loyalty card")
+            : t("Open your existing card")}
         </h1>
 
         <p
@@ -300,10 +307,10 @@ export default function JoinForm({
           style={{ color: isKato ? katoTextMuted : theme.textMuted }}
         >
           {mode === "join"
-            ? `Join ${cafeName} and start collecting ${
-                isBarbershop ? "visits" : "stamps"
-              }.`
-            : "Enter the phone number you used to create your card."}
+            ? arabic
+              ? <>انضم لـ <bdi>{cafeName}</bdi> وابدأ {isBarbershop ? "تسجيل زياراتك" : "تجميع الأختام"}.</>
+              : `Join ${cafeName} and start collecting ${isBarbershop ? "visits" : "stamps"}.`
+            : t("Enter the phone number you used to create your card.")}
         </p>
       </div>
 
@@ -314,9 +321,7 @@ export default function JoinForm({
               htmlFor="customer-name"
               className="mb-2 block text-sm font-medium"
               style={{ color: isKato ? katoTextSecondary : theme.textSecondary }}
-            >
-              Full name
-            </label>
+            >{t("Full name")}</label>
 
             <input
               id="customer-name"
@@ -326,7 +331,7 @@ export default function JoinForm({
               onChange={(event) => setName(event.target.value)}
               autoComplete="name"
               enterKeyHint="next"
-              placeholder="Your full name"
+              placeholder={t("Your full name")}
               maxLength={80}
               required
               className={inputClassName}
@@ -340,14 +345,14 @@ export default function JoinForm({
             htmlFor="customer-phone"
             className="mb-2 block text-sm font-medium"
             style={{ color: isKato ? katoTextSecondary : theme.textSecondary }}
-          >
-            Phone number{mode === "join" && <span style={{ color: isKato ? katoTextMuted : theme.textMuted }}> (optional)</span>}
+          >{t("Phone number")}{mode === "join" && <span style={{ color: isKato ? katoTextMuted : theme.textMuted }}>{" " + t("(optional)")}</span>}
           </label>
 
           <input
             id="customer-phone"
             name="phone"
             type="tel"
+            dir="ltr"
             value={phone}
             onChange={(event) =>
               handlePhoneChange(event.target.value)
@@ -368,9 +373,7 @@ export default function JoinForm({
           <p
             className="mt-2 text-xs"
             style={{ color: isKato ? katoTextMuted : theme.textMuted }}
-          >
-            Enter your 11-digit Egyptian phone number.
-          </p>
+          >{t("Enter your 11-digit Egyptian phone number.")}</p>
         </div>
 
         {mode === "join" && (
@@ -380,7 +383,7 @@ export default function JoinForm({
               className="mb-2 block text-sm font-medium"
               style={{ color: isKato ? katoTextSecondary : theme.textSecondary }}
             >
-              Instagram <span style={{ color: isKato ? katoTextMuted : theme.textMuted }}>(optional)</span>
+              Instagram <span style={{ color: isKato ? katoTextMuted : theme.textMuted }}>{t("(optional)")}</span>
             </label>
 
             <input
@@ -396,6 +399,7 @@ export default function JoinForm({
               spellCheck={false}
               enterKeyHint="next"
               placeholder="@username"
+              dir="ltr"
               className={inputClassName}
               style={inputStyle}
             />
@@ -403,9 +407,7 @@ export default function JoinForm({
             <p
               className="mt-2 text-xs"
               style={{ color: isKato ? katoTextMuted : theme.textMuted }}
-            >
-              Phone or Instagram can be used to sign up. Add your phone number to reopen your card later.
-            </p>
+            >{t("Phone or Instagram can be used to sign up. Add your phone number to reopen your card later.")}</p>
           </div>
         )}
 
@@ -415,9 +417,7 @@ export default function JoinForm({
               htmlFor="customer-birthday"
               className="mb-2 block text-sm font-medium"
               style={{ color: isKato ? katoTextSecondary : theme.textSecondary }}
-            >
-              Birthday
-            </label>
+            >{t("Birthday")}</label>
 
             <input
               id="customer-birthday"
@@ -437,8 +437,7 @@ export default function JoinForm({
               className="mt-2 text-xs"
               style={{ color: isKato ? katoTextMuted : theme.textMuted }}
             >
-              Your birthday helps {cafeName} provide birthday
-              rewards.
+              {arabic ? <>تاريخ ميلادك بيساعد <bdi>{cafeName}</bdi> يقدّم لك مكافأة عيد الميلاد.</> : <>Your birthday helps {cafeName} provide birthday rewards.</>}
             </p>
           </div>
         )}
@@ -450,14 +449,14 @@ export default function JoinForm({
                 onInvalid={handleConsentInvalid} aria-invalid={Boolean(consentError) && !privacyAccepted}
                 aria-describedby={consentError && !privacyAccepted ? "join-consent-error" : undefined}
                 className="mt-0.5 h-5 w-5 shrink-0" />
-              <span>I agree to the <a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">Privacy Policy</a> and use of my data for loyalty membership.</span>
+              <span>{t("I agree to the") + " "}<a href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">{t("Privacy Policy")}</a>{" " + t("and use of my data for loyalty membership.")}</span>
             </label>
             <label className="flex min-h-11 items-start gap-3 py-1.5">
               <input type="checkbox" required checked={marketingConsent} onChange={event => setMarketingConsent(event.target.checked)}
                 onInvalid={handleConsentInvalid} aria-invalid={Boolean(consentError) && !marketingConsent}
                 aria-describedby={consentError && !marketingConsent ? "join-consent-error" : undefined}
                 className="mt-0.5 h-5 w-5 shrink-0" />
-              <span>I agree to receive offers from {cafeName}.</span>
+              <span>{arabic ? <>أنا موافق على استلام عروض من <bdi>{cafeName}</bdi>.</> : <>I agree to receive offers from {cafeName}.</>}</span>
             </label>
             {consentError && (
               <div id="join-consent-error" ref={consentAlert} role="alert"
@@ -468,9 +467,9 @@ export default function JoinForm({
           </div>
         )}
         {error && (
-          <div className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3">
+          <div role="alert" className="rounded-2xl border border-red-400/25 bg-red-500/10 px-4 py-3">
             <p className={`text-sm leading-5 ${theme.light ? "text-red-800" : "text-red-200"}`}>
-              {error}
+              {t(error)}
             </p>
           </div>
         )}
@@ -493,15 +492,14 @@ export default function JoinForm({
         >
           {isSubmitting
             ? mode === "join"
-              ? "Creating your card..."
-              : "Finding your card..."
+              ? t("Creating your card...")
+              : t("Finding your card...")
             : mode === "join"
-              ? "Agree and create my card"
-              : "Open my loyalty card"}
+              ? t("Agree and create my card")
+              : t("Open my loyalty card")}
         </button>
 
         {mode === "join" ? (
-          <>
             <div
               className="rounded-2xl border px-4 py-4"
               style={{
@@ -513,33 +511,28 @@ export default function JoinForm({
                 className="text-center text-sm leading-6"
                 style={{ color: isKato ? katoTextSecondary : theme.textSecondary }}
               >
-                {isBarbershop
+                {arabic
+                  ? `${isBarbershop ? "سجّل" : "اجمع"} ${loyaltyTarget} ${isBarbershop ? "زيارات مدفوعة" : "أختام"} واستلم المكافأة في زيارتك الجاية `
+                  : isBarbershop
                   ? `Complete ${loyaltyTarget} paid visits, then redeem on your next visit: `
-                  : mbVape ? `Collect ${loyaltyTarget} stamps, then redeem on your next visit: `
+                  : vapeShop ? `Collect ${loyaltyTarget} stamps, then redeem on your next visit: `
                     : `Buy ${loyaltyTarget} and get 1 free: `}
                 <span
                   className="font-medium"
                   style={{ color: isKato ? katoTextPrimary : theme.textPrimary }}
                 >
-                  {rewardName}
+                  <bdi>{rewardName}</bdi>
                 </span>
                 .
               </p>
             </div>
 
-            <p
-              className="text-center text-xs leading-5"
-              style={{ color: isKato ? katoTextMuted : theme.textMuted }}
-            >
-              
-            </p>
-          </>
         ) : (
           <p
             className="text-center text-xs leading-5"
             style={{ color: isKato ? katoTextMuted : theme.textMuted }}
           >
-            Signed up without a phone number? Ask {cafeName} for your card link.
+            {arabic ? <>سجّلت من غير رقم موبايل؟ اطلب رابط الكارت من <bdi>{cafeName}</bdi>.</> : <>Signed up without a phone number? Ask {cafeName} for your card link.</>}
           </p>
         )}
       </form>

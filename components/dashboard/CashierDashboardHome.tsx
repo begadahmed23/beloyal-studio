@@ -1,4 +1,5 @@
 "use client";
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import Link from "next/link";
 import {
@@ -26,7 +27,8 @@ type SummaryResponse = {
 };
 
 export default function CashierDashboardHome() {
-  const { cafe, theme } = useCafeTheme();
+  const { t } = useBeLoyalLanguage();
+  const { cafe, theme, themeName, savedThemeName } = useCafeTheme();
   const isBarbershop =
     cafe.businessType === "BARBERSHOP";
 
@@ -36,8 +38,8 @@ export default function CashierDashboardHome() {
     .toLowerCase();
 
   const isKato =
-    cafe.slug.toLowerCase().includes("kato") ||
-    normalizedCafeName.includes("kato");
+    !cafe.hasDashboardPalette && themeName === savedThemeName &&
+    (cafe.slug.toLowerCase().includes("kato") || normalizedCafeName.includes("kato"));
 
   const [summary, setSummary] = useState({
     totalCustomers: 0,
@@ -81,10 +83,10 @@ export default function CashierDashboardHome() {
 
   const actions = [
     {
-      label: isBarbershop ? "View clients" : "View members",
+      label: isBarbershop ? t("View clients") : t("View members"),
       helper: isBarbershop
-        ? "Search clients, record visits, and redeem rewards"
-        : "Search members, add stamps, and redeem rewards",
+        ? t("Search clients, record visits, and redeem rewards")
+        : t("Search members, add stamps, and redeem rewards"),
       href: "/dashboard/members",
       icon: UserRound,
       primary: true,
@@ -136,9 +138,7 @@ export default function CashierDashboardHome() {
           <p
             className="text-sm font-medium"
             style={{ color: theme.textMuted }}
-          >
-            Counter overview
-          </p>
+          >{t("Counter overview")}</p>
 
           <h2 className="mt-2 text-3xl font-semibold tracking-tight">
             {cafe.name}
@@ -147,9 +147,7 @@ export default function CashierDashboardHome() {
           <p
             className="mt-2 text-sm"
             style={{ color: theme.textMuted }}
-          >
-            Manage today&apos;s loyalty activity from the counter.
-          </p>
+          >{t("Manage today's loyalty activity from the counter.")}</p>
         </section>
       )}
 
@@ -166,9 +164,7 @@ export default function CashierDashboardHome() {
             <p
               className="text-sm"
               style={{ color: theme.textMuted }}
-            >
-              Total customers
-            </p>
+            >{t("Total customers")}</p>
 
             <Users
               size={18}
@@ -200,9 +196,7 @@ export default function CashierDashboardHome() {
             <p
               className="text-sm"
               style={{ color: theme.textMuted }}
-            >
-              New today
-            </p>
+            >{t("New today")}</p>
 
             <UserRound
               size={18}
@@ -224,9 +218,7 @@ export default function CashierDashboardHome() {
       </section>
 
       <section>
-        <p className="text-sm font-semibold">
-          Counter tools
-        </p>
+        <p className="text-sm font-semibold">{t("Counter tools")}</p>
 
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           {actions.map((action) => {

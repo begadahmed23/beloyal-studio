@@ -1,12 +1,11 @@
 "use client";
-import Link from "next/link";
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 import {
   CheckCircle2,
   Gift,
   LoaderCircle,
   ScanLine,
   TriangleAlert,
-  Smartphone,
 } from "lucide-react";
 import {
   FormEvent,
@@ -90,6 +89,7 @@ function playSuccessSound() {
   }
 }
 export default function ScannerPage() {
+  const { t } = useBeLoyalLanguage();
   const { cafe } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
   const personLabel = isBarbershop ? "client" : "customer";
@@ -307,8 +307,7 @@ playSuccessSound();
           Counter scanner
         </p>
 
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-          Scan {personLabel}
+        <h2 className="mt-2 text-3xl font-semibold tracking-tight">{t("Scan")}{personLabel}
         </h2>
 
         <p className="mt-2 max-w-2xl text-sm leading-6 opacity-60">
@@ -347,9 +346,7 @@ playSuccessSound();
                   <ScanLine size={42} />
                 </div>
 
-                <h3 className="mt-7 text-2xl font-semibold">
-                  Ready to scan
-                </h3>
+                <h3 className="mt-7 text-2xl font-semibold">{t("Ready to scan")}</h3>
 
                 <p className="mt-3 max-w-md text-sm leading-6 opacity-60">
                   The USB scanner is active. Ask the
@@ -379,7 +376,7 @@ playSuccessSound();
                 </div>
 
                 <h3 className="mt-7 text-2xl font-semibold">
-                  {isBarbershop ? "Recording visit" : "Adding stamp"}
+                  {isBarbershop ? t("Recording visit") : t("Adding stamp")}
                 </h3>
 
                 <p className="mt-3 text-sm opacity-60">
@@ -395,7 +392,7 @@ playSuccessSound();
                 </div>
 
                 <p className="mt-7 text-sm font-medium text-emerald-500">
-                  {isBarbershop ? "Visit recorded" : "Stamp added"}
+                  {isBarbershop ? t("Visit recorded") : t("Stamp added")}
                 </p>
 
                 <h3 className="mt-2 text-3xl font-semibold">
@@ -435,9 +432,7 @@ playSuccessSound();
                   <Gift size={46} />
                 </div>
 
-                <p className="mt-7 text-sm font-medium text-amber-500">
-                  Reward earned
-                </p>
+                <p className="mt-7 text-sm font-medium text-amber-500">{t("Reward earned")}</p>
 
                 <h3 className="mt-2 text-3xl font-semibold">
                   {result.customer.name}
@@ -476,7 +471,7 @@ playSuccessSound();
                 </h3>
 
                 <p className="mt-3 max-w-md text-sm leading-6 opacity-60">
-                  {error}
+                  {t(error)}
                 </p>
 
                 <button

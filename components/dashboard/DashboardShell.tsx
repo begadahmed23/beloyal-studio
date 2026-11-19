@@ -1,311 +1,47 @@
 "use client";
 
-import { ReactNode } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Settings } from "lucide-react";
+import type { ReactNode } from "react";
 
-import LogoutButton from "@/components/auth/LogoutButton";
-import { isMbVape } from "@/lib/business/mb-vape";
 import MbVapeLogo from "@/components/brand/MbVapeLogo";
 import KatoMark from "@/components/brand/KatoMark";
-import DashboardMobileNavigation from "@/components/dashboard/DashboardMobileNavigation";
-import DashboardViewport from "@/components/dashboard/DashboardViewport";
-import MobileLogoutButton from "@/components/dashboard/MobileLogoutButton";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
+import { isMbVape } from "@/lib/business/mb-vape";
 
-import {
-  cafeNavigation,
-  isDashboardCurrentPage,
-} from "./cafe-navigation";
+import DashboardFrame from "./DashboardFrame";
+import { cafeNavigation } from "./cafe-navigation";
 
-type Props = {
-  children: ReactNode;
-};
-
-export default function DashboardShell({
-  children,
-}: Props) {
-  const pathname = usePathname();
+export default function DashboardShell({ children }: { children: ReactNode }) {
   const { theme, cafe, userRole } = useCafeTheme();
+  const normalizedName = cafe.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const slug = cafe.slug.toLowerCase();
+  const isKato = cafe.businessType === "CAFE" && (slug.includes("kato") || normalizedName.includes("kato"));
+  const isKeka = cafe.businessType === "CAFE" && (slug.includes("keka") || normalizedName.includes("keka"));
+  const name = isKato ? "KATŌ" : isKeka ? "Keka" : cafe.name;
+  const subtitle = isKato ? "Specialty Coffee" : isKeka ? "Little Rituals, Big Comfort" : "Loyalty Dashboard";
+  const items = cafeNavigation.filter((item) => userRole !== "CASHIER" || !("adminOnly" in item));
 
-  const mbVape = isMbVape(cafe);
-  const normalizedCafeName = cafe.name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-
-  const isKato =
-    cafe.slug.toLowerCase().includes("kato") ||
-    normalizedCafeName.includes("kato");
-  const isKeka =
-    cafe.slug.toLowerCase().includes("keka") ||
-    normalizedCafeName.includes("keka");
-
-  const navigationItems =
-    userRole === "CASHIER"
-      ? cafeNavigation.filter(
-          (item) =>
-            item.href === "/dashboard" ||
-            item.href === "/dashboard/members" ||
-            item.href === "/dashboard/scanner" ||
-            item.href === "/dashboard/scanner/phone",
-        )
-      : cafeNavigation;
-
-  function isActive(href: string) {
-    return isDashboardCurrentPage(pathname, href);
+  let mark: ReactNode;
+  if (isMbVape(cafe)) {
+    mark = <MbVapeLogo className="h-10 w-11 shrink-0 border border-black/10 p-1" />;
+  } else if (isKato) {
+    mark = (
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#102B49] text-[#E9E6D8]" aria-hidden="true">
+        <KatoMark size={25} />
+      </span>
+    );
+  } else if (cafe.logoUrl) {
+    mark = (
+      // Business logos can be hosted by the business.
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={cafe.logoUrl} alt="" className={`size-10 shrink-0 rounded-xl ${isKeka ? "object-contain" : "border object-cover"}`} style={{ borderColor: theme.border }} />
+    );
+  } else {
+    mark = (
+      <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-xl text-base font-semibold" style={{ backgroundColor: theme.accentSoft, color: theme.accent }}>
+        {name.charAt(0).toUpperCase()}
+      </span>
+    );
   }
 
-  const currentPage =
-    navigationItems.find((item) => isActive(item.href))
-      ?.label || "Overview";
-
-  return (
-    <DashboardViewport>
-      <aside
-        className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r lg:flex lg:flex-col"
-        style={{
-          borderColor: theme.border,
-          backgroundColor: theme.surface,
-        }}
-      >
-        <div
-          className="flex min-h-24 items-center border-b px-6"
-          style={{
-            borderColor: theme.border,
-          }}
-        >
-          <div className="flex min-w-0 items-center gap-3">
-            {mbVape ? (
-              <MbVapeLogo className="h-11 w-14 border border-black/10 p-1" />
-            ) : isKato ? (
-              <div
-                className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full"
-                style={{
-                  backgroundColor: "#102B49",
-                  color: "#E9E6D8",
-                }}
-              >
-                <KatoMark size={31} />
-              </div>
-            ) : isKeka && cafe.logoUrl ? (
-              <img
-                src={cafe.logoUrl}
-                alt="Keka logo"
-                className="h-14 w-14 shrink-0 object-contain"
-              />
-            ) : cafe.logoUrl ? (
-              <img
-                src={cafe.logoUrl}
-                alt={`${cafe.name} logo`}
-                className="h-12 w-12 rounded-xl border object-cover"
-                style={{ borderColor: theme.border }}
-              />
-            ) : (
-              <div
-                className="flex h-12 w-12 items-center justify-center rounded-xl text-lg font-bold"
-                style={{
-                  backgroundColor: theme.accentSoft,
-                  color: theme.accent,
-                }}
-              >
-                {cafe.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-
-            <div className="min-w-0">
-              <p
-                className={
-                  isKato
-                    ? "truncate text-xl font-medium tracking-[0.08em]"
-                    : "truncate text-lg font-semibold tracking-tight"
-                }
-                style={{ color: theme.textPrimary }}
-              >
-                {isKato ? "KATŌ" : isKeka ? "Keka" : cafe.name}
-              </p>
-
-              <p
-                className={
-                  isKato
-                    ? "mt-1 text-[9px] font-semibold uppercase tracking-[0.22em]"
-                    : "mt-1 text-xs"
-                }
-                style={{ color: theme.textMuted }}
-              >
-                {isKato
-                  ? "Specialty Coffee"
-                  : isKeka
-                    ? "Little Rituals, Big Comfort"
-                    : "Loyalty Dashboard"}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <nav className="flex-1 space-y-1 p-4">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex h-11 items-center gap-3 px-3 text-sm font-medium transition hover:opacity-90"
-                style={{
-                  backgroundColor: active
-                    ? theme.accentSoft
-                    : "transparent",
-                  color: active
-                    ? theme.accent
-                    : theme.textSecondary,
-                  borderRadius: theme.radiusMedium,
-                }}
-              >
-                <Icon size={18} />
-
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div
-          className="border-t p-4"
-          style={{
-            borderColor: theme.border,
-          }}
-        >
-          <div
-            className="mb-3 border px-3 py-3"
-            style={{
-              borderColor: theme.border,
-              backgroundColor: theme.surfaceRaised,
-              borderRadius: theme.radiusMedium,
-            }}
-          >
-            <p
-              className="truncate text-sm font-medium"
-              style={{
-                color: theme.textPrimary,
-              }}
-            >
-              {cafe.name}
-            </p>
-
-            <p
-              className="mt-1 text-xs capitalize"
-              style={{
-                color: theme.textMuted,
-              }}
-            >
-              {cafe.subscriptionStatus
-                .toLowerCase()
-                .replace("_", " ")}
-            </p>
-          </div>
-
-          <LogoutButton />
-        </div>
-      </aside>
-
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain scroll-pt-20 lg:min-h-screen lg:overflow-visible lg:overscroll-auto lg:pl-64">
-        <header
-          className="sticky top-0 z-30 flex h-20 items-center justify-between border-b bg-[var(--dashboard-chrome)] px-5 sm:px-7 lg:bg-[var(--dashboard-desktop-header)] lg:px-10 lg:backdrop-blur-xl"
-          style={{ borderColor: theme.border }}
-        >
-          <div className="flex min-w-0 items-center gap-3">
-            {mbVape ? (
-              <MbVapeLogo className="h-10 w-12 border border-black/10 p-1" />
-            ) : isKato ? (
-              <div
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full lg:hidden"
-                style={{
-                  backgroundColor: "#102B49",
-                  color: "#E9E6D8",
-                }}
-              >
-                <KatoMark size={25} />
-              </div>
-            ) : isKeka && cafe.logoUrl ? (
-              <img
-                src={cafe.logoUrl}
-                alt="Keka logo"
-                className="h-10 w-10 shrink-0 object-contain lg:hidden"
-              />
-            ) : cafe.logoUrl ? (
-              <img
-                src={cafe.logoUrl}
-                alt={`${cafe.name} logo`}
-                className="h-10 w-10 shrink-0 rounded-xl border object-cover lg:hidden"
-                style={{ borderColor: theme.border }}
-              />
-            ) : (
-              <div
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-sm font-semibold lg:hidden"
-                style={{
-                  backgroundColor: theme.accentSoft,
-                  color: theme.accent,
-                }}
-              >
-                {cafe.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-
-            <div className="min-w-0">
-              <p
-                className="text-xs font-medium"
-                style={{
-                  color: theme.textMuted,
-                }}
-              >
-                {isKato ? "KATŌ" : isKeka ? "Keka" : cafe.name}
-              </p>
-
-              <h1
-                className="truncate text-xl font-semibold tracking-tight"
-                style={{
-                  color: theme.textPrimary,
-                }}
-              >
-                {currentPage}
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {userRole !== "CASHIER" && (
-            <Link
-              href="/dashboard/settings"
-              prefetch
-              aria-label="Open settings"
-              className="flex h-10 w-10 touch-manipulation items-center justify-center border text-sm font-medium transition duration-150 active:opacity-80 hover:opacity-80 sm:w-auto sm:gap-2 sm:px-3"
-              style={{
-                borderColor: theme.border,
-                backgroundColor: theme.surface,
-                color: theme.textSecondary,
-                borderRadius: theme.radiusMedium,
-              }}
-            >
-              <Settings size={16} />
-
-              <span className="hidden sm:inline">
-                Settings
-              </span>
-            </Link>
-            )}
-            <MobileLogoutButton />
-          </div>
-        </header>
-
-        <main className="mx-auto w-full max-w-[1500px] px-4 py-6 sm:px-7 lg:px-10 lg:pb-10 lg:pt-9">
-          {children}
-        </main>
-      </div>
-
-      <DashboardMobileNavigation items={navigationItems} />
-    </DashboardViewport>
-  );
+  return <DashboardFrame items={items} name={name} subtitle={subtitle} mark={mark}>{children}</DashboardFrame>;
 }

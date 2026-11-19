@@ -1,6 +1,8 @@
 "use client";
 import type { BusinessType } from "@prisma/client";
 
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
+
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import QRCode from "react-qr-code";
@@ -61,6 +63,7 @@ export default function QrCodeModal({
   onStampDetected,
   onLogoError,
 }: QrCodeModalProps) {
+  const { t, lang, dir, arabic } = useBeLoyalLanguage();
   const isBarbershop = businessType === "BARBERSHOP";
   const normalizedCafeName = cafeName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const isKeka = cafeSlug.toLowerCase().includes("keka") || normalizedCafeName.includes("keka");
@@ -218,7 +221,7 @@ export default function QrCodeModal({
       }}
       role="dialog"
       aria-modal="true"
-      aria-label="Loyalty card QR code"
+      aria-label={t("Loyalty card QR code")} lang={lang} dir={dir}
       onClick={(event) => {
         if (event.target === event.currentTarget) {
           onClose();
@@ -245,8 +248,8 @@ export default function QrCodeModal({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Close QR code"
-          className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border transition hover:opacity-75"
+          aria-label={t("Close QR code")}
+          className="absolute end-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border transition hover:opacity-75"
           style={{
             borderColor: modalBorder,
             backgroundColor: modalSurface,
@@ -294,12 +297,13 @@ export default function QrCodeModal({
           )}
 
           <p className="mt-4 text-lg font-semibold" style={{ color: modalText }}>
-            Your loyalty code
+            {t("Your loyalty code")}
           </p>
 
           <p className="mt-2 text-sm leading-6" style={{ color: modalSecondary }}>
-            Show this code to the {isBarbershop ? "barber" : "cashier"}{" "}
-            after an eligible {isBarbershop ? "service" : "purchase"}.
+            {arabic
+              ? isBarbershop ? "ورّي الكود للحلاق بعد الخدمة المؤهلة." : "ورّي الكود للكاشير بعد عملية شراء مؤهلة."
+              : `Show this code to the ${isBarbershop ? "barber" : "cashier"} after an eligible ${isBarbershop ? "service" : "purchase"}.`}
           </p>
 
           <div

@@ -1,4 +1,5 @@
 "use client";
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import {
   ArrowLeft,
@@ -94,7 +95,8 @@ function playSuccessSound() {
 }
 
 export default function PhoneScannerPage() {
-  const { cafe } = useCafeTheme();
+  const { t } = useBeLoyalLanguage();
+  const { cafe, theme } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
   const personLabel = isBarbershop ? "client" : "customer";
   const scannerRef = useRef<
@@ -404,17 +406,12 @@ export default function PhoneScannerPage() {
         prefetch={false}
         className="hidden lg:inline-flex items-center gap-2 text-sm opacity-60 transition hover:opacity-100"
       >
-        <ArrowLeft size={16} />
-        USB scanner
-      </Link>
+        <ArrowLeft size={16} />{t("USB scanner")}</Link>
 
       <div className="mt-6">
-        <p className="text-sm opacity-60">
-          Mobile camera
-        </p>
+        <p className="text-sm opacity-60">{t("Mobile camera")}</p>
 
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-          Scan {personLabel}
+        <h2 className="mt-2 text-3xl font-semibold tracking-tight">{t("Scan")}{personLabel}
         </h2>
 
         <p className="mt-2 text-sm leading-6 opacity-60">
@@ -439,13 +436,9 @@ export default function PhoneScannerPage() {
                     className="mx-auto animate-spin"
                   />
 
-                  <h3 className="mt-5 text-xl font-semibold">
-                    Starting camera
-                  </h3>
+                  <h3 className="mt-5 text-xl font-semibold">{t("Starting camera")}</h3>
 
-                  <p className="mt-2 text-sm text-white/60">
-                    Allow camera permission when asked.
-                  </p>
+                  <p className="mt-2 text-sm text-white/60">{t("Allow camera permission when asked.")}</p>
                 </div>
               )}
 
@@ -457,7 +450,7 @@ export default function PhoneScannerPage() {
                   />
 
                   <h3 className="mt-5 text-xl font-semibold">
-                    {isBarbershop ? "Recording visit" : "Adding stamp"}
+                    {isBarbershop ? t("Recording visit") : t("Adding stamp")}
                   </h3>
                 </div>
               )}
@@ -470,7 +463,7 @@ export default function PhoneScannerPage() {
                   />
 
                   <p className="mt-5 text-sm font-medium text-emerald-400">
-                    {isBarbershop ? "Visit recorded" : "Stamp added"}
+                    {isBarbershop ? t("Visit recorded") : t("Stamp added")}
                   </p>
 
                   <h3 className="mt-2 text-3xl font-semibold">
@@ -494,9 +487,7 @@ export default function PhoneScannerPage() {
                     className="mx-auto text-amber-400"
                   />
 
-                  <p className="mt-5 text-sm font-medium text-amber-400">
-                    Reward earned
-                  </p>
+                  <p className="mt-5 text-sm font-medium text-amber-400">{t("Reward earned")}</p>
 
                   <h3 className="mt-2 text-3xl font-semibold">
                     {result.customer.name}
@@ -515,12 +506,10 @@ export default function PhoneScannerPage() {
                     className="mx-auto text-red-400"
                   />
 
-                  <h3 className="mt-5 text-xl font-semibold">
-                    Scanner unavailable
-                  </h3>
+                  <h3 className="mt-5 text-xl font-semibold">{t("Scanner unavailable")}</h3>
 
                   <p className="mt-3 max-w-sm text-sm leading-6 text-white/65">
-                    {error}
+                    {t(error)}
                   </p>
 
                   <button
@@ -528,10 +517,9 @@ export default function PhoneScannerPage() {
                     onClick={() =>
                       window.location.reload()
                     }
-                    className="mt-6 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black"
-                  >
-                    Try again
-                  </button>
+                    className="mt-6 rounded-xl px-5 py-3 text-sm font-semibold"
+                    style={{ backgroundColor: theme.accent, color: theme.buttonText }}
+                  >{t("Try again")}</button>
                 </div>
               )}
             </div>
@@ -540,9 +528,7 @@ export default function PhoneScannerPage() {
           {status === "scanning" && (
             <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center">
               <div className="flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-xs font-medium text-white backdrop-blur">
-                <Camera size={14} />
-                Ready to scan
-              </div>
+                <Camera size={14} />{t("Ready to scan")}</div>
             </div>
           )}
         </div>

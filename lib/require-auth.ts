@@ -1,3 +1,4 @@
+import { dashboardPaletteSelect } from "@/lib/business/dashboard-palette";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -38,6 +39,7 @@ export async function requireAuth(
           primaryColor: true,
           secondaryColor: true,
           backgroundColor: true,
+          ...dashboardPaletteSelect,
 
           rewardTarget: true,
           rewardName: true,
@@ -88,6 +90,7 @@ export async function requireAuth(
           primaryColor: true,
           secondaryColor: true,
           backgroundColor: true,
+          ...dashboardPaletteSelect,
 
           rewardTarget: true,
           rewardName: true,
@@ -138,6 +141,7 @@ export async function requireAuth(
           primaryColor: true,
           secondaryColor: true,
           backgroundColor: true,
+          ...dashboardPaletteSelect,
 
           rewardTarget: true,
           rewardName: true,

@@ -1,6 +1,8 @@
 "use client";
+import { getReadableText } from "@/app/card/[token]/card-theme-utils";
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
   CheckCircle2,
@@ -16,10 +18,11 @@ import {
   Share2,
   Trash2,
   X,
+  TriangleAlert,
 } from "lucide-react";
 
+import { ActionButton } from "@/components/ui/action-button";
 import MbVapeStamp from "@/components/brand/MbVapeStamp";
-import { isMbVape } from "@/lib/business/mb-vape";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
@@ -68,9 +71,10 @@ type Props = {
 export default function MemberCard({
   customer: originalCustomer,
 }: Props) {
+  const { t, arabic } = useBeLoyalLanguage();
   const { theme, cafe } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
-  const LoyaltyIcon = isMbVape(cafe) ? MbVapeStamp : isBarbershop ? Scissors : Coffee;
+  const LoyaltyIcon = cafe.businessType === "VAPE" ? MbVapeStamp : isBarbershop ? Scissors : Coffee;
   const personLabel = isBarbershop ? "client" : "member";
   const loyaltyUnit = isBarbershop ? "visit" : "stamp";
 
@@ -93,17 +97,11 @@ export default function MemberCard({
   const [deleteOpen, setDeleteOpen] =
     useState(false);
 
-  const [messageOpen, setMessageOpen] =
-    useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; title: string; text: string } | null>(null);
 
-  const [messageTitle, setMessageTitle] =
-    useState("Done");
-
-  const [messageText, setMessageText] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(false);
+  const [pendingAction, setPendingAction] = useState<"stamp" | "redeem" | "delete" | null>(null);
+  const requestInFlight = useRef(false);
+  const loading = pendingAction !== null;
 
   const [stampFeedback, setStampFeedback] = useState<{
     type: "success" | "error";
@@ -144,13 +142,8 @@ export default function MemberCard({
     ).format(date);
   }, [customer.birthday]);
 
-  function showMessage(
-    title: string,
-    text: string,
-  ) {
-    setMessageTitle(title);
-    setMessageText(text);
-    setMessageOpen(true);
+  function showMessage(type: "success" | "error", title: string, text: string) {
+    setMessage({ type, title, text });
   }
 
   function notifyDashboard() {
@@ -176,6 +169,7 @@ export default function MemberCard({
 
     if (!cardUrl) {
       showMessage(
+        "error",
         "Card unavailable",
         `This ${personLabel} does not have a secure card token yet.`,
       );
@@ -195,6 +189,7 @@ export default function MemberCard({
 
     if (!cardUrl) {
       showMessage(
+        "error",
         "Card unavailable",
         `This ${personLabel} does not have a secure card token yet.`,
       );
@@ -208,6 +203,7 @@ export default function MemberCard({
       );
 
       showMessage(
+        "success",
         "Link copied",
         `The ${personLabel} card link is ready to paste.`,
       );
@@ -215,6 +211,7 @@ export default function MemberCard({
       console.error(error);
 
       showMessage(
+        "error",
         "Copy failed",
         "The browser could not copy the card link.",
       );
@@ -226,6 +223,7 @@ export default function MemberCard({
 
     if (!cardUrl) {
       showMessage(
+        "error",
         "Card unavailable",
         `This ${personLabel} does not have a secure card token yet.`,
       );
@@ -233,14 +231,14 @@ export default function MemberCard({
       return;
     }
 
-    const text =
-      `Welcome to ${cafe.name}, ${customer.name}. ` +
-      "Here is your digital loyalty card.";
+    const text = arabic
+      ? `أهلاً يا ${customer.name} في ${cafe.name}. ده كارت الولاء بتاعك.`
+      : `Welcome to ${cafe.name}, ${customer.name}. Here is your digital loyalty card.`;
 
     try {
       if (navigator.share) {
         await navigator.share({
-          title: `${cafe.name} Loyalty Card`,
+          title: `${cafe.name} — ${t("Loyalty card")}`,
           text,
           url: cardUrl,
         });
@@ -253,6 +251,7 @@ export default function MemberCard({
       );
 
       showMessage(
+        "success",
         "Message copied",
         "Native sharing is unavailable, so the message and link were copied.",
       );
@@ -267,6 +266,7 @@ export default function MemberCard({
       console.error(error);
 
       showMessage(
+        "error",
         "Share failed",
         `The browser could not share the ${personLabel} card.`,
       );
@@ -274,12 +274,14 @@ export default function MemberCard({
   }
 
   async function addStamp() {
-    if (loading || rewardReady) {
+    if (requestInFlight.current || rewardReady) {
       return;
     }
 
+    requestInFlight.current = true;
+    setPendingAction("stamp");
+
     try {
-      setLoading(true);
       setStampFeedback(null);
 
       const response = await fetch(
@@ -347,17 +349,20 @@ export default function MemberCard({
         text: error instanceof Error ? error.message : "Something went wrong.",
       });
     } finally {
-      setLoading(false);
+      requestInFlight.current = false;
+      setPendingAction(null);
     }
   }
 
   async function redeemReward() {
-    if (loading || !rewardReady) {
+    if (requestInFlight.current || !rewardReady) {
       return;
     }
 
+    requestInFlight.current = true;
+    setPendingAction("redeem");
+
     try {
-      setLoading(true);
 
       const response = await fetch(
         "/api/customers/redeem",
@@ -409,30 +414,35 @@ export default function MemberCard({
       notifyDashboard();
 
       showMessage(
+        "success",
         "Reward redeemed",
-        `${cafe.rewardName} was redeemed successfully.`,
+        arabic ? `تم صرف مكافأة ${cafe.rewardName}.` : `${cafe.rewardName} was redeemed successfully.`,
       );
     } catch (error) {
       console.error(error);
 
       showMessage(
+        "error",
         "Could not redeem reward",
         error instanceof Error
           ? error.message
           : "Something went wrong.",
       );
     } finally {
-      setLoading(false);
+      requestInFlight.current = false;
+      setPendingAction(null);
     }
   }
 
   async function deleteMember() {
-    if (loading) {
+    if (requestInFlight.current) {
       return;
     }
 
+    requestInFlight.current = true;
+    setPendingAction("delete");
+
     try {
-      setLoading(true);
 
       const response = await fetch(
         `/api/customers/${customer.id}`,
@@ -473,13 +483,15 @@ export default function MemberCard({
       console.error(error);
 
       showMessage(
+        "error",
         "Delete failed",
         error instanceof Error
           ? error.message
           : "Something went wrong.",
       );
     } finally {
-      setLoading(false);
+      requestInFlight.current = false;
+      setPendingAction(null);
     }
   }
 
@@ -495,6 +507,7 @@ export default function MemberCard({
     notifyDashboard();
 
     showMessage(
+      "success",
       isBarbershop ? "Client updated" : "Member updated",
       `The ${personLabel} details were saved successfully.`,
     );
@@ -600,7 +613,7 @@ export default function MemberCard({
             }}
           >
             {rewardReady
-              ? "Reward ready"
+              ? t("Reward ready")
               : `${visibleStamps}/${paidStampTarget}`}
           </div>
         </div>
@@ -710,7 +723,7 @@ export default function MemberCard({
                     <span className="truncate">{customer.memberNumber}</span>
                     <span aria-hidden="true">·</span>
                     <span style={{ color: rewardReady ? theme.success : theme.textSecondary }}>
-                      {rewardReady ? "Reward ready" : `${visibleStamps}/${paidStampTarget} ${loyaltyUnit}s`}
+                      {rewardReady ? t("Reward ready") : `${visibleStamps}/${paidStampTarget} ${loyaltyUnit}s`}
                     </span>
                   </div>
                 </div>
@@ -719,7 +732,7 @@ export default function MemberCard({
               <button
                 type="button"
                 onClick={() => setProfileOpen(false)}
-                aria-label="Close customer details"
+                aria-label={t("Close customer details")}
                 className="flex h-9 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full border transition duration-150 active:opacity-80 hover:opacity-80"
                 style={{
                   borderColor: theme.border,
@@ -744,7 +757,7 @@ export default function MemberCard({
                 }}
               >
                 <Pencil size={15} />
-                Edit details
+                {t("Edit details")}
               </button>
 
               <button
@@ -784,9 +797,7 @@ export default function MemberCard({
                   <Phone size={14} />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[11px] font-medium" style={{ color: theme.textMuted }}>
-                    Phone number
-                  </p>
+                  <p className="text-[11px] font-medium" style={{ color: theme.textMuted }}>{t("Phone number")}</p>
                   <p className="mt-0.5 break-all text-sm font-medium" style={{ color: theme.textPrimary }}>
                     {customer.phone}
                   </p>
@@ -806,9 +817,7 @@ export default function MemberCard({
                   <CalendarDays size={14} />
                 </div>
                 <div>
-                  <p className="text-[11px] font-medium" style={{ color: theme.textMuted }}>
-                    Birthday
-                  </p>
+                  <p className="text-[11px] font-medium" style={{ color: theme.textMuted }}>{t("Birthday")}</p>
                   <p className="mt-0.5 text-sm font-medium" style={{ color: theme.textPrimary }}>
                     {formattedBirthday}
                   </p>
@@ -865,7 +874,7 @@ export default function MemberCard({
                   }}
                 >
                   {rewardReady
-                    ? "Reward ready"
+                    ? t("Reward ready")
                     : `${visibleStamps}/${paidStampTarget}`}
                 </p>
               </div>
@@ -994,7 +1003,7 @@ export default function MemberCard({
                     theme.textMuted,
                 }}
               >
-                {isBarbershop ? "Client card" : "Customer card"}
+                {isBarbershop ? "Client card" : t("Customer card")}
               </p>
 
               <div className="grid grid-cols-3 gap-2">
@@ -1088,24 +1097,20 @@ export default function MemberCard({
             className="shrink-0 border-t px-4 pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:px-6"
             style={{ borderColor: theme.border }}
           >
-            <button
-              type="button"
+            <ActionButton
               onClick={rewardReady ? () => setRedeemOpen(true) : addStamp}
               disabled={loading}
-              aria-busy={loading}
-              className="flex h-12 w-full touch-manipulation items-center justify-center gap-2 text-sm font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
+              pending={pendingAction === "stamp"}
+              icon={rewardReady ? <Gift size={18} /> : <LoyaltyIcon size={18} />}
+              className="flex min-h-12 w-full items-center justify-center gap-2 px-3 py-2.5 text-sm font-semibold pointer-fine:hover:opacity-90 active:opacity-80 disabled:opacity-75"
               style={{
                 backgroundColor: rewardReady ? theme.success : theme.accent,
-                color: rewardReady ? "#ffffff" : theme.buttonText,
+                color: rewardReady ? getReadableText(theme.success) : theme.buttonText,
                 borderRadius: theme.radiusMedium,
               }}
             >
-              {rewardReady ? (
-                <><Gift size={18} aria-hidden="true" /> Redeem {cafe.rewardName}</>
-              ) : (
-                <><LoyaltyIcon size={18} aria-hidden="true" /> {isBarbershop ? "Record Visit" : "Add Stamp"}</>
-              )}
-            </button>
+              {rewardReady ? `Redeem ${cafe.rewardName}` : isBarbershop ? t("Record Visit") : t("Add Stamp")}
+            </ActionButton>
             <p
               role="status"
               className="mt-1.5 h-8 overflow-y-auto text-xs leading-4"
@@ -1113,24 +1118,17 @@ export default function MemberCard({
                 color: stampFeedback?.type === "error" ? theme.danger : theme.textSecondary,
               }}
             >
-              {loading && !rewardReady
-                ? (isBarbershop ? "Recording visit…" : "Adding stamp…")
-                : stampFeedback?.text}
+              {pendingAction === "stamp"
+                ? (isBarbershop ? t("Recording visit…") : t("Adding stamp…"))
+                : stampFeedback && t(stampFeedback.text)}
             </p>
           </div>
         </DialogContent>
       </Dialog>
 
-      <EditMemberDialog
-        customer={customer}
-        open={editOpen}
-        onOpenChange={
-          setEditOpen
-        }
-        onUpdated={
-          handleMemberUpdated
-        }
-      />
+      {editOpen && (
+        <EditMemberDialog customer={customer} onOpenChange={setEditOpen} onUpdated={handleMemberUpdated} />
+      )}
 
       <AlertDialog
         open={redeemOpen}
@@ -1150,8 +1148,7 @@ export default function MemberCard({
           }}
         >
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Redeem{" "}
+            <AlertDialogTitle>{t("Redeem")}{" "}
               {cafe.rewardName}?
             </AlertDialogTitle>
 
@@ -1174,9 +1171,7 @@ export default function MemberCard({
               style={
                 standardButtonStyle
               }
-            >
-              Cancel
-            </AlertDialogCancel>
+            >{t("Cancel")}</AlertDialogCancel>
 
             <AlertDialogAction
               onClick={redeemReward}
@@ -1257,9 +1252,7 @@ export default function MemberCard({
               style={
                 standardButtonStyle
               }
-            >
-              Cancel
-            </AlertDialogCancel>
+            >{t("Cancel")}</AlertDialogCancel>
 
             <AlertDialogAction
               onClick={
@@ -1280,10 +1273,8 @@ export default function MemberCard({
       </AlertDialog>
 
       <AlertDialog
-        open={messageOpen}
-        onOpenChange={
-          setMessageOpen
-        }
+        open={message !== null}
+        onOpenChange={(open) => { if (!open) setMessage(null); }}
       >
         <AlertDialogContent
           className="border"
@@ -1301,18 +1292,16 @@ export default function MemberCard({
               className="mb-2 flex h-11 w-11 items-center justify-center rounded-full"
               style={{
                 backgroundColor:
-                  `${theme.success}18`,
+                  `${message?.type === "error" ? theme.danger : theme.success}18`,
                 color:
-                  theme.success,
+                  message?.type === "error" ? theme.danger : theme.success,
               }}
             >
-              <CheckCircle2
-                size={22}
-              />
+              {message?.type === "error" ? <TriangleAlert size={22} aria-hidden /> : <CheckCircle2 size={22} aria-hidden />}
             </div>
 
             <AlertDialogTitle>
-              {messageTitle}
+              {t(message?.title ?? "")}
             </AlertDialogTitle>
 
             <AlertDialogDescription
@@ -1321,14 +1310,14 @@ export default function MemberCard({
                   theme.textMuted,
               }}
             >
-              {messageText}
+              {t(message?.text ?? "")}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <AlertDialogFooter>
             <AlertDialogAction
               onClick={() =>
-                setMessageOpen(false)
+                setMessage(null)
               }
               className="hover:opacity-90"
               style={{
@@ -1337,9 +1326,7 @@ export default function MemberCard({
                 color:
                   theme.buttonText,
               }}
-            >
-              Close
-            </AlertDialogAction>
+            >{t("Close")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

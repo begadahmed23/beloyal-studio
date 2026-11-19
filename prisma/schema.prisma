@@ -17,6 +17,10 @@ model Cafe {
   primaryColor                  String                     @default("#8e6045")
   secondaryColor                String                     @default("#d6b08c")
   backgroundColor               String                     @default("#0c0c0c")
+  dashboardTheme                CafeTheme?
+  dashboardPrimaryColor         String?
+  dashboardSecondaryColor       String?
+  dashboardBackgroundColor      String?
   rewardTarget                  Int                        @default(7)
   rewardName                    String                     @default("Free Drink")
   rewardDescription             String?

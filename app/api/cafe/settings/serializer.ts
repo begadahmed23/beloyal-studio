@@ -1,3 +1,4 @@
+import { getDashboardPalette } from "@/lib/business/dashboard-palette";
 import {
   BusinessType,
   CafeTheme,
@@ -5,7 +6,7 @@ import {
   SubscriptionStatus,
 } from "@prisma/client";
 
-export type CafeSettingsRecord = {
+export type CafeSettingsRecord = Parameters<typeof getDashboardPalette>[0] & {
   id: string;
   name: string;
   slug: string;
@@ -13,9 +14,9 @@ export type CafeSettingsRecord = {
   logoUrl: string | null;
   theme: CafeTheme;
 
-  primaryColor: string | null;
-  secondaryColor: string | null;
-  backgroundColor: string | null;
+  primaryColor: string;
+  secondaryColor: string;
+  backgroundColor: string;
 
   rewardTarget: number;
   rewardName: string;
@@ -57,11 +58,7 @@ export function serializeCafeSettings(cafe: CafeSettingsRecord) {
     slug: cafe.slug,
     businessType: cafe.businessType,
     logoUrl: cafe.logoUrl,
-    theme: cafe.theme,
-
-    primaryColor: cafe.primaryColor,
-    secondaryColor: cafe.secondaryColor,
-    backgroundColor: cafe.backgroundColor,
+    ...getDashboardPalette(cafe),
 
     rewardTarget: cafe.rewardTarget,
     rewardName: cafe.rewardName,

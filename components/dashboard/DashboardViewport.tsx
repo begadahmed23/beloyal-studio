@@ -3,6 +3,8 @@
 import type { ReactNode } from "react";
 
 import { isLightColor, normalizeHex } from "@/app/card/[token]/card-theme-utils";
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
+import { dashboardThemeVariables } from "@/lib/cafe-theme";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 export default function DashboardViewport({
@@ -13,6 +15,7 @@ export default function DashboardViewport({
   className?: string;
 }) {
   const { theme } = useCafeTheme();
+  const { dir, lang } = useBeLoyalLanguage();
   const chromeColor = normalizeHex(theme.surface, "#fffefa");
   const pageColor = normalizeHex(theme.pageBackground, chromeColor);
   const colorScheme = isLightColor(chromeColor) ? "light" : "dark";
@@ -20,8 +23,10 @@ export default function DashboardViewport({
   return (
     <div
       data-dashboard-viewport=""
+      dir={dir}
+      lang={lang}
       className={`flex h-dvh min-w-0 flex-col overflow-hidden lg:block lg:h-auto lg:min-h-screen lg:overflow-visible ${className}`}
-      style={{ backgroundColor: theme.pageBackground, color: theme.textPrimary }}
+      style={{ ...dashboardThemeVariables(theme), backgroundColor: theme.pageBackground, color: theme.textPrimary }}
     >
       {/* Safari can extend the document background into the area around its controls. */}
       <style>{`

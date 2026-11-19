@@ -1,4 +1,5 @@
 "use client";
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "react-qr-code";
@@ -15,6 +16,7 @@ import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 import { exportJoinPoster, POSTER_HEIGHT, POSTER_WIDTH } from "./export-join-poster";
 
 export default function JoinQRCode() {
+  const { t } = useBeLoyalLanguage();
   const { theme, cafe } = useCafeTheme();
   const logoUrl = isMbVape(cafe) ? MB_VAPE_LOGO_URL : cafe.logoUrl;
   const isBarbershop = cafe.businessType === "BARBERSHOP";
@@ -207,7 +209,7 @@ export default function JoinQRCode() {
                   <Copy size={17} />
                 )}
 
-                {copied ? "Link copied" : "Copy link"}
+                {copied ? "Link copied" : t("Copy link")}
               </button>
 
               <button

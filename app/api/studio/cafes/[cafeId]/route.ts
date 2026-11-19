@@ -1,3 +1,4 @@
+import { dashboardPaletteSelect, getDashboardPalette } from "@/lib/business/dashboard-palette";
 import { NextRequest, NextResponse } from "next/server";
 import {
   CafeTheme,
@@ -23,6 +24,7 @@ const selectCafe = {
   primaryColor: true,
   secondaryColor: true,
   backgroundColor: true,
+  ...dashboardPaletteSelect,
   rewardTarget: true,
   rewardName: true,
   rewardDescription: true,
@@ -101,6 +103,7 @@ async function normalizeCafe(cafe: CafeResult) {
 
   return {
     ...cafe,
+    ...getDashboardPalette(cafe),
     monthlyPrice: cafe.monthlyPrice?.toNumber() ?? null,
     minimumPurchaseAmount:
       cafe.minimumPurchaseAmount?.toNumber() ?? null,
@@ -336,25 +339,25 @@ export async function PATCH(
         );
       }
 
-      data.theme = body.theme as CafeTheme;
+      data.dashboardTheme = body.theme as CafeTheme;
     }
 
-    for (const field of [
-      "primaryColor",
-      "secondaryColor",
-      "backgroundColor",
+    for (const [field, column] of [
+      ["primaryColor", "dashboardPrimaryColor"],
+      ["secondaryColor", "dashboardSecondaryColor"],
+      ["backgroundColor", "dashboardBackgroundColor"],
     ] as const) {
       if (field in body) {
         const value = requiredText(body[field]);
 
-        if (!value) {
+        if (!value || !/^#[0-9a-f]{6}$/i.test(value)) {
           return NextResponse.json(
-            { message: `${field} is required.` },
+            { message: `${field} must be a six-digit hex color.` },
             { status: 400 }
           );
         }
 
-        data[field] = value;
+        data[column] = value;
       }
     }
 
@@ -597,7 +600,7 @@ export async function PATCH(
       );
     }
 
-    if (["name", "logoUrl", "theme", "primaryColor", "secondaryColor", "backgroundColor"].some((field) => field in data)) {
+    if (["name", "logoUrl"].some((field) => field in data)) {
       scheduleGoogleWalletBrandUpdate(cafe);
     }
 

@@ -22,7 +22,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { businessTypeLabels, getBusinessTerminology } from "@/lib/business/terminology";
-import { getBusinessThemeOptions, getDefaultBusinessTheme } from "@/lib/cafe-theme";
+import ThemeGallery from "@/components/theme/ThemeGallery";
+import { getDefaultBusinessTheme } from "@/lib/cafe-theme";
 
 import BusinessTypeSelector from "./BusinessTypeSelector";
 import type { BusinessType } from "./studio-types";
@@ -71,8 +72,6 @@ export default function CreateCafeDialog({
   const terminology =
     getBusinessTerminology(businessType);
   const businessLabel = businessTypeLabels[businessType];
-  const availableThemes =
-    getBusinessThemeOptions(businessType);
 
   function resetForm() {
     setBusinessType("CAFE");
@@ -503,29 +502,10 @@ export default function CreateCafeDialog({
                 </div>
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-medium text-[#48484D]">
-                  Card theme
-                </label>
-
-                <select
-                  value={theme}
-                  onChange={(event) =>
-                    setTheme(event.target.value)
-                  }
-                  disabled={loading}
-                  className={inputClassName}
-                >
-                  {availableThemes.map((themeOption) => (
-                    <option
-                      key={themeOption.value}
-                      value={themeOption.value}
-                    >
-                      {themeOption.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            </div>
+            <div className="mt-5">
+              <p className="mb-2 text-sm font-medium text-[#48484D]">Dashboard theme</p>
+              <ThemeGallery value={theme} onChange={setTheme} disabled={loading} />
             </div>
 
             <div className="mt-5 flex items-start gap-3 rounded-xl border border-black/[0.06] bg-gradient-to-r from-[#F4F5F6] to-[#FAFAFB] px-4 py-3.5">

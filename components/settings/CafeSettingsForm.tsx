@@ -1,12 +1,13 @@
 "use client";
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import MbVapeLogo from "@/components/brand/MbVapeLogo";
 import { isMbVape } from "@/lib/business/mb-vape";
 import { dashboardSettingsSections, type DashboardSettingsSection } from "@/lib/business/settings-sections";
+import ThemeGallery from "@/components/theme/ThemeGallery";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 import {
-  Check,
   Coffee,
   Gift,
   ImagePlus,
@@ -33,10 +34,7 @@ import {
   useCafeTheme,
 } from "@/components/theme/CafeThemeProvider";
 import {
-  getBusinessTheme,
-  getBusinessBrandColors,
-  getBusinessThemeOptions,
-  type BusinessThemeOption,
+  getDashboardThemeColors,
   type CafeThemeConfig,
   type CafeThemeName,
 } from "@/lib/cafe-theme";
@@ -87,9 +85,9 @@ function formatStatus(value: string) {
 export default function CafeSettingsForm({
   accountEmail,
 }: Props) {
+  const { t } = useBeLoyalLanguage();
  const {
   theme,
-  themeName,
   savedThemeName,
   cafe,
   setPreviewTheme,
@@ -109,9 +107,6 @@ export default function CafeSettingsForm({
     cafe.slug.toLowerCase().includes("keka") ||
     normalizedCafeName.includes("keka");
 
-  const themeOptions = getBusinessThemeOptions(
-    cafe.businessType,
-  );
   const PreviewIcon = isBarbershop ? Scissors : Coffee;
 
   const createInitialState = (): FormState => ({
@@ -135,6 +130,7 @@ export default function CafeSettingsForm({
 
   const [draft, setDraft] = useState<Partial<FormState>>({});
   const form = { ...createInitialState(), ...draft };
+  const saveRequest = useRef(false);
   const [saving, setSaving] = useState<DashboardSettingsSection | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [logoPreviewFailed, setLogoPreviewFailed] = useState(false);
@@ -269,7 +265,9 @@ export default function CafeSettingsForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>, section: DashboardSettingsSection) {
     event.preventDefault();
-    if (saving || (section === "general" && uploadingLogo)) return;
+    if (saveRequest.current || (section === "general" && uploadingLogo)) return;
+
+    saveRequest.current = true;
 
     setSaving(section);
     setMessage(null);
@@ -277,10 +275,8 @@ export default function CafeSettingsForm({
     try {
       const fields = dashboardSettingsSections[section];
       const input = Object.fromEntries(fields.map((field) => [field, form[field]]));
-      if (section === "branding" && !isKato && !isKeka) {
-        const [primaryColor, secondaryColor, backgroundColor] = getBusinessBrandColors(
-          form.theme, cafe.businessType, form.theme === savedThemeName ? cafe : undefined,
-        );
+      if (section === "branding") {
+        const [primaryColor, secondaryColor, backgroundColor] = getDashboardThemeColors(form.theme);
         Object.assign(input, { primaryColor, secondaryColor, backgroundColor });
       }
 
@@ -293,6 +289,7 @@ export default function CafeSettingsForm({
       if (!response.ok) throw new Error(result.error ?? "Unable to save settings.");
 
       applySavedSettings(result.cafe, result.cafe.theme);
+      if (section === "branding") resetPreviewTheme();
       setDraft((current) => {
         const next = { ...current };
         for (const field of fields) {
@@ -304,6 +301,7 @@ export default function CafeSettingsForm({
     } catch (error) {
       setMessage({ section, type: "error", text: error instanceof Error ? error.message : "Unable to save settings." });
     } finally {
+      saveRequest.current = false;
       setSaving(null);
     }
   }
@@ -314,23 +312,23 @@ export default function CafeSettingsForm({
     const dirty = dashboardSettingsSections[section].some((field) => field in draft);
     return (
       <div className="mt-6 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: theme.border }}>
-        <div className="flex flex-wrap justify-end gap-2 sm:ml-auto">
+        <div className="flex flex-wrap justify-end gap-2 sm:ms-auto">
           {dirty && (
             <button type="button" disabled={disabled} onClick={() => resetSection(section)}
               className="flex min-h-11 items-center gap-2 rounded-xl border px-4 text-sm font-medium disabled:opacity-50"
               style={{ borderColor: theme.border, color: theme.textSecondary }}>
-              <RotateCcw size={16} aria-hidden="true" /> Reset
+              <RotateCcw size={16} aria-hidden="true" /> {t("Reset")}
             </button>
           )}
           <button type="submit" disabled={disabled} aria-busy={pending}
             className="flex min-h-11 items-center justify-center gap-2 px-4 text-sm font-semibold disabled:opacity-60"
             style={{ backgroundColor: theme.accent, color: theme.accentText, borderRadius: theme.radiusMedium }}>
             {pending ? <Loader2 size={16} className="motion-safe:animate-spin" aria-hidden="true" /> : <Save size={16} aria-hidden="true" />}
-            {label}
+            {t(label)}
           </button>
         </div>
         <p role="status" className="min-h-5 text-sm sm:order-first" style={{ color: message?.type === "error" ? theme.danger : theme.textSecondary }}>
-          {pending ? "Saving…" : message?.section === section ? message.text : ""}
+          {t(pending ? "Saving…" : message?.section === section ? message.text : "")}
         </p>
       </div>
     );
@@ -363,8 +361,8 @@ export default function CafeSettingsForm({
             {isKato
               ? "KATŌ configuration"
               : isBarbershop
-                ? "Barbershop configuration"
-                : cafe.businessType === "CAFE" ? "Café configuration" : "Business configuration"}
+                ? t("Barbershop configuration")
+                : cafe.businessType === "CAFE" ? t("Café configuration") : t("Business configuration")}
           </p>
 
           <h2
@@ -372,9 +370,7 @@ export default function CafeSettingsForm({
             style={{
               color: theme.textPrimary,
             }}
-          >
-            Settings
-          </h2>
+          >{t("Settings")}</h2>
 
           <p
             className="mt-2 max-w-2xl text-sm leading-6"
@@ -384,7 +380,7 @@ export default function CafeSettingsForm({
           >
             {isKato
               ? "Manage KATŌ’s loyalty program, customer experience, and business controls."
-              : "Customize your loyalty program. Each section saves independently."}
+              : t("Customize your loyalty program. Each section saves independently.")}
           </p>
         </div>
 
@@ -399,7 +395,7 @@ export default function CafeSettingsForm({
           <SectionHeader
            theme={theme}
             icon={Store}
-            title="General"
+            title={t("General")}
             description={`Basic information displayed throughout your ${
               isBarbershop ? "barbershop" : cafe.businessType === "CAFE" ? "café" : "business"
             } dashboard and customer loyalty card.`}
@@ -576,288 +572,17 @@ export default function CafeSettingsForm({
         </form>
         )}
 
-        {!isKato && !isKeka && (
-        <form onSubmit={(event) => handleSubmit(event, "branding")}
-          className="border p-5 sm:p-7"
-          style={cardStyle}
-        >
-          <SectionHeader
-              theme={theme}
-            icon={Palette}
-            title="Branding"
-            description={`Choose the visual identity used across the ${
-              isBarbershop ? "barbershop" : cafe.businessType === "CAFE" ? "café" : "business"
-            } dashboard and customer card.`}
-          />
-
-          <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {themeOptions.map((option) => {
-              const selected = form.theme === option.value;
-              const previewTheme = getBusinessTheme(
-                option.value,
-                cafe.businessType,
-              );
-
-              return (
-                <ThemePreviewOption
-                  key={option.value}
-                  option={option}
-                  selected={selected}
-                  previewTheme={previewTheme}
-                  cafeName={
-                    form.name ||
-                    cafe.name ||
-                    (isBarbershop
-                      ? "Your barbershop"
-                      : "Your business")
-                  }
-                  rewardTarget={getLoyaltyProgressTarget({
-                    rewardTarget: Number(form.rewardTarget) || (isBarbershop ? 3 : 8),
-                  })}
-                  rewardName={
-                    form.rewardName ||
-                    (isBarbershop
-                      ? "Free haircut"
-                      : cafe.businessType === "CAFE" ? "Free drink" : "Member reward")
-                  }
-                  isBarbershop={isBarbershop}
-                  onSelect={() => selectTheme(option.value)}
-                />
-              );
-            })}
+        <form onSubmit={(event) => handleSubmit(event, "branding")} className="border p-5 sm:p-7" style={cardStyle}>
+          <SectionHeader theme={theme} icon={Palette} title={t("Dashboard appearance")}
+            description={t("Choose a palette for the owner and cashier dashboards.")} />
+          <div className="mt-5">
+            <ThemeGallery value={form.theme} onChange={selectTheme} disabled={saving !== null} />
           </div>
-
-          {themeName !== savedThemeName && (
-            <p
-              className="mt-5 text-sm"
-              style={{
-                color: theme.accent,
-              }}
-            >
-              You are previewing an unsaved theme.
-              Select Save Branding to keep it.
-            </p>
+          {"theme" in draft && (
+            <p className="mt-4 text-sm" style={{ color: theme.accent }}>{t("Previewing an unsaved theme.")}</p>
           )}
-          {saveControls("branding", "Save Branding")}
+          {saveControls("branding", "Save appearance")}
         </form>
-
-        )}
-        {isKeka && (
-          <form onSubmit={(event) => handleSubmit(event, "branding")}
-            className="border p-5 sm:p-7"
-            style={cardStyle}
-          >
-            <SectionHeader
-              theme={theme}
-              icon={Palette}
-              title="Customer card appearance"
-              description="Choose the Keka loyalty card style customers see on their phones."
-            />
-
-            <div className="mt-7 grid gap-4 sm:grid-cols-2">
-              {[
-                {
-                  value: "COFFEE_CLASSIC" as CafeThemeName,
-                  label: "Burgundy",
-                  description: "Keka’s deep burgundy with warm cream details.",
-                  background: "#4A0D10",
-                  card: "#741A1D",
-                  accent: "#F4E5C6",
-                },
-                {
-                  value: "MODERN_MINIMAL" as CafeThemeName,
-                  label: "Cream",
-                  description: "Warm cream with burgundy typography and details.",
-                  background: "#F3E5D3",
-                  card: "#FFF6E6",
-                  accent: "#741A1D",
-                },
-              ].map((option) => {
-                const selected = form.theme === option.value;
-
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => selectTheme(option.value)}
-                    className="overflow-hidden border p-3 text-left transition pointer-fine:motion-safe:hover:-translate-y-0.5"
-                    style={{
-                      borderColor: selected ? theme.accent : theme.border,
-                      backgroundColor: theme.surface,
-                      borderRadius: theme.radiusLarge,
-                    }}
-                  >
-                    <div
-                      className="relative min-h-40 overflow-hidden p-5"
-                      style={{
-                        backgroundColor: option.background,
-                        borderRadius: theme.radiusMedium,
-                      }}
-                    >
-                      <div
-                        className="rounded-[22px] border p-4"
-                        style={{
-                          backgroundColor: option.card,
-                          borderColor: option.accent + "33",
-                          color: option.accent,
-                        }}
-                      >
-                        <p className="font-serif text-2xl font-semibold">Keka</p>
-                        <p className="mt-1 text-[9px] uppercase tracking-[0.18em] opacity-65">
-                          Little Rituals, Big Comfort
-                        </p>
-                        <div className="mt-7 flex gap-2">
-                          {[0, 1, 2, 3].map((stamp) => (
-                            <span
-                              key={stamp}
-                              className="h-6 w-6 rounded-[9px] border"
-                              style={{
-                                borderColor: option.accent + "55",
-                                backgroundColor:
-                                  stamp < 3 ? option.accent : "transparent",
-                              }}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      {selected ? (
-                        <span
-                          className="absolute right-4 top-4 flex h-7 w-7 items-center justify-center rounded-full"
-                          style={{
-                            backgroundColor: option.accent,
-                            color: option.card,
-                          }}
-                        >
-                          <Check size={14} />
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="px-2 pb-2 pt-4">
-                      <p className="font-semibold" style={{ color: theme.textPrimary }}>
-                        {option.label}
-                      </p>
-                      <p className="mt-1 text-sm" style={{ color: theme.textMuted }}>
-                        {option.description}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            {saveControls("branding", "Save Card Appearance")}
-          </form>
-        )}
-
-        {isKato && (
-          <form onSubmit={(event) => handleSubmit(event, "branding")}
-            className="border p-5 sm:p-7"
-            style={cardStyle}
-          >
-            <SectionHeader
-              theme={theme}
-              icon={Palette}
-              title="Customer card appearance"
-              description="Choose the KATŌ loyalty card style customers see on their phones."
-            />
-
-            <div className="mt-7 grid gap-4 sm:grid-cols-2">
-              {[
-                {
-                  value: "MODERN_MINIMAL" as CafeThemeName,
-                  label: "Light",
-                  description: "White, navy, and soft stone.",
-                  background: "#F4F7FA",
-                  card: "#FFFFFF",
-                  accent: "#102B49",
-                },
-                {
-                  value: "DARK_LUXURY" as CafeThemeName,
-                  label: "Dark",
-                  description: "Deep navy, cream, and soft white.",
-                  background: "#071A33",
-                  card: "#0D2744",
-                  accent: "#E9E6D8",
-                },
-              ].map((option) => {
-                const selected = form.theme === option.value;
-
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => selectTheme(option.value)}
-                    className="overflow-hidden border p-4 text-left transition pointer-fine:motion-safe:hover:-translate-y-0.5"
-                    style={{
-                      borderColor: selected
-                        ? "#102B49"
-                        : theme.border,
-                      backgroundColor: theme.surface,
-                      borderRadius: theme.radiusMedium,
-                      boxShadow: selected
-                        ? "0 0 0 1px #102B49"
-                        : "none",
-                    }}
-                  >
-                    <div
-                      className="rounded-[18px] p-3"
-                      style={{
-                        backgroundColor: option.background,
-                      }}
-                    >
-                      <div
-                        className="h-20 rounded-[15px] p-3"
-                        style={{
-                          backgroundColor: option.card,
-                        }}
-                      >
-                        <div
-                          className="h-2 w-16 rounded-full"
-                          style={{
-                            backgroundColor: option.accent,
-                          }}
-                        />
-                        <div
-                          className="mt-3 h-8 rounded-lg"
-                          style={{
-                            backgroundColor:
-                              option.value === "DARK_LUXURY"
-                                ? "#102B49"
-                                : "#EEF3F7",
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex items-center justify-between gap-3">
-                      <div>
-                        <p
-                          className="text-sm font-semibold"
-                          style={{ color: theme.textPrimary }}
-                        >
-                          {option.label}
-                        </p>
-                        <p
-                          className="mt-1 text-xs"
-                          style={{ color: theme.textMuted }}
-                        >
-                          {option.description}
-                        </p>
-                      </div>
-
-                      {selected && (
-                        <Check
-                          size={18}
-                          style={{ color: theme.accent }}
-                        />
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            {saveControls("branding", "Save Card Appearance")}
-          </form>
-        )}
 
         <form onSubmit={(event) => handleSubmit(event, "loyalty")}
           className="border p-5 sm:p-7"
@@ -866,7 +591,7 @@ export default function CafeSettingsForm({
           <SectionHeader
               theme={theme}
             icon={Gift}
-            title="Loyalty program"
+            title={t("Loyalty program")}
             description={
               isBarbershop
                 ? "Control how clients earn visits and what they receive after completing their card."
@@ -900,7 +625,7 @@ export default function CafeSettingsForm({
 
             <Field
               theme={theme}
-              label="Reward name"
+              label={t("Reward name")}
               description="The short reward title shown to customers."
             >
               <input
@@ -1074,7 +799,7 @@ export default function CafeSettingsForm({
                     }}
                   >
                     {form.rewardName ||
-                      "Your reward"}
+                      t("Your reward")}
                   </p>
 
                   {form.eligiblePurchaseDescription.trim() && (
@@ -1355,190 +1080,9 @@ export default function CafeSettingsForm({
 
 }
 
-type ThemeOption = BusinessThemeOption;
-
 type ThemedComponentProps = {
   theme: CafeThemeConfig;
 };
-
-function ThemePreviewOption({
-  option,
-  selected,
-  previewTheme,
-  cafeName,
-  rewardTarget,
-  rewardName,
-  isBarbershop,
-  onSelect,
-}: {
-  option: ThemeOption;
-  selected: boolean;
-  previewTheme: CafeThemeConfig;
-  cafeName: string;
-  rewardTarget: number;
-  rewardName: string;
-  isBarbershop: boolean;
-  onSelect: () => void;
-}) {
-  const previewStampCount = Math.min(
-    isBarbershop ? 2 : 5,
-    rewardTarget,
-  );
-  const visibleStampTotal = isBarbershop
-    ? Math.min(Math.max(rewardTarget, 1), 6)
-    : Math.min(Math.max(rewardTarget, 6), 8);
-  const LoyaltyIcon = isBarbershop ? Scissors : Coffee;
-
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={selected}
-      className="group relative overflow-hidden border p-3 text-left transition duration-300 pointer-fine:motion-safe:hover:-translate-y-1"
-      style={{
-        borderColor: selected ? previewTheme.accent : previewTheme.border,
-        backgroundColor: previewTheme.surface,
-        borderRadius: previewTheme.radiusLarge,
-        boxShadow: selected
-          ? `0 22px 55px ${withAlpha(previewTheme.accent, "24")}`
-          : previewTheme.cardShadow,
-      }}
-    >
-      {selected && (
-        <span
-          className="absolute right-5 top-5 z-20 flex h-8 w-8 items-center justify-center rounded-full border"
-          style={{
-            backgroundColor: previewTheme.accent,
-            borderColor: withAlpha(previewTheme.buttonText, "33"),
-            color: previewTheme.buttonText,
-          }}
-        >
-          <Check size={16} strokeWidth={2.5} />
-        </span>
-      )}
-
-      <div
-        className="relative min-h-56 overflow-hidden border p-5 transition duration-300 pointer-fine:motion-safe:group-hover:scale-[1.01]"
-        style={{
-          borderColor: previewTheme.border,
-          borderRadius: previewTheme.radiusMedium,
-          background: `radial-gradient(circle at top right, ${withAlpha(
-            previewTheme.accent,
-            "24"
-          )} 0%, ${previewTheme.surfaceRaised} 42%, ${previewTheme.pageBackground} 100%)`,
-        }}
-      >
-        <div
-          className="absolute -right-10 -top-12 h-32 w-32 rounded-full blur-3xl"
-          style={{ backgroundColor: withAlpha(previewTheme.accent, "2b") }}
-        />
-
-        <div className="relative flex min-h-46 flex-col">
-          <div className="pr-10">
-            <p
-              className="truncate text-[10px] font-semibold uppercase tracking-[0.22em]"
-              style={{ color: previewTheme.textMuted }}
-            >
-              {isBarbershop
-                ? "Barber loyalty card"
-                : "Digital loyalty card"}
-            </p>
-
-            <p
-              className="mt-2 truncate text-xl font-semibold tracking-tight"
-              style={{ color: previewTheme.textPrimary }}
-            >
-              {cafeName}
-            </p>
-          </div>
-
-          <div
-            className={`mt-7 grid gap-2 ${
-              isBarbershop ? "grid-cols-3" : "grid-cols-4"
-            }`}
-          >
-            {Array.from({ length: visibleStampTotal }).map((_, index) => {
-              const filled = index < previewStampCount;
-
-              return (
-                <span
-                  key={index}
-                  className="flex aspect-square items-center justify-center border"
-                  style={{
-                    borderColor: filled
-                      ? withAlpha(previewTheme.accent, "66")
-                      : previewTheme.border,
-                    backgroundColor: filled
-                      ? previewTheme.accentSoft
-                      : previewTheme.surface,
-                    borderRadius: previewTheme.radiusMedium,
-                  }}
-                >
-                  <LoyaltyIcon
-                    size={15}
-                    style={{
-                      color: filled
-                        ? previewTheme.accent
-                        : previewTheme.textMuted,
-                      fill:
-                        isBarbershop || !filled
-                          ? "transparent"
-                          : previewTheme.accent,
-                    }}
-                  />
-                </span>
-              );
-            })}
-          </div>
-
-          <div className="mt-auto pt-6">
-            <div className="flex items-end justify-between gap-3">
-              <div className="min-w-0">
-                <p
-                  className="text-[10px] uppercase tracking-[0.16em]"
-                  style={{ color: previewTheme.textMuted }}
-                >
-                  Your reward
-                </p>
-                <p
-                  className="mt-1 truncate text-sm font-semibold"
-                  style={{ color: previewTheme.accent }}
-                >
-                  {rewardName}
-                </p>
-              </div>
-
-              <span
-                className="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold"
-                style={{
-                  backgroundColor: previewTheme.accent,
-                  color: previewTheme.buttonText,
-                }}
-              >
-                {previewStampCount}/{rewardTarget}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="px-2 pb-2 pt-5">
-        <p
-          className="font-semibold"
-          style={{ color: previewTheme.textPrimary }}
-        >
-          {option.label}
-        </p>
-        <p
-          className="mt-2 text-sm leading-5"
-          style={{ color: previewTheme.textMuted }}
-        >
-          {option.description}
-        </p>
-      </div>
-    </button>
-  );
-}
 
 function SectionHeader({
   theme,
@@ -1641,11 +1185,4 @@ function ReadOnlyItem({
       </p>
     </div>
   );
-}
-
-function withAlpha(color: string, alpha: string) {
-  const cleanColor = color.replace("#", "");
-  return /^[0-9a-fA-F]{6}$/.test(cleanColor)
-    ? `#${cleanColor}${alpha}`
-    : color;
 }

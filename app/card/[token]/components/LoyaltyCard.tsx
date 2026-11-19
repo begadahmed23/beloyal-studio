@@ -1,9 +1,10 @@
 "use client";
+import LanguageToggle, { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import type { BusinessType } from "@prisma/client";
 import { ChevronDown, QrCode, RefreshCw } from "lucide-react";
 import { CardBrandHeader, CardStampStrip, cardFrame } from "@/components/loyalty/CardBrand";
-import { isMbVape, MB_VAPE_IVORY, MB_VAPE_WALNUT } from "@/lib/business/mb-vape";
+import { MB_VAPE_IVORY, MB_VAPE_WALNUT } from "@/lib/business/mb-vape";
 import AppleWalletButton from "./AppleWalletButton";
 import BirthdayCustomerDisplay from "./BirthdayCustomerDisplay";
 import GoogleWalletButton from "./GoogleWalletButton";
@@ -87,25 +88,27 @@ export type LoyaltyCardProps = {
 };
 
 export default function LoyaltyCard(props: LoyaltyCardProps) {
+  const { t, lang, dir } = useBeLoyalLanguage();
   const {
     customer, rewardTarget, visibleStamps, rewardReady, refreshing, onRefresh,
     walletEnabled, googleEnabled, onShowQrCode, onShowFeedback,
     cardBackground, cardBorder, cardIsLight, textPrimary, textSecondary, textMuted,
   } = props;
   const { cafe } = customer;
-  const mbVape = isMbVape(cafe);
+  const mbVape = cafe.businessType === "VAPE";
   const minimumPurchase = Number(cafe.minimumPurchaseAmount);
   const defaultRule = cafe.businessType === "BARBERSHOP" ? "One visit per eligible service." : "One stamp per eligible purchase.";
   const birthday = <BirthdayCustomerDisplay {...props} />;
 
   return (
-    <div className="mx-auto w-full max-w-md">
+    <div className="mx-auto w-full max-w-md" lang={lang} dir={dir}>
+      <div className="mb-3 flex justify-end"><LanguageToggle /></div>
       <article
         aria-label={`${cafe.name} loyalty card`}
         className={cardFrame}
         style={{ backgroundColor: cardBackground, borderColor: cardBorder, color: textPrimary, colorScheme: cardIsLight ? "light" : "dark" }}
       >
-        <CardBrandHeader business={cafe} progress={{ target: rewardTarget, stamps: visibleStamps, ready: rewardReady }}
+        <CardBrandHeader business={cafe} progress={{ target: rewardTarget, stamps: visibleStamps, label: t(rewardReady ? "Reward ready" : cafe.businessType === "BARBERSHOP" ? "Visits" : "Stamps") }}
           logoUrl={props.showLogo ? props.logoUrl : null}
           onLogoError={props.logoUrl ? () => props.onLogoError(props.logoUrl!) : undefined} />
         <CardStampStrip business={cafe} target={rewardTarget} stamps={visibleStamps} accent={props.primaryColor}
@@ -114,12 +117,12 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
         <div className="space-y-3 px-4 py-4 min-[380px]:px-5">
           <div className="grid grid-cols-2 gap-3">
             <div className="min-w-0">
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em]" style={{ color: textMuted }}>Member</p>
-              <h1 className="mt-1 break-words text-base font-semibold leading-tight">{customer.name}</h1>
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em]" style={{ color: textMuted }}>{t("Member")}</p>
+              <h1 className="mt-1 break-words text-base font-semibold leading-tight"><bdi>{customer.name}</bdi></h1>
             </div>
-            <div className="min-w-0 border-l pl-3" style={{ borderColor: cardBorder }}>
-              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em]" style={{ color: textMuted }}>Your reward</p>
-              <p className="mt-1 break-words text-base font-semibold leading-tight">{cafe.rewardName || "Member reward"}</p>
+            <div className="min-w-0 border-s ps-3" style={{ borderColor: cardBorder }}>
+              <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em]" style={{ color: textMuted }}>{t("Your reward")}</p>
+              <p className="mt-1 break-words text-base font-semibold leading-tight"><bdi>{cafe.rewardName || "Member reward"}</bdi></p>
             </div>
           </div>
 
@@ -129,7 +132,7 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
             className="flex min-h-11 w-full touch-manipulation items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-opacity hover:opacity-85"
             style={{ backgroundColor: mbVape ? MB_VAPE_WALNUT : textPrimary, color: mbVape ? MB_VAPE_IVORY : cardBackground }}
           >
-            <QrCode size={18} aria-hidden="true" /> Show QR Code
+            <QrCode size={18} aria-hidden="true" /> {t("Show QR Code")}
           </button>
 
           {(walletEnabled || googleEnabled) && (
@@ -142,24 +145,24 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
           <div className="flex items-start justify-between gap-2 border-t pt-1" style={{ borderColor: cardBorder }}>
             <details className="group min-w-0 flex-1 text-xs leading-5" style={{ color: textSecondary }}>
               <summary className="flex min-h-10 cursor-pointer list-none items-center gap-1.5 font-semibold [&::-webkit-details-marker]:hidden">
-                Card details <ChevronDown size={14} aria-hidden="true" className="group-open:rotate-180" />
+                {t("Card details")} <ChevronDown size={14} aria-hidden="true" className="group-open:rotate-180" />
               </summary>
               <div className="space-y-2 pb-2">
-                <p>{cafe.eligiblePurchaseDescription || defaultRule}</p>
-                {minimumPurchase > 0 && <p>Minimum purchase EGP {minimumPurchase.toLocaleString("en-EG")}</p>}
+                <p>{cafe.eligiblePurchaseDescription || t(defaultRule)}</p>
+                {minimumPurchase > 0 && <p>{t("Minimum purchase")} EGP {minimumPurchase.toLocaleString("en-EG")}</p>}
                 {cafe.rewardDescription && <p>{cafe.rewardDescription}</p>}
-                <p>Member since {props.memberSince}</p>
-                <p>Last updated {props.lastUpdated}</p>
+                <p>{t("Member since")} {props.memberSince}</p>
+                <p>{t("Last updated")} {props.lastUpdated}</p>
                 {cafe.feedbackEnabled && (
                   <button type="button" onClick={onShowFeedback} className="min-h-10 text-sm underline underline-offset-4">
-                    Share your thoughts
+                    {t("Share your thoughts")}
                   </button>
                 )}
               </div>
             </details>
             <button
               type="button"
-              aria-label="Refresh loyalty card"
+              aria-label={t("Refresh loyalty card")}
               onClick={onRefresh}
               disabled={refreshing}
               className="flex size-10 shrink-0 items-center justify-center rounded-lg transition-opacity hover:opacity-70 disabled:opacity-50"

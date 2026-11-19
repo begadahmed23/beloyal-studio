@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Pencil, Save, X } from "lucide-react";
+import { type FormEvent, useRef, useState } from "react";
+import { LoaderCircle, Pencil, Save, X } from "lucide-react";
 
 import {
   Dialog,
@@ -11,6 +11,10 @@ import {
 } from "@/components/ui/dialog";
 
 import { Input } from "@/components/ui/input";
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
+import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
+import { phoneDigits } from "@/lib/business/phone-digits";
+import { isLightColor } from "@/app/card/[token]/card-theme-utils";
 
 type Customer = {
   id: string;
@@ -25,7 +29,6 @@ type Customer = {
 
 type Props = {
   customer: Customer;
-  open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdated: (customer: Customer) => void;
 };
@@ -42,10 +45,12 @@ function birthdayToInputValue(birthday: string) {
 
 export default function EditMemberDialog({
   customer,
-  open,
   onOpenChange,
   onUpdated,
 }: Props) {
+  const { theme } = useCafeTheme();
+  const { t, arabic } = useBeLoyalLanguage();
+  const submitting = useRef(false);
   const [name, setName] = useState(customer.name);
   const [phone, setPhone] = useState(customer.phone);
   const [instagram, setInstagram] = useState(customer.instagram ?? "");
@@ -56,17 +61,9 @@ export default function EditMemberDialog({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (!open) return;
-
-    setName(customer.name);
-    setPhone(customer.phone);
-    setInstagram(customer.instagram ?? "");
-    setBirthday(birthdayToInputValue(customer.birthday));
-    setError("");
-  }, [open, customer]);
-
-  async function updateMember() {
+  async function updateMember(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (submitting.current) return;
     const cleanName = name.trim();
     const cleanPhone = phone.trim();
     const cleanInstagram = instagram.trim().replace(/^@+/, "").toLowerCase();
@@ -91,6 +88,7 @@ export default function EditMemberDialog({
       return;
     }
 
+    submitting.current = true;
     try {
       setLoading(true);
       setError("");
@@ -127,333 +125,78 @@ export default function EditMemberDialog({
           : "Failed to update member."
       );
     } finally {
+      submitting.current = false;
       setLoading(false);
     }
   }
 
-  function closeDialog() {
-    if (loading) return;
-
-    setError("");
-    onOpenChange(false);
-  }
+  const fieldClass = "h-12 min-w-0 rounded-xl text-base focus-visible:ring-1";
+  const fieldStyle = {
+    backgroundColor: theme.inputBackground,
+    borderColor: theme.inputBorder,
+    color: theme.textPrimary,
+    colorScheme: isLightColor(theme.inputBackground) ? "light" : "dark",
+  };
+  const actionClass = "flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border px-2 text-sm font-semibold transition-opacity active:opacity-75 disabled:opacity-60";
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="
-          fixed
-          bottom-0
-          left-0
-          top-auto
-          z-50
-          flex
-          max-h-[calc(100dvh-0.5rem)]
-          w-full
-          max-w-none
-          translate-x-0
-          translate-y-0
-          flex-col
-          gap-0
-          overflow-hidden
-          rounded-b-none
-          rounded-t-[28px]
-          border
-          border-white/[0.08]
-          bg-[#0d0d0d]
-          p-0
-          text-white
-          shadow-[0_30px_100px_rgba(0,0,0,0.65)]
-          sm:bottom-auto
-          sm:left-1/2
-          sm:top-1/2
-          sm:max-h-[90vh]
-          sm:w-[calc(100%-2rem)]
-          sm:max-w-md
-          sm:-translate-x-1/2
-          sm:-translate-y-1/2
-          sm:rounded-[28px]
-          [&>button]:hidden
-        "
-      >
-        {/* Header */}
-        <div className="shrink-0 border-b border-white/[0.07] px-4 pb-4 pt-3 sm:px-6 sm:py-5">
-          <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/15 sm:hidden" />
-
-          <DialogHeader>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.06] text-white">
-                  <Pencil size={17} strokeWidth={1.8} />
-                </div>
-
-                <DialogTitle className="text-2xl font-semibold tracking-[-0.03em] text-white">
-                  Edit member
-                </DialogTitle>
-
-                <p className="mt-1.5 text-sm leading-6 text-[#9b9b9b]">
-                  Update the member&apos;s personal information.
-                </p>
+    <Dialog open onOpenChange={(nextOpen) => { if (!submitting.current) onOpenChange(nextOpen); }}>
+      <DialogContent showCloseButton={false}
+        className="fixed left-2 right-2 bottom-2 top-auto flex max-h-[calc(100dvh-1rem)] w-auto max-w-none translate-x-0 translate-y-0 flex-col gap-0 overflow-hidden rounded-[24px] border p-0 sm:right-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[calc(100%-2rem)] sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2"
+        style={{ boxShadow: theme.cardShadow }}>
+        <DialogHeader className="shrink-0 border-b p-4 sm:p-6" style={{ borderColor: theme.border }}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="mb-3 inline-flex rounded-xl p-2.5" style={{ backgroundColor: theme.accentSoft, color: theme.accent }}>
+                <Pencil size={18} aria-hidden />
               </div>
-
-              <button
-                type="button"
-                onClick={closeDialog}
-                disabled={loading}
-                aria-label="Close edit member dialog"
-                className="
-                  flex
-                  h-9
-                  w-9
-                  shrink-0
-                  items-center
-                  justify-center
-                  rounded-full
-                  border
-                  border-white/[0.08]
-                  bg-white/[0.04]
-                  text-[#a3a3a3]
-                  transition
-                  hover:bg-white/[0.08]
-                  hover:text-white
-                  disabled:cursor-not-allowed
-                  disabled:opacity-50
-                "
-              >
-                <X size={17} />
-              </button>
+              <DialogTitle className="text-xl font-semibold">{t("Edit member")}</DialogTitle>
+              <p className="mt-2 text-sm" style={{ color: theme.textMuted }}>{t("Update the member's personal information.")}</p>
             </div>
-          </DialogHeader>
-        </div>
-
-        {/* Form */}
-        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:py-6">
-          <div>
-            <label
-              htmlFor="edit-member-name"
-              className="mb-2 block text-sm font-medium text-[#d6d6d6]"
-            >
-              Full name
-            </label>
-
-            <Input
-              id="edit-member-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-              placeholder="Ahmed Mohamed"
-              autoComplete="name"
-              disabled={loading}
-              className="
-                h-12
-                rounded-xl
-                border-white/[0.09]
-                bg-white/[0.045]
-                px-4
-                text-white
-                shadow-none
-                outline-none
-                transition
-                placeholder:text-[#5f5f5f]
-                hover:border-white/[0.15]
-                focus-visible:border-white/30
-                focus-visible:ring-2
-                focus-visible:ring-white/[0.08]
-                disabled:cursor-not-allowed
-                disabled:opacity-60
-              "
-            />
+            <button type="button" disabled={loading} aria-label={t("Close edit member dialog")}
+              className="grid size-11 shrink-0 place-items-center rounded-xl border transition-opacity active:opacity-75 disabled:opacity-60"
+              style={{ borderColor: theme.border, color: theme.textSecondary }} onClick={() => onOpenChange(false)}>
+              <X size={18} aria-hidden />
+            </button>
           </div>
-
-          <div>
-            <label
-              htmlFor="edit-member-phone"
-              className="mb-2 block text-sm font-medium text-[#d6d6d6]"
-            >
-              Phone number <span className="text-[#6f6f6f]">(optional)</span>
-            </label>
-
-            <Input
-              id="edit-member-phone"
-              value={phone}
-              onChange={(event) => {
-                const digits = event.target.value
-                  .replace(/\D/g, "")
-                  .slice(0, 11);
-
-                setPhone(digits);
-              }}
-              inputMode="numeric"
-              maxLength={11}
-              placeholder="01012345678"
-              autoComplete="tel"
-              disabled={loading}
-              className="
-                h-12
-                rounded-xl
-                border-white/[0.09]
-                bg-white/[0.045]
-                px-4
-                text-white
-                shadow-none
-                outline-none
-                transition
-                placeholder:text-[#5f5f5f]
-                hover:border-white/[0.15]
-                focus-visible:border-white/30
-                focus-visible:ring-2
-                focus-visible:ring-white/[0.08]
-                disabled:cursor-not-allowed
-                disabled:opacity-60
-              "
-            />
-
-            <p className="mt-2 text-xs text-[#6f6f6f]">
-              Use phone or Instagram. Phone must contain exactly 11 digits.
-            </p>
-          </div>
-
-          <div>
-            <label
-              htmlFor="edit-member-instagram"
-              className="mb-2 block text-sm font-medium text-[#d6d6d6]"
-            >
-              Instagram <span className="text-[#6f6f6f]">(optional)</span>
-            </label>
-
-            <Input
-              id="edit-member-instagram"
-              value={instagram}
-              onChange={(event) =>
-                setInstagram(event.target.value.replace(/^@+/, "").slice(0, 30))
-              }
-              placeholder="@username"
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              disabled={loading}
-              className="h-12 rounded-xl border-white/[0.09] bg-white/[0.045] px-4 text-base text-white shadow-none outline-none transition placeholder:text-[#5f5f5f] hover:border-white/[0.15] focus-visible:border-white/30 focus-visible:ring-2 focus-visible:ring-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
-            />
-
-            <p className="mt-2 text-xs text-[#6f6f6f]">
-              You only need one contact method: phone or Instagram.
-            </p>
-          </div>
-
-          <div>
-            <label
-              htmlFor="edit-member-birthday"
-              className="mb-2 block text-sm font-medium text-[#d6d6d6]"
-            >
-              Birthday
-            </label>
-
-            <Input
-              id="edit-member-birthday"
-              type="date"
-              value={birthday}
-              onChange={(event) => setBirthday(event.target.value)}
-              disabled={loading}
-              className="
-                h-12
-                rounded-xl
-                border-white/[0.09]
-                bg-white/[0.045]
-                px-4
-                text-white
-                shadow-none
-                outline-none
-                transition
-                [color-scheme:dark]
-                hover:border-white/[0.15]
-                focus-visible:border-white/30
-                focus-visible:ring-2
-                focus-visible:ring-white/[0.08]
-                disabled:cursor-not-allowed
-                disabled:opacity-60
-              "
-            />
-          </div>
-
-          {error && (
-            <div
-              role="alert"
-              className="
-                rounded-xl
-                border
-                border-red-400/20
-                bg-red-400/[0.08]
-                px-4
-                py-3
-                text-sm
-                leading-5
-                text-red-200
-              "
-            >
-              {error}
-            </div>
-          )}
-
-          {/* Actions */}
+        </DialogHeader>
+        <form onSubmit={updateMember} aria-busy={loading} className="min-h-0 space-y-4 overflow-y-auto overscroll-contain px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6">
+          <label className="block space-y-2">
+            <span className="font-medium">{t("Full name")}</span>
+            <Input value={name} onChange={(event) => setName(event.target.value)} autoComplete="name"
+              dir="auto" maxLength={80} disabled={loading} className={fieldClass} style={fieldStyle} />
+          </label>
+          <label className="block space-y-2">
+            <span className="font-medium">{t("Phone number")} <span style={{ color: theme.textMuted }}>{t("(optional)")}</span></span>
+            <Input value={phone} onChange={(event) => setPhone(phoneDigits(event.target.value).slice(0, 11))}
+              type="tel" inputMode="numeric" autoComplete="tel" dir="ltr" placeholder="01012345678"
+              disabled={loading} className={fieldClass} style={fieldStyle} />
+          </label>
+          <label className="block space-y-2">
+            <span className="font-medium">Instagram <span style={{ color: theme.textMuted }}>{t("(optional)")}</span></span>
+            <Input value={instagram} onChange={(event) => setInstagram(event.target.value.replace(/^@+/, "").slice(0, 30))}
+              placeholder="@username" autoCapitalize="none" autoCorrect="off" spellCheck={false} dir="ltr"
+              disabled={loading} className={fieldClass} style={fieldStyle} />
+          </label>
+          <p className="text-xs" style={{ color: theme.textMuted }}>
+            {arabic ? "استخدم رقم الموبايل أو Instagram. رقم الموبايل لازم يكون ١١ رقم." : "Use a phone number or Instagram. The phone number must have 11 digits."}
+          </p>
+          <label className="block space-y-2">
+            <span className="font-medium">{t("Birthday")}</span>
+            <Input type="date" value={birthday} onChange={(event) => setBirthday(event.target.value)} autoComplete="bday"
+              disabled={loading} className={fieldClass} style={fieldStyle} />
+          </label>
+          {error && <p role="alert" className="rounded-xl border px-3 py-2.5" style={{ borderColor: theme.border, color: theme.danger }}>{t(error)}</p>}
           <div className="flex gap-3 pt-1">
-            <button
-              type="button"
-              onClick={closeDialog}
-              disabled={loading}
-              className="
-                h-12
-                flex-1
-                rounded-xl
-                border
-                border-white/[0.09]
-                bg-white/[0.04]
-                text-sm
-                font-medium
-                text-[#c7c7c7]
-                touch-manipulation
-                transition
-                duration-150
-                active:opacity-80
-                hover:border-white/[0.14]
-                hover:bg-white/[0.075]
-                hover:text-white
-                disabled:cursor-not-allowed
-                disabled:opacity-50
-              "
-            >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              onClick={updateMember}
-              disabled={loading}
-              className="
-                flex
-                h-12
-                flex-1
-                items-center
-                justify-center
-                gap-2
-                rounded-xl
-                bg-white
-                text-sm
-                font-semibold
-                text-black
-                touch-manipulation
-                transition
-                duration-150
-                hover:bg-[#e9e9e9]
-                active:opacity-80
-                disabled:cursor-not-allowed
-                disabled:opacity-50
-              "
-            >
-              <Save size={17} strokeWidth={2} />
-
-              {loading ? "Saving..." : "Save changes"}
+            <button type="button" onClick={() => onOpenChange(false)} disabled={loading} className={actionClass}
+              style={{ borderColor: theme.border, color: theme.textSecondary }}>{t("Cancel")}</button>
+            <button type="submit" disabled={loading} className={actionClass}
+              style={{ backgroundColor: theme.accent, borderColor: theme.accent, color: theme.buttonText }}>
+              {loading ? <LoaderCircle size={17} className="motion-safe:animate-spin" aria-hidden /> : <Save size={17} aria-hidden />}
+              <span aria-live="polite">{t(loading ? "Saving..." : "Save changes")}</span>
             </button>
           </div>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );

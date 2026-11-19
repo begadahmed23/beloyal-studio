@@ -1,3 +1,4 @@
+import { dashboardPaletteSelect, getDashboardPalette } from "@/lib/business/dashboard-palette";
 import { NextRequest, NextResponse } from "next/server";
 import { BusinessType, Prisma } from "@prisma/client";
 
@@ -6,7 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { requireSuperAdmin } from "@/lib/require-super-admin";
 import {
   getBusinessThemeColors,
-  getBusinessThemeOptions,
+  dashboardThemeOptions,
+  getDashboardThemeColors,
   getDefaultBusinessTheme,
 } from "@/lib/cafe-theme";
 
@@ -86,6 +88,7 @@ export async function GET(request: NextRequest) {
           primaryColor: true,
           secondaryColor: true,
           backgroundColor: true,
+          ...dashboardPaletteSelect,
           rewardTarget: true,
           rewardName: true,
 
@@ -329,6 +332,7 @@ export async function GET(request: NextRequest) {
 
       return {
         ...cafe,
+        ...getDashboardPalette(cafe),
 
         monthlyPrice:
           cafe.monthlyPrice?.toNumber() ?? 0,
@@ -725,17 +729,13 @@ export async function POST(
         TRIAL_DAYS,
     );
 
-    const savedTheme = getBusinessThemeOptions(businessType)
+    const savedTheme = dashboardThemeOptions
       .find(option => option.value === body.theme)?.value ?? getDefaultBusinessTheme(businessType);
 
-    const [
-      primaryColor,
-      secondaryColor,
-      backgroundColor,
-    ] = getBusinessThemeColors(
-      savedTheme,
-      businessType,
-    );
+    const cardTheme = businessType === "VAPE" ? getDefaultBusinessTheme(businessType) : savedTheme;
+    const [primaryColor, secondaryColor, backgroundColor] = getBusinessThemeColors(cardTheme, businessType);
+
+    const [dashboardPrimaryColor, dashboardSecondaryColor, dashboardBackgroundColor] = getDashboardThemeColors(savedTheme);
 
     const cafe =
       await prisma.cafe.create({
@@ -748,11 +748,14 @@ export async function POST(
             businessType !==
             BusinessType.BARBERSHOP,
 
-          theme: savedTheme,
-
+          theme: cardTheme,
           primaryColor,
           secondaryColor,
           backgroundColor,
+          dashboardTheme: savedTheme,
+          dashboardPrimaryColor,
+          dashboardSecondaryColor,
+          dashboardBackgroundColor,
 
           rewardTarget,
 
@@ -811,6 +814,7 @@ export async function POST(
         {
           cafe: {
             ...cafe,
+            ...getDashboardPalette(cafe),
 
             monthlyPrice:
               cafe.monthlyPrice?.toNumber() ??

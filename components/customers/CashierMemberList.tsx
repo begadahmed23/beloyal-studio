@@ -1,4 +1,5 @@
 "use client";
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import {
   Cake,
@@ -12,11 +13,12 @@ import {
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
- import BirthdayRewardAction from "@/components/customers/BirthdayRewardAction";
+import { ActionButton } from "@/components/ui/action-button";
+import BirthdayRewardAction from "@/components/customers/BirthdayRewardAction";
 import MbVapeStamp from "@/components/brand/MbVapeStamp";
-import { isMbVape } from "@/lib/business/mb-vape";
 import KatoMark from "@/components/brand/KatoMark";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
@@ -45,6 +47,7 @@ type CashierMembersResponse = {
 };
 
 export default function CashierMemberList() {
+  const { t } = useBeLoyalLanguage();
   const { theme, cafe } = useCafeTheme();
   const isBarbershop =
     cafe.businessType === "BARBERSHOP";
@@ -55,7 +58,7 @@ export default function CashierMemberList() {
   const isKato =
     cafe.slug.toLowerCase().includes("kato") ||
     normalizedCafeName.includes("kato");
-  const StampIcon = isMbVape(cafe) ? MbVapeStamp : Stamp;
+  const StampIcon = cafe.businessType === "VAPE" ? MbVapeStamp : Stamp;
   const unit = isBarbershop ? "visit" : "stamp";
 
   const [data, setData] =
@@ -63,12 +66,16 @@ export default function CashierMemberList() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const requests = useRef(new Set<string>());
+  const memberRead = useRef(0);
   const [actions, setActions] = useState<Record<string, {
     status: "pending" | "success" | "error";
+    operation?: "stamp" | "redeem";
     text: string;
   }>>({});
 
   const loadMembers = useCallback(async (searchValue = "") => {
+    const read = ++memberRead.current;
     try {
       setError("");
 
@@ -92,15 +99,16 @@ export default function CashierMemberList() {
         );
       }
 
-      setData(body as CashierMembersResponse);
+      if (read === memberRead.current) setData(body as CashierMembersResponse);
     } catch (error) {
+      if (read !== memberRead.current) return;
       setError(
         error instanceof Error
           ? error.message
           : "Failed to load members.",
       );
     } finally {
-      setLoading(false);
+      if (read === memberRead.current) setLoading(false);
     }
   }, []);
 
@@ -131,17 +139,18 @@ export default function CashierMemberList() {
 
   async function runAction(
     memberId: string,
-    endpoint: string,
+    operation: "stamp" | "redeem",
   ) {
-    if (actions[memberId]?.status === "pending") return;
+    if (requests.current.has(memberId)) return;
+    requests.current.add(memberId);
 
     setActions((previous) => ({
       ...previous,
-      [memberId]: { status: "pending", text: "Updating card…" },
+      [memberId]: { status: "pending", operation, text: operation === "redeem" ? t("Redeeming reward…") : isBarbershop ? t("Recording visit…") : t("Adding stamp…") },
     }));
 
     try {
-      const response = await fetch(endpoint, {
+      const response = await fetch(`/api/customers/${operation}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -164,13 +173,15 @@ export default function CashierMemberList() {
       await loadMembers(search);
       setActions((previous) => ({
         ...previous,
-        [memberId]: { status: "success", text: body.message || "Updated successfully." },
+        [memberId]: { status: "success", text: body.message || (operation === "redeem" ? "Reward redeemed." : "Card updated.") },
       }));
     } catch (error) {
       setActions((previous) => ({
         ...previous,
-        [memberId]: { status: "error", text: error instanceof Error ? error.message : "Action failed." },
+        [memberId]: { status: "error", text: error instanceof Error ? error.message : t("Could not update the card. Try again.") },
       }));
+    } finally {
+      requests.current.delete(memberId);
     }
   }
 
@@ -201,7 +212,7 @@ export default function CashierMemberList() {
           style={{ color: theme.danger }}
         />
         <p className="mt-3 text-sm">
-          {error || "Members could not load."}
+          {t(error || "Members could not load.")}
         </p>
       </div>
     );
@@ -219,7 +230,7 @@ export default function CashierMemberList() {
             color: theme.danger,
           }}
         >
-          {error}
+          {t(error)}
         </div>
       )}
 
@@ -242,7 +253,7 @@ export default function CashierMemberList() {
           onChange={(event) =>
             setSearch(event.target.value)
           }
-          placeholder="Search name, phone, Instagram, or member number"
+          placeholder={t("Search name, phone, Instagram, or member number")}
           className="w-full bg-transparent text-base outline-none sm:text-sm"
           style={{ color: theme.textPrimary }}
         />
@@ -291,9 +302,7 @@ export default function CashierMemberList() {
                       color: theme.success,
                     }}
                   >
-                    <Gift size={12} />
-                    Reward ready
-                  </div>
+                    <Gift size={12} />{t("Reward ready")}</div>
                 )}
               </div>
 
@@ -439,37 +448,39 @@ export default function CashierMemberList() {
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
-                <button
+                <ActionButton
                   type="button"
                   disabled={busy || member.rewardReady}
-                  aria-busy={busy}
+                  pending={busy && action?.operation === "stamp"}
+                  icon={<StampIcon size={16} />}
                   onClick={() =>
                     runAction(
                       member.id,
-                      "/api/customers/stamp",
+                      "stamp",
                     )
                   }
-                  className="flex h-11 touch-manipulation items-center justify-center gap-2 text-sm font-semibold transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-45"
+                  className="flex min-h-11 px-2 items-center justify-center gap-2 text-sm font-semibold transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-45"
                   style={{
                     backgroundColor: theme.accent,
                     color: theme.buttonText,
                     borderRadius: theme.radiusMedium,
                   }}
                 >
-                  <StampIcon size={16} aria-hidden="true" />
-                  Add {unit}
-                </button>
+                  {t(unit === "visit" ? "Add visit" : "Add stamp")}
+                </ActionButton>
 
-                <button
+                <ActionButton
                   type="button"
                   disabled={busy || !member.rewardReady}
+                  pending={busy && action?.operation === "redeem"}
+                  icon={<CheckCircle2 size={16} />}
                   onClick={() =>
                     runAction(
                       member.id,
-                      "/api/customers/redeem",
+                      "redeem",
                     )
                   }
-                  className="flex h-11 touch-manipulation items-center justify-center gap-2 border text-sm font-semibold transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex min-h-11 px-2 items-center justify-center gap-2 border text-sm font-semibold transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-40"
                   style={{
                     borderColor: member.rewardReady
                       ? `${theme.success}70`
@@ -482,17 +493,14 @@ export default function CashierMemberList() {
                       : theme.textMuted,
                     borderRadius: theme.radiusMedium,
                   }}
-                >
-                  <CheckCircle2 size={16} />
-                  Redeem
-                </button>
+                >{t("Redeem reward")}</ActionButton>
               </div>
               <p
                 role="status"
                 className="mt-1.5 h-8 overflow-y-auto text-xs leading-4"
                 style={{ color: action?.status === "error" ? theme.danger : theme.textSecondary }}
               >
-                {action?.text}
+                {action && t(action.text)}
               </p>
             </div>
           );

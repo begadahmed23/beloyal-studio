@@ -3,6 +3,9 @@
 import * as React from "react"
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle"
+import { useOptionalCafeTheme } from "@/components/theme/CafeThemeProvider"
+import { dashboardThemeVariables } from "@/lib/cafe-theme"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
@@ -43,15 +46,22 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  style,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean
 }) {
+  const dashboard = useOptionalCafeTheme()
+  const { lang, dir, t } = useBeLoyalLanguage()
+  const theme = dashboard?.theme
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Popup
         data-slot="dialog-content"
+        lang={dashboard ? lang : undefined}
+        dir={dashboard ? dir : undefined}
+        style={theme ? { ...dashboardThemeVariables(theme), backgroundColor: theme.surface, color: theme.textPrimary, borderColor: theme.border, ...style } : style}
         className={cn(
           "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-6 rounded-[min(var(--radius-4xl),24px)] bg-popover p-6 text-sm text-popover-foreground shadow-xl ring-1 ring-foreground/5 duration-100 outline-none sm:max-w-md dark:ring-foreground/10 data-open:animate-in data-open:fade-in-0 pointer-fine:motion-safe:data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 pointer-fine:motion-safe:data-closed:zoom-out-95",
           className
@@ -65,14 +75,14 @@ function DialogContent({
             render={
               <Button
                 variant="ghost"
-                className="absolute top-4 right-4 bg-secondary"
+                className="absolute top-4 end-4 bg-secondary"
                 size="icon-sm"
               />
             }
           >
             <XIcon
             />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{dashboard ? t("Close") : "Close"}</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Popup>

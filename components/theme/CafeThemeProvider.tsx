@@ -13,11 +13,11 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 
-import { getMbVapeBrandColors } from "@/lib/business/mb-vape";
 import {
   CafeThemeConfig,
   CafeThemeName,
   getBusinessTheme,
+  getDashboardTheme,
 } from "@/lib/cafe-theme";
 
 export type CafeSettings = {
@@ -26,6 +26,7 @@ export type CafeSettings = {
   slug: string;
   businessType: BusinessType;
   logoUrl: string | null;
+  hasDashboardPalette: boolean;
   primaryColor: string | null;
   secondaryColor: string | null;
   backgroundColor: string | null;
@@ -201,16 +202,21 @@ export default function CafeThemeProvider({
     useState<CafeThemeName>(themeName);
 
   const [previewThemeName, setPreviewThemeName] =
-    useState<CafeThemeName>(themeName);
+    useState<CafeThemeName | null>(null);
 
-  useEffect(() => {
+  const [receivedCafe, setReceivedCafe] = useState(cafe);
+  const [receivedThemeName, setReceivedThemeName] = useState(themeName);
+
+  if (receivedCafe !== cafe) {
+    setReceivedCafe(cafe);
     setCurrentCafe(cafe);
-  }, [cafe]);
+  }
 
-  useEffect(() => {
+  if (receivedThemeName !== themeName) {
+    setReceivedThemeName(themeName);
     setSavedThemeName(themeName);
-    setPreviewThemeName(themeName);
-  }, [themeName]);
+    setPreviewThemeName(null);
+  }
 
   useEffect(() => {
     const refreshAppData = () => {
@@ -277,8 +283,8 @@ export default function CafeThemeProvider({
   );
 
   const resetPreviewTheme = useCallback(() => {
-    setPreviewThemeName(savedThemeName);
-  }, [savedThemeName]);
+    setPreviewThemeName(null);
+  }, []);
 
   const applySavedSettings = useCallback(
     (
@@ -287,32 +293,31 @@ export default function CafeThemeProvider({
     ) => {
       setCurrentCafe(updatedCafe);
       setSavedThemeName(updatedThemeName);
-      setPreviewThemeName((current) => current === savedThemeName ? updatedThemeName : current);
     },
-    [savedThemeName],
+    [],
   );
 
+  const useLegacyPalette = !currentCafe.hasDashboardPalette && previewThemeName === null;
   const theme = useMemo(
     () =>
-      isKatoCafe(currentCafe)
+      useLegacyPalette && isKatoCafe(currentCafe)
         ? KATO_DASHBOARD_THEME
-        : isKekaCafe(currentCafe)
+        : useLegacyPalette && isKekaCafe(currentCafe)
           ? KEKA_DASHBOARD_THEME
-          : getBusinessTheme(
-              previewThemeName,
-              currentCafe.businessType,
-              previewThemeName === savedThemeName ? getMbVapeBrandColors({ ...currentCafe, theme: savedThemeName }) : undefined,
-            ),
+          : useLegacyPalette
+            ? getBusinessTheme(savedThemeName, currentCafe.businessType, currentCafe)
+            : getDashboardTheme(previewThemeName ?? savedThemeName, previewThemeName === null ? currentCafe : undefined),
     [
       previewThemeName,
       savedThemeName,
       currentCafe,
+      useLegacyPalette,
     ],
   );
 
   const contextValue = useMemo(
     () => ({
-      themeName: previewThemeName,
+      themeName: previewThemeName ?? savedThemeName,
       userRole,
       accountEmail,
       savedThemeName,

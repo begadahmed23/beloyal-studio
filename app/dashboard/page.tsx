@@ -1,4 +1,5 @@
 "use client";
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
@@ -6,7 +7,6 @@ import Link from "next/link";
 import {
   ArrowRight,
   Coffee,
-  Layers,
   Store,
   Monitor,
   ScanLine,
@@ -41,7 +41,8 @@ export default function DashboardPage() {
 }
 
 function CafeDashboardHome() {
-  const { cafe, theme } = useCafeTheme();
+  const { t } = useBeLoyalLanguage();
+  const { cafe, theme, themeName, savedThemeName } = useCafeTheme();
 
   const normalizedCafeName = cafe.name
     .normalize("NFD")
@@ -49,15 +50,15 @@ function CafeDashboardHome() {
     .toLowerCase();
 
   const isKato =
-    cafe.slug.toLowerCase().includes("kato") ||
-    normalizedCafeName.includes("kato");
+    !cafe.hasDashboardPalette && themeName === savedThemeName &&
+    (cafe.slug.toLowerCase().includes("kato") || normalizedCafeName.includes("kato"));
   const isKeka =
-    cafe.slug.toLowerCase().includes("keka") ||
-    normalizedCafeName.includes("keka");
+    !cafe.hasDashboardPalette && themeName === savedThemeName &&
+    (cafe.slug.toLowerCase().includes("keka") || normalizedCafeName.includes("keka"));
 
   const isCafe = cafe.businessType === "CAFE";
   const mbVape = isMbVape(cafe);
-  const BusinessIcon = mbVape ? MbVapeStamp : isCafe ? Coffee : cafe.businessType === "VAPE" ? Layers : Store;
+  const BusinessIcon = cafe.businessType === "VAPE" ? MbVapeStamp : isCafe ? Coffee : Store;
   const actions = [
     {
       label: "Scan a card",
@@ -268,7 +269,7 @@ function CafeDashboardHome() {
 
       <section>
         <div>
-          <p className="text-sm font-semibold">Counter tools</p>
+          <p className="text-sm font-semibold">{t("Counter tools")}</p>
           <p
             className="mt-1 text-xs"
             style={{ color: theme.textMuted }}

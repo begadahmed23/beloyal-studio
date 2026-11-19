@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import DashboardShell from "@/components/dashboard/DashboardShell";
 import BarberDashboardShell from "@/components/dashboard/barber/BarberDashboardShell";
 import CafeThemeProvider from "@/components/theme/CafeThemeProvider";
+import { getDashboardPalette } from "@/lib/business/dashboard-palette";
 import { requireAuth } from "@/lib/require-auth";
 
 type Props = {
@@ -33,6 +34,7 @@ export default async function DashboardLayout({
   }
 
   const cafe = authData.cafe;
+  const { theme, ...palette } = getDashboardPalette(cafe);
   const Shell =
     cafe.businessType === "BARBERSHOP"
       ? BarberDashboardShell
@@ -44,7 +46,7 @@ export default async function DashboardLayout({
 
   return (
     <CafeThemeProvider
-      themeName={cafe.theme}
+      themeName={theme}
       userRole={authData.isCashier ? "CASHIER" : "CAFE_ADMIN"}
       accountEmail={authData.user.email}
       cafe={{
@@ -53,9 +55,7 @@ export default async function DashboardLayout({
         slug: cafe.slug,
         businessType: cafe.businessType,
         logoUrl: cafe.logoUrl,
-        primaryColor: cafe.primaryColor,
-        secondaryColor: cafe.secondaryColor,
-        backgroundColor: cafe.backgroundColor,
+        ...palette,
 
         rewardTarget: cafe.rewardTarget,
         rewardName: cafe.rewardName,

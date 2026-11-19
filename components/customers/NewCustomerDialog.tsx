@@ -1,6 +1,8 @@
 "use client";
+import { phoneDigits } from "@/lib/business/phone-digits";
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   AlertCircle,
   Plus,
@@ -17,9 +19,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+import { ActionButton } from "@/components/ui/action-button";
 import { Input } from "@/components/ui/input";
 
 export default function NewCustomerDialog() {
+  const { t } = useBeLoyalLanguage();
   const { theme, cafe } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
   const personLabel = isBarbershop ? "client" : "member";
@@ -31,6 +35,7 @@ export default function NewCustomerDialog() {
   const [birthday, setBirthday] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const requestInFlight = useRef(false);
 
   function resetForm() {
     setName("");
@@ -41,6 +46,7 @@ export default function NewCustomerDialog() {
   }
 
   async function createMember() {
+    if (requestInFlight.current) return;
     const cleanName = name.trim();
     const cleanPhone = phone.trim();
     const cleanInstagram = instagram
@@ -51,20 +57,20 @@ export default function NewCustomerDialog() {
     setError("");
 
     if (!cleanName || !birthday) {
-      setError("Please enter the name and birthday.");
+      setError(t("Please enter the name and birthday."));
       return;
     }
 
     if (!cleanPhone && !cleanInstagram) {
       setError(
-        "Please enter a phone number or Instagram username."
+        t("Please enter a phone number or Instagram username.")
       );
       return;
     }
 
     if (cleanPhone && !/^\d{11}$/.test(cleanPhone)) {
       setError(
-        "Phone number must contain exactly 11 digits."
+        t("Phone number must contain exactly 11 digits.")
       );
       return;
     }
@@ -74,11 +80,12 @@ export default function NewCustomerDialog() {
       !/^[a-z0-9._]{1,30}$/.test(cleanInstagram)
     ) {
       setError(
-        "Please enter a valid Instagram username."
+        t("Please enter a valid Instagram username.")
       );
       return;
     }
 
+    requestInFlight.current = true;
     try {
       setLoading(true);
 
@@ -132,6 +139,7 @@ export default function NewCustomerDialog() {
           : `Something went wrong while creating the ${personLabel}.`
       );
     } finally {
+      requestInFlight.current = false;
       setLoading(false);
     }
   }
@@ -159,7 +167,7 @@ export default function NewCustomerDialog() {
         }}
       >
         <Plus size={18} />
-        New {isBarbershop ? "Client" : "Member"}
+        {t(isBarbershop ? "New Client" : "New Member")}
       </button>
 
       <Dialog
@@ -210,12 +218,12 @@ export default function NewCustomerDialog() {
                     <UserPlus size={18} />
                   </div>
 
-                  <div className="min-w-0 text-left">
+                  <div className="min-w-0 text-start">
                     <DialogTitle
                       className="text-xl font-semibold tracking-[-0.025em] sm:text-2xl"
                       style={{ color: theme.textPrimary }}
                     >
-                      New {personLabel}
+                      {t(isBarbershop ? "New client" : "New member")}
                     </DialogTitle>
                     <p className="mt-1 text-sm" style={{ color: theme.textMuted }}>
                       Add them to {cafe.name}&apos;s loyalty program.
@@ -260,21 +268,20 @@ export default function NewCustomerDialog() {
                   className="mt-0.5 shrink-0"
                 />
 
-                <p>{error}</p>
+                <p role="alert">{t(error)}</p>
               </div>
             )}
 
             <div>
-              <label
+              <label htmlFor="new-member-name"
                 className="mb-2 block text-sm font-medium"
                 style={{
                   color: theme.textSecondary,
                 }}
-              >
-                Full name
-              </label>
+              >{t("Full name")}</label>
 
               <Input
+                id="new-member-name"
                 value={name}
                 onChange={(event) => {
                   setName(event.target.value);
@@ -292,23 +299,20 @@ export default function NewCustomerDialog() {
             </div>
 
             <div>
-              <label
+              <label htmlFor="new-member-phone"
                 className="mb-2 block text-sm font-medium"
                 style={{
                   color: theme.textSecondary,
                 }}
-              >
-                Phone number{" "}
-                <span style={{ color: theme.textMuted }}>
-                  (optional)
-                </span>
+              >{t("Phone number")}{" "}
+                <span style={{ color: theme.textMuted }}>{t("(optional)")}</span>
               </label>
 
               <Input
+                id="new-member-phone"
                 value={phone}
                 onChange={(event) => {
-                  const digits = event.target.value
-                    .replace(/\D/g, "")
+                  const digits = phoneDigits(event.target.value)
                     .slice(0, 11);
 
                   setPhone(digits);
@@ -317,6 +321,8 @@ export default function NewCustomerDialog() {
                     setError("");
                   }
                 }}
+                type="tel"
+                dir="ltr"
                 inputMode="numeric"
                 maxLength={11}
                 placeholder="01012345678"
@@ -351,19 +357,18 @@ export default function NewCustomerDialog() {
             </div>
 
             <div>
-              <label
+              <label htmlFor="new-member-instagram"
                 className="mb-2 block text-sm font-medium"
                 style={{
                   color: theme.textSecondary,
                 }}
               >
                 Instagram{" "}
-                <span style={{ color: theme.textMuted }}>
-                  (optional)
-                </span>
+                <span style={{ color: theme.textMuted }}>{t("(optional)")}</span>
               </label>
 
               <Input
+                id="new-member-instagram"
                 value={instagram}
                 onChange={(event) => {
                   setInstagram(
@@ -380,6 +385,7 @@ export default function NewCustomerDialog() {
                 autoCorrect="off"
                 spellCheck={false}
                 placeholder="@username"
+                dir="ltr"
                 disabled={loading}
                 className="h-12 border text-base outline-none placeholder:opacity-50 focus-visible:ring-0 focus-visible:ring-offset-0"
                 style={inputStyle}
@@ -396,16 +402,15 @@ export default function NewCustomerDialog() {
             </div>
 
             <div>
-              <label
+              <label htmlFor="new-member-birthday"
                 className="mb-2 block text-sm font-medium"
                 style={{
                   color: theme.textSecondary,
                 }}
-              >
-                Birthday
-              </label>
+              >{t("Birthday")}</label>
 
               <Input
+                id="new-member-birthday"
                 type="date"
                 value={birthday}
                 onChange={(event) => {
@@ -430,10 +435,11 @@ export default function NewCustomerDialog() {
               boxShadow: `0 -12px 28px ${theme.surface}F2`,
             }}
           >
-            <button
+            <ActionButton
               type="button"
               onClick={createMember}
-              disabled={loading}
+              pending={loading}
+              icon={<UserPlus size={17} />}
               className="flex h-12 w-full touch-manipulation items-center justify-center gap-2 text-sm font-semibold transition duration-150 active:opacity-80 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               style={{
                 backgroundColor: theme.accent,
@@ -442,11 +448,8 @@ export default function NewCustomerDialog() {
                 boxShadow: `0 10px 24px ${theme.accent}24`,
               }}
             >
-              <UserPlus size={17} />
-              {loading
-                ? "Creating..."
-                : `Create ${isBarbershop ? "Client" : "Member"}`}
-            </button>
+              {isBarbershop ? t("Create client") : t("Create member")}
+            </ActionButton>
           </div>
         </DialogContent>
       </Dialog>

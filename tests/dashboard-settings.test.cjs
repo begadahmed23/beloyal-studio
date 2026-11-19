@@ -36,3 +36,36 @@ test("cached clients can still submit the previously supported full payload", ()
   assert.equal(settings.googleReviewUrl, "https://example.com/review");
   assert.equal(Object.hasOwn(settings, "birthdayRewardsEnabled"), false);
 });
+
+test("saving dashboard branding leaves the customer card palette intact", () => {
+  function load(path, resolve = require) {
+    const exports = {};
+    const { outputText } = ts.transpileModule(readFileSync(path, "utf8"), {
+      compilerOptions: { module: ts.ModuleKind.CommonJS },
+    });
+    new Function("exports", "require", outputText)(exports, resolve);
+    return exports;
+  }
+
+  const mbVape = load("lib/business/mb-vape.ts");
+  const { dashboardPaletteUpdate, getDashboardPalette } = load(
+    "lib/business/dashboard-palette.ts",
+    (id) => id === "./mb-vape" ? mbVape : require(id),
+  );
+  const savedBusiness = {
+    slug: "sample-cafe", businessType: "CAFE",
+    theme: "COFFEE_CLASSIC", primaryColor: "#7b4f35", secondaryColor: "#6f4a35", backgroundColor: "#f3ede5",
+    dashboardTheme: null, dashboardPrimaryColor: null, dashboardSecondaryColor: null, dashboardBackgroundColor: null,
+  };
+  assert.equal(getDashboardPalette(savedBusiness).hasDashboardPalette, false);
+
+  const paletteChange = dashboardPaletteUpdate({ theme: "DARK_LUXURY", primaryColor: "#debb93" });
+  assert.deepEqual(paletteChange, { dashboardTheme: "DARK_LUXURY", dashboardPrimaryColor: "#debb93" });
+
+  const updatedBusiness = { ...savedBusiness, ...paletteChange };
+  assert.equal(updatedBusiness.theme, savedBusiness.theme);
+  assert.equal(updatedBusiness.primaryColor, savedBusiness.primaryColor);
+  assert.equal(getDashboardPalette(updatedBusiness).theme, "DARK_LUXURY");
+  assert.equal(getDashboardPalette(updatedBusiness).primaryColor, "#debb93");
+  assert.equal(getDashboardPalette(updatedBusiness).secondaryColor, savedBusiness.secondaryColor);
+});

@@ -70,6 +70,7 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
   const cafe = getMbVapeBrandColors(member.cafe);
   const { businessType } = cafe;
   const mbVape = isMbVape(cafe);
+  const vapeShop = businessType === "VAPE";
   const barber = businessType === "BARBERSHOP";
   const walid = barber && member.cafe.slug === "walid-saad";
   const loretto = businessType === "CAFE" && /loretto/i.test(member.cafe.slug + member.cafe.name);
@@ -106,7 +107,7 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
     return marker + check;
   }).join("");
   // Wallet crops the sides of store-card strips; keep stamps within the safe centre.
-  const strip = mbVape ? await renderMbVapeAppleStrip(ready ? target : stamps, target) : await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1125" height="369" viewBox="0 0 375 123"><rect width="375" height="123" fill="${background}"/>${artwork}${circles}</svg>`))
+  const strip = vapeShop ? await renderMbVapeAppleStrip(ready ? target : stamps, target) : await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1125" height="369" viewBox="0 0 375 123"><rect width="375" height="123" fill="${background}"/>${artwork}${circles}</svg>`))
     .composite([
       { input: await textImage(ready ? "YOUR REWARD IS READY" : walid ? "YOUR NEXT FREE HAIRCUT" : "A LITTLE CLOSER TO YOUR REWARD", 840, 35), left: 142, top: 30 },
       { input: await textImage(ready ? member.cafe.rewardName : `${stamps} of ${target} ${barber ? "visits" : "stamps"}`, 800, 44), left: 162, top: 292 },
@@ -120,7 +121,7 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
   const logoHeight = mbVape ? 42 : 32;
   const logo = mbVape ? await renderMbVapeLogo(logoWidth * 3, logoHeight * 3, background) : customLogo ?? await sharp(icon)
     .resize(logoWidth * 3, logoHeight * 3).png().toBuffer();
-  const stripHeight = mbVape ? 144 : 123;
+  const stripHeight = vapeShop ? 144 : 123;
   const locations = walletLocations(notificationSettings);
   const nearby = locations.length ? notificationSettings : null;
   const pass = new PKPass(

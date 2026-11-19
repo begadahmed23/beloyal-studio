@@ -3,6 +3,9 @@
 import * as React from "react"
 import { AlertDialog as AlertDialogPrimitive } from "@base-ui/react/alert-dialog"
 
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle"
+import { useOptionalCafeTheme } from "@/components/theme/CafeThemeProvider"
+import { dashboardThemeVariables } from "@/lib/cafe-theme"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 
@@ -41,18 +44,24 @@ function AlertDialogOverlay({
 function AlertDialogContent({
   className,
   size = "default",
+  style,
   ...props
 }: AlertDialogPrimitive.Popup.Props & {
   size?: "default" | "sm"
 }) {
+  const theme = useOptionalCafeTheme()?.theme
+  const { dir, lang } = useBeLoyalLanguage()
   return (
     <AlertDialogPortal>
       <AlertDialogOverlay />
       <AlertDialogPrimitive.Popup
         data-slot="alert-dialog-content"
         data-size={size}
+        dir={theme ? dir : undefined}
+        lang={theme ? lang : undefined}
+        style={theme ? { ...dashboardThemeVariables(theme), ...style } : style}
         className={cn(
-          "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-6 rounded-[min(var(--radius-4xl),24px)] bg-popover p-6 text-popover-foreground shadow-xl ring-1 ring-foreground/5 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-md dark:ring-foreground/10 data-open:animate-in data-open:fade-in-0 pointer-fine:motion-safe:data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 pointer-fine:motion-safe:data-closed:zoom-out-95",
+          "group/alert-dialog-content fixed top-1/2 left-1/2 z-50 grid w-[calc(100%-1rem)] -translate-x-1/2 -translate-y-1/2 gap-6 max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-[min(var(--radius-4xl),24px)] bg-popover p-6 text-popover-foreground shadow-xl ring-1 ring-foreground/5 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-md dark:ring-foreground/10 data-open:animate-in data-open:fade-in-0 pointer-fine:motion-safe:data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 pointer-fine:motion-safe:data-closed:zoom-out-95",
           className
         )}
         {...props}
@@ -69,7 +78,7 @@ function AlertDialogHeader({
     <div
       data-slot="alert-dialog-header"
       className={cn(
-        "grid grid-rows-[auto_1fr] place-items-center gap-1.5 text-center has-data-[slot=alert-dialog-media]:grid-rows-[auto_auto_1fr] has-data-[slot=alert-dialog-media]:gap-x-6 sm:group-data-[size=default]/alert-dialog-content:place-items-start sm:group-data-[size=default]/alert-dialog-content:text-left sm:group-data-[size=default]/alert-dialog-content:has-data-[slot=alert-dialog-media]:grid-rows-[auto_1fr]",
+        "grid grid-rows-[auto_1fr] place-items-center gap-1.5 text-center has-data-[slot=alert-dialog-media]:grid-rows-[auto_auto_1fr] has-data-[slot=alert-dialog-media]:gap-x-6 sm:group-data-[size=default]/alert-dialog-content:place-items-start sm:group-data-[size=default]/alert-dialog-content:text-start sm:group-data-[size=default]/alert-dialog-content:has-data-[slot=alert-dialog-media]:grid-rows-[auto_1fr]",
         className
       )}
       {...props}
@@ -158,6 +167,7 @@ function AlertDialogCancel({
   className,
   variant = "outline",
   size = "default",
+  style,
   ...props
 }: AlertDialogPrimitive.Close.Props &
   Pick<React.ComponentProps<typeof Button>, "variant" | "size">) {

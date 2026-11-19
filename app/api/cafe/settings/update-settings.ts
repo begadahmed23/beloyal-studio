@@ -1,3 +1,4 @@
+import { dashboardPaletteUpdate, dashboardPaletteSelect } from "@/lib/business/dashboard-palette";
 import { prisma } from "@/lib/prisma";
 
 import { validateCafeSettingsPatch } from "./validation";
@@ -6,13 +7,13 @@ export async function updateCafeSettings(
   cafeId: string,
   body: Record<string, unknown>,
 ) {
-  const settings = validateCafeSettingsPatch(body);
+  const { theme, primaryColor, secondaryColor, backgroundColor, ...settings } = validateCafeSettingsPatch(body);
 
   const cafe = await prisma.cafe.update({
     where: {
       id: cafeId,
     },
-    data: settings,
+    data: { ...settings, ...dashboardPaletteUpdate({ theme, primaryColor, secondaryColor, backgroundColor }) },
     select: {
       id: true,
       name: true,
@@ -25,6 +26,7 @@ export async function updateCafeSettings(
       primaryColor: true,
       secondaryColor: true,
       backgroundColor: true,
+      ...dashboardPaletteSelect,
 
       rewardTarget: true,
       rewardName: true,

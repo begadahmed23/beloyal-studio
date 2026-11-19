@@ -14,7 +14,7 @@ const stampIcons = { CAFE: Coffee, BARBERSHOP: Scissors, VAPE: Layers, OTHER: St
 
 export function CardBrandHeader({ business, progress, logoUrl, onLogoError }: {
   business: Brand;
-  progress?: { target: number; stamps: number; ready: boolean };
+  progress?: { target: number; stamps: number; label: string };
   logoUrl?: string | null;
   onLogoError?: () => void;
 }) {
@@ -26,7 +26,7 @@ export function CardBrandHeader({ business, progress, logoUrl, onLogoError }: {
     <header className={progress
       ? "flex min-h-24 items-center justify-between gap-3 px-4 py-3.5 min-[380px]:px-5"
       : "grid min-h-20 place-items-center px-4 py-3 text-center"}
-      style={mbVape ? { backgroundColor: "#fff", color: "#432B1D" } : undefined}>
+      style={business.businessType === "VAPE" ? { backgroundColor: "#fff", color: "#432B1D" } : undefined}>
       <div className={progress ? "min-w-0 flex-1" : "grid min-w-0 max-w-full place-items-center"}>
         {mbVape ? (
           <MbVapeLogo className={progress
@@ -51,11 +51,11 @@ export function CardBrandHeader({ business, progress, logoUrl, onLogoError }: {
         )}
       </div>
       {progress && (
-        <div className="shrink-0 text-right">
+        <div className="shrink-0 text-end">
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.10em]">
-            {progress.ready ? "Reward ready" : business.businessType === "BARBERSHOP" ? "Visits" : "Stamps"}
+            {progress.label}
           </p>
-          <p className="mt-1 text-[1.7rem] font-semibold leading-none tabular-nums min-[380px]:text-3xl" aria-live="polite">
+          <p className="mt-1 text-[1.7rem] font-semibold leading-none tabular-nums min-[380px]:text-3xl" aria-live="polite" dir="ltr">
             {progress.stamps}<span className="mx-0.5 opacity-50">/</span>{progress.target}
           </p>
         </div>
@@ -73,7 +73,7 @@ export function CardStampStrip({ business, target, stamps, accent, ink, backgrou
   background: string;
   newStampIndex?: number | null;
 }) {
-  if (isMbVape(business)) {
+  if (business.businessType === "VAPE") {
     const count = Math.min(target, 99);
     return <Image
       src={`${MB_VAPE_ARTWORK_PATH}?asset=strip&stamps=${Math.min(stamps, count)}&target=${count}`}

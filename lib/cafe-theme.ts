@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { BusinessType } from "@prisma/client";
 export type CafeThemeName =
   | "COFFEE_CLASSIC"
@@ -286,68 +287,6 @@ const barberThemes: Partial<
   },
 };
 
-export const cafeThemeOptions: BusinessThemeOption[] = [
-  {
-    value: "COFFEE_CLASSIC",
-    label: "Coffee Classic",
-    description:
-      "Warm cream and walnut tones for a timeless coffee-house atmosphere.",
-  },
-  {
-    value: "MODERN_MINIMAL",
-    label: "Modern Minimal",
-    description:
-      "Soft ivory, stone, and charcoal for bright contemporary cafés.",
-  },
-  {
-    value: "DARK_LUXURY",
-    label: "Dark Luxury",
-    description:
-      "Deep espresso and bronze for an intimate, high-end experience.",
-  },
-  {
-    value: "MEDITERRANEAN_BLUE",
-    label: "Mediterranean Blue",
-    description:
-      "Calm coastal blues, warm ivory, and an airy Mediterranean feeling.",
-  },
-  {
-    value: "ORGANIC",
-    label: "Organic",
-    description:
-      "Sage, oat, and natural tones for calm wellness-focused cafés.",
-  },
-];
-
-export const barberThemeOptions: BusinessThemeOption[] = [
-  {
-    value: "DARK_LUXURY",
-    label: "Forest & Walnut",
-    description:
-      "Deep forest charcoal, walnut leather, and warm ivory.",
-  },
-  {
-    value: "MODERN_MINIMAL",
-    label: "Concrete & Chrome",
-    description:
-      "Pale concrete, graphite, and brushed silver for a clean studio look.",
-  },
-  {
-    value: "COFFEE_CLASSIC",
-    label: "Brick & Black",
-    description:
-      "Industrial charcoal, warm brick, and soft sandstone highlights.",
-  },
-];
-
-const retailThemeOptions: BusinessThemeOption[] = [
-  { value: "MODERN_MINIMAL", label: "Soft Ivory", description: "Clean ivory, ink, and warm neutrals." },
-  { value: "ORGANIC", label: "Soft Sage", description: "Sage green with oat and cream." },
-  { value: "MEDITERRANEAN_BLUE", label: "Mist Blue", description: "Dusty blue with pale stone." },
-  { value: "DARK_LUXURY", label: "Charcoal", description: "Deep charcoal with warm accents." },
-  { value: "COFFEE_CLASSIC", label: "Warm Sand", description: "Sand and muted terracotta." },
-];
-
 export function getDefaultBusinessTheme(businessType: ThemeBusinessType): CafeThemeName {
   switch (businessType) {
     case "BARBERSHOP": return "DARK_LUXURY";
@@ -355,15 +294,6 @@ export function getDefaultBusinessTheme(businessType: ThemeBusinessType): CafeTh
     case "OTHER": return "ORGANIC";
     default: return "COFFEE_CLASSIC";
   }
-}
-
-export function getBusinessThemeOptions(businessType: ThemeBusinessType) {
-  if (businessType === "BARBERSHOP") return barberThemeOptions;
-  if (businessType === "VAPE") return [
-    { value: "MODERN_MINIMAL", label: "Ivory & Walnut", description: "White surfaces with warm walnut accents." } as const,
-    ...retailThemeOptions.slice(1),
-  ];
-  return businessType === "OTHER" ? retailThemeOptions : cafeThemeOptions;
 }
 
 type BrandColors = { primaryColor?: string | null; secondaryColor?: string | null; backgroundColor?: string | null };
@@ -393,11 +323,13 @@ export function getBusinessTheme(
   const base = businessType === "BARBERSHOP"
     ? barberThemes[themeName as CafeThemeName] ?? barberThemes.DARK_LUXURY!
     : getCafeTheme(themeName);
-  const [accent, secondary, background] = getBusinessBrandColors(themeName, businessType, saved);
   const defaults = getBusinessThemeColors(themeName, businessType);
   const retail = businessType === "VAPE" || businessType === "OTHER";
-  if (!retail && [accent, secondary, background].every((value, i) => value.toLowerCase() === defaults[i].toLowerCase())) return base;
+  if (!retail && getBusinessBrandColors(themeName, businessType, saved).every((color, i) => color.toLowerCase() === defaults[i].toLowerCase())) return base;
+  return applyBrandColors(base, getBusinessBrandColors(themeName, businessType, saved));
+}
 
+function applyBrandColors(base: CafeThemeConfig, [accent, secondary, background]: [string, string, string]): CafeThemeConfig {
   const light = colorLuma(background) > 0.32;
   const ink = light ? "#23332c" : "#f7f4eb";
   const accentedText = ((Math.max(colorLuma(accent), colorLuma(background)) + 0.05) /
@@ -417,7 +349,7 @@ export function getBusinessTheme(
     accentHover: secondary,
     accentSoft: `${accent}1f`,
     accentText: accentedText === accent ? accentText : light ? "#ffffff" : "#161a15",
-    buttonText: accentText,
+    buttonText: accentedText === accent ? accentText : light ? "#ffffff" : "#161a15",
     inputBackground: surface,
     inputBorder: light ? "#cbd0c5" : "#53594e",
     cardShadow: light ? "0 16px 44px rgba(39,49,38,.09)" : "0 18px 50px rgba(0,0,0,.25)",
@@ -443,7 +375,7 @@ export function getBusinessThemeColors(
       return ["#B8613C", "#E0B88F", "#1B1815"];
     }
 
-    return ["#9B6546", "#D7CAB8", "#0E1513"];
+    if (themeName === "DARK_LUXURY") return ["#9B6546", "#D7CAB8", "#0E1513"];
   }
 
   if (themeName === "MODERN_MINIMAL") {
@@ -473,4 +405,152 @@ export function getCafeTheme(
   }
 
   return themes.COFFEE_CLASSIC;
+}
+
+const sharedTheme = {
+  success: "#386249",
+  warning: "#855416",
+  danger: "#b91e1e",
+  cardShadow: "0 1px 2px rgb(28 26 23 / 0.10), 0 4px 14px rgb(28 26 23 / 0.04)",
+  radiusLarge: "16px",
+  radiusMedium: "8px",
+};
+
+const dashboardThemes: Record<CafeThemeName, CafeThemeConfig> = {
+  MODERN_MINIMAL: {
+    ...sharedTheme,
+    pageBackground: "#e9e4d8",
+    surface: "#f4efe4",
+    surfaceRaised: "#d8d2c4",
+    border: "#d2cbbb",
+    textPrimary: "#20201e",
+    textSecondary: "#524f47",
+    textMuted: "#625d53",
+    accent: "#2e2e2e",
+    accentHover: "#42413d",
+    accentSoft: "#e6e4d7",
+    accentText: "#f4efe4",
+    buttonText: "#f4efe4",
+    inputBackground: "#e9e4d8",
+    inputBorder: "#8c8272",
+  },
+  COFFEE_CLASSIC: {
+    ...sharedTheme,
+    pageBackground: "#efe2d7",
+    surface: "#faf0e7",
+    surfaceRaised: "#e5d0bf",
+    border: "#d9beaa",
+    textPrimary: "#31231f",
+    textSecondary: "#5b4035",
+    textMuted: "#6a5147",
+    accent: "#784c41",
+    accentHover: "#633d35",
+    accentSoft: "#eddacf",
+    accentText: "#fff6ef",
+    buttonText: "#fff6ef",
+    inputBackground: "#f4e7dc",
+    inputBorder: "#9b7c6a",
+  },
+  ORGANIC: {
+    ...sharedTheme,
+    pageBackground: "#e4e7db",
+    surface: "#f1f3e9",
+    surfaceRaised: "#d5dccb",
+    border: "#c6cebc",
+    textPrimary: "#253129",
+    textSecondary: "#465346",
+    textMuted: "#546052",
+    accent: "#395447",
+    accentHover: "#2b4237",
+    accentSoft: "#e0e8d9",
+    accentText: "#f3f6ee",
+    buttonText: "#f3f6ee",
+    inputBackground: "#e8ecdf",
+    inputBorder: "#7d8976",
+  },
+  MEDITERRANEAN_BLUE: {
+    ...sharedTheme,
+    pageBackground: "#e1e7eb",
+    surface: "#eff3f5",
+    surfaceRaised: "#d4dfe6",
+    border: "#c4d1da",
+    textPrimary: "#23333f",
+    textSecondary: "#425867",
+    textMuted: "#4e626e",
+    accent: "#3c596e",
+    accentHover: "#324c5f",
+    accentSoft: "#dfe8ed",
+    accentText: "#f3f7fa",
+    buttonText: "#f3f7fa",
+    inputBackground: "#e6edf1",
+    inputBorder: "#788d9c",
+  },
+  DARK_LUXURY: {
+    ...sharedTheme,
+    pageBackground: "#282521",
+    surface: "#302d28",
+    surfaceRaised: "#403a32",
+    border: "#524a40",
+    textPrimary: "#f4ece0",
+    textSecondary: "#ddd2c2",
+    textMuted: "#c4b8a6",
+    accent: "#debb93",
+    accentHover: "#efcba2",
+    accentSoft: "#4a3e32",
+    accentText: "#29231c",
+    buttonText: "#29231c",
+    success: "#a9c9ab",
+    warning: "#ebc486",
+    danger: "#f1a19a",
+    inputBackground: "#27241f",
+    inputBorder: "#948773",
+    cardShadow: "0 1px 2px rgb(0 0 0 / 0.26), 0 4px 14px rgb(0 0 0 / 0.12)",
+  },
+};
+
+export const dashboardThemeOptions: BusinessThemeOption[] = [
+  { value: "MODERN_MINIMAL", label: "Zen Linen", description: "Warm linen, stone, and charcoal." },
+  { value: "COFFEE_CLASSIC", label: "Clay & Oat", description: "Soft oat with muted terracotta." },
+  { value: "ORGANIC", label: "Soft Sage", description: "Pale sage with eucalyptus green." },
+  { value: "MEDITERRANEAN_BLUE", label: "Mist Blue", description: "Cool stone with slate blue." },
+  { value: "DARK_LUXURY", label: "Smoked Bronze", description: "Warm charcoal with brushed bronze." },
+];
+
+export function getDashboardThemeColors(themeName: CafeThemeName): [string, string, string] {
+  const theme = dashboardThemes[themeName];
+  return [theme.accent, theme.accentHover, theme.pageBackground];
+}
+
+export function getDashboardTheme(themeName: CafeThemeName, saved?: BrandColors): CafeThemeConfig {
+  const base = dashboardThemes[themeName];
+  const defaults = getDashboardThemeColors(themeName);
+  const values = [saved?.primaryColor, saved?.secondaryColor, saved?.backgroundColor].map((color, i) =>
+    color && /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : defaults[i],
+  ) as [string, string, string];
+  if (values.every((color, i) => color === defaults[i])) return base;
+  return applyBrandColors(base, values);
+}
+
+
+export function dashboardThemeVariables(theme: CafeThemeConfig): CSSProperties {
+  return {
+    "--background": theme.pageBackground,
+    "--foreground": theme.textPrimary,
+    "--card": theme.surface,
+    "--card-foreground": theme.textPrimary,
+    "--popover": theme.surface,
+    "--popover-foreground": theme.textPrimary,
+    "--primary": theme.accent,
+    "--primary-foreground": theme.buttonText,
+    "--secondary": theme.surfaceRaised,
+    "--secondary-foreground": theme.textSecondary,
+    "--muted": theme.surfaceRaised,
+    "--muted-foreground": theme.textMuted,
+    "--accent": theme.accentSoft,
+    "--accent-foreground": theme.textPrimary,
+    "--destructive": theme.danger,
+    "--border": theme.border,
+    "--input": theme.inputBorder,
+    "--ring": theme.accent,
+  } as CSSProperties;
 }

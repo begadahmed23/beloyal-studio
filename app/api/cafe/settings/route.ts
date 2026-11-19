@@ -1,3 +1,4 @@
+import { dashboardPaletteSelect } from "@/lib/business/dashboard-palette";
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
@@ -42,6 +43,7 @@ export async function GET(request: NextRequest) {
         primaryColor: true,
         secondaryColor: true,
         backgroundColor: true,
+        ...dashboardPaletteSelect,
 
         rewardTarget: true,
         rewardName: true,
@@ -142,7 +144,7 @@ export async function PATCH(request: NextRequest) {
     const settings = body as Record<string, unknown>;
     const cafe = await updateCafeSettings(authData.cafeId, settings);
 
-    if (settings.section === undefined || settings.section === "general" || settings.section === "branding") {
+    if (settings.section === undefined || settings.section === "general") {
       scheduleGoogleWalletBrandUpdate(cafe);
     }
 

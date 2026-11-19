@@ -22,7 +22,7 @@ export function getMbVapeBrandColors<T extends BrandColors & { slug: string; bus
     && business.primaryColor?.toLowerCase() === "#7b4f35"
     && business.secondaryColor?.toLowerCase() === "#6f4a35"
     && business.backgroundColor?.toLowerCase() === "#f3ede5";
-  if (!isMbVape(business) || !warmSand) return business;
+  if (business.businessType !== "VAPE" || (isMbVape(business) && !warmSand)) return business;
 
-  return { ...business, primaryColor: MB_VAPE_WALNUT, secondaryColor: "#A47B60", backgroundColor: MB_VAPE_IVORY };
+  return { ...business, theme: isMbVape(business) ? business.theme : "MODERN_MINIMAL", primaryColor: MB_VAPE_WALNUT, secondaryColor: "#A47B60", backgroundColor: MB_VAPE_IVORY };
 }
