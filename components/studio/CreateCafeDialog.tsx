@@ -22,7 +22,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { businessTypeLabels, getBusinessTerminology } from "@/lib/business/terminology";
-import { getBusinessThemeOptions, getDefaultBusinessTheme } from "@/lib/cafe-theme";
+import { getDefaultBusinessTheme, type CafeThemeName } from "@/lib/cafe-theme";
+import BusinessThemeGallery from "@/components/theme/BusinessThemeGallery";
 
 import BusinessTypeSelector from "./BusinessTypeSelector";
 import type { BusinessType } from "./studio-types";
@@ -65,14 +66,12 @@ export default function CreateCafeDialog({
     useState("7");
   const [monthlyPrice, setMonthlyPrice] =
     useState("1000");
-  const [theme, setTheme] =
-    useState("COFFEE_CLASSIC");
+  const [chosenTheme, setChosenTheme] = useState<CafeThemeName | null>(null);
+  const theme = chosenTheme ?? getDefaultBusinessTheme(businessType);
 
   const terminology =
     getBusinessTerminology(businessType);
   const businessLabel = businessTypeLabels[businessType];
-  const availableThemes =
-    getBusinessThemeOptions(businessType);
 
   function resetForm() {
     setBusinessType("CAFE");
@@ -84,7 +83,7 @@ export default function CreateCafeDialog({
     setRewardName("Free Drink");
     setRewardTarget("7");
     setMonthlyPrice("1000");
-    setTheme("COFFEE_CLASSIC");
+    setChosenTheme(null);
     setError("");
     setSuccess(false);
     setShowPassword(false);
@@ -101,7 +100,6 @@ export default function CreateCafeDialog({
     setRewardTarget(
       nextBusinessType === "BARBERSHOP" ? "3" : "7",
     );
-    setTheme(getDefaultBusinessTheme(nextBusinessType));
   }
 
   function generateSlug(value: string) {
@@ -503,28 +501,9 @@ export default function CreateCafeDialog({
                 </div>
               </div>
 
-              <div>
-                <label className="mb-2 block text-sm font-medium text-[#48484D]">
-                  Card theme
-                </label>
-
-                <select
-                  value={theme}
-                  onChange={(event) =>
-                    setTheme(event.target.value)
-                  }
-                  disabled={loading}
-                  className={inputClassName}
-                >
-                  {availableThemes.map((themeOption) => (
-                    <option
-                      key={themeOption.value}
-                      value={themeOption.value}
-                    >
-                      {themeOption.label}
-                    </option>
-                  ))}
-                </select>
+              <div className="sm:col-span-2">
+                <p className="mb-2 text-sm font-medium text-[#48484D]">Card theme</p>
+                <BusinessThemeGallery value={theme} onChange={setChosenTheme} disabled={loading} />
               </div>
             </div>
 

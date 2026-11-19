@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useMemo,
   useState,
 } from "react";
@@ -107,9 +108,12 @@ export default function MemberList() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const latestRequest = useRef(0);
 
   const loadCustomers = useCallback(
     async (showRefreshing = false) => {
+      const request = ++latestRequest.current;
+
       try {
         if (showRefreshing) setRefreshing(true);
         setError("");
@@ -142,8 +146,9 @@ export default function MemberList() {
           throw new Error(`Invalid ${personSingular} list response.`);
         }
 
-        setCustomers(data);
+        if (request === latestRequest.current) setCustomers(data);
       } catch (error) {
+        if (request !== latestRequest.current) return;
         console.error("Member list error:", error);
         setError(
           error instanceof Error
@@ -151,23 +156,27 @@ export default function MemberList() {
             : `Failed to load ${personPlural}.`,
         );
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (request === latestRequest.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [personPlural, personSingular],
   );
 
   useEffect(() => {
-    loadCustomers();
+    const initialLoad = window.setTimeout(() => void loadCustomers(), 0);
 
     function handleMembersUpdated() {
       loadCustomers(true);
     }
 
     window.addEventListener("members-updated", handleMembersUpdated);
-    return () =>
+    return () => {
+      window.clearTimeout(initialLoad);
       window.removeEventListener("members-updated", handleMembersUpdated);
+    };
   }, [loadCustomers]);
 
   const birthdaySoonCount = useMemo(
@@ -369,7 +378,13 @@ export default function MemberList() {
         </div>
       )}
 
-      {!loading && error && (
+      {!loading && error && customers.length > 0 && (
+        <p role="status" className="mt-4 text-sm" style={{ color: theme.danger }}>
+          The list could not refresh. {error}
+        </p>
+      )}
+
+      {!loading && error && customers.length === 0 && (
         <div
           className="mt-5 border p-7 text-center"
           style={{
@@ -399,7 +414,7 @@ export default function MemberList() {
         </div>
       )}
 
-      {!loading && !error && filteredCustomers.length === 0 && (
+      {!loading && (!error || customers.length > 0) && filteredCustomers.length === 0 && (
         <div
           className="mt-5 border border-dashed p-12 text-center"
           style={{
@@ -429,7 +444,7 @@ export default function MemberList() {
         </div>
       )}
 
-      {!loading && !error && filteredCustomers.length > 0 && (
+      {!loading && filteredCustomers.length > 0 && (
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           {filteredCustomers.map((customer) => {
             const birthdayProximity = getBirthdayProximity(customer.birthday);

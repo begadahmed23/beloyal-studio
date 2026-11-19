@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import WalletButtonStatus from "./WalletButtonStatus";
 
@@ -11,11 +11,14 @@ const getServerSupported = () => false;
 export default function AppleWalletButton({ token, enabled }: { token: string; enabled: boolean }) {
   const supported = useSyncExternalStore(subscribe, getSupported, getServerSupported);
   const [busy, setBusy] = useState(false);
+  const requestInFlight = useRef(false);
   const [error, setError] = useState("");
   const [opened, setOpened] = useState(false);
   if (!enabled || !supported) return null;
 
   async function download() {
+    if (requestInFlight.current) return;
+    requestInFlight.current = true;
     setBusy(true);
     setError("");
     setOpened(false);
@@ -37,6 +40,7 @@ export default function AppleWalletButton({ token, enabled }: { token: string; e
     } catch (caught) {
       setError(caught instanceof Error && caught.name !== "TimeoutError" ? caught.message : "Apple Wallet took too long. Try again.");
     } finally {
+      requestInFlight.current = false;
       setBusy(false);
     }
   }

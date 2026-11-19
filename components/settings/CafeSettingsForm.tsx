@@ -1,6 +1,7 @@
 "use client";
 
 import MbVapeLogo from "@/components/brand/MbVapeLogo";
+import BusinessThemeGallery from "@/components/theme/BusinessThemeGallery";
 import { isMbVape } from "@/lib/business/mb-vape";
 import { dashboardSettingsSections, type DashboardSettingsSection } from "@/lib/business/settings-sections";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
@@ -33,10 +34,7 @@ import {
   useCafeTheme,
 } from "@/components/theme/CafeThemeProvider";
 import {
-  getBusinessTheme,
   getBusinessBrandColors,
-  getBusinessThemeOptions,
-  type BusinessThemeOption,
   type CafeThemeConfig,
   type CafeThemeName,
 } from "@/lib/cafe-theme";
@@ -89,7 +87,6 @@ export default function CafeSettingsForm({
 }: Props) {
  const {
   theme,
-  themeName,
   savedThemeName,
   cafe,
   setPreviewTheme,
@@ -109,9 +106,6 @@ export default function CafeSettingsForm({
     cafe.slug.toLowerCase().includes("keka") ||
     normalizedCafeName.includes("keka");
 
-  const themeOptions = getBusinessThemeOptions(
-    cafe.businessType,
-  );
   const PreviewIcon = isBarbershop ? Scissors : Coffee;
 
   const createInitialState = (): FormState => ({
@@ -277,9 +271,9 @@ export default function CafeSettingsForm({
     try {
       const fields = dashboardSettingsSections[section];
       const input = Object.fromEntries(fields.map((field) => [field, form[field]]));
-      if (section === "branding" && !isKato && !isKeka) {
+      if (section === "branding" && !isKato && !isKeka && draft.theme) {
         const [primaryColor, secondaryColor, backgroundColor] = getBusinessBrandColors(
-          form.theme, cafe.businessType, form.theme === savedThemeName ? cafe : undefined,
+          form.theme,
         );
         Object.assign(input, { primaryColor, secondaryColor, backgroundColor });
       }
@@ -293,6 +287,7 @@ export default function CafeSettingsForm({
       if (!response.ok) throw new Error(result.error ?? "Unable to save settings.");
 
       applySavedSettings(result.cafe, result.cafe.theme);
+      if (section === "branding") resetPreviewTheme();
       setDraft((current) => {
         const next = { ...current };
         for (const field of fields) {
@@ -384,7 +379,7 @@ export default function CafeSettingsForm({
           >
             {isKato
               ? "Manage KATŌ’s loyalty program, customer experience, and business controls."
-              : "Customize your loyalty program. Each section saves independently."}
+              : "Use the Save button in each section to keep your changes."}
           </p>
         </div>
 
@@ -434,7 +429,7 @@ export default function CafeSettingsForm({
               label={
                 isBarbershop ? "Barbershop slug" : "Business slug"
               }
-              description="The permanent identifier used by the platform."
+              description="This is part of the link customers use to join."
             >
               <input
                 type="text"
@@ -458,7 +453,7 @@ export default function CafeSettingsForm({
                 label={
                   isBarbershop ? "Barbershop logo" : "Business logo"
                 }
-                description="Upload a permanent PNG, JPG, or WebP logo up to 4 MB. You can also paste a direct image URL."
+                description="Upload a PNG, JPG, or WebP (up to 4 MB), or paste a link to your logo."
               >
                 <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
                   <input
@@ -585,57 +580,22 @@ export default function CafeSettingsForm({
               theme={theme}
             icon={Palette}
             title="Branding"
-            description={`Choose the visual identity used across the ${
+            description={`Choose colors for your ${
               isBarbershop ? "barbershop" : cafe.businessType === "CAFE" ? "café" : "business"
             } dashboard and customer card.`}
           />
 
-          <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {themeOptions.map((option) => {
-              const selected = form.theme === option.value;
-              const previewTheme = getBusinessTheme(
-                option.value,
-                cafe.businessType,
-              );
-
-              return (
-                <ThemePreviewOption
-                  key={option.value}
-                  option={option}
-                  selected={selected}
-                  previewTheme={previewTheme}
-                  cafeName={
-                    form.name ||
-                    cafe.name ||
-                    (isBarbershop
-                      ? "Your barbershop"
-                      : "Your business")
-                  }
-                  rewardTarget={getLoyaltyProgressTarget({
-                    rewardTarget: Number(form.rewardTarget) || (isBarbershop ? 3 : 8),
-                  })}
-                  rewardName={
-                    form.rewardName ||
-                    (isBarbershop
-                      ? "Free haircut"
-                      : cafe.businessType === "CAFE" ? "Free drink" : "Member reward")
-                  }
-                  isBarbershop={isBarbershop}
-                  onSelect={() => selectTheme(option.value)}
-                />
-              );
-            })}
+          <div className="mt-6">
+            <BusinessThemeGallery
+              value={form.theme}
+              disabled={saving !== null}
+              onChange={selectTheme}
+            />
           </div>
 
-          {themeName !== savedThemeName && (
-            <p
-              className="mt-5 text-sm"
-              style={{
-                color: theme.accent,
-              }}
-            >
-              You are previewing an unsaved theme.
-              Select Save Branding to keep it.
+          {draft.theme && (
+            <p role="status" className="mt-4 text-sm" style={{ color: theme.textSecondary }}>
+              You’re previewing these colors. Tap Save Branding to use them.
             </p>
           )}
           {saveControls("branding", "Save Branding")}
@@ -869,8 +829,8 @@ export default function CafeSettingsForm({
             title="Loyalty program"
             description={
               isBarbershop
-                ? "Control how clients earn visits and what they receive after completing their card."
-                : "Control how customers earn stamps and what they receive after completing their card."
+                ? "Choose which visits count and what clients earn."
+                : "Choose how customers earn stamps and what reward they get."
             }
           />
 
@@ -878,7 +838,7 @@ export default function CafeSettingsForm({
             <Field
               theme={theme}
               label="Reward visit"
-              description="A target of 7 means 6 paid visits, then the reward on visit 7."
+              description="Example: enter 7 to give a reward on visit 7, after 6 paid visits."
             >
               <input
                 type="number"
@@ -901,7 +861,7 @@ export default function CafeSettingsForm({
             <Field
               theme={theme}
               label="Reward name"
-              description="The short reward title shown to customers."
+              description="Name the reward. Example: Free coffee."
             >
               <input
                 type="text"
@@ -925,7 +885,7 @@ export default function CafeSettingsForm({
             <Field
               theme={theme}
               label="Reward description"
-              description="Additional details about the completed reward."
+              description="Tell customers what the reward includes."
             >
               <textarea
                 value={form.rewardDescription}
@@ -987,8 +947,8 @@ export default function CafeSettingsForm({
               }
               description={
                 isBarbershop
-                  ? "Optional minimum service amount needed to record a visit."
-                  : "Optional minimum order amount needed to earn a stamp."
+                  ? "Enter the minimum spend for a visit to count. Leave it blank if there’s no minimum."
+                  : "Enter the minimum spend to earn a stamp. Leave it blank if there’s no minimum."
               }
             >
               <div className="relative">
@@ -1109,7 +1069,7 @@ export default function CafeSettingsForm({
             theme={theme}
             icon={MessageCircle}
             title="Customer feedback"
-            description="Choose whether customers can privately share written feedback from their loyalty card."
+            description="Let customers send you private feedback from their card."
           />
 
           <div
@@ -1297,7 +1257,7 @@ export default function CafeSettingsForm({
               theme={theme}
             icon={UserRound}
             title="Account and subscription"
-            description="These details are managed by the platform administrator and cannot be changed here."
+            description="Contact BeLoyal to change your account or subscription."
           />
 
           <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -1355,190 +1315,10 @@ export default function CafeSettingsForm({
 
 }
 
-type ThemeOption = BusinessThemeOption;
 
 type ThemedComponentProps = {
   theme: CafeThemeConfig;
 };
-
-function ThemePreviewOption({
-  option,
-  selected,
-  previewTheme,
-  cafeName,
-  rewardTarget,
-  rewardName,
-  isBarbershop,
-  onSelect,
-}: {
-  option: ThemeOption;
-  selected: boolean;
-  previewTheme: CafeThemeConfig;
-  cafeName: string;
-  rewardTarget: number;
-  rewardName: string;
-  isBarbershop: boolean;
-  onSelect: () => void;
-}) {
-  const previewStampCount = Math.min(
-    isBarbershop ? 2 : 5,
-    rewardTarget,
-  );
-  const visibleStampTotal = isBarbershop
-    ? Math.min(Math.max(rewardTarget, 1), 6)
-    : Math.min(Math.max(rewardTarget, 6), 8);
-  const LoyaltyIcon = isBarbershop ? Scissors : Coffee;
-
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={selected}
-      className="group relative overflow-hidden border p-3 text-left transition duration-300 pointer-fine:motion-safe:hover:-translate-y-1"
-      style={{
-        borderColor: selected ? previewTheme.accent : previewTheme.border,
-        backgroundColor: previewTheme.surface,
-        borderRadius: previewTheme.radiusLarge,
-        boxShadow: selected
-          ? `0 22px 55px ${withAlpha(previewTheme.accent, "24")}`
-          : previewTheme.cardShadow,
-      }}
-    >
-      {selected && (
-        <span
-          className="absolute right-5 top-5 z-20 flex h-8 w-8 items-center justify-center rounded-full border"
-          style={{
-            backgroundColor: previewTheme.accent,
-            borderColor: withAlpha(previewTheme.buttonText, "33"),
-            color: previewTheme.buttonText,
-          }}
-        >
-          <Check size={16} strokeWidth={2.5} />
-        </span>
-      )}
-
-      <div
-        className="relative min-h-56 overflow-hidden border p-5 transition duration-300 pointer-fine:motion-safe:group-hover:scale-[1.01]"
-        style={{
-          borderColor: previewTheme.border,
-          borderRadius: previewTheme.radiusMedium,
-          background: `radial-gradient(circle at top right, ${withAlpha(
-            previewTheme.accent,
-            "24"
-          )} 0%, ${previewTheme.surfaceRaised} 42%, ${previewTheme.pageBackground} 100%)`,
-        }}
-      >
-        <div
-          className="absolute -right-10 -top-12 h-32 w-32 rounded-full blur-3xl"
-          style={{ backgroundColor: withAlpha(previewTheme.accent, "2b") }}
-        />
-
-        <div className="relative flex min-h-46 flex-col">
-          <div className="pr-10">
-            <p
-              className="truncate text-[10px] font-semibold uppercase tracking-[0.22em]"
-              style={{ color: previewTheme.textMuted }}
-            >
-              {isBarbershop
-                ? "Barber loyalty card"
-                : "Digital loyalty card"}
-            </p>
-
-            <p
-              className="mt-2 truncate text-xl font-semibold tracking-tight"
-              style={{ color: previewTheme.textPrimary }}
-            >
-              {cafeName}
-            </p>
-          </div>
-
-          <div
-            className={`mt-7 grid gap-2 ${
-              isBarbershop ? "grid-cols-3" : "grid-cols-4"
-            }`}
-          >
-            {Array.from({ length: visibleStampTotal }).map((_, index) => {
-              const filled = index < previewStampCount;
-
-              return (
-                <span
-                  key={index}
-                  className="flex aspect-square items-center justify-center border"
-                  style={{
-                    borderColor: filled
-                      ? withAlpha(previewTheme.accent, "66")
-                      : previewTheme.border,
-                    backgroundColor: filled
-                      ? previewTheme.accentSoft
-                      : previewTheme.surface,
-                    borderRadius: previewTheme.radiusMedium,
-                  }}
-                >
-                  <LoyaltyIcon
-                    size={15}
-                    style={{
-                      color: filled
-                        ? previewTheme.accent
-                        : previewTheme.textMuted,
-                      fill:
-                        isBarbershop || !filled
-                          ? "transparent"
-                          : previewTheme.accent,
-                    }}
-                  />
-                </span>
-              );
-            })}
-          </div>
-
-          <div className="mt-auto pt-6">
-            <div className="flex items-end justify-between gap-3">
-              <div className="min-w-0">
-                <p
-                  className="text-[10px] uppercase tracking-[0.16em]"
-                  style={{ color: previewTheme.textMuted }}
-                >
-                  Your reward
-                </p>
-                <p
-                  className="mt-1 truncate text-sm font-semibold"
-                  style={{ color: previewTheme.accent }}
-                >
-                  {rewardName}
-                </p>
-              </div>
-
-              <span
-                className="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold"
-                style={{
-                  backgroundColor: previewTheme.accent,
-                  color: previewTheme.buttonText,
-                }}
-              >
-                {previewStampCount}/{rewardTarget}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="px-2 pb-2 pt-5">
-        <p
-          className="font-semibold"
-          style={{ color: previewTheme.textPrimary }}
-        >
-          {option.label}
-        </p>
-        <p
-          className="mt-2 text-sm leading-5"
-          style={{ color: previewTheme.textMuted }}
-        >
-          {option.description}
-        </p>
-      </div>
-    </button>
-  );
-}
 
 function SectionHeader({
   theme,
@@ -1641,11 +1421,4 @@ function ReadOnlyItem({
       </p>
     </div>
   );
-}
-
-function withAlpha(color: string, alpha: string) {
-  const cleanColor = color.replace("#", "");
-  return /^[0-9a-fA-F]{6}$/.test(cleanColor)
-    ? `#${cleanColor}${alpha}`
-    : color;
 }

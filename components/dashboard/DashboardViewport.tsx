@@ -7,10 +7,8 @@ import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 export default function DashboardViewport({
   children,
-  className = "",
 }: {
   children: ReactNode;
-  className?: string;
 }) {
   const { theme } = useCafeTheme();
   const chromeColor = normalizeHex(theme.surface, "#fffefa");
@@ -20,7 +18,7 @@ export default function DashboardViewport({
   return (
     <div
       data-dashboard-viewport=""
-      className={`flex h-dvh min-w-0 flex-col overflow-hidden lg:block lg:h-auto lg:min-h-screen lg:overflow-visible ${className}`}
+      className="flex h-dvh min-w-0 flex-col overflow-hidden lg:block lg:h-auto lg:min-h-screen lg:overflow-visible"
       style={{ backgroundColor: theme.pageBackground, color: theme.textPrimary }}
     >
       {/* Safari can extend the document background into the area around its controls. */}

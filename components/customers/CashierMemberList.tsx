@@ -12,9 +12,11 @@ import {
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
- import BirthdayRewardAction from "@/components/customers/BirthdayRewardAction";
+import { ActionButton } from "@/components/ui/action-button";
+import BirthdayRewardAction from "@/components/customers/BirthdayRewardAction";
 import MbVapeStamp from "@/components/brand/MbVapeStamp";
 import { isMbVape } from "@/lib/business/mb-vape";
 import KatoMark from "@/components/brand/KatoMark";
@@ -63,8 +65,10 @@ export default function CashierMemberList() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const requests = useRef(new Set<string>());
   const [actions, setActions] = useState<Record<string, {
     status: "pending" | "success" | "error";
+    operation?: "stamp" | "redeem";
     text: string;
   }>>({});
 
@@ -131,17 +135,18 @@ export default function CashierMemberList() {
 
   async function runAction(
     memberId: string,
-    endpoint: string,
+    operation: "stamp" | "redeem",
   ) {
-    if (actions[memberId]?.status === "pending") return;
+    if (requests.current.has(memberId)) return;
+    requests.current.add(memberId);
 
     setActions((previous) => ({
       ...previous,
-      [memberId]: { status: "pending", text: "Updating card…" },
+      [memberId]: { status: "pending", operation, text: operation === "redeem" ? "Redeeming reward…" : isBarbershop ? "Recording visit…" : "Adding stamp…" },
     }));
 
     try {
-      const response = await fetch(endpoint, {
+      const response = await fetch(`/api/customers/${operation}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -169,8 +174,10 @@ export default function CashierMemberList() {
     } catch (error) {
       setActions((previous) => ({
         ...previous,
-        [memberId]: { status: "error", text: error instanceof Error ? error.message : "Action failed." },
+        [memberId]: { status: "error", text: error instanceof Error ? error.message : "Could not update the card. Try again." },
       }));
+    } finally {
+      requests.current.delete(memberId);
     }
   }
 
@@ -439,37 +446,39 @@ export default function CashierMemberList() {
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3">
-                <button
+                <ActionButton
                   type="button"
                   disabled={busy || member.rewardReady}
-                  aria-busy={busy}
+                  pending={busy && action?.operation === "stamp"}
+                  icon={<StampIcon size={16} />}
                   onClick={() =>
                     runAction(
                       member.id,
-                      "/api/customers/stamp",
+                      "stamp",
                     )
                   }
-                  className="flex h-11 touch-manipulation items-center justify-center gap-2 text-sm font-semibold transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-45"
+                  className="flex min-h-11 px-2 items-center justify-center gap-2 text-sm font-semibold transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-45"
                   style={{
                     backgroundColor: theme.accent,
                     color: theme.buttonText,
                     borderRadius: theme.radiusMedium,
                   }}
                 >
-                  <StampIcon size={16} aria-hidden="true" />
                   Add {unit}
-                </button>
+                </ActionButton>
 
-                <button
+                <ActionButton
                   type="button"
                   disabled={busy || !member.rewardReady}
+                  pending={busy && action?.operation === "redeem"}
+                  icon={<CheckCircle2 size={16} />}
                   onClick={() =>
                     runAction(
                       member.id,
-                      "/api/customers/redeem",
+                      "redeem",
                     )
                   }
-                  className="flex h-11 touch-manipulation items-center justify-center gap-2 border text-sm font-semibold transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="flex min-h-11 px-2 items-center justify-center gap-2 border text-sm font-semibold transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-40"
                   style={{
                     borderColor: member.rewardReady
                       ? `${theme.success}70`
@@ -483,9 +492,8 @@ export default function CashierMemberList() {
                     borderRadius: theme.radiusMedium,
                   }}
                 >
-                  <CheckCircle2 size={16} />
-                  Redeem
-                </button>
+                  Redeem reward
+                </ActionButton>
               </div>
               <p
                 role="status"

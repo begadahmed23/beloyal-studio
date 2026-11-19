@@ -111,7 +111,6 @@ function getLoaderTheme(
     barberBackgroundColor,
   ] = getBusinessBrandColors(
     cafe.theme,
-    cafe.businessType,
     cafe,
   );
 
@@ -189,6 +188,7 @@ export default function DigitalCardPage() {
     useRef<number | null>(null);
 
   const requestInProgress = useRef(false);
+  const feedbackInProgress = useRef(false);
 
   const hasLoadedCard = useRef(false);
 
@@ -1006,7 +1006,7 @@ export default function DigitalCardPage() {
       if (
         !customer ||
         !customer.cafe.feedbackEnabled ||
-        feedbackSubmitting
+        feedbackInProgress.current
       ) {
         return;
       }
@@ -1016,12 +1016,13 @@ export default function DigitalCardPage() {
 
       if (cleanComment.length < 10) {
         setFeedbackError(
-          "Tell us a little more — even a short note helps.",
+          "Write at least 10 characters so the business knows what happened.",
         );
 
         return;
       }
 
+      feedbackInProgress.current = true;
       setFeedbackSubmitting(true);
 
       setFeedbackError("");
@@ -1091,6 +1092,7 @@ export default function DigitalCardPage() {
             : "We couldn't send your feedback right now.",
         );
       } finally {
+        feedbackInProgress.current = false;
         setFeedbackSubmitting(false);
       }
     };
@@ -1340,7 +1342,6 @@ const visibleStamps = rewardReady
     barberBackgroundColor,
   ] = getBusinessBrandColors(
     customer.cafe.theme,
-    customer.cafe.businessType,
     brand,
   );
 

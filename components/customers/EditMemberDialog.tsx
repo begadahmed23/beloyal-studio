@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pencil, Save, X } from "lucide-react";
 
 import {
@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+import { ActionButton } from "@/components/ui/action-button";
 import { Input } from "@/components/ui/input";
 
 type Customer = {
@@ -54,6 +55,7 @@ export default function EditMemberDialog({
   );
 
   const [loading, setLoading] = useState(false);
+  const requestInFlight = useRef(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -67,6 +69,7 @@ export default function EditMemberDialog({
   }, [open, customer]);
 
   async function updateMember() {
+    if (requestInFlight.current) return;
     const cleanName = name.trim();
     const cleanPhone = phone.trim();
     const cleanInstagram = instagram.trim().replace(/^@+/, "").toLowerCase();
@@ -91,6 +94,7 @@ export default function EditMemberDialog({
       return;
     }
 
+    requestInFlight.current = true;
     try {
       setLoading(true);
       setError("");
@@ -127,6 +131,7 @@ export default function EditMemberDialog({
           : "Failed to update member."
       );
     } finally {
+      requestInFlight.current = false;
       setLoading(false);
     }
   }
@@ -423,10 +428,11 @@ export default function EditMemberDialog({
               Cancel
             </button>
 
-            <button
+            <ActionButton
               type="button"
               onClick={updateMember}
-              disabled={loading}
+              pending={loading}
+              icon={<Save size={17} />}
               className="
                 flex
                 h-12
@@ -448,10 +454,8 @@ export default function EditMemberDialog({
                 disabled:opacity-50
               "
             >
-              <Save size={17} strokeWidth={2} />
-
-              {loading ? "Saving..." : "Save changes"}
-            </button>
+              Save changes
+            </ActionButton>
           </div>
         </div>
       </DialogContent>

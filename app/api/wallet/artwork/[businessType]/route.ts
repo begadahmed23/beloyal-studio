@@ -35,7 +35,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ busi
   }
 
   if (!isArtworkBusinessType(businessType)) return new Response(null, { status: 404 });
-  const [primary, secondary, background] = getBusinessBrandColors(getDefaultBusinessTheme(businessType), businessType, {
+  const [primary, secondary, background] = getBusinessBrandColors(getDefaultBusinessTheme(businessType), {
     primaryColor: colors.get("primary") ? `#${colors.get("primary")}` : null,
     secondaryColor: colors.get("secondary") ? `#${colors.get("secondary")}` : null,
     backgroundColor: colors.get("background") ? `#${colors.get("background")}` : null,

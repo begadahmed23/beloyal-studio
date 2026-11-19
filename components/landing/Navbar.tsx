@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { SlidingSelection } from "@/components/ui/sliding-selection";
 import { Menu, X } from "lucide-react";
 
-export default function Navbar({ arabic = false, onLanguageChange }: { arabic?: boolean; onLanguageChange?: () => void }) {
+export default function Navbar({ arabic = false, active, onLanguageChange }: { arabic?: boolean; active: string; onLanguageChange?: () => void }) {
   const [open, setOpen] = useState(false);
   const barRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -26,7 +27,24 @@ export default function Navbar({ arabic = false, onLanguageChange }: { arabic?: 
     <header className="sticky top-0 z-50 border-b border-black/[0.06] bg-white/95 text-neutral-950 backdrop-blur-xl">
       <div ref={barRef} className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-3 sm:px-6 lg:px-8">
         <Link href="/" aria-label={arabic ? "الصفحة الرئيسية لـ BeLoyal" : "BeLoyal home"} className="flex shrink-0 items-center gap-2 text-xl font-semibold tracking-[-0.04em]" dir="ltr"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-black text-sm text-white">B</span>BeLoyal</Link>
-        <nav aria-label={arabic ? "التنقل الرئيسي" : "Main navigation"} className="hidden items-center gap-5 text-sm text-neutral-600 xl:flex">{links.map(([label, href]) => <a key={href} href={href} className="py-3 transition hover:text-black">{label}</a>)}</nav>
+        <nav aria-label={arabic ? "التنقل الرئيسي" : "Main navigation"} className="hidden text-sm text-neutral-600 xl:block">
+          <SlidingSelection value={active} indicatorColor="#f0f0f0" indicatorClassName="rounded-full" className="flex items-center gap-1">
+            {links.map(([label, href]) => {
+              const selected = href === `#${active}`;
+              return (
+                <a
+                  key={href}
+                  href={href}
+                  aria-current={selected ? "location" : undefined}
+                  data-selection={selected ? "active" : undefined}
+                  className={`px-3 py-3 hover:text-black motion-safe:transition-colors ${selected ? "text-black" : ""}`}
+                >
+                  {label}
+                </a>
+              );
+            })}
+          </SlidingSelection>
+        </nav>
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => { setOpen(false); onLanguageChange?.(); }} lang={arabic ? "en" : "ar"} aria-label={arabic ? "Switch to English" : "التبديل إلى العربية"} className="min-h-11 rounded-full px-3 text-sm font-medium hover:bg-neutral-100">{arabic ? "English" : "العربية"}</button>
           <div className="hidden items-center gap-2 sm:flex"><Link href="/login" className="inline-flex min-h-11 items-center rounded-full border border-neutral-300 px-4 text-sm font-medium">{arabic ? "دخول أصحاب الأعمال" : "Business login"}</Link><a href="#contact" className="inline-flex min-h-11 items-center rounded-full bg-black px-5 text-sm font-semibold text-white">{arabic ? "خلّينا نتكلم" : "Let’s talk"}</a></div>

@@ -20,8 +20,8 @@ export function getJoinTheme(cafe: JoinCafe) {
   const isLoretto = matches("loretto");
   const isKeka = !isLoretto && matches("keka");
   const isKato = !isLoretto && !isKeka && matches("kato");
-  const base = getBusinessTheme(cafe.theme, cafe.businessType);
-  const [brandPrimary, brandSecondary, background] = getBusinessBrandColors(cafe.theme, cafe.businessType, getMbVapeBrandColors(cafe));
+  const base = getBusinessTheme(cafe.theme);
+  const [brandPrimary, brandSecondary, background] = getBusinessBrandColors(cafe.theme, getMbVapeBrandColors(cafe));
   const barber = cafe.businessType === "BARBERSHOP";
   const retail = cafe.businessType === "VAPE" || cafe.businessType === "OTHER";
   let primary = brandPrimary;

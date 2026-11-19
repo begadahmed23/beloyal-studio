@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   AlertCircle,
   Plus,
@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+import { ActionButton } from "@/components/ui/action-button";
 import { Input } from "@/components/ui/input";
 
 export default function NewCustomerDialog() {
@@ -31,6 +32,7 @@ export default function NewCustomerDialog() {
   const [birthday, setBirthday] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const requestInFlight = useRef(false);
 
   function resetForm() {
     setName("");
@@ -41,6 +43,7 @@ export default function NewCustomerDialog() {
   }
 
   async function createMember() {
+    if (requestInFlight.current) return;
     const cleanName = name.trim();
     const cleanPhone = phone.trim();
     const cleanInstagram = instagram
@@ -79,6 +82,7 @@ export default function NewCustomerDialog() {
       return;
     }
 
+    requestInFlight.current = true;
     try {
       setLoading(true);
 
@@ -132,6 +136,7 @@ export default function NewCustomerDialog() {
           : `Something went wrong while creating the ${personLabel}.`
       );
     } finally {
+      requestInFlight.current = false;
       setLoading(false);
     }
   }
@@ -430,10 +435,11 @@ export default function NewCustomerDialog() {
               boxShadow: `0 -12px 28px ${theme.surface}F2`,
             }}
           >
-            <button
+            <ActionButton
               type="button"
               onClick={createMember}
-              disabled={loading}
+              pending={loading}
+              icon={<UserPlus size={17} />}
               className="flex h-12 w-full touch-manipulation items-center justify-center gap-2 text-sm font-semibold transition duration-150 active:opacity-80 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               style={{
                 backgroundColor: theme.accent,
@@ -442,11 +448,8 @@ export default function NewCustomerDialog() {
                 boxShadow: `0 10px 24px ${theme.accent}24`,
               }}
             >
-              <UserPlus size={17} />
-              {loading
-                ? "Creating..."
-                : `Create ${isBarbershop ? "Client" : "Member"}`}
-            </button>
+              {isBarbershop ? "Create client" : "Create member"}
+            </ActionButton>
           </div>
         </DialogContent>
       </Dialog>
