@@ -2,7 +2,6 @@
 
 import {
   calculateBirthdayCountdown,
-  getProgressMessage,
   withAlpha,
 } from "./card-utils";
 import {
@@ -1334,41 +1333,6 @@ const visibleStamps = rewardReady
       unlockAt,
     );
 
-const cardGlowsGreen = rewardReady;
-
-const remainingStamps = rewardReady
-  ? 0
-  : Math.max(
-      unlockAt - customer.stamps,
-      0,
-    );
-
-const progressMessage = rewardReady
-  ? {
-      title: `${
-        customer.cafe.rewardName ||
-        "Reward"
-      } is ready`,
-      description: `Show this card to the ${
-        isBarbershop ? "barber" : "cashier"
-      } to redeem your ${
-        customer.cafe.rewardName?.toLowerCase() ||
-        "reward"
-      }.`,
-    }
-  : getProgressMessage(
-      customer.stamps,
-      rewardTarget,
-      customer.cafe.rewardName,
-      customer.cafe.businessType,
-    );
-
-const progressPercentage = rewardReady
-  ? 100
-  : (Math.min(customer.stamps, unlockAt) /
-      unlockAt) *
-    100;
-
   const brand = getMbVapeBrandColors(customer.cafe);
   const [
     barberPrimaryColor,
@@ -1418,10 +1382,13 @@ const progressPercentage = rewardReady
   const pageIsLight =
     isLightColor(backgroundColor);
 
+  const isKekaCream = isKeka && customer.cafe.theme === "MODERN_MINIMAL";
   const cardBackground = isLoretto
     ? backgroundColor
-    : isKato
-      ? "#FFFFFF"
+    : isKeka
+      ? (isKekaCream ? "#FFF6E6" : "#741A1D")
+      : isKato
+      ? (customer.cafe.theme === "DARK_LUXURY" ? "#071A33" : "#FFFFFF")
     : isBrickBarber
       ? "#211D1A"
       : mixColors(
@@ -1456,24 +1423,6 @@ const progressPercentage = rewardReady
     ? withAlpha("#FFFFFF", 0.64)
     : withAlpha("#FFFFFF", 0.07);
 
-  const emptyStampBackground =
-    cardIsLight
-      ? mixColors(
-          cardBackground,
-          "#000000",
-          0.92,
-        )
-      : mixColors(
-          cardBackground,
-          "#000000",
-          0.68,
-        );
-
-  const emptyStampText =
-    getReadableText(
-      emptyStampBackground,
-    );
-
   const accentText =
     getReadableText(primaryColor);
 
@@ -1492,17 +1441,6 @@ const progressPercentage = rewardReady
     0.32,
   );
 
-  const secondaryGlow = withAlpha(
-    secondaryColor,
-    0.25,
-  );
-
-  const rewardEmerald = "#163F36";
-
-  const rewardEmeraldLight =
-    "#2D6A5A";
-
-  const isKekaCream = isKeka && customer.cafe.theme === "MODERN_MINIMAL";
   const feedbackCardBackground = isLoretto
     ? "#F3EBDD"
     : isKeka
@@ -1553,10 +1491,6 @@ const progressPercentage = rewardReady
     : isKeka
       ? (isKekaCream ? "#FFF6E6" : "#4A0D10")
       : accentText;
-
-  const rewardChampagne = "#D8BE82";
-
-  const rewardIvory = "#F7EFD9";
 
   const logoUrl = isMbVape(customer.cafe) ? MB_VAPE_LOGO_URL : getDirectLogoUrl(customer.cafe.logoUrl);
 
@@ -1622,22 +1556,7 @@ const progressPercentage = rewardReady
         rewardTarget={unlockAt}
         visibleStamps={visibleStamps}
         rewardReady={rewardReady}
-        cardGlowsGreen={
-          cardGlowsGreen
-        }
-        remainingStamps={
-          remainingStamps
-        }
-        progressMessage={
-          progressMessage
-        }
-        progressPercentage={
-          progressPercentage
-        }
         primaryColor={primaryColor}
-        secondaryColor={
-          secondaryColor
-        }
         cardBackground={
           cardBackground
         }
@@ -1648,32 +1567,10 @@ const progressPercentage = rewardReady
         cardBorder={cardBorder}
         surfaceColor={surfaceColor}
         surfaceRaised={surfaceRaised}
-        emptyStampBackground={
-          emptyStampBackground
-        }
-        emptyStampText={
-          emptyStampText
-        }
-        accentText={accentText}
         primarySoft={primarySoft}
         primaryBorder={primaryBorder}
-        primaryGlow={primaryGlow}
-        secondaryGlow={
-          secondaryGlow
-        }
-        rewardEmerald={
-          rewardEmerald
-        }
-        rewardEmeraldLight={
-          rewardEmeraldLight
-        }
-        rewardChampagne={
-          rewardChampagne
-        }
-        rewardIvory={rewardIvory}
         logoUrl={logoUrl}
         showLogo={showLogo}
-        cafeInitial={cafeInitial}
         onRefresh={() =>
           void loadCard(true)
         }

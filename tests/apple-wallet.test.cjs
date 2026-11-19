@@ -321,6 +321,8 @@ test('MB Vape pass uses the brand logo and device stamps without changing the sc
   const pass = unzipSync(await createAppleWalletPass(fixture));
   const metadata = JSON.parse(strFromU8(pass['pass.json']));
   assert.equal(metadata.backgroundColor, 'rgb(247, 242, 233)');
+  assert.equal(metadata.logoText, 'MB Vape');
+  assert.equal(pass['logo.png'].readUInt32BE(16), 60);
   assert.equal(metadata.storeCard.headerFields[0].value, '2/6');
   assert.equal(metadata.barcodes[0].message, `BL:${member.publicToken}`);
   assert.equal(pass['strip@3x.png'].readUInt32BE(20), 432);

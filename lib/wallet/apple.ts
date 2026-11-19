@@ -19,7 +19,7 @@ export type WalletMember = {
   stamps: number;
   rewardEarnedAt: Date | null;
   updatedAt: Date;
-  cafe: { name: string; slug: string; theme: string; businessType: BusinessType; rewardTarget: number; rewardName: string; primaryColor: string; secondaryColor?: string; backgroundColor: string; updatedAt: Date };
+  cafe: { name: string; slug: string; logoUrl?: string | null; theme: string; businessType: BusinessType; rewardTarget: number; rewardName: string; primaryColor: string; secondaryColor?: string; backgroundColor: string; updatedAt: Date };
 };
 
 function color(value: string, fallback: string) {
@@ -28,6 +28,37 @@ function color(value: string, fallback: string) {
 
 function rgb(hex: string) {
   return `rgb(${[1, 3, 5].map((offset) => parseInt(hex.slice(offset, offset + 2), 16)).join(", ")})`;
+}
+
+async function uploadedLogo(url: string | null | undefined) {
+  if (!url) return null;
+  try {
+    const image = new URL(url);
+    // Only fetch uploads from our public blob store. External logo hosts are web-only.
+    const store = process.env.BLOB_PUBLIC_STORE_ID?.trim().toLowerCase().replace(/^store_/, "");
+    if (!store || image.protocol !== "https:" || image.port ||
+        image.hostname !== `${store}.public.blob.vercel-storage.com` || !image.pathname.startsWith("/cafes/")) return null;
+    const response = await fetch(image, { redirect: "error", signal: AbortSignal.timeout(1500) });
+    if (!response.ok || !response.body) return null;
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    const reader = response.body.getReader();
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > 2_000_000) return null;
+        chunks.push(value);
+      }
+    } finally {
+      await reader.cancel().catch(() => {});
+    }
+    return await sharp(Buffer.concat(chunks), { limitInputPixels: 16_000_000 })
+      .resize(120, 96, { fit: "contain", background: "#00000000" }).png().toBuffer();
+  } catch {
+    return null;
+  }
 }
 
 export async function createAppleWalletPass(member: WalletMember, message?: string, notificationSettings?: WalletNotificationSettings) {
@@ -80,14 +111,15 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
       { input: await textImage(ready ? "YOUR REWARD IS READY" : walid ? "YOUR NEXT FREE HAIRCUT" : "A LITTLE CLOSER TO YOUR REWARD", 840, 35), left: 142, top: 30 },
       { input: await textImage(ready ? member.cafe.rewardName : `${stamps} of ${target} ${barber ? "visits" : "stamps"}`, 800, 44), left: 162, top: 292 },
     ]).png().toBuffer();
-  const logo = mbVape ? await renderMbVapeLogo(480, 150, background) : await sharp({ create: { width: 480, height: 150, channels: 4, background: "#00000000" } })
-    .composite([
-      { input: await textImage(loretto ? "LORETTO" : walid ? member.cafe.name.toUpperCase().slice(0,32) : member.cafe.name.slice(0, 32), 460, 85), left: 0, top: 8 },
-      ...(walid ? [{ input: await textImage("BARBERSHOP", 320, 22), left: 0, top: 110 }] : []),
-      ...(loretto ? [{ input: await textImage("ARTISAN COFFEE & BAKERY", 450, 22), left: 5, top: 110 }] : []),
-    ]).png().toBuffer();
+  const initials = member.cafe.name.trim().split(/\s+/).slice(0, 2)
+    .map(word => Array.from(word)[0]).join("").toUpperCase() || "B";
+  const customLogo = mbVape ? null : await uploadedLogo(member.cafe.logoUrl);
   const icon = mbVape ? await renderMbVapeLogo(87, 87, "#ffffff", 8) : await sharp({ create: { width: 87, height: 87, channels: 4, background } })
-    .composite([{ input: await textImage(walid ? "WS" : "B", 54, 65), left: 16, top: 11 }]).png().toBuffer();
+    .composite([{ input: await textImage(initials, 66, 60), left: 10, top: 13 }]).png().toBuffer();
+  const logoWidth = mbVape ? 60 : customLogo ? 40 : 32;
+  const logoHeight = mbVape ? 42 : 32;
+  const logo = mbVape ? await renderMbVapeLogo(logoWidth * 3, logoHeight * 3, background) : customLogo ?? await sharp(icon)
+    .resize(logoWidth * 3, logoHeight * 3).png().toBuffer();
   const stripHeight = mbVape ? 144 : 123;
   const locations = walletLocations(notificationSettings);
   const nearby = locations.length ? notificationSettings : null;
@@ -95,8 +127,8 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
     { "icon.png": await sharp(icon).resize(29, 29).png().toBuffer(),
       "icon@2x.png": await sharp(icon).resize(58, 58).png().toBuffer(),
       "icon@3x.png": icon,
-      "logo.png": await sharp(logo).resize(160, 50).png().toBuffer(),
-      "logo@2x.png": await sharp(logo).resize(320, 100).png().toBuffer(),
+      "logo.png": await sharp(logo).resize(logoWidth, logoHeight).png().toBuffer(),
+      "logo@2x.png": await sharp(logo).resize(logoWidth * 2, logoHeight * 2).png().toBuffer(),
       "logo@3x.png": logo,
       "strip.png": await sharp(strip).resize(375, stripHeight).png().toBuffer(),
       "strip@2x.png": await sharp(strip).resize(750, stripHeight * 2).png().toBuffer(),
@@ -108,6 +140,7 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
       teamIdentifier: process.env.APPLE_WALLET_TEAM_ID!,
       ...(nearby ? { maxDistance: nearby.nearbyMaxDistance ?? 150 } : walid ? { maxDistance: 150 } : {}),
       organizationName: member.cafe.name,
+      logoText: member.cafe.name,
       description: `${member.cafe.name} loyalty card`,
       ...(walletUpdatesEnabled() ? { webServiceURL: process.env.APPLE_WALLET_WEB_SERVICE_URL!.replace(/\/$/, ""), authenticationToken: walletAuthToken(member.id) } : {}),
       backgroundColor: rgb(background), foregroundColor: rgb(foreground), labelColor: rgb(foreground) },

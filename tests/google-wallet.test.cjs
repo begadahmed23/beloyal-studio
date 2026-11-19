@@ -31,6 +31,9 @@ test('save flow signs a verifiable JWT and handles existing classes and objects'
  const object = JSON.parse(calls.find(call => call.method === 'PATCH' && call.url.includes('loyaltyObject/')).body);
  assert.equal(object.loyaltyPoints.balance.string, '3/6'); assert.equal(object.barcode.value, `BL:${member.publicToken}`);
  assert.ok(!object.id.includes(member.publicToken));
+ assert.equal(object.heroImage, null);
+ const brandUpdate = calls.find(call => call.method === "PATCH" && call.url.includes("loyaltyClass/"));
+ assert.equal(JSON.parse(brandUpdate.body).heroImage, null);
 });
 test('missing passes do not get created by balance sync; API failures surface', async () => {
  calls.length = 0; patchStatus = 404; await wallet.syncGoogleWalletMember(member.id);
@@ -53,27 +56,22 @@ test('private key copies support raw PEM, JSON strings and service-account JSON'
 test('business branding and nearby coordinates are scoped to the class', () => {
  const brand = wallet.googleClassBrand({...member.cafe, logoUrl:'https://example.com/cafe.png'}, {nearbyEnabled:true, nearbyLatitude:31.2, nearbyLongitude:29.9});
  assert.equal(brand.programLogo.sourceUri.uri,'https://example.com/cafe.png');
- const artwork = new URL(wallet.googleClassBrand({
-   ...member.cafe, businessType: 'VAPE', primaryColor: '#71523d', secondaryColor: '#b49072',
- }).heroImage.sourceUri.uri);
- assert.equal(artwork.pathname, '/api/wallet/artwork/VAPE');
- assert.equal(artwork.searchParams.get('primary'), '71523d');
- assert.equal(artwork.searchParams.get('background'), '123456');
+ assert.equal(brand.heroImage, undefined);
+ assert.equal(brand.hexBackgroundColor, "#123456");
  assert.equal(brand.merchantLocations[0].latitude,31.2);
  assert.equal(wallet.googleClassBrand(member.cafe,{nearbyEnabled:false}).merchantLocations.length,0);
 });
 
 
-test('MB Vape branding keeps the uploaded mark and updates artwork with stamp progress', () => {
+test('MB Vape branding keeps the uploaded mark, native stamp count and compact face', () => {
  const cafe = { ...member.cafe, slug: 'mb-vape', name: 'MB Vape', businessType: 'VAPE', theme: 'COFFEE_CLASSIC',
    primaryColor: '#7B4F35', secondaryColor: '#6F4A35', backgroundColor: '#F3EDE5' };
  const brand = wallet.googleClassBrand(cafe);
  assert.equal(brand.programLogo.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?asset=icon');
  assert.equal(brand.hexBackgroundColor, '#F7F2E9');
  const card = wallet.googleWalletObject({ ...member, cafe, stamps: 2 });
- assert.equal(card.heroImage.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?stamps=2&target=6&v=compact');
+ assert.equal(card.heroImage, undefined);
+ assert.equal(brand.heroImage, undefined);
  assert.equal(card.loyaltyPoints.balance.string, '2/6');
- assert.equal(wallet.googleWalletObject({ ...member, cafe, rewardEarnedAt: new Date() }).heroImage.sourceUri.uri,
-   'https://example.com/api/wallet/artwork/mb-vape?stamps=6&target=6&v=compact');
- assert.equal(wallet.googleWalletObject({ ...member, cafe: { ...cafe, slug: 'other-vape' } }).heroImage, undefined);
+ assert.equal(wallet.googleWalletObject({ ...member, cafe, rewardEarnedAt: new Date() }).loyaltyPoints.label, 'REWARD READY');
 });

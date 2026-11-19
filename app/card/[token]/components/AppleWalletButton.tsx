@@ -2,6 +2,7 @@
 
 import { useState, useSyncExternalStore } from "react";
 import Image from "next/image";
+import WalletButtonStatus from "./WalletButtonStatus";
 
 const subscribe = () => () => {};
 const getSupported = () => /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
@@ -11,13 +12,15 @@ export default function AppleWalletButton({ token, enabled }: { token: string; e
   const supported = useSyncExternalStore(subscribe, getSupported, getServerSupported);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [opened, setOpened] = useState(false);
   if (!enabled || !supported) return null;
 
   async function download() {
     setBusy(true);
     setError("");
+    setOpened(false);
     try {
-      const response = await fetch(`/api/wallet/apple/${encodeURIComponent(token)}`, { cache: "no-store" });
+      const response = await fetch(`/api/wallet/apple/${encodeURIComponent(token)}`, { cache: "no-store", signal: AbortSignal.timeout(30000) });
       if (!response.ok) {
         const body = await response.json();
         throw new Error(body.message || "Could not create your Wallet card.");
@@ -29,9 +32,10 @@ export default function AppleWalletButton({ token, enabled }: { token: string; e
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
+      setOpened(true);
       window.setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Please try again.");
+      setError(caught instanceof Error && caught.name !== "TimeoutError" ? caught.message : "Apple Wallet took too long. Try again.");
     } finally {
       setBusy(false);
     }
@@ -56,8 +60,8 @@ export default function AppleWalletButton({ token, enabled }: { token: string; e
           className="h-11 w-auto"
         />
       </button>
-      <span role="status" className="sr-only">{busy ? "Preparing your Wallet card…" : ""}</span>
-      {error ? <p role="alert" className="mt-2 text-sm">{error}</p> : null}
+      <WalletButtonStatus busy={busy} error={error}
+        message={busy ? "Preparing Apple Wallet…" : opened ? "Tap Add in Apple Wallet." : ""} />
     </div>
   );
 }

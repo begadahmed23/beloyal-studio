@@ -58,7 +58,8 @@ trustedOrigins: [
   },
 
   session: {
-    expiresIn: 60 * 60 * 12,
+    // Better Auth only issues a persistent session cookie when rememberMe is true.
+    expiresIn: 60 * 60 * 24 * 30,
     updateAge: 60 * 60,
   },
 

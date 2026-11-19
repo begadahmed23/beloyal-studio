@@ -63,15 +63,6 @@ function walletImage(url: URL, label: string) {
   return { sourceUri: { uri: url.href }, contentDescription: { defaultValue: { language: "en-US", value: label } } };
 }
 
-function mbVapeHero(stamps: number, target: number) {
-  const url = new URL(MB_VAPE_ARTWORK_PATH, process.env.GOOGLE_WALLET_SITE_URL!);
-  const count = Math.min(target, 99);
-  url.searchParams.set("stamps", String(Math.min(stamps, count)));
-  url.searchParams.set("target", String(count));
-  url.searchParams.set("v", "compact");
-  return walletImage(url, `${stamps} of ${target} MB Vape stamps`);
-}
-
 export function googleWalletObject(member: WalletMember) {
   const target = getLoyaltyProgressTarget(member.cafe);
   const ready = Boolean(member.rewardEarnedAt) || member.stamps >= target;
@@ -81,7 +72,6 @@ export function googleWalletObject(member: WalletMember) {
     barcode: { type: "QR_CODE", value: `BL:${member.publicToken}`, alternateText: member.memberNumber },
     loyaltyPoints: { label: ready ? "REWARD READY" : member.cafe.businessType === "BARBERSHOP" ? "VISITS" : "STAMPS",
       balance: { string: `${stamps}/${target}` } },
-    ...(isMbVape(member.cafe) ? { heroImage: mbVapeHero(ready ? target : stamps, target) } : {}),
     textModulesData: [{ id: "reward", header: "YOUR REWARD", body: member.cafe.rewardName }],
     linksModuleData: { uris: [{ id: "card", uri: new URL(`/card/${member.publicToken}`, process.env.GOOGLE_WALLET_SITE_URL!).href, description: "Open your BeLoyal card" }] } };
 }
@@ -93,18 +83,12 @@ export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocati
   const fallback = new URL(process.env.GOOGLE_WALLET_LOGO_URL!);
   let logo = fallback;
   try { if (cafe.logoUrl) { const candidate = new URL(cafe.logoUrl); if (candidate.protocol === "https:") logo = candidate; } } catch { /* use fallback */ }
-  const artwork = new URL(`/api/wallet/artwork/${cafe.businessType}`, process.env.GOOGLE_WALLET_SITE_URL!);
-  const colors = { primary: cafe.primaryColor, secondary: cafe.secondaryColor, background: cafe.backgroundColor };
-  for (const [key, value] of Object.entries(colors)) {
-    if (value && /^#[0-9a-f]{6}$/i.test(value)) artwork.searchParams.set(key, value.slice(1));
-  }
   const site = process.env.GOOGLE_WALLET_SITE_URL!;
   if (mbVape) logo = new URL(MB_VAPE_ARTWORK_PATH + "?asset=icon", site);
   return {
     issuerName: cafe.name,
     programName: `${cafe.name} Rewards`,
     programLogo: walletImage(logo, cafe.name),
-    heroImage: mbVape ? mbVapeHero(0, getLoyaltyProgressTarget(cafe)) : walletImage(artwork, `${cafe.name} loyalty card artwork`),
     reviewStatus: "UNDER_REVIEW",
     hexBackgroundColor: /^#[0-9a-f]{6}$/i.test(cafe.backgroundColor) ? cafe.backgroundColor : "#111111",
     ...(settings ? { merchantLocations: walletLocations(settings).map(({ latitude, longitude }) => ({ latitude, longitude })) } : {}),
@@ -112,7 +96,7 @@ export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocati
 }
 export async function updateGoogleWalletClass(cafe: GoogleBrand, settings?: GoogleLocation) {
   if (!googleWalletEnabled()) return;
-  const response = await api(`loyaltyClass/${classId(cafe.slug)}`, "PATCH", googleClassBrand(cafe, settings));
+  const response = await api(`loyaltyClass/${classId(cafe.slug)}`, "PATCH", { ...googleClassBrand(cafe, settings), heroImage: null });
   if (!response.ok && response.status !== 404) throw new GoogleWalletError("class-update", response.status);
 }
 export function scheduleGoogleWalletBrandUpdate(cafe: GoogleBrand) {
@@ -150,7 +134,7 @@ export async function createGoogleWalletLink(member: WalletMember & { cafe: Goog
   const object = googleWalletObject(member);
   const createdObject = await api("loyaltyObject", "POST", object);
   if (createdObject.status === 409) {
-    const updated = await api(`loyaltyObject/${object.id}`, "PATCH", object);
+    const updated = await api(`loyaltyObject/${object.id}`, "PATCH", { ...object, heroImage: null });
     if (!updated.ok) throw new GoogleWalletError("card-update", updated.status);
   } else if (!createdObject.ok) throw new GoogleWalletError("card-create", createdObject.status);
   return `https://pay.google.com/gp/v/save/${jwt({ iss: process.env.GOOGLE_WALLET_CLIENT_EMAIL, aud: "google", typ: "savetowallet", iat: Math.floor(Date.now() / 1000), origins: [site.origin], payload: { loyaltyObjects: [{ id: object.id }] } })}`;
@@ -161,7 +145,7 @@ export async function syncGoogleWalletMember(id: string) {
   if (!member) return;
   // Do not create passes for customers who have never requested one.
   const object = googleWalletObject(member);
-  const response = await api(`loyaltyObject/${object.id}`, "PATCH", object);
+  const response = await api(`loyaltyObject/${object.id}`, "PATCH", { ...object, heroImage: null });
   if (!response.ok && response.status !== 404) throw new Error("Google Wallet balance sync failed.");
 }
 

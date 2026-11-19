@@ -286,14 +286,14 @@ export default function JoinForm({
       </div>
 
       <div className="mb-6 mt-5">
-        <h2
+        <h1
           className="text-lg font-semibold"
           style={{ color: isKato ? katoTextPrimary : theme.textPrimary }}
         >
           {mode === "join"
             ? "Create your loyalty card"
             : "Open your existing card"}
-        </h2>
+        </h1>
 
         <p
           className="mt-1 text-sm leading-6"
