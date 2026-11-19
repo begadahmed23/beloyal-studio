@@ -27,7 +27,6 @@ const deleteSchema = sendSchema.extend({ action: z.literal("delete") });
 async function handle(request: NextRequest) {
   const auth = await requireAuth(request.headers);
   if (!auth || auth.isCashier || (auth.user.role !== "SUPER_ADMIN" && auth.user.role !== "CAFE_ADMIN")) return json({ message: "Administrator access required." }, 403);
-  if (request.method === "POST" && !auth.isSuperAdmin) return json({ message: "Manage campaigns in BeLoyal Studio." }, 403);
   if (!auth.isSuperAdmin) {
     const access = await requireActiveCafe(request.headers);
     if (!access.allowed) return json({ message: access.message }, access.status);
@@ -35,6 +34,7 @@ async function handle(request: NextRequest) {
   if (request.method === "POST" && request.headers.get("origin") !== request.nextUrl.origin) return json({ message: "Invalid request origin." }, 403);
   if (request.method === "POST" && Number(request.headers.get("content-length") ?? 0) > 16384) return json({ message: "Request too large." }, 413);
   const body = request.method === "POST" ? await request.json() : null;
+  if (request.method === "POST" && !auth.isSuperAdmin && body?.action !== "delete") return json({ message: "Manage campaigns in BeLoyal Studio." }, 403);
   const cafeId = request.method === "POST" ? body?.cafeId : request.nextUrl.searchParams.get("cafeId");
   if (typeof cafeId !== "string" || !cafeId || cafeId.length > 100) return json({ message: "Choose a business." }, 400);
   if (!auth.isSuperAdmin && auth.cafeId !== cafeId) return json({ message: "Business access denied." }, 403);

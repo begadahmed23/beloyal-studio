@@ -75,7 +75,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
     finally { requestInFlight.current = false; setBusy(null); }
   }
   async function deleteHistoryEntry(campaignId: string) {
-    if (!studio || requestInFlight.current) return;
+    if (requestInFlight.current) return;
     requestInFlight.current = true;
     setBusy("delete");
     setHistoryFeedback(null);
@@ -254,7 +254,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
               <span>· {count.skipped} {t("Skipped")}</span>
               {count.pending > 0 && <span>· {count.pending} {t("Pending")}</span>}
             </p>
-            {studio && campaign.status === "complete" && (deleteId === campaign.id ? (
+            {campaign.status === "complete" && (deleteId === campaign.id ? (
               <div className="mt-4 rounded-xl bg-[var(--wallet-raised,#f4f4f5)] p-3">
                 <p className="text-sm">{t("Remove this message from BeLoyal history? Customers may still see it in Wallet.")}</p>
                 <div className="mt-3 flex flex-wrap gap-2">

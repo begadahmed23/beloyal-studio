@@ -132,7 +132,7 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
   assert.equal(pushes, 4);
 });
 
-test('a business admin can read its own history but only Studio can manage campaigns', async () => {
+test('a business admin can read its own history and only Studio can preview or send', async () => {
   const route = routeFor({ ...admin, cafeId: 'other' }, {
     '@/lib/prisma': { prisma: { cafe: { findFirst: async ({ where }) => {
       assert.deepEqual(where, { id: 'other', isActive: true });
@@ -149,12 +149,12 @@ test('a business admin can read its own history but only Studio can manage campa
   const response = await route.GET(new NextRequest('https://example.com/api/wallet/campaigns?cafeId=other'));
   assert.equal(response.status, 200);
   assert.deepEqual((await response.json()).history, [{ id: 'sent' }]);
-  for (const action of ['preview', 'send', 'delete']) {
+  for (const action of ['preview', 'send']) {
     assert.equal((await route.POST(post({ action, cafeId: 'other' }))).status, 403);
   }
 });
 
-test('Studio can delete completed history entries for the selected business', async () => {
+test('Studio and the owning business admin can delete completed history entries', async () => {
   const id = 'bcf5013e-ca92-432d-b70e-816720568e53';
   const operations = [];
   let campaign = { id, cafeId: 'other', status: 'complete' };
@@ -163,19 +163,26 @@ test('Studio can delete completed history entries for the selected business', as
     del: (...args) => { operations.push(args); return transaction; },
     exec: async () => { campaign = null; },
   };
-  const route = routeFor(studioAdmin, {
+  const mocks = {
     '@/lib/prisma': { prisma: { cafe: { findFirst: async ({ where }) => ({ id: where.id, name: 'Business', timezone: 'Africa/Cairo' }) } } },
     './updates': { passKey: key => key, walletRedis: () => ({ get: async () => campaign, multi: () => transaction }) },
-  });
-  const remove = cafeId => route.POST(post({ action: 'delete', cafeId, campaignId: id }));
+  };
+  const route = routeFor(studioAdmin, mocks);
+  const owner = routeFor({ ...admin, cafeId: 'other' }, mocks);
+  const remove = (cafeId, handler = route) => handler.POST(post({ action: 'delete', cafeId, campaignId: id }));
+  assert.equal((await remove('other', routeFor(admin, mocks))).status, 403);
+  assert.equal((await remove('other', routeFor({ ...admin, cafeId: 'other', isCashier: true }, mocks))).status, 403);
+  assert.equal((await remove('cafe1', owner)).status, 403);
   assert.equal((await remove('cafe1')).status, 404);
   campaign.status = 'sending';
-  assert.equal((await remove('other')).status, 409);
+  assert.equal((await remove('other', owner)).status, 409);
   assert.deepEqual(operations, []);
   campaign.status = 'complete';
-  assert.equal((await remove('other')).status, 200);
+  assert.equal((await remove('other', owner)).status, 200);
   assert.deepEqual(operations, [['campaigns:history:other', id], ['campaigns:item:' + id]]);
   assert.equal((await remove('other')).status, 404);
+  campaign = { id, cafeId: 'other', status: 'complete' };
+  assert.equal((await remove('other')).status, 200);
 });
 
  test('reward-ready audience matches cafe/barber targets and excludes redeemed rewards', async () => {
