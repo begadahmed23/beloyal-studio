@@ -165,7 +165,7 @@ function validateGeneral(body: SettingsBody) {
     body.name.trim().length < 2
   ) {
     throw new Error(
-      "Café name must contain at least 2 characters.",
+      "Business name must contain at least 2 characters.",
     );
   }
 
@@ -180,7 +180,7 @@ function validateBranding(body: SettingsBody) {
   const validThemes = Object.values(CafeTheme);
 
   if (!validThemes.includes(body.theme as CafeTheme)) {
-    throw new Error("Invalid café theme.");
+    throw new Error("Invalid business theme.");
   }
 
   return {

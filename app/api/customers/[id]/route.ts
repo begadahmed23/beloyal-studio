@@ -26,14 +26,14 @@ export async function PATCH(
 
     if (authData.isCashier) {
       return NextResponse.json(
-        { message: "Only café administrators can manage customer profiles." },
+        { message: "Only business administrators can manage customer profiles." },
         { status: 403 }
       );
     }
 
     if (!authData.cafe) {
       return NextResponse.json(
-        { message: "Café account not found." },
+        { message: "Business account not found." },
         { status: 404 }
       );
     }
@@ -156,7 +156,7 @@ export async function PATCH(
       return NextResponse.json(
         {
           message:
-            "This phone number or Instagram username already belongs to another member in this café.",
+            "This phone number or Instagram username already belongs to another member in this business.",
         },
         { status: 409 }
       );
@@ -228,14 +228,14 @@ export async function DELETE(
 
     if (authData.isCashier) {
       return NextResponse.json(
-        { message: "Only café administrators can manage customer profiles." },
+        { message: "Only business administrators can manage customer profiles." },
         { status: 403 }
       );
     }
 
     if (!authData.cafe) {
       return NextResponse.json(
-        { message: "Café account not found." },
+        { message: "Business account not found." },
         { status: 404 }
       );
     }

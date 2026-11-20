@@ -177,11 +177,11 @@ function CafeDashboardHome() {
               </p>
 
               <p className="relative mt-4 text-3xl font-semibold tracking-[-0.04em]">
-                Buy {getLoyaltyProgressTarget(cafe)}
+                {getLoyaltyProgressTarget(cafe)} {t(getLoyaltyProgressTarget(cafe) === 1 ? "stamp" : "stamps")}
               </p>
 
               <p className="relative mt-1 text-sm text-primary-foreground/85">
-                & get 1 {cafe.rewardName || "reward"}
+                then {cafe.rewardName}
               </p>
 
               <div className="relative mt-7 h-[3px] overflow-hidden rounded-full bg-primary-foreground/10">

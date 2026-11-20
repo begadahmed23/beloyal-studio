@@ -1,3 +1,4 @@
+import { getRewardName } from "@/lib/business/terminology";
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
@@ -215,7 +216,7 @@ export async function GET(request: NextRequest) {
       },
       reward: {
         target: paidStampTarget,
-        name: cafe.rewardName || "Free Drink",
+        name: getRewardName(cafe),
       },
       members: customers.map((customer) => {
         const activeStampDates: Date[] = [];

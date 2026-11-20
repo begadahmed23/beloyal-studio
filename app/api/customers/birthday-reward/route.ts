@@ -382,7 +382,7 @@ export async function GET(request: NextRequest) {
 
   if (!authData.cafeId) {
     return jsonResponse(
-      { message: "Café account required." },
+      { message: "Business account required." },
       403,
     );
   }
@@ -413,7 +413,7 @@ export async function GET(request: NextRequest) {
     return jsonResponse(
       {
         message:
-          "This member does not belong to this café.",
+          "This member does not belong to this business.",
       },
       404,
     );
@@ -421,7 +421,7 @@ export async function GET(request: NextRequest) {
 
   if (!config) {
     return jsonResponse(
-      { message: "Café account not found." },
+      { message: "Business account not found." },
       404,
     );
   }
@@ -476,7 +476,7 @@ export async function POST(request: NextRequest) {
 
   if (!authData.cafeId) {
     return jsonResponse(
-      { message: "Café account required." },
+      { message: "Business account required." },
       403,
     );
   }
@@ -511,7 +511,7 @@ export async function POST(request: NextRequest) {
       return jsonResponse(
         {
           message:
-            "This member does not belong to this café.",
+            "This member does not belong to this business.",
         },
         404,
       );
@@ -519,7 +519,7 @@ export async function POST(request: NextRequest) {
 
     if (!config) {
       return jsonResponse(
-        { message: "Café account not found." },
+        { message: "Business account not found." },
         404,
       );
     }

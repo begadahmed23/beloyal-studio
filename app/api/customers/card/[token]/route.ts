@@ -1,3 +1,4 @@
+import { getRewardName } from "@/lib/business/terminology";
 import { googleWalletEnabled } from "@/lib/wallet/google";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -116,6 +117,7 @@ export async function GET(
 
     const cafe = {
       ...customer.cafe,
+      rewardName: getRewardName(customer.cafe),
       minimumPurchaseAmount: customer.cafe.minimumPurchaseAmount?.toString() ?? null,
       feedbackEnabled:
         customer.cafe.feedbackEnabled ??

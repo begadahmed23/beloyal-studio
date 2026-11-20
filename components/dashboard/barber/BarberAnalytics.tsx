@@ -1,5 +1,6 @@
 "use client";
 
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 import {
   useCallback,
   useEffect,
@@ -10,7 +11,7 @@ import {
   CheckCircle2,
   LoaderCircle,
   RefreshCw,
-  Scissors,
+  Gift,
   Star,
   UserPlus,
   Users,
@@ -39,7 +40,8 @@ type AnalyticsData = {
   totalMembers: number;
   newMembersToday: number;
   activeMembersThisMonth: number;
-  freeDrinksThisMonth: number;
+  rewardsRedeemedThisMonth?: number;
+  freeDrinksThisMonth?: number;
   rewardName: string;
   reviews: {
     averageRating: number;
@@ -69,6 +71,7 @@ function formatRatingDate(value: string) {
 }
 
 export default function BarberAnalytics() {
+  const { t } = useBeLoyalLanguage();
   const { cafe, theme } = useCafeTheme();
   const cachedData =
     barberAnalyticsCache?.businessId === cafe.id
@@ -193,16 +196,16 @@ export default function BarberAnalytics() {
       icon: UserPlus,
     },
     {
-      label: "Visited this month",
+      label: t("Active this month"),
       value: data.activeMembersThisMonth,
       helper: "Unique active clients",
       icon: CheckCircle2,
     },
     {
-      label: "Free cuts redeemed",
-      value: data.freeDrinksThisMonth,
-      helper: "Rewards this month",
-      icon: Scissors,
+      label: t("Rewards redeemed this month"),
+      value: data.rewardsRedeemedThisMonth ?? data.freeDrinksThisMonth,
+      helper: t("Loyalty rewards redeemed"),
+      icon: Gift,
     },
   ];
 

@@ -108,13 +108,13 @@ export function validateCafeSettings(
     body.name.trim().length < 2
   ) {
     throw new Error(
-      "Café name must contain at least 2 characters.",
+      "Business name must contain at least 2 characters.",
     );
   }
 
   if (body.name.trim().length > 80) {
     throw new Error(
-      "Café name must be 80 characters or fewer.",
+      "Business name must be 80 characters or fewer.",
     );
   }
 
@@ -153,7 +153,7 @@ export function validateCafeSettings(
   const validThemes = Object.values(CafeTheme);
 
   if (!validThemes.includes(body.theme as CafeTheme)) {
-    throw new Error("Invalid café theme.");
+    throw new Error("Invalid business theme.");
   }
 
   let minimumPurchaseAmount: number | null = null;

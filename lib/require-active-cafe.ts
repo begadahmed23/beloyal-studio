@@ -32,7 +32,7 @@ export async function requireActiveCafe(
     return {
       allowed: false,
       status: 404,
-      message: "Café account not found.",
+      message: "Business account not found.",
     };
   }
 
@@ -43,7 +43,7 @@ export async function requireActiveCafe(
       allowed: false,
       status: 403,
       message:
-        "This café account is suspended. Contact support.",
+        "This business account is suspended. Contact support.",
     };
   }
 

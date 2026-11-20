@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       !authData.cafe
     ) {
       return NextResponse.json(
-        { message: "Customer export is only available to café administrators." },
+        { message: "Customer export is only available to business administrators." },
         { status: 403 },
       );
     }

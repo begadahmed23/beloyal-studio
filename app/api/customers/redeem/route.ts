@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
   if (!authData.cafe || !authData.cafeId) {
     return jsonResponse(
       {
-        message: "Café account required.",
+        message: "Business account required.",
       },
       403,
     );
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
       return jsonResponse(
         {
           message:
-            "This member does not belong to this café.",
+            "This member does not belong to this business.",
         },
         404,
       );

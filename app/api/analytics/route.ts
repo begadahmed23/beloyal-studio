@@ -1,3 +1,4 @@
+import { getRewardName } from "@/lib/business/terminology";
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
@@ -165,34 +166,35 @@ export async function GET(request: NextRequest) {
 
     if (authData.isCashier) {
       return NextResponse.json(
-        { message: "Analytics are only available to café administrators." },
+        { message: "Analytics are only available to business administrators." },
         { status: 403 }
       );
     }
 
     if (!authData.cafe) {
       return NextResponse.json(
-        { message: "Café account not found." },
+        { message: "Business account not found." },
         { status: 404 }
       );
     }
 
     const cafeId = authData.cafe.id;
+    const timeZone = authData.cafe.timezone?.trim() || CAFE_TIME_ZONE;
     const isBarberSummary =
       authData.cafe.businessType === "BARBERSHOP" &&
       request.nextUrl.searchParams.get("view") === "barber";
 
     const { startOfToday, startOfTomorrow } =
-      getTodayRange(CAFE_TIME_ZONE);
+      getTodayRange(timeZone);
 
     const { startOfMonth, startOfNextMonth } =
-      getCurrentMonthRange(CAFE_TIME_ZONE);
+      getCurrentMonthRange(timeZone);
 
     const [
       totalMembers,
       newMembersToday,
       activeMemberGroups,
-      freeDrinksThisMonth,
+      rewardsRedeemedThisMonth,
       ratingAggregate,
       ratingGroups,
       recentRatings,
@@ -346,10 +348,11 @@ export async function GET(request: NextRequest) {
       totalMembers,
       newMembersToday,
       activeMembersThisMonth: activeMemberGroups.length,
-      freeDrinksThisMonth,
+      rewardsRedeemedThisMonth,
+      // Keep older dashboard bundles working during deployment.
+      freeDrinksThisMonth: rewardsRedeemedThisMonth,
       rewardTarget: authData.cafe.rewardTarget,
-      rewardName:
-        authData.cafe.rewardName || "Free Drink",
+      rewardName: getRewardName(authData.cafe),
       reviews: {
         averageRating:
           ratingAggregate._avg.rating ?? 0,

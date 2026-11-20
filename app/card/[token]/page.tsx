@@ -85,13 +85,10 @@ function getLoaderTheme(
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 
-  const isKato =
-    cafe.slug.toLowerCase().includes("kato") ||
-    normalizedCafeName.includes("kato");
-
-  const isLoretto =
-    cafe.slug.toLowerCase().includes("loretto") ||
-    normalizedCafeName.includes("loretto");
+  const isKato = cafe.businessType === "CAFE" &&
+    (cafe.slug.toLowerCase().includes("kato") || normalizedCafeName.includes("kato"));
+  const isLoretto = cafe.businessType === "CAFE" &&
+    (cafe.slug.toLowerCase().includes("loretto") || normalizedCafeName.includes("loretto"));
 
   if (isLoretto) {
     return getLorettoPageTheme(cafe.theme);
@@ -1290,21 +1287,19 @@ const isBrickBarber =
   isBarbershop && customer.cafe.theme === "COFFEE_CLASSIC" &&
   (!customer.cafe.backgroundColor || customer.cafe.backgroundColor.toUpperCase() === "#1B1815");
 const isRetail = customer.cafe.businessType === "VAPE" || customer.cafe.businessType === "OTHER";
+const isCafe = customer.cafe.businessType === "CAFE";
 
 const normalizedCafeName = customer.cafe.name
   .normalize("NFD")
   .replace(/[\u0300-\u036f]/g, "")
   .toLowerCase();
 
-const isKato =
-  customer.cafe.slug.toLowerCase().includes("kato") ||
-  normalizedCafeName.includes("kato");
-const isKeka =
-  customer.cafe.slug.toLowerCase().includes("keka") ||
-  normalizedCafeName.includes("keka");
-const isLoretto =
-  customer.cafe.slug.toLowerCase().includes("loretto") ||
-  normalizedCafeName.includes("loretto");
+const isKato = isCafe &&
+  (customer.cafe.slug.toLowerCase().includes("kato") || normalizedCafeName.includes("kato"));
+const isKeka = isCafe &&
+  (customer.cafe.slug.toLowerCase().includes("keka") || normalizedCafeName.includes("keka"));
+const isLoretto = isCafe &&
+  (customer.cafe.slug.toLowerCase().includes("loretto") || normalizedCafeName.includes("loretto"));
 
 const unlockAt = getLoyaltyProgressTarget({
   businessType: customer.cafe.businessType,
@@ -1594,8 +1589,8 @@ const visibleStamps = rewardReady
             customer.cafe
               .rewardDescription
           }
-          cafeName={customer.cafe.name}
-          cafeSlug={customer.cafe.slug}
+          cafeName={isCafe ? customer.cafe.name : undefined}
+          cafeSlug={isCafe ? customer.cafe.slug : undefined}
           onClose={() =>
             setShowRewardCelebration(
               false,

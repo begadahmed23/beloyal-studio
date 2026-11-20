@@ -1,3 +1,4 @@
+import { getRewardName } from "@/lib/business/terminology";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -62,7 +63,7 @@ async function handle(request: NextRequest) {
     await saveWalletNotificationSettings(cafeId, settings);
     if (auth.isSuperAdmin && Object.keys(parsed.data).some(key => key.startsWith("nearby"))) await updateGoogleWalletClass(cafe, settings);
   }
-  return json({ settings: await getWalletNotificationSettings(cafeId) ?? DEFAULT_WALLET_NOTIFICATIONS, rewardName: cafe.rewardName, target: getLoyaltyProgressTarget(cafe) });
+  return json({ settings: await getWalletNotificationSettings(cafeId) ?? DEFAULT_WALLET_NOTIFICATIONS, rewardName: getRewardName(cafe), target: getLoyaltyProgressTarget(cafe) });
 }
 async function respond(request: NextRequest) {
   try { return await handle(request); }

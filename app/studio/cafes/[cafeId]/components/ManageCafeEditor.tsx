@@ -198,7 +198,7 @@ export default function ManageCafeEditor() {
     useState("#0c0c0c");
 
   const [rewardName, setRewardName] =
-    useState("Free Drink");
+    useState("");
 
   const [rewardTarget, setRewardTarget] =
     useState("7");

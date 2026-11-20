@@ -131,7 +131,7 @@ export default function AdminFeedbackPanel() {
             className="mt-1 text-xs"
             style={{ color: theme.textMuted }}
           >
-            Visible to café administrators only.
+            Visible to business administrators only.
           </p>
         </div>
 

@@ -62,6 +62,15 @@ export function getBusinessTerminology(
 ): BusinessTerminology {
   return terminologyByBusinessType[businessType];
 }
+// Older accounts could inherit the café reward from the database default.
+export function getRewardName(business: { businessType: BusinessType; rewardName?: string | null }) {
+  const name = business.rewardName?.trim();
+  if (!name || (business.businessType !== "CAFE" && name.toLowerCase() === "free drink")) {
+    return getBusinessTerminology(business.businessType).defaultRewardName;
+  }
+  return name;
+}
+
 export const businessTypeLabels: Record<BusinessType, string> = {
   CAFE: "Café",
   BARBERSHOP: "Barbershop",

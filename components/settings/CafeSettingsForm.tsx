@@ -1,4 +1,6 @@
 "use client";
+import MbVapeStamp from "@/components/brand/MbVapeStamp";
+import { getBusinessTerminology } from "@/lib/business/terminology";
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import MbVapeLogo from "@/components/brand/MbVapeLogo";
@@ -91,18 +93,16 @@ export default function CafeSettingsForm() {
 } = useCafeTheme();
   const mbVape = isMbVape(cafe);
   const isBarbershop = cafe.businessType === "BARBERSHOP";
+  const isCafe = cafe.businessType === "CAFE";
+  const terminology = getBusinessTerminology(cafe.businessType);
   const normalizedCafeName = cafe.name
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
-  const isKato =
-    cafe.slug.toLowerCase().includes("kato") ||
-    normalizedCafeName.includes("kato");
-  const isKeka =
-    cafe.slug.toLowerCase().includes("keka") ||
-    normalizedCafeName.includes("keka");
+  const isKato = isCafe && (cafe.slug.toLowerCase().includes("kato") || normalizedCafeName.includes("kato"));
+  const isKeka = isCafe && (cafe.slug.toLowerCase().includes("keka") || normalizedCafeName.includes("keka"));
 
-  const PreviewIcon = isBarbershop ? Scissors : Coffee;
+  const PreviewIcon = { CAFE: Coffee, BARBERSHOP: Scissors, VAPE: MbVapeStamp, OTHER: Store }[cafe.businessType];
 
   const createInitialState = (): FormState => ({
     name: cafe.name,
@@ -218,7 +218,7 @@ export default function CafeSettingsForm() {
 
       if (!response.ok) {
         throw new Error(
-          result.error ?? "Unable to upload the café logo."
+          result.error ?? "Unable to upload the business logo."
         );
       }
 
@@ -240,7 +240,7 @@ export default function CafeSettingsForm() {
         text:
           error instanceof Error
             ? error.message
-            : "Unable to upload the café logo.",
+            : "Unable to upload the business logo.",
       });
     } finally {
       setUploadingLogo(false);
@@ -337,6 +337,7 @@ export default function CafeSettingsForm() {
     boxShadow: theme.cardShadow,
   };
 
+  const previewTarget = getLoyaltyProgressTarget({ rewardTarget: Number(form.rewardTarget) });
   const inputStyle = {
     borderColor: theme.inputBorder,
     backgroundColor: theme.inputBackground,
@@ -393,7 +394,7 @@ export default function CafeSettingsForm() {
             icon={Store}
             title={t("General")}
             description={`Basic information displayed throughout your ${
-              isBarbershop ? "barbershop" : cafe.businessType === "CAFE" ? "café" : "business"
+              terminology.businessSingular
             } dashboard and customer loyalty card.`}
           />
 
@@ -633,9 +634,7 @@ export default function CafeSettingsForm() {
                     event.target.value
                   )
                 }
-                placeholder={
-                  isBarbershop ? "Free Haircut" : "Free Drink"
-                }
+                placeholder={terminology.defaultRewardName}
                 maxLength={80}
                 required
                 className="h-12 w-full border px-4 text-base sm:text-sm outline-none"
@@ -656,7 +655,7 @@ export default function CafeSettingsForm() {
                     event.target.value
                   )
                 }
-                placeholder="Any regular-sized drink from the menu."
+                placeholder="Describe what members can redeem and any restrictions."
                 maxLength={300}
                 rows={4}
                 className="w-full resize-none border px-4 py-3 text-base sm:text-sm outline-none"
@@ -687,11 +686,7 @@ export default function CafeSettingsForm() {
                     event.target.value
                   )
                 }
-                placeholder={
-                  isBarbershop
-                    ? "One visit for every paid haircut."
-                    : "One stamp for every coffee purchase."
-                }
+                placeholder={`One ${terminology.loyaltyUnitSingular} per ${terminology.qualifyingAction}.`}
                 maxLength={300}
                 rows={4}
                 className="w-full resize-none border px-4 py-3 text-base sm:text-sm outline-none"
@@ -783,9 +778,7 @@ export default function CafeSettingsForm() {
                       color: theme.textSecondary,
                     }}
                   >
-                    {isBarbershop
-                      ? `Complete ${getLoyaltyProgressTarget({ rewardTarget: Number(form.rewardTarget) })} paid visits, then redeem on your next visit:`
-                      : `Buy ${getLoyaltyProgressTarget({ rewardTarget: Number(form.rewardTarget) })} and get 1 free:`}
+                    {previewTarget} {previewTarget === 1 ? terminology.loyaltyUnitSingular : terminology.loyaltyUnitPlural} to earn:
                   </p>
 
                   <p
@@ -956,9 +949,7 @@ export default function CafeSettingsForm() {
             theme={theme}
             icon={Star}
             title="Google Reviews"
-            description={`Add your ${
-              isBarbershop ? "barbershop’s" : "café’s"
-            } Google review link. Customers can choose to open it after joining.`}
+            description="Customers can choose to open your Google review link after joining."
           />
 
           <div className="mt-7">
@@ -966,7 +957,7 @@ export default function CafeSettingsForm() {
               theme={theme}
               label="Google review URL"
               description={`Paste the direct Google review link for this ${
-                isBarbershop ? "barbershop" : cafe.businessType === "CAFE" ? "café" : "business"
+                terminology.businessSingular
               }. Leave it empty to disable the review prompt.`}
             >
               <input

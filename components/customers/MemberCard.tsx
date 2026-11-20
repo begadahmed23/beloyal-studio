@@ -7,6 +7,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Coffee,
+  Store,
   Copy,
   ExternalLink,
   Gift,
@@ -74,7 +75,7 @@ export default function MemberCard({
   const { t, arabic } = useBeLoyalLanguage();
   const { theme, cafe } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
-  const LoyaltyIcon = cafe.businessType === "VAPE" ? MbVapeStamp : isBarbershop ? Scissors : Coffee;
+  const LoyaltyIcon = { CAFE: Coffee, BARBERSHOP: Scissors, VAPE: MbVapeStamp, OTHER: Store }[cafe.businessType];
   const personLabel = isBarbershop ? "client" : "member";
   const loyaltyUnit = isBarbershop ? "visit" : "stamp";
 

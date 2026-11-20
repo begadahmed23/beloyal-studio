@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     ) {
       return NextResponse.json(
         {
-          error: "You are not authorized to access café settings.",
+          error: "You are not authorized to access business settings.",
         },
         {
           status: 403,
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
     if (!cafe) {
       return NextResponse.json(
         {
-          error: "Café not found.",
+          error: "Business not found.",
         },
         {
           status: 404,
@@ -95,11 +95,11 @@ export async function GET(request: NextRequest) {
       accountEmail: authData.user.email,
     });
   } catch (error) {
-    console.error("GET café settings error:", error);
+    console.error("GET business settings error:", error);
 
     return NextResponse.json(
       {
-        error: "Unable to load café settings.",
+        error: "Unable to load business settings.",
       },
       {
         status: 500,
@@ -120,7 +120,7 @@ export async function PATCH(request: NextRequest) {
     ) {
       return NextResponse.json(
         {
-          error: "You are not authorized to update café settings.",
+          error: "You are not authorized to update business settings.",
         },
         {
           status: 403,
@@ -153,14 +153,14 @@ export async function PATCH(request: NextRequest) {
       cafe: serializeCafeSettings(cafe),
     });
   } catch (error) {
-    console.error("PATCH café settings error:", error);
+    console.error("PATCH business settings error:", error);
 
     return NextResponse.json(
       {
         error:
           error instanceof Error
             ? error.message
-            : "Unable to save café settings.",
+            : "Unable to save business settings.",
       },
       {
         status: 400,

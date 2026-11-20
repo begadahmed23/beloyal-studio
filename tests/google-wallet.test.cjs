@@ -20,7 +20,7 @@ function loadPureModule(filename) {
 }
 const source = compile('lib/wallet/google.ts');
 const moduleObject = { exports: {} };
-vm.runInNewContext(source, { exports: moduleObject.exports, require: id => id === '@/lib/prisma' ? { prisma: { customer: { findUnique: async () => savedMember } } } : id.includes('loyalty-target') ? loadPureModule('lib/business/loyalty-target.ts') : id === '../business/mb-vape' ? loadPureModule('lib/business/mb-vape.ts') : id === './notification-text' ? loadPureModule('lib/wallet/notification-text.ts') : require(id), Buffer, URL, URLSearchParams, AbortSignal, process, console,
+vm.runInNewContext(source, { exports: moduleObject.exports, require: id => id === '@/lib/prisma' ? { prisma: { customer: { findUnique: async () => savedMember } } } : id.includes('loyalty-target') ? loadPureModule('lib/business/loyalty-target.ts') : id === '../business/terminology' ? loadPureModule('lib/business/terminology.ts') : id === '../business/mb-vape' ? loadPureModule('lib/business/mb-vape.ts') : id === './notification-text' ? loadPureModule('lib/wallet/notification-text.ts') : require(id), Buffer, URL, URLSearchParams, AbortSignal, process, console,
   fetch: async (url, options) => { calls.push({ url, ...options }); if (url.includes('oauth2')) return { ok: true, json: async () => ({ access_token: 'test', expires_in: 3600 }) }; const status = options.method === 'PATCH' ? patchStatus : 409; return { ok: status === 200, status }; } });
 const wallet = moduleObject.exports;
 test('save flow signs a verifiable JWT and handles existing classes and objects', async () => {
@@ -71,6 +71,10 @@ test('MB Vape keeps its logo and refreshes the matching stamp artwork on save an
  const brand = wallet.googleClassBrand(cafe);
  assert.equal(brand.programLogo.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?asset=icon&v=2');
  assert.equal(brand.programName, 'MB Vape');
+ const legacyObject = wallet.googleWalletObject({ ...member, cafe: { ...cafe, rewardName: 'Free Drink' } });
+ assert.equal(legacyObject.textModulesData.find(field => field.id === 'reward').body, 'Member Reward');
+ const discountObject = wallet.googleWalletObject({ ...member, cafe: { ...cafe, rewardName: '50%' } });
+ assert.equal(discountObject.textModulesData.find(field => field.id === 'reward').body, '50%');
  assert.equal(brand.wideProgramLogo.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?asset=google-logo&v=2');
  assert.equal(brand.hexBackgroundColor, '#F7F2E9');
  assert.equal(brand.heroImage, undefined);

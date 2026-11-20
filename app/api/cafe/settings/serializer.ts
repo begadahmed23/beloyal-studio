@@ -1,3 +1,4 @@
+import { getRewardName } from "@/lib/business/terminology";
 import { getDashboardPalette } from "@/lib/business/dashboard-palette";
 import {
   BusinessType,
@@ -61,7 +62,7 @@ export function serializeCafeSettings(cafe: CafeSettingsRecord) {
     ...getDashboardPalette(cafe),
 
     rewardTarget: cafe.rewardTarget,
-    rewardName: cafe.rewardName,
+    rewardName: getRewardName(cafe),
     rewardDescription: cafe.rewardDescription,
     eligiblePurchaseDescription:
       cafe.eligiblePurchaseDescription,

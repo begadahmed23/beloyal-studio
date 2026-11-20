@@ -1,3 +1,4 @@
+import { getRewardName } from "@/lib/business/terminology";
 import { CardBrandHeader, cardFrame } from "@/components/loyalty/CardBrand";
 import { dashboardPaletteSelect, getDashboardPalette } from "@/lib/business/dashboard-palette";
 import { dashboardThemeVariables } from "@/lib/cafe-theme";
@@ -105,7 +106,7 @@ export default async function JoinPage({
               businessType={cafe.businessType}
               theme={businessTheme}
               rewardTarget={cafe.rewardTarget}
-              rewardName={cafe.rewardName}
+              rewardName={getRewardName(cafe)}
             />
           </div>
         </section>

@@ -292,7 +292,7 @@ export async function GET(
       return jsonResponse(
         {
           message:
-            "Customer data is only available to café administrators.",
+            "Customer data is only available to business administrators.",
         },
         403,
       );
@@ -305,7 +305,7 @@ export async function GET(
       return jsonResponse(
         {
           message:
-            "Café account not found.",
+            "Business account not found.",
         },
         404,
       );
@@ -518,7 +518,7 @@ export async function POST(
       return jsonResponse(
         {
           message:
-            "Café account required.",
+            "Business account required.",
         },
         403,
       );

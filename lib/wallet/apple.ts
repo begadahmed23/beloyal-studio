@@ -1,3 +1,4 @@
+import { getRewardName } from "../business/terminology";
 import type { BusinessType } from "@prisma/client";
 import { walletLocations } from "./notification-text";
 import { walletProgressChangeMessage, type WalletNotificationSettings } from "./notification-text";
@@ -69,6 +70,7 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
   const cardUrl = new URL(`/card/${encodeURIComponent(member.publicToken)}`, site).href;
   const cafe = getMbVapeBrandColors(member.cafe);
   const { businessType } = cafe;
+  const rewardName = getRewardName(cafe);
   const mbVape = isMbVape(cafe);
   const vapeShop = businessType === "VAPE";
   const barber = businessType === "BARBERSHOP";
@@ -109,8 +111,8 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
   // Wallet crops the sides of store-card strips; keep stamps within the safe centre.
   const strip = vapeShop ? await renderMbVapeAppleStrip(ready ? target : stamps, target) : await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1125" height="369" viewBox="0 0 375 123"><rect width="375" height="123" fill="${background}"/>${artwork}${circles}</svg>`))
     .composite([
-      { input: await textImage(ready ? "YOUR REWARD IS READY" : walid ? "YOUR NEXT FREE HAIRCUT" : "A LITTLE CLOSER TO YOUR REWARD", 840, 35), left: 142, top: 30 },
-      { input: await textImage(ready ? member.cafe.rewardName : `${stamps} of ${target} ${barber ? "visits" : "stamps"}`, 800, 44), left: 162, top: 292 },
+      { input: await textImage(ready ? "YOUR REWARD IS READY" : "A LITTLE CLOSER TO YOUR REWARD", 840, 35), left: 142, top: 30 },
+      { input: await textImage(ready ? rewardName : `${stamps} of ${target} ${barber ? "visits" : "stamps"}`, 800, 44), left: 162, top: 292 },
     ]).png().toBuffer();
   const initials = member.cafe.name.trim().split(/\s+/).slice(0, 2)
     .map(word => Array.from(word)[0]).join("").toUpperCase() || "B";
@@ -154,17 +156,17 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
     if (!nearby) pass.setLocations({ latitude: 31.2299403, longitude: 29.9547298,
       relevantText: "Near Waleed Saad? Have your loyalty card ready for your next visit." });
     pass.backFields.push({ key: "walid-reward-status", label: "REWARD STATUS",
-      value: ready ? `Your reward is ready at ${member.cafe.name}: ${member.cafe.rewardName}.` : "Collect visits toward your next free haircut.",
+      value: ready ? `Your reward is ready at ${member.cafe.name}: ${rewardName}.` : "Record visits to earn your reward.",
       changeMessage: "%@" });
     pass.backFields.push({ key: "shop-location", label: "FIND WALEED SAAD",
       value: "467 Abou Quer, Fleming, Alexandria\nhttps://maps.app.goo.gl/DLqwQhwqEPJCnfpd8" });
   }
   const balanceChangeMessage = notificationSettings
-    ? walletProgressChangeMessage(ready, member.cafe.rewardName, notificationSettings, !ready && stamps === 0)
+    ? walletProgressChangeMessage(ready, rewardName, notificationSettings, !ready && stamps === 0)
     : "Your loyalty progress is now %@.";
   pass.headerFields.push({ key: "balance", label: ready ? "REWARD READY" : barber ? "VISITS" : "STAMPS", value: `${stamps}/${target}`, ...(walid ? {} : { changeMessage: balanceChangeMessage }) });
   pass.secondaryFields.push({ key: "member", label: "MEMBER", value: member.name });
-  pass.auxiliaryFields.push({ key: "reward", label: "YOUR REWARD", value: member.cafe.rewardName });
+  pass.auxiliaryFields.push({ key: "reward", label: "YOUR REWARD", value: rewardName });
   pass.backFields.push({ key: "member-message", label: "CARD UPDATE",
     value: message || "Your loyalty card is connected.", changeMessage: "%@" });
   pass.backFields.push(

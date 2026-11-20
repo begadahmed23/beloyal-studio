@@ -105,7 +105,7 @@ export default function RewardCelebrationModal({
           </p>
 
           <h2 className="mt-3 font-serif text-[2rem] font-semibold leading-tight tracking-[-0.035em] text-[#2E2A27]">
-            Your free drink is ready.
+            Your reward is ready.
           </h2>
 
           <p className="mx-auto mt-3 max-w-[18rem] text-sm leading-6 text-[#2E2A27]/62">
@@ -299,11 +299,11 @@ export default function RewardCelebrationModal({
           </p>
 
           <h2 className="mt-3 text-[2.25rem] font-semibold leading-none tracking-[-0.055em] text-white">
-            FREE DRINK
+            {rewardName || "Reward ready"}
           </h2>
 
           <p className="mx-auto mt-3 max-w-[18rem] text-sm leading-6 text-white/70">
-            You completed your loyalty card. Your {rewardName || "reward"} is ready.
+            You completed your loyalty card.
           </p>
 
           {rewardDescription ? (
