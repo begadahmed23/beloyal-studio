@@ -393,6 +393,7 @@ export async function GET(
         select: {
           id: true,
           memberNumber: true,
+          joinLocation: { select: { name: true } },
           name: true,
           phone: true,
           instagram: true,

@@ -54,6 +54,7 @@ model Cafe {
   feedbackRewardEnabled         Boolean                    @default(true)
   googleReviewUrl               String?
   customers                     Customer[]
+  locations                     CafeLocation[]
   reviews                       CustomerReview[]
   feedbacks                     CustomerFeedback[]
   transactions                  StampTransaction[]
@@ -67,6 +68,17 @@ model Cafe {
   @@index([subscriptionStatus])
   @@index([trialEndsAt])
   @@index([subscriptionEndsAt])
+}
+
+model CafeLocation {
+  id        String     @id @default(cuid())
+  cafeId    String
+  name      String
+  cafe      Cafe       @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  members   Customer[] @relation("CustomerJoinLocation")
+
+  @@unique([cafeId, id])
+  @@unique([cafeId, name])
 }
 
 model Payment {
@@ -104,6 +116,8 @@ model Customer {
   publicToken          String                     @unique
   cafeId               String
   cafe                 Cafe                       @relation(fields: [cafeId], references: [id], onDelete: Cascade)
+  joinLocationId       String?
+  joinLocation         CafeLocation?              @relation("CustomerJoinLocation", fields: [cafeId, joinLocationId], references: [cafeId, id], onDelete: NoAction)
   review               CustomerReview?
   feedbackRewardedAt   DateTime?
   privacyAcceptedAt DateTime?
@@ -122,6 +136,7 @@ model Customer {
   @@unique([cafeId, memberNumber])
   @@index([cafeId])
   @@index([cafeId, name])
+  @@index([cafeId, joinLocationId])
 }
 
 model BirthdayRewardRedemption {

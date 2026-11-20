@@ -30,6 +30,7 @@ const slugSchema = z
 const joinRequestSchema = z
   .object({
     action: z.enum(["join", "recover"]).default("join"),
+    locationId: z.string().min(1).max(40).regex(/^[a-z0-9]+$/).optional(),
     privacyAccepted: z.boolean().optional(),
     marketingConsent: z.boolean().optional(),
 
@@ -455,12 +456,21 @@ export async function POST(
       );
     }
 
+    const locationId = validationResult.data.locationId;
+    const joinLocation = locationId
+      ? await prisma.cafeLocation.findUnique({
+          where: { cafeId_id: { cafeId: cafe.id, id: locationId } },
+          select: { id: true },
+        })
+      : null;
+
     for (let attempt = 0; attempt < 5; attempt += 1) {
       try {
         const acceptedAt = new Date();
         const customer = await prisma.customer.create({
           data: {
             cafeId: cafe.id,
+            joinLocationId: joinLocation?.id,
             memberNumber: createMemberNumber(),
             publicToken: createPublicToken(),
             name,

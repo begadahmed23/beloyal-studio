@@ -7,7 +7,7 @@ import { passKey, walletRedis, notifyWalletMember } from "./updates";
 import { getWalletMessage, setWalletMessage } from "./messages";
 import { memberSegments, type CampaignMember, type CampaignSegment } from "./campaign-segments";
 
-// Environment-isolated alongside existing Wallet registrations. No schema changes.
+// Environment-isolated alongside existing Wallet registrations.
 const prefix = () => `${passKey("campaigns")}:`;
 export const campaignKey = (id: string) => `${prefix()}item:${id}`;
 const historyKey = (cafeId: string) => `${prefix()}history:${cafeId}`;
@@ -20,6 +20,7 @@ export type WalletCampaign = {
 export async function walletAudience(cafeId: string, timezone: string, now = new Date()) {
   const members = await prisma.customer.findMany({ where: { cafeId }, orderBy: [{ name: "asc" }, { id: "asc" }], take: 10001,
     select: { id: true, marketingConsentAt: true, marketingWithdrawnAt: true, name: true, memberNumber: true, birthday: true, createdAt: true, stamps: true, rewardEarnedAt: true, cafe: { select: { businessType: true, rewardTarget: true } },
+      joinLocation: { select: { name: true } },
       transactions: { where: { OR: [{ description: null }, { NOT: { description: { startsWith: "Feedback", mode: "insensitive" } } }] }, orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } } } });
   if (members.length > 10000) throw new Error("AUDIENCE_TOO_LARGE");
   const cafe = await prisma.cafe.findUnique({ where: { id: cafeId }, select: { slug: true } });
@@ -53,6 +54,7 @@ export async function walletAudience(cafeId: string, timezone: string, now = new
       const offersStatus = member.marketingWithdrawnAt ? "withdrawn" : member.marketingConsentAt ? "enabled" : "missing";
       const lastVisit = member.transactions[0]?.createdAt ?? null;
       audience.push({ id: member.id, name: member.name, memberNumber: member.memberNumber, devices: apple + Number(google), offersStatus,
+        joinLocationName: member.joinLocation?.name ?? null,
         lastVisitAt: lastVisit?.toISOString() ?? null, ...memberSegments(member.birthday, member.createdAt, lastVisit, now, timezone, Boolean(member.rewardEarnedAt) || member.stamps >= getLoyaltyProgressTarget(member.cafe)) });
     }
   }

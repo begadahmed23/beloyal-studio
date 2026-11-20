@@ -24,6 +24,7 @@ import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 type Customer = {
   id: string;
   memberNumber: string;
+  joinLocation: { name: string } | null;
   publicToken: string | null;
   name: string;
   phone: string;
@@ -199,7 +200,8 @@ export default function MemberList() {
             (customer.instagram?.toLowerCase().includes(
               value.replace(/^@+/, ""),
             ) ?? false) ||
-            customer.memberNumber.toLowerCase().includes(value),
+            customer.memberNumber.toLowerCase().includes(value) ||
+            (customer.joinLocation?.name.toLowerCase().includes(value) ?? false),
         )
       : [...customers];
 
@@ -251,7 +253,7 @@ export default function MemberList() {
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder={t(`Search by name, phone, Instagram, or ${personSingular} number`)}
+          placeholder={t("Search members by name, phone or store")}
           className="h-full w-full bg-transparent text-base outline-none sm:text-sm"
           style={{ color: theme.textPrimary }}
         />
@@ -438,7 +440,7 @@ export default function MemberList() {
           </p>
           <p className="mt-2 text-sm" style={{ color: theme.textMuted }}>
             {search
-              ? `Try another name, phone, Instagram, or ${personSingular} number.`
+              ? `Try another name, phone, Instagram, store, or ${personSingular} number.`
               : `Create the first ${personSingular} to start the loyalty program.`}
           </p>
         </div>
@@ -466,6 +468,11 @@ export default function MemberList() {
                   </div>
                 )}
                 <MemberCard customer={customer} />
+                {customer.joinLocation && (
+                  <p className="px-1 pt-2 text-sm" style={{ color: theme.textSecondary }}>
+                    {t("Joined at")} <span className="font-medium">{customer.joinLocation.name}</span>
+                  </p>
+                )}
               </div>
             );
           })}

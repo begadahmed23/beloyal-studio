@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import WalletNotificationSettings from "@/components/wallet/WalletNotificationSettings";
+import StoreLocations from "@/components/settings/StoreLocations";
 import BirthdayRewardsSettings from "@/components/settings/BirthdayRewardsSettings";
 import CafeSettingsForm, { AccountSubscriptionSettings } from "@/components/settings/CafeSettingsForm";
 import StaffManagementPanel from "@/components/staff/StaffManagementPanel";
@@ -30,6 +31,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-7">
       <CafeSettingsForm />
+      <StoreLocations key={cafe.id} />
       <div className="min-w-0" style={{
         "--wallet-surface": theme.surface,
         "--wallet-raised": theme.surfaceRaised,
