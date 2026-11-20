@@ -69,9 +69,9 @@ test('MB Vape keeps its logo and refreshes the matching stamp artwork on save an
  const cafe = { ...member.cafe, slug: 'mb-vape', name: 'MB Vape', businessType: 'VAPE', theme: 'COFFEE_CLASSIC',
    primaryColor: '#7B4F35', secondaryColor: '#6F4A35', backgroundColor: '#F3EDE5' };
  const brand = wallet.googleClassBrand(cafe);
- assert.equal(brand.programLogo.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?asset=icon');
+ assert.equal(brand.programLogo.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?asset=icon&v=2');
  assert.equal(brand.programName, 'MB Vape');
- assert.equal(brand.wideProgramLogo.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?asset=google-logo');
+ assert.equal(brand.wideProgramLogo.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?asset=google-logo&v=2');
  assert.equal(brand.hexBackgroundColor, '#F7F2E9');
  assert.equal(brand.heroImage, undefined);
  const imageUrl = stamps => `https://example.com/api/wallet/artwork/mb-vape?asset=strip&stamps=${stamps}&target=6`;

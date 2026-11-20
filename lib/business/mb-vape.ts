@@ -1,7 +1,7 @@
 import type { BusinessType } from "@prisma/client";
 
 export const MB_VAPE_ARTWORK_PATH = "/api/wallet/artwork/mb-vape";
-export const MB_VAPE_LOGO_URL = MB_VAPE_ARTWORK_PATH + "?asset=logo";
+export const MB_VAPE_LOGO_URL = MB_VAPE_ARTWORK_PATH + "?asset=logo&v=2";
 export const MB_VAPE_WALNUT = "#6A4937";
 export const MB_VAPE_IVORY = "#F7F2E9";
 export const MB_VAPE_WOOD_BACKGROUND = "repeating-linear-gradient(90deg, #25170e38 0 1px, transparent 1px 6px, #ffffff28 7px 8px, transparent 8px 23px), linear-gradient(125deg, #94694D, #6A4937 64%, #40291E)";

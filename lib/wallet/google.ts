@@ -97,13 +97,13 @@ export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocati
   let logo = fallback;
   try { if (cafe.logoUrl) { const candidate = new URL(cafe.logoUrl); if (candidate.protocol === "https:") logo = candidate; } } catch { /* use fallback */ }
   const site = process.env.GOOGLE_WALLET_SITE_URL!;
-  if (mbVape) logo = new URL(MB_VAPE_ARTWORK_PATH + "?asset=icon", site);
+  if (mbVape) logo = new URL(MB_VAPE_ARTWORK_PATH + "?asset=icon&v=2", site);
   return {
     issuerName: cafe.name,
     programName: mbVape ? cafe.name : `${cafe.name} Rewards`,
     programLogo: walletImage(logo, cafe.name),
     ...(mbVape ? {
-      wideProgramLogo: walletImage(new URL(`${MB_VAPE_ARTWORK_PATH}?asset=google-logo`, site), cafe.name),
+      wideProgramLogo: walletImage(new URL(MB_VAPE_ARTWORK_PATH + "?asset=google-logo&v=2", site), cafe.name),
       accountNameLabel: "MEMBER",
       classTemplateInfo: {
         cardBarcodeSectionDetails: {
