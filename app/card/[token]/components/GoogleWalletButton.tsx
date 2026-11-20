@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import WalletButtonStatus from "./WalletButtonStatus";
+import WalletButtonStatus, { WalletButtonProgress } from "./WalletButtonStatus";
 
 export default function GoogleWalletButton({ token, enabled }: { token: string; enabled: boolean }) {
   const [busy, setBusy] = useState(false);
@@ -41,8 +41,9 @@ export default function GoogleWalletButton({ token, enabled }: { token: string; 
   return <div className="mx-auto mt-3 text-center">
     <button type="button" onClick={() => void save()} disabled={busy} aria-busy={busy}
       aria-label="Add to Google Wallet"
-      className="inline-flex min-h-12 items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-60">
-      <img src="/wallet/add-to-google-wallet.svg" alt="Add to Google Wallet" className="h-12 w-auto" />
+      className="relative inline-flex min-h-[54px] items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-wait">
+      <img src="/wallet/add-to-google-wallet.svg" alt="Add to Google Wallet" className={`h-12 w-auto ${busy ? "invisible" : ""}`} />
+      {busy && <WalletButtonProgress />}
     </button>
     <WalletButtonStatus busy={busy} error={error}
       message={opening ? "Opening Google Wallet…" : busy ? "Preparing Google Wallet…" : ""} />

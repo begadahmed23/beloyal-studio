@@ -4,6 +4,7 @@ import { Cake, CheckCircle2, ChevronRight, Gift, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 import type { Customer } from "./LoyaltyCard";
 
 type Props = {
@@ -134,6 +135,7 @@ export default function BirthdayCustomerDisplay({
   textSecondary,
   textMuted,
 }: Props) {
+  const { t, dir, arabic } = useBeLoyalLanguage();
   const [open, setOpen] = useState(false);
   const state = useMemo(() => getBirthdayState(customer), [customer]);
 
@@ -193,7 +195,8 @@ export default function BirthdayCustomerDisplay({
       className="fixed inset-0 z-[999] flex items-center justify-center overflow-y-auto bg-black/70 px-4 py-8 backdrop-blur-md"
       role="dialog"
       aria-modal="true"
-      aria-label="Birthday offer"
+      aria-label={t("Birthday offer")}
+      dir={dir}
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) {
           setOpen(false);
@@ -317,7 +320,7 @@ export default function BirthdayCustomerDisplay({
               )}
             </p>
             <p className="mt-2 text-xs" style={{ color: textMuted }}>
-              Present your B-LO card when ordering. Birthday gift available once per year.
+              Present your BeLoyal card when ordering. Birthday gift available once per year.
             </p>
           </div>
         </div>
@@ -337,61 +340,34 @@ export default function BirthdayCustomerDisplay({
     </div>
   ) : null;
 
-  return (
+  const countdown = `Birthday in ${daysUntilBirthday} ${daysUntilBirthday === 1 ? "day" : "days"}`;
+  const label = arabic && title === countdown ? `عيد ميلادك بعد ${daysUntilBirthday} يوم` : t(title);
+  const BirthdayIcon = redeemed && state?.isActive ? CheckCircle2 : Cake;
+  const row = (
     <>
-      <button
-        type="button"
-        onClick={() => interactive && setOpen(true)}
-        disabled={!interactive}
-        className="flex w-full items-center gap-4 rounded-2xl border p-4 text-left transition pointer-fine:motion-safe:enabled:hover:-translate-y-0.5 enabled:hover:opacity-90 disabled:cursor-default"
-        style={{
-          borderColor: highlighted ? primaryBorder : cardBorder,
-          backgroundColor: highlighted ? primarySoft : surfaceColor,
-          color: textPrimary,
-        }}
-      >
-        <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-          style={{
-            backgroundColor: highlighted ? surfaceRaised : primarySoft,
-            color: primaryColor,
-          }}
-        >
-          {redeemed && state?.isActive ? (
-            <CheckCircle2 size={19} />
-          ) : (
-            <Cake size={19} />
-          )}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <p
-            className="text-sm font-semibold"
-            style={{ color: textPrimary }}
-          >
-            {title}
-          </p>
-          <p
-            className="mt-1 truncate text-xs"
-            style={{ color: textMuted }}
-          >
-            {subtitle}
-          </p>
-          {enabled && customer.cafe.birthdayFriendDiscountEnabled && <p className="mt-2 text-xs leading-5" style={{color: textPrimary}}>Birthday + 1 guest: {customer.cafe.birthdayOneFriendDiscount}% off · 2+ guests: {customer.cafe.birthdayGroupDiscount}% off</p>}
-        </div>
-
-        {interactive ? (
-          <ChevronRight
-            size={17}
-            className="shrink-0"
-            style={{ color: primaryColor }}
-          />
-        ) : null}
-      </button>
-
-      {modal && typeof document !== "undefined"
-        ? createPortal(modal, document.body)
-        : null}
+      <BirthdayIcon size={15} strokeWidth={1.7} aria-hidden="true" className="shrink-0"
+        style={{ color: highlighted ? primaryColor : textMuted }} />
+      <span className="min-w-0 flex-1 break-words text-[0.75rem] font-medium leading-4">{label}</span>
+      <bdi className="max-w-[46%] break-words text-end text-[0.7rem] leading-4" style={{ color: textMuted }}>{t(subtitle)}</bdi>
+      {interactive && <ChevronRight size={13} aria-hidden="true" className="shrink-0 rtl:rotate-180" style={{ color: textMuted }} />}
     </>
+  );
+
+  return (
+    <div className="border-t" style={{ borderColor: cardBorder }}>
+      {interactive ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-haspopup="dialog"
+          className="flex min-h-11 w-full items-center gap-2 rounded-md py-2 text-start transition-opacity hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          {row}
+        </button>
+      ) : (
+        <div className="flex min-h-9 items-center gap-2 py-2 text-start">{row}</div>
+      )}
+      {modal && typeof document !== "undefined" ? createPortal(modal, document.body) : null}
+    </div>
   );
 }
