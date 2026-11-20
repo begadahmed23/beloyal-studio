@@ -4,7 +4,8 @@ import sharp from "sharp";
 import { MB_VAPE_IVORY, MB_VAPE_STAMP_PATH, MB_VAPE_WALNUT } from "../business/mb-vape";
 
 const originalLogo = path.join(process.cwd(), "public/brands/mb-vape/logo.png");
-const logoBounds = { left: 197, top: 310, width: 733, height: 500 };
+// The MB monogram ends above the descriptor printed on the supplied image.
+const logoBounds = { left: 197, top: 310, width: 733, height: 433 };
 
 export function renderMbVapeLogo(width: number, height: number, background = "#ffffff", padding = 0) {
   return sharp(originalLogo)

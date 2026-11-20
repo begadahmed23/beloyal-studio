@@ -331,6 +331,7 @@ test('MB Vape pass uses the brand logo and device stamps without changing the sc
   const googleArt = async query => GET(new Request(`https://example.com/api/wallet/artwork/mb-vape?${query}`), {
     params: Promise.resolve({ businessType: 'mb-vape' }),
   });
+  const webLogo = Buffer.from(await (await googleArt('asset=logo&v=2')).arrayBuffer());
   const logo = Buffer.from(await (await googleArt('asset=icon')).arrayBuffer());
   assert.equal(logo.readUInt32BE(16), 720);
   assert.equal(logo.readUInt32BE(20), 720);
@@ -345,6 +346,23 @@ test('MB Vape pass uses the brand logo and device stamps without changing the sc
     if (data[i] > 128) opaqueColumns.add(((i - 3) / 4) % info.width);
   }
   assert.ok(Math.abs((Math.min(...opaqueColumns) + Math.max(...opaqueColumns)) / 2 - info.width / 2) < 12);
+  // The monogram is wider than the complete mark with its descriptor underneath.
+  for (const image of [webLogo, pass['logo@3x.png'], logo, wideLogo]) {
+    const { data: pixels, info: dimensions } = await require('sharp')(image)
+      .flatten({ background: 'white' }).raw().toBuffer({ resolveWithObject: true });
+    let left = dimensions.width, right = -1, top = dimensions.height, bottom = -1;
+    for (let y = 0; y < dimensions.height; y++) {
+      for (let x = 0; x < dimensions.width; x++) {
+        if (pixels[(y * dimensions.width + x) * dimensions.channels] >= 128) continue;
+        left = Math.min(left, x);
+        right = Math.max(right, x);
+        top = Math.min(top, y);
+        bottom = Math.max(bottom, y);
+      }
+    }
+    const ratio = (right - left + 1) / (bottom - top + 1);
+    assert.ok(ratio > 1.65 && ratio < 1.85, `Unexpected MB mark aspect ratio: ${ratio}`);
+  }
   const artwork = Buffer.from(await (await googleArt('stamps=2&target=6')).arrayBuffer());
   assert.equal(artwork.readUInt32BE(16), 1032);
   assert.equal(artwork.readUInt32BE(20), 812);
