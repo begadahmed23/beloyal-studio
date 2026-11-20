@@ -3,7 +3,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import WalletNotificationSettings from "@/components/wallet/WalletNotificationSettings";
 import StoreLocations from "@/components/settings/StoreLocations";
 import BirthdayRewardsSettings from "@/components/settings/BirthdayRewardsSettings";
 import CafeSettingsForm, { AccountSubscriptionSettings } from "@/components/settings/CafeSettingsForm";
@@ -12,11 +11,7 @@ import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const {
-    cafe,
-    theme,
-    userRole,
-  } = useCafeTheme();
+  const { cafe, userRole } = useCafeTheme();
 
   useEffect(() => {
     if (userRole === "CASHIER") {
@@ -32,19 +27,6 @@ export default function SettingsPage() {
     <div className="space-y-7">
       <CafeSettingsForm />
       <StoreLocations key={cafe.id} />
-      <div className="min-w-0" style={{
-        "--wallet-surface": theme.surface,
-        "--wallet-raised": theme.surfaceRaised,
-        "--wallet-border": theme.border,
-        "--wallet-text": theme.textPrimary,
-        "--wallet-secondary": theme.textSecondary,
-        "--wallet-muted": theme.textMuted,
-        "--wallet-accent": theme.accent,
-        "--wallet-accent-text": theme.accentText,
-        color: theme.textPrimary,
-      } as React.CSSProperties}>
-        <WalletNotificationSettings cafeId={cafe.id} />
-      </div>
       <BirthdayRewardsSettings />
       <StaffManagementPanel
         endpoint="/api/cafe/staff"
