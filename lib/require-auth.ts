@@ -25,6 +25,7 @@ export async function requireAuth(
       role: true,
       cafeId: true,
       cashierCafeId: true,
+      cashierLocationId: true,
       staffCafeId: true,
       isEnabled: true,
 

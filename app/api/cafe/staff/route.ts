@@ -35,6 +35,12 @@ export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const includeActivity = params.get("activity") === "1";
 
+  const locations = await prisma.cafeLocation.findMany({
+    where: { cafeId: authData.cafeId },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+
   const users = await prisma.user.findMany({
     where: {
       role: { in: ["CAFE_ADMIN", "CASHIER"] },
@@ -52,6 +58,7 @@ export async function GET(request: NextRequest) {
       role: true,
       isEnabled: true,
       createdAt: true,
+      cashierLocationId: true,
       transactions: {
         orderBy: { createdAt: "desc" },
         take: 1,
@@ -68,6 +75,7 @@ export async function GET(request: NextRequest) {
     name: user.name,
     email: user.email,
     role: user.role,
+    location: locations.find(location => location.id === user.cashierLocationId) ?? null,
     isEnabled: user.isEnabled,
     createdAt: user.createdAt,
     lastActivityAt: user.transactions[0]?.createdAt ?? null,
@@ -76,7 +84,7 @@ export async function GET(request: NextRequest) {
   }));
 
   if (!includeActivity) {
-    return json({ staff, activity: [], activityLoaded: false });
+    return json({ staff, locations, activity: [], activityLoaded: false });
   }
 
   const allowedLimits = new Set([25, 50, 100, 250, 500, 1000]);
@@ -168,6 +176,7 @@ export async function GET(request: NextRequest) {
       type: true,
       description: true,
       createdAt: true,
+      location: { select: { name: true } },
       user: {
         select: {
           id: true,
@@ -188,6 +197,7 @@ export async function GET(request: NextRequest) {
 
   return json({
     staff,
+    locations,
     activity,
     activityLoaded: true,
     activityLimit: limit,
@@ -211,6 +221,7 @@ export async function POST(request: NextRequest) {
       name?: unknown;
       email?: unknown;
       password?: unknown;
+      locationId?: unknown;
     };
 
     const name =
@@ -240,6 +251,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const locationId = typeof body.locationId === "string" ? body.locationId : "";
+    const location = locationId && locationId.length <= 40
+      ? await prisma.cafeLocation.findUnique({
+          where: { cafeId_id: { cafeId: authData.cafeId, id: locationId } },
+          select: { id: true },
+        })
+      : null;
+    if (locationId && !location) {
+      return json({ message: "Choose a branch from this business." }, 400);
+    }
+    if (!location && await prisma.cafeLocation.count({ where: { cafeId: authData.cafeId } })) {
+      return json({ message: "Choose a branch for this cashier." }, 400);
+    }
+
     const existing = await prisma.user.findUnique({
       where: { email },
       select: { id: true },
@@ -267,6 +292,7 @@ export async function POST(request: NextRequest) {
         staffCafeId: authData.cafeId,
         cafeId: null,
         cashierCafeId: null,
+        cashierLocationId: location?.id ?? null,
         isEnabled: true,
       },
       select: {

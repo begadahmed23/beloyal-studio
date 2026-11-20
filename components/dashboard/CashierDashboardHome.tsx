@@ -16,7 +16,7 @@ import {
 } from "react";
 
 import KatoMark from "@/components/brand/KatoMark";
-import JoinQRCode from "@/components/dashboard/JoinQRCode";
+import StoreJoinQRCodes from "@/components/dashboard/StoreJoinQRCodes";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type SummaryResponse = {
@@ -279,7 +279,7 @@ export default function CashierDashboardHome() {
         </div>
       </section>
 
-      <JoinQRCode />
+      <StoreJoinQRCodes key={cafe.id} />
     </div>
   );
 }

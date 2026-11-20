@@ -346,6 +346,7 @@ export async function POST(request: NextRequest) {
                   cafeId: authData.cafeId,
                   customerId: currentCustomer.id,
                   userId: authData.user.id,
+                  locationId: authData.isCashier ? authData.user.cashierLocationId : null,
                   type: "ADD",
                   description: isBarbershop
                     ? "Barbershop visit recorded"

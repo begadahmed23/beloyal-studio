@@ -14,17 +14,21 @@ async function handle(request: NextRequest) {
   if (!access.allowed) return NextResponse.json({ message: access.message }, { status: access.status });
 
   const { user, cafeId } = access.authData;
-  if (user.role !== "CAFE_ADMIN" || !cafeId) {
-    return NextResponse.json({ message: "Business administrator access required." }, { status: 403 });
+  if (!cafeId) {
+    return NextResponse.json({ message: "Business access required." }, { status: 403 });
   }
 
   if (request.method === "GET") {
-    const locations = await prisma.cafeLocation.findMany({
-      where: { cafeId },
+    const locations = user.role === "CASHIER" && !user.cashierLocationId ? [] : await prisma.cafeLocation.findMany({
+      where: { cafeId, ...(user.role === "CASHIER" ? { id: user.cashierLocationId! } : {}) },
       orderBy: { name: "asc" },
       select: locationFields,
     });
     return NextResponse.json({ locations }, { headers: { "Cache-Control": "private, no-store" } });
+  }
+
+  if (user.role !== "CAFE_ADMIN") {
+    return NextResponse.json({ message: "Business administrator access required." }, { status: 403 });
   }
 
   if (request.headers.get("origin") !== request.nextUrl.origin) {

@@ -76,6 +76,8 @@ model CafeLocation {
   name      String
   cafe      Cafe       @relation(fields: [cafeId], references: [id], onDelete: Cascade)
   members   Customer[] @relation("CustomerJoinLocation")
+  cashiers  User[] @relation("CashierLocation")
+  transactions StampTransaction[] @relation("TransactionLocation")
 
   @@unique([cafeId, id])
   @@unique([cafeId, name])
@@ -207,10 +209,12 @@ model StampTransaction {
   description String?
   userId      String?
   cafeId      String?
+  locationId  String?
 
   cafe     Cafe?    @relation(fields: [cafeId], references: [id])
   customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
   user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  location CafeLocation? @relation("TransactionLocation", fields: [cafeId, locationId], references: [cafeId, id], onDelete: NoAction)
 
   @@index([cafeId])
   @@index([customerId])
@@ -219,6 +223,7 @@ model StampTransaction {
   @@index([cafeId, createdAt])
   @@index([userId, createdAt])
   @@index([cafeId, type, createdAt])
+  @@index([cafeId, locationId])
 }
 
 model User {
@@ -231,6 +236,7 @@ model User {
   updatedAt     DateTime           @updatedAt
   cafeId        String?            @unique
   cashierCafeId String?
+  cashierLocationId String?
   staffCafeId   String?
   isEnabled     Boolean            @default(true)
   role          UserRole           @default(CAFE_ADMIN)
@@ -242,7 +248,10 @@ model User {
   staffCafe     Cafe?              @relation("CafeStaff", fields: [staffCafeId], references: [id], onDelete: SetNull)
 
   @@index([cafeId])
+  cashierLocation CafeLocation? @relation("CashierLocation", fields: [cashierLocationId], references: [id], onDelete: SetNull)
+
   @@index([cashierCafeId])
+  @@index([cashierLocationId])
   @@index([staffCafeId])
   @@map("user")
 }

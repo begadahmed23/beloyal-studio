@@ -320,6 +320,7 @@ export async function POST(request: NextRequest) {
               cafeId: authData.cafeId,
               customerId: customer.id,
               userId: authData.user.id,
+              locationId: authData.isCashier ? authData.user.cashierLocationId : null,
               type: "REDEEM",
               description: `${rewardName} redeemed`,
             },
