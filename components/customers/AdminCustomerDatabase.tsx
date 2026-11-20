@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
+import SignupBranchFilter from "@/components/customers/SignupBranchFilter";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type Customer = {
@@ -181,6 +182,8 @@ export default function AdminCustomerDatabase() {
   const [search, setSearch] =
     useState("");
 
+  const [signupBranch, setSignupBranch] = useState("");
+
   const [birthdayFilter, setBirthdayFilter] =
     useState<BirthdayFilter>("all");
 
@@ -244,6 +247,8 @@ export default function AdminCustomerDatabase() {
     const value = search.trim().toLowerCase();
 
     return data.customers.filter((customer) => {
+      if (signupBranch && customer.joinLocation?.name !== signupBranch) return false;
+
       const matchesSearch =
         !value ||
         customer.name.toLowerCase().includes(value) ||
@@ -368,6 +373,7 @@ export default function AdminCustomerDatabase() {
   }, [
     data,
     search,
+    signupBranch,
     birthdayFilter,
     activityFilter,
     contactFilter,
@@ -391,6 +397,7 @@ export default function AdminCustomerDatabase() {
 
   function resetFilters() {
     setSearch("");
+    setSignupBranch("");
     setBirthdayFilter("all");
     setActivityFilter("all");
     setContactFilter("all");
@@ -512,6 +519,7 @@ export default function AdminCustomerDatabase() {
         </div>
 
         <div className="mt-4 grid gap-3 lg:grid-cols-4">
+          <SignupBranchFilter value={signupBranch} onChange={setSignupBranch} />
           <div
             className="flex h-11 items-center border px-3"
             style={{
