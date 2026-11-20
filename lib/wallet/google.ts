@@ -3,7 +3,7 @@ import { createHash, sign } from "node:crypto";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
-import { getMbVapeBrandColors, isMbVape, MB_VAPE_ARTWORK_PATH } from "../business/mb-vape";
+import { getMbVapeBrandColors, isMbVape, MB_VAPE_ARTWORK_PATH, walletBusinessName } from "../business/mb-vape";
 import { walletLocations } from "./notification-text";
 import type { WalletMember } from "./apple";
 
@@ -94,17 +94,18 @@ type GoogleLocation = Parameters<typeof walletLocations>[0];
 export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocation) {
   const cafe = getMbVapeBrandColors(savedCafe);
   const mbVape = isMbVape(cafe);
+  const displayName = walletBusinessName(cafe);
   const fallback = new URL(process.env.GOOGLE_WALLET_LOGO_URL!);
   let logo = fallback;
   try { if (cafe.logoUrl) { const candidate = new URL(cafe.logoUrl); if (candidate.protocol === "https:") logo = candidate; } } catch { /* use fallback */ }
   const site = process.env.GOOGLE_WALLET_SITE_URL!;
   if (mbVape) logo = new URL(MB_VAPE_ARTWORK_PATH + "?asset=icon&v=2", site);
   return {
-    issuerName: cafe.name,
-    programName: mbVape ? cafe.name : `${cafe.name} Rewards`,
-    programLogo: walletImage(logo, cafe.name),
+    issuerName: displayName,
+    programName: mbVape ? displayName : `${displayName} Rewards`,
+    programLogo: walletImage(logo, displayName),
     ...(mbVape ? {
-      wideProgramLogo: walletImage(new URL(MB_VAPE_ARTWORK_PATH + "?asset=google-logo&v=2", site), cafe.name),
+      wideProgramLogo: walletImage(new URL(MB_VAPE_ARTWORK_PATH + "?asset=google-logo&v=2", site), displayName),
       accountNameLabel: "MEMBER",
       classTemplateInfo: {
         cardBarcodeSectionDetails: {

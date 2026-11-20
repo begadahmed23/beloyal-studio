@@ -4,7 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
-import { DEFAULT_WALLET_NOTIFICATIONS } from "@/lib/wallet/notification-text";
+import { configuredWalletLocations, DEFAULT_WALLET_NOTIFICATIONS } from "@/lib/wallet/notification-text";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 import { getWalletNotificationSettings, saveWalletNotificationSettings } from "@/lib/wallet/notification-settings";
 import { updateGoogleWalletClass } from "@/lib/wallet/google";
@@ -33,6 +33,18 @@ const schema = z.object({ cafeId: z.string().min(1).max(100), stampSuffix: suffi
   nearbyLongitude: z.number().finite().min(-180).max(180).nullable().optional(),
   nearbyMaxDistance: z.number().int().min(50).max(1000).nullable().transform(value => value ?? 150).optional(),
 }).strict();
+const nearbyMessageSchema = z.object({
+  cafeId: z.string().min(1).max(100),
+  edits: z.array(z.object({
+    index: z.number().int().min(0).max(9),
+    name: z.string().min(1).max(80),
+    latitude: z.number().min(-90).max(90),
+    longitude: z.number().min(-180).max(180),
+    previousMessage: suffix,
+    message: suffix.refine(value => value.length > 0),
+  }).strict()).min(1).max(10).refine(edits => new Set(edits.map(edit => edit.index)).size === edits.length),
+}).strict();
+
 async function handle(request: NextRequest) {
   const auth = await requireAuth(request.headers);
   if (!auth || auth.isCashier || !["CAFE_ADMIN", "SUPER_ADMIN"].includes(auth.user.role)) return json({ message: "Administrator access required." }, 403);
@@ -40,13 +52,39 @@ async function handle(request: NextRequest) {
     const access = await requireActiveCafe(request.headers);
     if (!access.allowed) return json({ message: access.message }, access.status);
   }
-  if (request.method === "POST" && request.headers.get("origin") !== request.nextUrl.origin) return json({ message: "Invalid request origin." }, 403);
+  const writing = request.method !== "GET";
+  if (writing && request.headers.get("origin") !== request.nextUrl.origin) return json({ message: "Invalid request origin." }, 403);
   if (Number(request.headers.get("content-length") ?? 0) > 16384) return json({ message: "Request too large." }, 413);
-  const body = request.method === "POST" ? await request.json() : null;
+  const body = writing ? await request.json().catch(() => null) : null;
   const cafeId = body?.cafeId ?? request.nextUrl.searchParams.get("cafeId");
   if (typeof cafeId !== "string" || (!auth.isSuperAdmin && cafeId !== auth.cafeId)) return json({ message: "Business access denied." }, 403);
   const cafe = await prisma.cafe.findFirst({ where: { id: cafeId, isActive: true },  });
   if (!cafe) return json({ message: "Active business not found." }, 404);
+  if (request.method === "PATCH") {
+    const parsed = nearbyMessageSchema.safeParse(body);
+    if (!parsed.success) return json({ message: "Enter a nearby message of 1–100 characters." }, 400);
+
+    const current = await getWalletNotificationSettings(cafeId);
+    const locations = configuredWalletLocations(current);
+    const edits = new Map(parsed.data.edits.map(edit => [edit.index, edit]));
+    for (const [index, edit] of edits) {
+      const location = locations[index];
+      if (!location || location.name !== edit.name || location.latitude !== edit.latitude ||
+        location.longitude !== edit.longitude || location.message.trim() !== edit.previousMessage) {
+        return json({ message: "Nearby settings changed. Refresh the page and try again." }, 409);
+      }
+    }
+    if (current && parsed.data.edits.some(edit => edit.message !== edit.previousMessage)) {
+      const settings = current.nearbyLocations
+        ? { ...current, nearbyLocations: locations.map((location, index) => ({
+            ...location, message: edits.get(index)?.message ?? location.message,
+          })) }
+        : { ...current, nearbyMessage: edits.get(0)?.message ?? current.nearbyMessage };
+      await saveWalletNotificationSettings(cafeId, settings);
+      // Mark existing passes stale so the updated text is included on their next refresh.
+      await prisma.cafe.update({ where: { id: cafeId }, data: { updatedAt: new Date() }, select: { id: true } });
+    }
+  }
   if (request.method === "POST") {
     const parsed = schema.safeParse(body);
     if (!parsed.success) return json({ message: "Use up to 100 characters for each optional message. Only notification messages and nearby settings can be edited here." }, 400);
@@ -71,3 +109,4 @@ async function respond(request: NextRequest) {
 }
 export const GET = respond;
 export const POST = respond;
+export const PATCH = respond;

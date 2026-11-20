@@ -16,8 +16,23 @@ export function walletNotificationPreview(balance: string, ready: boolean, rewar
   return suffix ? `${base} ${suffix}` : base;
 }
 
+export function configuredWalletLocations(settings?: WalletNotificationSettings): WalletLocation[] {
+  if (!settings) return [];
+  return settings.nearbyLocations ?? (
+    settings.nearbyLatitude != null && settings.nearbyLongitude != null
+      ? [{
+          name: "Main branch",
+          latitude: settings.nearbyLatitude,
+          longitude: settings.nearbyLongitude,
+          message: settings.nearbyMessage || DEFAULT_WALLET_NOTIFICATIONS.nearbyMessage!,
+        }]
+      : []
+  );
+}
+
 export function walletLocations(settings?: WalletNotificationSettings): WalletLocation[] {
- if (!settings?.nearbyEnabled) return [];
- const locations = settings.nearbyLocations ?? (settings.nearbyLatitude != null && settings.nearbyLongitude != null ? [{name:"Main branch",latitude:settings.nearbyLatitude,longitude:settings.nearbyLongitude,message:settings.nearbyMessage || "Your loyalty card is ready for your next visit."}] : []);
- return locations.filter(l => Number.isFinite(l.latitude) && Number.isFinite(l.longitude) && Math.abs(l.latitude)<=90 && Math.abs(l.longitude)<=180).slice(0,10);
+  if (!settings?.nearbyEnabled) return [];
+  return configuredWalletLocations(settings)
+    .filter(l => Number.isFinite(l.latitude) && Number.isFinite(l.longitude) && Math.abs(l.latitude) <= 90 && Math.abs(l.longitude) <= 180)
+    .slice(0, 10);
 }

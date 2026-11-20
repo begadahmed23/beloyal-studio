@@ -1,11 +1,18 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 import { ActionButton } from "@/components/ui/action-button";
 import { Bell, Loader2, LockKeyhole, Save } from "lucide-react";
-import { walletNotificationPreview, type WalletLocation, type WalletNotificationSettings } from "@/lib/wallet/notification-text";
+import { configuredWalletLocations, walletNotificationPreview, type WalletLocation, type WalletNotificationSettings } from "@/lib/wallet/notification-text";
 
 type Data = { settings: WalletNotificationSettings; rewardName: string; target: number };
-export default function WalletNotificationSettings({ cafeId, manageLocation = false }: { cafeId: string; manageLocation?: boolean }) {
+export default function WalletNotificationSettings({ cafeId, manageLocation = false, editNearbyMessages = false }: {
+  cafeId: string;
+  manageLocation?: boolean;
+  editNearbyMessages?: boolean;
+}) {
+  const { t } = useBeLoyalLanguage();
+  const [nearbyDrafts, setNearbyDrafts] = useState<Record<number, string>>({});
   const [data, setData] = useState<Data | null>(null);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
@@ -35,7 +42,45 @@ export default function WalletNotificationSettings({ cafeId, manageLocation = fa
     setData(previous => previous ? { ...previous, settings: { ...previous.settings, [key]: value } } : previous);
     setStatus("");
   }
-  const locations: WalletLocation[] = data?.settings.nearbyLocations ?? (data?.settings.nearbyLatitude != null && data.settings.nearbyLongitude != null ? [{name:"Main branch",latitude:data.settings.nearbyLatitude,longitude:data.settings.nearbyLongitude,message:data.settings.nearbyMessage || "Your loyalty card is ready nearby."}] : []);
+  const locations = configuredWalletLocations(data?.settings);
+  const nearbyEdits = locations.flatMap((location, index) => {
+    const message = nearbyDrafts[index]?.trim();
+    if (message === undefined || message === location.message.trim()) return [];
+    return [{ index, name: location.name, latitude: location.latitude, longitude: location.longitude,
+      previousMessage: location.message, message }];
+  });
+
+  async function saveNearbyMessages() {
+    if (!data || savingRef.current || !nearbyEdits.length || nearbyEdits.some(edit => !edit.message)) return;
+    savingRef.current = true;
+    setSaving(true);
+    setError("");
+    setStatus("");
+    try {
+      const response = await fetch("/api/wallet/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cafeId, edits: nearbyEdits }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.message);
+      setData(previous => previous && {
+        ...previous,
+        settings: {
+          ...previous.settings,
+          nearbyLocations: body.settings.nearbyLocations,
+          nearbyMessage: body.settings.nearbyMessage,
+        },
+      });
+      setNearbyDrafts({});
+      setStatus(t("Nearby messages saved. Wallet uses the new wording on its next card update."));
+    } catch (reason) {
+      setError(reason instanceof Error ? t(reason.message) : t("Could not save."));
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
+  }
   function setLocations(value: WalletLocation[]) {
     setData(previous => previous ? {...previous,settings:{...previous.settings,nearbyLocations:value}} : previous);
     setStatus("");
@@ -57,7 +102,35 @@ export default function WalletNotificationSettings({ cafeId, manageLocation = fa
       <p className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-[var(--wallet-muted,#71717a)]">Example notification</p>
       <p className="mt-2 break-words rounded-xl bg-[var(--wallet-raised,#fafafa)] p-3 text-sm leading-6">{walletNotificationPreview(`${item.reset ? 0 : item.ready ? data.target : Math.min(3, Math.max(0, data.target - 1))}/${data.target}`, item.ready, data.rewardName, data.settings)}</p>
     </div>)}</div>
-    {!manageLocation && locations.length>0 && <div className="mt-5 rounded-2xl border p-4"><h3 className="text-sm font-semibold">Business locations</h3>{locations.map((l,i)=><div key={i} className="mt-3 text-sm">{l.name} · {data.settings.nearbyEnabled ? "Nearby reminders enabled" : "Reminders disabled"}</div>)}</div>}
+    {editNearbyMessages && locations.length > 0 && (
+      <div className="mt-5 space-y-4 rounded-2xl border border-[var(--wallet-border,#e4e4e7)] p-4 sm:p-5">
+        <div>
+          <h3 className="text-sm font-semibold">{t("Apple Wallet nearby messages")}</h3>
+          <p className="mt-2 text-xs text-[var(--wallet-muted,#71717a)]">
+            {t(data.settings.nearbyEnabled ? "Nearby reminders enabled" : "Reminders disabled")}
+          </p>
+        </div>
+        {locations.map((location, index) => (
+          <label key={index} className="block text-xs font-medium">
+            {location.name}
+            <input type="text" dir="auto" maxLength={100} disabled={saving}
+              value={nearbyDrafts[index] ?? location.message}
+              onChange={event => {
+                const value = event.target.value;
+                setNearbyDrafts(previous => ({ ...previous, [index]: value }));
+                setStatus("");
+              }}
+              className="mt-2 min-h-12 w-full rounded-xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] px-3 text-base sm:text-sm" />
+          </label>
+        ))}
+        <button type="button" onClick={saveNearbyMessages}
+          disabled={saving || !nearbyEdits.length || nearbyEdits.some(edit => !edit.message)}
+          className="min-h-11 rounded-xl border border-[var(--wallet-border,#e4e4e7)] px-4 text-sm font-medium disabled:opacity-50">
+          {t("Save nearby messages")}
+        </button>
+      </div>
+    )}
+    {!manageLocation && !editNearbyMessages && locations.length>0 && <div className="mt-5 rounded-2xl border p-4"><h3 className="text-sm font-semibold">Business locations</h3>{locations.map((l,i)=><div key={i} className="mt-3 text-sm">{l.name} · {data.settings.nearbyEnabled ? "Nearby reminders enabled" : "Reminders disabled"}</div>)}</div>}
     {manageLocation && <div className="mt-5 rounded-2xl border border-[var(--wallet-border,#e4e4e7)] p-4 sm:p-5">
       <h3 className="text-sm font-semibold">When a member is nearby</h3>
       <p className="mt-2 text-xs leading-5 text-[var(--wallet-muted,#71717a)]">Wallet may show the loyalty card on a member’s lock screen near a branch. The phone decides when the reminder appears.</p>

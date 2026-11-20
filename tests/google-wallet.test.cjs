@@ -70,7 +70,8 @@ test('MB Vape keeps its logo and refreshes the matching stamp artwork on save an
    primaryColor: '#7B4F35', secondaryColor: '#6F4A35', backgroundColor: '#F3EDE5' };
  const brand = wallet.googleClassBrand(cafe);
  assert.equal(brand.programLogo.sourceUri.uri, 'https://example.com/api/wallet/artwork/mb-vape?asset=icon&v=2');
- assert.equal(brand.programName, 'MB Vape');
+ assert.equal(brand.programName, 'MB Store');
+ assert.equal(brand.issuerName, 'MB Store');
  const legacyObject = wallet.googleWalletObject({ ...member, cafe: { ...cafe, rewardName: 'Free Drink' } });
  assert.equal(legacyObject.textModulesData.find(field => field.id === 'reward').body, 'Member Reward');
  const discountObject = wallet.googleWalletObject({ ...member, cafe: { ...cafe, rewardName: '50%' } });

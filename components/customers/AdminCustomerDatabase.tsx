@@ -14,6 +14,7 @@ import {
   X,
 } from "lucide-react";
 
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type Customer = {
@@ -30,6 +31,14 @@ type Customer = {
   totalVisits: number;
   rewardsRedeemed: number;
   lastVisitAt: string | null;
+  joinLocation?: { name: string } | null;
+  lastStampBranch?: string | null;
+  branchActivity?: {
+    id: string;
+    type: "ADD" | "REDEEM" | "BIRTHDAY_REDEEM";
+    createdAt: string;
+    branch: string;
+  }[];
 };
 
 type ApiResponse = {
@@ -125,6 +134,38 @@ function formatDate(value: string | null) {
   }).format(date);
 }
 
+function BranchDetails({ customer }: { customer: Customer }) {
+  const { t, arabic } = useBeLoyalLanguage();
+  const { cafe } = useCafeTheme();
+  const [open, setOpen] = useState(false);
+  const activity = customer.branchActivity ?? [];
+  if (!customer.joinLocation && !activity.length) return null;
+
+  return (
+    <div className="mt-2 space-y-1 text-xs">
+      {customer.joinLocation && <p>{t("Signup branch")} <span className="font-semibold">{customer.joinLocation.name}</span></p>}
+      {customer.lastStampBranch && <p>{t("Last stamp branch")} <span className="font-semibold">{customer.lastStampBranch}</span></p>}
+      {activity.length > 0 && (
+        <details onToggle={event => setOpen(event.currentTarget.open)}>
+          <summary className="cursor-pointer py-2 font-medium underline underline-offset-4">{t("Branch activity")}</summary>
+          {open && <ul className="max-h-48 space-y-2 overflow-y-auto pb-2">
+            {activity.map(event => (
+              <li key={event.id} className="text-xs">
+                <span className="block font-medium">{event.branch}</span>
+                <span>{t(event.type === "ADD" ? "Added stamp" : event.type === "REDEEM" ? "Redeemed reward" : "Redeemed birthday reward")}
+                  {" · "}{new Intl.DateTimeFormat(arabic ? "ar-EG" : "en-GB", {
+                    timeZone: cafe.timezone, dateStyle: "medium", timeStyle: "short",
+                  }).format(new Date(event.createdAt))}
+                </span>
+              </li>
+            ))}
+          </ul>}
+        </details>
+      )}
+    </div>
+  );
+}
+
 export default function AdminCustomerDatabase() {
   const { theme } = useCafeTheme();
 
@@ -192,7 +233,8 @@ export default function AdminCustomerDatabase() {
   }, []);
 
   useEffect(() => {
-    loadCustomers();
+    const initialLoad = window.setTimeout(() => void loadCustomers(), 0);
+    return () => window.clearTimeout(initialLoad);
   }, [loadCustomers]);
 
   const filteredCustomers = useMemo(() => {
@@ -211,7 +253,9 @@ export default function AdminCustomerDatabase() {
         customer.phone?.includes(value) ||
         customer.instagram
           ?.toLowerCase()
-          .includes(value);
+          .includes(value) ||
+        customer.joinLocation?.name.toLowerCase().includes(value) ||
+        customer.branchActivity?.some(event => event.branch.toLowerCase().includes(value));
 
       if (!matchesSearch) return false;
 
@@ -487,7 +531,7 @@ export default function AdminCustomerDatabase() {
               onChange={(event) =>
                 setSearch(event.target.value)
               }
-              placeholder="Name, phone, Instagram..."
+              placeholder="Name, phone, Instagram or branch…"
               className="w-full bg-transparent text-base outline-none sm:text-sm"
               style={{ color: theme.textPrimary }}
             />
@@ -797,6 +841,7 @@ export default function AdminCustomerDatabase() {
                         ),
                       )}
                     </dl>
+                    <BranchDetails customer={customer} />
                   </article>
                 );
               },
@@ -897,6 +942,7 @@ export default function AdminCustomerDatabase() {
 
                   <td className="px-5 py-4">
                     {formatDate(customer.createdAt)}
+                    <BranchDetails customer={customer} />
                   </td>
                 </tr>
               ))}
