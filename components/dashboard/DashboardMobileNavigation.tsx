@@ -18,6 +18,7 @@ export default function DashboardMobileNavigation({ items }: { items: readonly D
 
   return (
     <nav
+      data-dashboard-mobile-nav=""
       aria-label={t("Business dashboard navigation")}
       className="z-20 shrink-0 border-t bg-[var(--dashboard-chrome)] px-2 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] lg:hidden"
       style={{ borderColor: theme.border }}
