@@ -312,3 +312,53 @@ test('wallet notification settings remain scoped to each business', async (t) =>
   assert.equal(await lib.getWalletNotificationSettings('unconfigured'), undefined);
   assert.equal((await lib.getWalletNotificationSettings('pilot')).resetSuffix, settings.resetSuffix);
 });
+
+test('business admins can edit nearby wording without changing branch configuration', async () => {
+  const locations = [
+    { name: 'Zeitoun', latitude: 30.0923331, longitude: 31.3081347, mapsUrl: 'https://maps.google.com', message: 'Old message' },
+    { name: 'Other branch', latitude: 30.1, longitude: 31.2, message: 'Keep this' },
+  ];
+  let settings = { stampSuffix: 'Stamp', rewardSuffix: 'Reward', nearbyEnabled: true, nearbyMaxDistance: 150, nearbyLocations: locations };
+  let refreshed = 0;
+  function route(auth = admin) {
+    return loader({
+      '@/lib/require-auth': { requireAuth: async () => auth },
+      '@/lib/require-active-cafe': { requireActiveCafe: async () => ({ allowed: true }) },
+      '@/lib/prisma': { prisma: { cafe: {
+        findFirst: async () => ({ rewardName: 'Reward', rewardTarget: 6, businessType: 'VAPE' }),
+        update: async () => { refreshed++; },
+      } } },
+      '@/lib/wallet/notification-settings': {
+        getWalletNotificationSettings: async () => settings,
+        saveWalletNotificationSettings: async (_, value) => { settings = value; },
+      },
+      '@/lib/wallet/google': { updateGoogleWalletClass: async () => { throw new Error('Apple message edits should not change Google settings'); } },
+    })('app/api/wallet/notifications/route.ts');
+  }
+  const { mapsUrl, ...first } = locations[0];
+  const edit = { ...first, index: 0, previousMessage: first.message, message: 'New message' };
+  const patch = (body, origin = 'https://example.com') => new NextRequest('https://example.com/api/wallet/notifications', {
+    method: 'PATCH', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify(body),
+  });
+  const payload = { cafeId: 'cafe1', edits: [edit] };
+  assert.equal((await route({ ...admin, isCashier: true }).PATCH(patch(payload))).status, 403);
+  assert.equal((await route().PATCH(patch({ ...payload, cafeId: 'other' }))).status, 403);
+  assert.equal((await route().PATCH(patch(payload, 'https://other.example'))).status, 403);
+  assert.equal((await route().PATCH(patch({ ...payload, nearbyEnabled: false }))).status, 400);
+  assert.equal((await route().PATCH(patch({ ...payload, edits: [{ ...edit, latitude: 30.5 }] }))).status, 409);
+  assert.equal((await route().PATCH(patch(payload))).status, 200);
+  assert.equal(refreshed, 1);
+  assert.deepEqual(settings, {
+    stampSuffix: 'Stamp', rewardSuffix: 'Reward', nearbyEnabled: true, nearbyMaxDistance: 150,
+    nearbyLocations: [{ ...locations[0], message: 'New message' }, locations[1]],
+  });
+  assert.equal(settings.nearbyLocations[0].mapsUrl, mapsUrl);
+  assert.equal((await route().PATCH(patch(payload))).status, 409);
+  settings = { stampSuffix: '', rewardSuffix: '', nearbyEnabled: false, nearbyLatitude: 1, nearbyLongitude: 2, nearbyMessage: 'Earlier' };
+  assert.equal((await route().PATCH(patch({ cafeId: 'cafe1', edits: [
+    { index: 0, name: 'Main branch', latitude: 1, longitude: 2, previousMessage: 'Earlier', message: 'Edited' },
+  ] }))).status, 200);
+  assert.equal(settings.nearbyMessage, 'Edited');
+  assert.equal(settings.nearbyLocations, undefined);
+  assert.equal(settings.nearbyEnabled, false);
+});

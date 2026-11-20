@@ -15,7 +15,7 @@ const reply = (status: number) => new NextResponse(null, { status, headers });
 const identifier = (value: string) => /^[a-z0-9_-]{1,200}$/i.test(value);
 // Include current card artwork in update discovery for installed passes.
 const ARTWORK_VERSION = Date.UTC(2026, 10, 19, 9);
-const MB_ARTWORK_VERSION = Date.UTC(2026, 10, 20, 10);
+const MB_ARTWORK_VERSION = Date.UTC(2026, 10, 20, 14, 32);
 const artworkVersion = (cafe: Parameters<typeof isMbVape>[0]) => isMbVape(cafe) ? MB_ARTWORK_VERSION : ARTWORK_VERSION;
 const select = { id: true, publicToken: true, memberNumber: true, name: true, stamps: true,
   rewardEarnedAt: true, updatedAt: true,

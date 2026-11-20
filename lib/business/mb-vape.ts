@@ -11,6 +11,10 @@ export function isMbVape(business: { slug: string; businessType: BusinessType })
   return business.slug === "mb-vape" && business.businessType === "VAPE";
 }
 
+export function walletBusinessName(business: Parameters<typeof isMbVape>[0] & { name: string }) {
+  return isMbVape(business) ? "MB Store" : business.name;
+}
+
 type BrandColors = {
   primaryColor?: string | null;
   secondaryColor?: string | null;

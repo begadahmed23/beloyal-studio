@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         memberNumber: true,
+        joinLocation: { select: { name: true } },
         name: true,
         phone: true,
         instagram: true,
@@ -46,7 +47,9 @@ export async function GET(request: NextRequest) {
             createdAt: "desc",
           },
           select: {
+            id: true,
             type: true,
+            location: { select: { name: true } },
             createdAt: true,
           },
         },
@@ -67,6 +70,10 @@ export async function GET(request: NextRequest) {
         totalVisits: addTransactions.length,
         rewardsRedeemed: redeemTransactions.length,
         lastVisitAt: addTransactions[0]?.createdAt ?? null,
+        lastStampBranch: addTransactions[0]?.location?.name ?? null,
+        branchActivity: transactions.flatMap(({ id, type, createdAt, location }) =>
+          location ? [{ id, type, createdAt, branch: location.name }] : [],
+        ),
       };
     });
 

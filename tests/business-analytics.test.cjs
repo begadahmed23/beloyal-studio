@@ -57,3 +57,33 @@ test('analytics counts monthly loyalty redemptions for the authenticated busines
     assert.equal(data.rewardName, expectedReward);
   }
 });
+
+test('customer database distinguishes signup, stamp, and redemption branches', async () => {
+  const auth = { cafeId: 'business-1', cafe: { name: 'MB Store', rewardTarget: 6 }, isCashier: false };
+  const transactions = [
+    { id: 'redeem', type: 'REDEEM', createdAt: new Date('2026-11-20T12:00:00Z'), location: { name: 'Heliopolis' } },
+    { id: 'stamp', type: 'ADD', createdAt: new Date('2026-11-19T12:00:00Z'), location: { name: 'Heliopolis' } },
+    { id: 'legacy', type: 'ADD', createdAt: new Date('2026-11-18T12:00:00Z'), location: null },
+  ];
+  const { GET } = load('app/api/admin/customers/route.ts', {
+    '@/lib/require-auth': { requireAuth: async () => auth },
+    '@/lib/prisma': { prisma: { customer: { findMany: async query => {
+      assert.equal(query.where.cafeId, auth.cafeId);
+      return [{ id: 'member', joinLocation: { name: 'Zeitoun' }, transactions }];
+    } } } },
+  });
+  const request = new NextRequest('https://example.com/api/admin/customers');
+  const response = await GET(request);
+  assert.equal(response.status, 200);
+  const [member] = (await response.json()).customers;
+  assert.equal(member.joinLocation.name, 'Zeitoun');
+  assert.equal(member.lastStampBranch, 'Heliopolis');
+  assert.equal(member.totalVisits, 2);
+  assert.equal(member.rewardsRedeemed, 1);
+  assert.deepEqual(member.branchActivity.map(({ id, type, branch }) => ({ id, type, branch })), [
+    { id: 'redeem', type: 'REDEEM', branch: 'Heliopolis' },
+    { id: 'stamp', type: 'ADD', branch: 'Heliopolis' },
+  ]);
+  auth.isCashier = true;
+  assert.equal((await GET(request)).status, 403);
+});

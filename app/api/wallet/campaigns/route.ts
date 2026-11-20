@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { isMbVape } from "@/lib/business/mb-vape";
+import { isMbVape, walletBusinessName } from "@/lib/business/mb-vape";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
@@ -71,7 +71,7 @@ async function handle(request: NextRequest) {
     const selected = new Set(parsed.data.customerIds);
     const recipients = audience.members.filter(member => selected.has(member.id) && eligibleFor(member, parsed.data.segment));
     if (recipients.length !== selected.size) return json({ message: "Your audience has changed. Refresh the list and choose recipients again." }, 409);
-    const campaign = await createCampaign({ cafeId, business: cafe.name, createdBy: auth.user.id, segment: parsed.data.segment, message: parsed.data.message,
+    const campaign = await createCampaign({ cafeId, business: walletBusinessName(cafe), createdBy: auth.user.id, segment: parsed.data.segment, message: parsed.data.message,
       recipients: recipients.map(member => ({ id: member.id, name: member.name, memberNumber: member.memberNumber, status: "pending" })) });
     return json({ campaign });
   }

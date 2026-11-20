@@ -234,7 +234,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
       </div>
     )}
     </>}
-    <WalletNotificationSettings key={cafeId} cafeId={cafeId} manageLocation={studio} />
+    <WalletNotificationSettings key={cafeId} cafeId={cafeId} manageLocation={studio} editNearbyMessages={!studio} />
     <section className="mt-7">
       <h2 className="flex items-center gap-2 text-lg font-semibold"><Bell size={18} aria-hidden="true" /> {t("Message history")}</h2>
       <p className="mt-2 text-xs text-[var(--wallet-muted,#71717a)]">{t("See your last 10 sends from the past 30 days.")}</p>

@@ -6,7 +6,7 @@ import { walletCredential as credential, walletUpdatesEnabled, walletAuthToken }
 export { appleWalletEnabled } from "./config";
 import { businessCardArtwork } from "../business/card-artwork";
 import { getLoyaltyProgressTarget } from "../business/loyalty-target";
-import { getMbVapeBrandColors, isMbVape } from "../business/mb-vape";
+import { getMbVapeBrandColors, isMbVape, walletBusinessName } from "../business/mb-vape";
 import { renderMbVapeAppleStrip, renderMbVapeLogo } from "./mb-vape-artwork";
 import { PKPass } from "passkit-generator";
 import sharp from "sharp";
@@ -72,6 +72,7 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
   const { businessType } = cafe;
   const rewardName = getRewardName(cafe);
   const mbVape = isMbVape(cafe);
+  const displayName = walletBusinessName(cafe);
   const vapeShop = businessType === "VAPE";
   const barber = businessType === "BARBERSHOP";
   const walid = barber && member.cafe.slug === "walid-saad";
@@ -142,9 +143,9 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
       passTypeIdentifier: process.env.APPLE_WALLET_PASS_TYPE_ID!,
       teamIdentifier: process.env.APPLE_WALLET_TEAM_ID!,
       ...(nearby ? { maxDistance: nearby.nearbyMaxDistance ?? 150 } : walid ? { maxDistance: 150 } : {}),
-      organizationName: member.cafe.name,
-      logoText: member.cafe.name,
-      description: `${member.cafe.name} loyalty card`,
+      organizationName: displayName,
+      logoText: displayName,
+      description: `${displayName} loyalty card`,
       ...(walletUpdatesEnabled() ? { webServiceURL: process.env.APPLE_WALLET_WEB_SERVICE_URL!.replace(/\/$/, ""), authenticationToken: walletAuthToken(member.id) } : {}),
       backgroundColor: rgb(background), foregroundColor: rgb(foreground), labelColor: rgb(foreground) },
   );
