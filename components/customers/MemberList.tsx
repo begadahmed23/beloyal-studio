@@ -18,8 +18,10 @@ import {
   X,
 } from "lucide-react";
 
+import SignupBranchFilter from "@/components/customers/SignupBranchFilter";
 import MemberCard from "@/components/customers/MemberCard";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
+import { daysUntilBirthday } from "@/lib/wallet/campaign-segments";
 
 type Customer = {
   id: string;
@@ -37,60 +39,7 @@ type Customer = {
   updatedAt: string;
 };
 
-type BirthdayProximity = {
-  daysUntil: number;
-  label: string;
-};
-
-function getBirthdayProximity(
-  birthday: string,
-): BirthdayProximity | null {
-  const birthdayDate = new Date(birthday);
-
-  if (Number.isNaN(birthdayDate.getTime())) {
-    return null;
-  }
-
-  const now = new Date();
-  const today = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-  );
-
-  let nextBirthday = new Date(
-    today.getFullYear(),
-    birthdayDate.getUTCMonth(),
-    birthdayDate.getUTCDate(),
-  );
-
-  if (nextBirthday.getTime() < today.getTime()) {
-    nextBirthday = new Date(
-      today.getFullYear() + 1,
-      birthdayDate.getUTCMonth(),
-      birthdayDate.getUTCDate(),
-    );
-  }
-
-  const daysUntil = Math.round(
-    (nextBirthday.getTime() - today.getTime()) /
-      86_400_000,
-  );
-
-  if (daysUntil === 0) {
-    return { daysUntil, label: "Birthday today" };
-  }
-
-  if (daysUntil === 1) {
-    return { daysUntil, label: "Tomorrow" };
-  }
-
-  if (daysUntil === 2) {
-    return { daysUntil, label: "In 2 days" };
-  }
-
-  return null;
-}
+const birthdayLabels = ["Birthday today", "Tomorrow", "In 2 days"] as const;
 
 export default function MemberList() {
   const { t } = useBeLoyalLanguage();
@@ -104,10 +53,11 @@ export default function MemberList() {
 
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [search, setSearch] = useState("");
+  const [signupBranch, setSignupBranch] = useState("");
   const [sortBy, setSortBy] = useState<
     "newest" | "recently-stamped"
   >("newest");
-  const [birthdaysFirst, setBirthdaysFirst] = useState(false);
+  const [showUpcomingBirthdays, setShowUpcomingBirthdays] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
@@ -182,18 +132,31 @@ export default function MemberList() {
     };
   }, [loadCustomers]);
 
-  const birthdaySoonCount = useMemo(
-    () =>
-      customers.filter((customer) =>
-        Boolean(getBirthdayProximity(customer.birthday)),
-      ).length,
-    [customers],
-  );
+  const upcomingBirthdays = useMemo(() => {
+    const now = new Date();
+    const upcoming = new Map<string, number>();
+    for (const customer of customers) {
+      if (!customer.birthday) continue;
+      const birthday = new Date(customer.birthday);
+      if (Number.isNaN(birthday.getTime())) continue;
+      const days = daysUntilBirthday(birthday, now, cafe.timezone);
+      if (days >= 0 && days < birthdayLabels.length) upcoming.set(customer.id, days);
+    }
+    return upcoming;
+  }, [customers, cafe.timezone]);
+
+  const birthdayCount = signupBranch
+    ? customers.filter(customer => customer.joinLocation?.name === signupBranch && upcomingBirthdays.has(customer.id)).length
+    : upcomingBirthdays.size;
 
   const filteredCustomers = useMemo(() => {
     const value = search.trim().toLowerCase();
+    const candidates = customers.filter(customer =>
+      (!signupBranch || customer.joinLocation?.name === signupBranch) &&
+      (!showUpcomingBirthdays || upcomingBirthdays.has(customer.id)),
+    );
     const matchingCustomers = value
-      ? customers.filter(
+      ? candidates.filter(
           (customer) =>
             customer.name.toLowerCase().includes(value) ||
             customer.phone.includes(value) ||
@@ -203,21 +166,12 @@ export default function MemberList() {
             customer.memberNumber.toLowerCase().includes(value) ||
             (customer.joinLocation?.name.toLowerCase().includes(value) ?? false),
         )
-      : [...customers];
+      : [...candidates];
 
     return matchingCustomers.sort((first, second) => {
-      if (birthdaysFirst) {
-        const firstBirthday = getBirthdayProximity(first.birthday);
-        const secondBirthday = getBirthdayProximity(second.birthday);
-
-        if (firstBirthday && !secondBirthday) return -1;
-        if (!firstBirthday && secondBirthday) return 1;
-
-        if (firstBirthday && secondBirthday) {
-          const difference =
-            firstBirthday.daysUntil - secondBirthday.daysUntil;
-          if (difference !== 0) return difference;
-        }
+      if (showUpcomingBirthdays) {
+        const difference = (upcomingBirthdays.get(first.id) ?? 0) - (upcomingBirthdays.get(second.id) ?? 0);
+        if (difference !== 0) return difference;
       }
 
       if (sortBy === "recently-stamped") {
@@ -235,7 +189,7 @@ export default function MemberList() {
         new Date(first.createdAt).getTime()
       );
     });
-  }, [customers, search, sortBy, birthdaysFirst]);
+  }, [customers, search, sortBy, signupBranch, showUpcomingBirthdays, upcomingBirthdays]);
 
   return (
     <div className="mt-8">
@@ -273,11 +227,11 @@ export default function MemberList() {
       <div className="mt-5 flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-sm font-medium" style={{ color: theme.textSecondary }}>
-            {search ? "Search results" : `Recent ${personPlural}`}
+            {showUpcomingBirthdays ? t("Upcoming birthdays") : search ? "Search results" : `Recent ${personPlural}`}
           </h3>
           <p className="mt-1 text-xs" style={{ color: theme.textMuted }}>
-            {birthdaysFirst
-              ? "Birthday members are prioritized for the next 2 days."
+            {showUpcomingBirthdays
+              ? t("Birthdays today and in the next 2 days.")
               : search
                 ? `Showing ${personPlural} that match your search.`
                 : sortBy === "recently-stamped"
@@ -287,6 +241,7 @@ export default function MemberList() {
         </div>
 
         <div className="flex w-full flex-wrap items-center justify-start gap-3 sm:w-auto sm:justify-end">
+          <SignupBranchFilter value={signupBranch} onChange={setSignupBranch} />
           {refreshing && (
             <div className="flex items-center gap-2 text-xs" style={{ color: theme.textMuted }}>
               <LoaderCircle size={13} className="animate-spin" />
@@ -294,32 +249,31 @@ export default function MemberList() {
             </div>
           )}
 
-          {!loading && !error && birthdaySoonCount > 0 && (
-            <button
-              type="button"
-              onClick={() => setBirthdaysFirst((current) => !current)}
-              aria-pressed={birthdaysFirst}
-              className="flex h-9 touch-manipulation items-center gap-2 border px-3 text-xs font-semibold transition duration-150 hover:opacity-85 active:opacity-80"
+          <button
+            type="button"
+            onClick={() => setShowUpcomingBirthdays((current) => !current)}
+            disabled={loading || Boolean(error && customers.length === 0)}
+            aria-pressed={showUpcomingBirthdays}
+            className="flex min-h-11 touch-manipulation items-center gap-2 border px-3 text-xs font-semibold transition duration-150 hover:opacity-85 active:opacity-80 disabled:opacity-50"
+            style={{
+              borderColor: showUpcomingBirthdays ? `${theme.accent}75` : theme.inputBorder,
+              backgroundColor: showUpcomingBirthdays ? theme.accentSoft : theme.inputBackground,
+              color: showUpcomingBirthdays ? theme.accent : theme.textSecondary,
+              borderRadius: theme.radiusMedium,
+            }}
+          >
+            <Cake size={14} />
+            {t("Upcoming birthdays")}
+            <span
+              className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px]"
               style={{
-                borderColor: birthdaysFirst ? `${theme.accent}75` : theme.inputBorder,
-                backgroundColor: birthdaysFirst ? theme.accentSoft : theme.inputBackground,
-                color: birthdaysFirst ? theme.accent : theme.textSecondary,
-                borderRadius: theme.radiusMedium,
+                backgroundColor: showUpcomingBirthdays ? `${theme.accent}20` : theme.surfaceRaised,
+                color: showUpcomingBirthdays ? theme.accent : theme.textMuted,
               }}
             >
-              <Cake size={14} />
-              Birthday soon
-              <span
-                className="flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px]"
-                style={{
-                  backgroundColor: birthdaysFirst ? `${theme.accent}20` : theme.surfaceRaised,
-                  color: birthdaysFirst ? theme.accent : theme.textMuted,
-                }}
-              >
-                {birthdaySoonCount}
-              </span>
-            </button>
-          )}
+              {loading ? "—" : birthdayCount}
+            </span>
+          </button>
 
           {!loading && !error && (
             <button
@@ -436,12 +390,14 @@ export default function MemberList() {
             <Users size={21} />
           </div>
           <p className="mt-4 font-medium" style={{ color: theme.textPrimary }}>
-            {search ? `No matching ${personPlural}` : `No ${personPlural} yet`}
+            {showUpcomingBirthdays ? t("No upcoming birthdays") : signupBranch ? t("No members joined at this branch") : search ? `No matching ${personPlural}` : `No ${personPlural} yet`}
           </p>
           <p className="mt-2 text-sm" style={{ color: theme.textMuted }}>
             {search
               ? `Try another name, phone, Instagram, store, or ${personSingular} number.`
-              : `Create the first ${personSingular} to start the loyalty program.`}
+              : showUpcomingBirthdays
+                ? t("No birthdays today or in the next 2 days.")
+                : signupBranch ? t("Try another signup branch.") : `Create the first ${personSingular} to start the loyalty program.`}
           </p>
         </div>
       )}
@@ -449,11 +405,11 @@ export default function MemberList() {
       {!loading && filteredCustomers.length > 0 && (
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           {filteredCustomers.map((customer) => {
-            const birthdayProximity = getBirthdayProximity(customer.birthday);
+            const birthdayInDays = upcomingBirthdays.get(customer.id);
 
             return (
               <div key={customer.id} className="relative min-w-0">
-                {birthdayProximity && (
+                {birthdayInDays !== undefined && (
                   <div
                     className="pointer-events-none absolute left-1/2 top-4 z-10 flex h-7 -translate-x-1/2 items-center gap-1.5 border px-2.5 text-[11px] font-semibold shadow-sm"
                     style={{
@@ -464,7 +420,7 @@ export default function MemberList() {
                     }}
                   >
                     <Cake size={12} />
-                    {birthdayProximity.label}
+                    {t(birthdayLabels[birthdayInDays])}
                   </div>
                 )}
                 <MemberCard customer={customer} />
