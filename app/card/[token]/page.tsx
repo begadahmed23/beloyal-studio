@@ -800,20 +800,13 @@ export default function DigitalCardPage() {
   ]);
 
   const birthdayText = useMemo(() => {
-    if (!customer) {
-      return "";
-    }
-
-    return new Intl.DateTimeFormat(
-      "en-GB",
-      {
-        day: "2-digit",
-        month: "long",
-      },
-    ).format(
-      new Date(customer.birthday),
-    );
-  }, [customer]);
+    if (!customer?.birthday) return "";
+    const date = new Date(customer.birthday);
+    if (Number.isNaN(date.getTime())) return "";
+    return new Intl.DateTimeFormat("en-GB", {
+      day: "2-digit", month: "long", timeZone: "UTC",
+    }).format(date);
+  }, [customer?.birthday]);
 
   const memberSince = useMemo(() => {
     if (!customer) {

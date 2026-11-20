@@ -2,7 +2,7 @@
 
 import { useRef, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
-import WalletButtonStatus from "./WalletButtonStatus";
+import WalletButtonStatus, { WalletButtonProgress } from "./WalletButtonStatus";
 
 const subscribe = () => () => {};
 const getSupported = () => /iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent);
@@ -53,7 +53,7 @@ export default function AppleWalletButton({ token, enabled }: { token: string; e
         disabled={busy}
         aria-label="Add to Apple Wallet"
         aria-busy={busy}
-        className="inline-flex items-center justify-center rounded-lg border-0 bg-transparent p-[5px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current disabled:cursor-wait"
+        className="relative inline-flex min-h-[54px] items-center justify-center rounded-lg border-0 bg-transparent p-[5px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current disabled:cursor-wait"
       >
         <Image
           src="/wallet/add-to-apple-wallet.svg"
@@ -61,8 +61,9 @@ export default function AppleWalletButton({ token, enabled }: { token: string; e
           width={111}
           height={35}
           unoptimized
-          className="h-11 w-auto"
+          className={`h-11 w-auto ${busy ? "invisible" : ""}`}
         />
+        {busy && <WalletButtonProgress />}
       </button>
       <WalletButtonStatus busy={busy} error={error}
         message={busy ? "Preparing Apple Wallet…" : opened ? "Tap Add in Apple Wallet." : ""} />

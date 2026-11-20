@@ -98,7 +98,6 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
   const mbVape = cafe.businessType === "VAPE";
   const minimumPurchase = Number(cafe.minimumPurchaseAmount);
   const defaultRule = cafe.businessType === "BARBERSHOP" ? "One visit per eligible service." : "One stamp per eligible purchase.";
-  const birthday = <BirthdayCustomerDisplay {...props} />;
 
   return (
     <div className="mx-auto w-full max-w-md" lang={lang} dir={dir}>
@@ -171,9 +170,9 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
               <RefreshCw size={16} aria-hidden="true" className={refreshing ? "motion-safe:animate-spin" : undefined} />
             </button>
           </div>
+          {props.birthdayText && <BirthdayCustomerDisplay {...props} />}
         </div>
       </article>
-      <div className="mt-4 rounded-2xl" style={{ backgroundColor: cardBackground, color: textPrimary }}>{birthday}</div>
     </div>
   );
 }

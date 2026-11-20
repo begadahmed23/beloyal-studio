@@ -1,3 +1,5 @@
+import { drawMbJoinPoster } from "./mb-join-poster";
+
 export const POSTER_WIDTH = 420;
 export const POSTER_HEIGHT = 720;
 
@@ -7,6 +9,7 @@ export async function exportJoinPoster(
   tagline: string,
   progress: string,
   reward: string,
+  mbVape = false,
 ): Promise<Blob> {
   const qr = poster.querySelector("svg");
   const modules = qr?.viewBox.baseVal.width;
@@ -34,35 +37,41 @@ export async function exportJoinPoster(
 
   const logo = poster.querySelector("img");
   if (logo) await logo.decode().catch(() => {});
-  if (logo?.naturalWidth && logo.naturalHeight) {
-    const ratio = 96 / Math.max(logo.naturalWidth, logo.naturalHeight);
-    const width = logo.naturalWidth * ratio;
-    const height = logo.naturalHeight * ratio;
-    context.drawImage(logo, (POSTER_WIDTH - width) / 2, 44 + (96 - height) / 2, width, height);
-    text(name, 174, 26, 700);
+  if (mbVape) {
+    if (!logo?.naturalWidth || !logo.naturalHeight) throw new Error("MB logo is unavailable.");
+    drawMbJoinPoster(context, logo, name, tagline, progress, reward);
   } else {
-    text(name, 134, 30, 700);
+    if (logo?.naturalWidth && logo.naturalHeight) {
+      const ratio = 96 / Math.max(logo.naturalWidth, logo.naturalHeight);
+      const width = logo.naturalWidth * ratio;
+      const height = logo.naturalHeight * ratio;
+      context.drawImage(logo, (POSTER_WIDTH - width) / 2, 44 + (96 - height) / 2, width, height);
+      text(name, 174, 26, 700);
+    } else {
+      text(name, 134, 30, 700);
+    }
+    text(tagline.toUpperCase(), 208, 11, 600, "#737373");
+
+    text(progress, 510, 22, 700);
+    text(reward, 538, 22, 700);
+    text("Scan the QR code to join.", 570, 13, 500, "#737373");
+    context.fillStyle = "#e5e5e5";
+    context.fillRect(42, 616, 336, 1);
+    text("POWERED BY", 640, 9, 600, "#737373");
+    text("BeLoyal Studio", 658, 14, 700);
+    text("getbeloyal.app", 678, 10, 500, "#737373");
   }
-  text(tagline.toUpperCase(), 208, 11, 600, "#737373");
 
   // Use whole output pixels per module and leave at least four white modules on all sides.
   const pixelsPerModule = Math.floor(210 * scale / modules);
   const qrSize = modules * pixelsPerModule;
   context.save();
   context.setTransform(pixelsPerModule, 0, 0, pixelsPerModule,
-    Math.floor((canvas.width - qrSize) / 2), 251 * scale);
+    Math.floor((canvas.width - qrSize) / 2),
+    mbVape ? Math.floor(363 * scale - qrSize / 2) : 251 * scale);
   context.fillStyle = "#111";
   context.fill(new Path2D(path));
   context.restore();
-
-  text(progress, 510, 22, 700);
-  text(reward, 538, 22, 700);
-  text("Scan the QR code to join.", 570, 13, 500, "#737373");
-  context.fillStyle = "#e5e5e5";
-  context.fillRect(42, 616, 336, 1);
-  text("POWERED BY", 640, 9, 600, "#737373");
-  text("BeLoyal Studio", 658, 14, 700);
-  text("getbeloyal.app", 678, 10, 500, "#737373");
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
