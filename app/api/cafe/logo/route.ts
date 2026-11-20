@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     if (!authData || authData.isSuperAdmin || !authData.cafeId) {
       return NextResponse.json(
         {
-          error: "You are not authorized to upload a café logo.",
+          error: "You are not authorized to upload a business logo.",
         },
         {
           status: 403,
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     if (!cafe) {
       return NextResponse.json(
         {
-          error: "Café not found.",
+          error: "Business not found.",
         },
         {
           status: 404,
@@ -140,11 +140,11 @@ export async function POST(request: NextRequest) {
       logoUrl: updatedCafe.logoUrl,
     });
   } catch (error) {
-    console.error("POST café logo error:", error);
+    console.error("POST business logo error:", error);
 
     return NextResponse.json(
       {
-        error: "Unable to upload the café logo.",
+        error: "Unable to upload the business logo.",
       },
       {
         status: 500,

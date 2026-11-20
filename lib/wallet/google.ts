@@ -1,3 +1,4 @@
+import { getRewardName } from "../business/terminology";
 import { createHash, sign } from "node:crypto";
 import { after } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -83,7 +84,7 @@ export function googleWalletObject(member: WalletMember) {
       balance: { string: `${stamps}/${target}` } },
     ...(heroImage ? { heroImage } : {}),
     textModulesData: [
-      { id: "reward", header: "YOUR REWARD", body: member.cafe.rewardName },
+      { id: "reward", header: "YOUR REWARD", body: getRewardName(member.cafe) },
       ...(mbVape ? [{ id: "progress", header: "STAMPS", body: progress }] : []),
     ],
     linksModuleData: { uris: [{ id: "card", uri: new URL(`/card/${member.publicToken}`, site).href, description: "Open your BeLoyal card" }] } };

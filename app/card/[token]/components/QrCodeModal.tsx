@@ -66,8 +66,8 @@ export default function QrCodeModal({
   const { t, lang, dir, arabic } = useBeLoyalLanguage();
   const isBarbershop = businessType === "BARBERSHOP";
   const normalizedCafeName = cafeName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const isKeka = cafeSlug.toLowerCase().includes("keka") || normalizedCafeName.includes("keka");
-  const isLoretto = cafeSlug.toLowerCase().includes("loretto") || normalizedCafeName.includes("loretto");
+  const isKeka = businessType === "CAFE" && (cafeSlug.toLowerCase().includes("keka") || normalizedCafeName.includes("keka"));
+  const isLoretto = businessType === "CAFE" && (cafeSlug.toLowerCase().includes("loretto") || normalizedCafeName.includes("loretto"));
   const isKekaCream = isKeka && cafeTheme === "MODERN_MINIMAL";
 
   const modalBackground = isLoretto

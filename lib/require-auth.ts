@@ -1,3 +1,4 @@
+import { getRewardName } from "@/lib/business/terminology";
 import { dashboardPaletteSelect } from "@/lib/business/dashboard-palette";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -201,7 +202,7 @@ export async function requireAuth(
     return {
       session,
       user,
-      cafe: user.staffCafe,
+      cafe: { ...user.staffCafe, rewardName: getRewardName(user.staffCafe) },
       cafeId: user.staffCafeId,
       isSuperAdmin: false,
       isCashier: user.role === "CASHIER",
@@ -216,7 +217,7 @@ export async function requireAuth(
     return {
       session,
       user,
-      cafe: user.cashierCafe,
+      cafe: { ...user.cashierCafe, rewardName: getRewardName(user.cashierCafe) },
       cafeId: user.cashierCafeId,
       isSuperAdmin: false,
       isCashier: true,
@@ -230,7 +231,7 @@ export async function requireAuth(
   return {
     session,
     user,
-    cafe: user.cafe,
+    cafe: { ...user.cafe, rewardName: getRewardName(user.cafe) },
     cafeId: user.cafeId,
     isSuperAdmin: false,
     isCashier: false,

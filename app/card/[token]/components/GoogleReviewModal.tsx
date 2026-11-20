@@ -1,4 +1,5 @@
 "use client";
+import { getBusinessTerminology } from "@/lib/business/terminology";
 import type { BusinessType } from "@prisma/client";
 
 import { Star } from "lucide-react";
@@ -104,9 +105,7 @@ export default function GoogleReviewModal({
 
         {!googleReviewUrl ? (
           <p className="mt-4 text-xs" style={{ color: textMuted }}>
-            This {businessType === "BARBERSHOP"
-              ? "barbershop"
-              : "café"} has not added a Google review link yet.
+            This {getBusinessTerminology(businessType).businessSingular} has not added a Google review link yet.
           </p>
         ) : null}
       </div>

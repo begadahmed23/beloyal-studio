@@ -45,6 +45,7 @@ export default function BirthdayRewardsSettings() {
   const router = useRouter();
   const { cafe, theme } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
+  const isCafe = cafe.businessType === "CAFE";
 
   const [settings, setSettings] = useState<BirthdaySettings>(EMPTY_SETTINGS);
   const [loading, setLoading] = useState(true);
@@ -225,7 +226,7 @@ export default function BirthdayRewardsSettings() {
                   type="text"
                   value={settings.rewardName}
                   onChange={(event) => update("rewardName", event.target.value)}
-                  placeholder={isBarbershop ? "25% off a haircut" : "Complimentary Cookie"}
+                  placeholder={isBarbershop ? "25% off a haircut" : isCafe ? "Complimentary Cookie" : "Birthday discount"}
                   maxLength={80}
                   disabled={disabled}
                   className="h-12 w-full border px-4 text-base sm:text-sm outline-none disabled:cursor-not-allowed"
@@ -260,7 +261,7 @@ export default function BirthdayRewardsSettings() {
                   type="text"
                   value={settings.purchaseRequirement}
                   onChange={(event) => update("purchaseRequirement", event.target.value)}
-                  placeholder={isBarbershop ? "With a paid haircut" : "With any drink purchase"}
+                  placeholder={isBarbershop ? "With an eligible service" : "With an eligible purchase"}
                   maxLength={300}
                   disabled={disabled}
                   className="h-12 w-full border px-4 text-base sm:text-sm outline-none disabled:cursor-not-allowed"

@@ -37,7 +37,6 @@ export default function JoinForm({
 }: JoinFormProps) {
   const { t, dir, lang, arabic } = useBeLoyalLanguage();
   const router = useRouter();
-  const vapeShop = businessType === "VAPE";
   const isBarbershop = businessType === "BARBERSHOP";
   const loyaltyTarget = getLoyaltyProgressTarget({
     businessType,
@@ -473,8 +472,7 @@ export default function JoinForm({
                   ? `${isBarbershop ? "سجّل" : "اجمع"} ${loyaltyTarget} ${isBarbershop ? "زيارات مدفوعة" : "أختام"} واستلم المكافأة في زيارتك الجاية `
                   : isBarbershop
                   ? `Complete ${loyaltyTarget} paid visits, then redeem on your next visit: `
-                  : vapeShop ? `Collect ${loyaltyTarget} stamps, then redeem on your next visit: `
-                    : `Buy ${loyaltyTarget} and get 1 free: `}
+                  : `Collect ${loyaltyTarget} ${loyaltyTarget === 1 ? "stamp" : "stamps"}, then redeem on your next visit: `}
                 <span
                   className="font-medium"
                   style={{ color: theme.textPrimary }}

@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       !authData.cafeId
     ) {
       return json(
-        { message: "Café administrator access required." },
+        { message: "Business administrator access required." },
         403,
       );
     }

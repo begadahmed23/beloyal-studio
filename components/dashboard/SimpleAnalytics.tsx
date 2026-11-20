@@ -1,4 +1,5 @@
 "use client";
+import { getBusinessTerminology } from "@/lib/business/terminology";
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
@@ -12,7 +13,7 @@ import {
   ChevronDown,
   ChevronUp,
   CircleGauge,
-  Coffee,
+  Gift,
   LoaderCircle,
   MessageCircle,
   RefreshCw,
@@ -62,7 +63,8 @@ type AnalyticsData = {
   totalMembers: number;
   newMembersToday: number;
   activeMembersThisMonth: number;
-  freeDrinksThisMonth: number;
+  rewardsRedeemedThisMonth?: number;
+  freeDrinksThisMonth?: number;
   rewardTarget: number;
   rewardName: string;
   reviews: {
@@ -92,7 +94,8 @@ function formatRatingDate(value: string) {
 
 export default function SimpleAnalytics() {
   const { t } = useBeLoyalLanguage();
-  const { theme } = useCafeTheme();
+  const { cafe, theme } = useCafeTheme();
+  const { loyaltyUnitSingular, loyaltyUnitPlural } = getBusinessTerminology(cafe.businessType);
 
   const [data, setData] =
     useState<AnalyticsData | null>(null);
@@ -293,42 +296,36 @@ export default function SimpleAnalytics() {
     );
   }
 
+  const progressTarget = getLoyaltyProgressTarget(data);
   const cards = [
     {
-      label: "Total members",
+      label: t("Total members"),
       value: data.totalMembers,
-      helper: "All loyalty members",
+      helper: t("All loyalty members"),
       icon: Users,
     },
     {
       label: t("New today"),
       value: data.newMembersToday,
-      helper:
-        "Members who joined today",
+      helper: t("Members who joined today"),
       icon: UserPlus,
     },
     {
-      label: "Active this month",
+      label: t("Active this month"),
       value:
         data.activeMembersThisMonth,
       helper:
         data.activeMembersThisMonth ===
         1
-          ? "1 member used the program"
-          : "Unique members who used the program",
+          ? t("1 member used the program")
+          : t("Unique members who used the program"),
       icon: UserCheck,
     },
     {
-      label:
-        "Free drinks this month",
-      value:
-        data.freeDrinksThisMonth,
-      helper:
-        data.freeDrinksThisMonth ===
-        1
-          ? `1 ${data.rewardName.toLowerCase()} redeemed`
-          : `${data.rewardName} rewards redeemed`,
-      icon: Coffee,
+      label: t("Rewards redeemed this month"),
+      value: data.rewardsRedeemedThisMonth ?? data.freeDrinksThisMonth,
+      helper: t("Loyalty rewards redeemed"),
+      icon: Gift,
     },
   ];
 
@@ -513,7 +510,7 @@ export default function SimpleAnalytics() {
               color: theme.textMuted,
             }}
           >
-            Reward program
+            {t("Reward program")}
           </span>
 
           <span
@@ -522,9 +519,8 @@ export default function SimpleAnalytics() {
               color: theme.textPrimary,
             }}
           >
-            {getLoyaltyProgressTarget(data)}{" "}
-            paid stamps →{" "}
-            {data.rewardName}
+            {progressTarget} {t(progressTarget === 1 ? loyaltyUnitSingular : loyaltyUnitPlural)}
+            {" → "}<bdi>{data.rewardName}</bdi>
           </span>
         </div>
       </section>
