@@ -95,7 +95,7 @@ export default function DashboardFrame({ children, items, name, subtitle, mark }
           </div>
         </aside>
 
-        <div ref={content} className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain scroll-pt-18 lg:min-h-screen lg:overflow-visible lg:overscroll-auto">
+        <div ref={content} data-dashboard-content="" className="min-h-0 min-w-0 flex-1 lg:min-h-screen">
           <header
             className="sticky top-0 z-30 flex min-h-16 items-center justify-between gap-3 border-b bg-[var(--dashboard-chrome)] px-4 sm:px-6 lg:min-h-18 lg:bg-[var(--dashboard-desktop-header)] lg:px-8 lg:backdrop-blur-md"
             style={{ borderColor: theme.border }}
