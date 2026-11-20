@@ -15,18 +15,18 @@ import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 import { exportJoinPoster, POSTER_HEIGHT, POSTER_WIDTH } from "./export-join-poster";
 
-export default function JoinQRCode() {
+export default function JoinQRCode({ location }: { location?: { id: string; name: string } }) {
   const { t } = useBeLoyalLanguage();
   const { theme, cafe } = useCafeTheme();
   const mbVape = isMbVape(cafe);
   const logoUrl = mbVape ? MB_VAPE_LOGO_URL : cafe.logoUrl;
   const isBarbershop = cafe.businessType === "BARBERSHOP";
 
-  const tagline = isBarbershop ? "Sharp style. Loyal clients." : cafe.businessType === "CAFE" ? "Let coffee connect us" : "Member rewards";
+  const tagline = location?.name ?? (isBarbershop ? "Sharp style. Loyal clients." : cafe.businessType === "CAFE" ? "Let coffee connect us" : "Member rewards");
   const progress = `Collect ${isBarbershop ? "visits" : "stamps"}.`;
   const rewardName = cafe.rewardName?.trim() || "a reward";
   const reward = mbVape ? `Earn ${/[.!?]$/.test(rewardName) ? rewardName : rewardName + "."}` : `Earn ${rewardName.toLowerCase()}.`;
-  const filename = `${cafe.slug}-${isBarbershop ? "barber" : "loyalty"}-qr.png`;
+  const filename = `${cafe.slug}${location ? `-${location.id}` : ""}-${isBarbershop ? "barber" : "loyalty"}-qr.png`;
 
   const previewRef = useRef<HTMLDivElement>(null);
   const posterRef = useRef<HTMLDivElement>(null);
@@ -62,8 +62,10 @@ export default function JoinQRCode() {
       process.env.NEXT_PUBLIC_APP_URL ||
       "https://getbeloyal.app";
 
-    return `${baseUrl.replace(/\/$/, "")}/join/${encodeURIComponent(cafe.slug)}`;
-  }, [cafe.slug]);
+    const url = new URL(`/join/${encodeURIComponent(cafe.slug)}`, baseUrl);
+    if (location) url.searchParams.set("location", location.id);
+    return url.toString();
+  }, [cafe.slug, location]);
 
   const posterKey = JSON.stringify([joinUrl, cafe.name, tagline, progress, reward]);
   const currentPreview = mbPreview?.key === posterKey ? mbPreview : null;
@@ -150,7 +152,7 @@ export default function JoinQRCode() {
                 color: theme.accent,
               }}
             >
-              {isBarbershop ? "Client join QR" : "Customer join QR"}
+              {location?.name ?? (isBarbershop ? "Client join QR" : "Customer join QR")}
             </p>
 
             <h3

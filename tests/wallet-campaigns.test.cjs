@@ -42,7 +42,7 @@ test('audience lists saved cards with consent status and keeps Apple available o
   let query, failGoogle = false;
   const base = { stamps: 0, rewardEarnedAt: null, cafe: { businessType: 'CAFE', rewardTarget: 7 }, birthday: new Date('2000-01-01'), createdAt: new Date('2020-01-01'), transactions: [], name: 'Member', memberNumber: '1' };
   const rows = [
-    { ...base, id: 'installed', marketingConsentAt: new Date() },
+    { ...base, id: 'installed', marketingConsentAt: new Date(), joinLocation: { name: 'فرع الزيتون' } },
     { ...base, id: 'missing' },
     { ...base, id: 'withdrawn', marketingConsentAt: new Date(), marketingWithdrawnAt: new Date() },
     { ...base, id: 'google', marketingConsentAt: new Date() },
@@ -68,6 +68,7 @@ test('audience lists saved cards with consent status and keeps Apple available o
     ['installed', 'enabled'], ['missing', 'missing'], ['withdrawn', 'withdrawn'], ['google', 'enabled'],
   ]);
   assert.equal(result.members[0].devices, 2);
+  assert.equal(result.members[0].joinLocationName, 'فرع الزيتون');
   failGoogle = true;
   const fallback = await lib.walletAudience('cafe1', 'Africa/Cairo');
   assert.equal(fallback.googleUnavailable, true);
@@ -132,7 +133,7 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
   assert.equal(pushes, 4);
 });
 
-test('a business admin can read its own history and only Studio can preview or send', async () => {
+test('other business admins can read their own history while Studio manages sends', async () => {
   const route = routeFor({ ...admin, cafeId: 'other' }, {
     '@/lib/prisma': { prisma: { cafe: { findFirst: async ({ where }) => {
       assert.deepEqual(where, { id: 'other', isActive: true });
@@ -152,6 +153,46 @@ test('a business admin can read its own history and only Studio can preview or s
   for (const action of ['preview', 'send']) {
     assert.equal((await route.POST(post({ action, cafeId: 'other' }))).status, 403);
   }
+});
+
+test('MB Vape business admins can preview and send only their own campaigns', async () => {
+  const id = 'bcf5013e-ca92-432d-b70e-816720568e53';
+  const member = { id: 'member', name: 'Member', memberNumber: '1', offersStatus: 'enabled', segments: ['all'] };
+  let campaign;
+  let sends = 0;
+  const route = routeFor(admin, {
+    '@/lib/prisma': { prisma: { cafe: { findFirst: async () => ({
+      id: 'cafe1', slug: 'mb-vape', businessType: 'VAPE', name: 'MB Vape', timezone: 'Africa/Cairo',
+    }) } } },
+    '@/lib/wallet/updates': {
+      passKey: key => key,
+      walletRedis: () => ({ set: async () => 'OK', eval: async () => true }),
+    },
+    '@/lib/wallet/campaigns': {
+      walletAudience: async () => ({ members: [member] }),
+      campaignHistory: async () => [],
+      createCampaign: async data => (campaign = { ...data, id, status: 'draft' }),
+      getCampaign: async () => campaign,
+      sendCampaign: async (draft, eligibleIds) => {
+        assert.ok(eligibleIds.has(member.id));
+        sends++;
+        return { ...draft, status: 'complete' };
+      },
+    },
+  });
+  const response = await route.GET(new NextRequest('https://example.com/api/wallet/campaigns?cafeId=cafe1'));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).members.length, 1);
+  assert.equal((await route.POST(post({
+    action: 'preview', cafeId: 'cafe1', segment: 'all', message: 'Hello', customerIds: [member.id],
+  }))).status, 200);
+  assert.equal(sends, 0);
+  assert.equal((await route.POST(post({ action: 'send', cafeId: 'other', campaignId: id }))).status, 403);
+  campaign.createdBy = 'another-admin';
+  assert.equal((await route.POST(post({ action: 'send', cafeId: 'cafe1', campaignId: id }))).status, 404);
+  campaign.createdBy = admin.user.id;
+  assert.equal((await route.POST(post({ action: 'send', cafeId: 'cafe1', campaignId: id }))).status, 200);
+  assert.equal(sends, 1);
 });
 
 test('Studio and the owning business admin can delete completed history entries', async () => {

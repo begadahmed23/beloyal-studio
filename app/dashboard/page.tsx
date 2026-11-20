@@ -21,7 +21,7 @@ import KatoMark from "@/components/brand/KatoMark";
 import AdminFeedbackPanel from "@/components/dashboard/AdminFeedbackPanel";
 import BirthdaySummary from "@/components/dashboard/BirthdaySummary";
 import CashierDashboardHome from "@/components/dashboard/CashierDashboardHome";
-import JoinQRCode from "@/components/dashboard/JoinQRCode";
+import StoreJoinQRCodes from "@/components/dashboard/StoreJoinQRCodes";
 import SimpleAnalytics from "@/components/dashboard/SimpleAnalytics";
 import BarberDashboardHome from "@/components/dashboard/barber/BarberDashboardHome";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
@@ -334,7 +334,7 @@ function CafeDashboardHome() {
         </div>
       </section>
 
-      <JoinQRCode />
+      <StoreJoinQRCodes key={cafe.id} />
     </div>
   );
 }

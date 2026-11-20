@@ -10,6 +10,7 @@ import { getJoinTheme } from "./join-theme";
 import JoinForm from "./join-form";
 
 type JoinPageProps = {
+  searchParams: Promise<{ location?: string | string[] }>;
   params: Promise<{
     slug: string;
   }>;
@@ -21,8 +22,10 @@ function getCardCookieName(cafeSlug: string) {
 
 export default async function JoinPage({
   params,
+  searchParams,
 }: JoinPageProps) {
-  const { slug } = await params;
+  const [{ slug }, { location }] = await Promise.all([params, searchParams]);
+  const locationId = typeof location === "string" && /^[a-z0-9]{1,40}$/.test(location) ? location : undefined;
 
   const cafe = await prisma.cafe.findUnique({
     where: {
@@ -102,6 +105,7 @@ export default async function JoinPage({
             style={{ borderColor: businessTheme.border }}>
             <JoinForm
               cafeSlug={cafe.slug}
+              locationId={locationId}
               cafeName={cafe.name}
               businessType={cafe.businessType}
               theme={businessTheme}

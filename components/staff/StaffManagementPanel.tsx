@@ -16,9 +16,12 @@ import {
   useState,
 } from "react";
 
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 import { useOptionalCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type Role = "CAFE_ADMIN" | "CASHIER";
+
+type Location = { id: string; name: string };
 
 type Staff = {
   id: string;
@@ -30,12 +33,14 @@ type Staff = {
   lastActivityAt: string | null;
   activityCount: number;
   isCurrentUser: boolean;
+  location?: Location | null;
 };
 
 type ActivityRow = {
   id: string;
   type: "ADD" | "REDEEM" | "BIRTHDAY_REDEEM";
   description: string | null;
+  location?: { name: string } | null;
   createdAt: string;
   user: {
     id: string;
@@ -52,6 +57,7 @@ type ActivityRow = {
 
 type ResponseData = {
   staff: Staff[];
+  locations?: Location[];
   activity: ActivityRow[];
   activityLoaded?: boolean;
   activityLimit?: number;
@@ -86,6 +92,7 @@ export default function StaffManagementPanel({
   canCreateAdmins = false,
   title = "Staff & activity",
 }: Props) {
+  const { t } = useBeLoyalLanguage();
   const cafeTheme = useOptionalCafeTheme();
   const themed = Boolean(cafeTheme);
   const theme = cafeTheme?.theme;
@@ -100,6 +107,8 @@ export default function StaffManagementPanel({
   const [success, setSuccess] = useState("");
 
   const [name, setName] = useState("");
+  const [locationId, setLocationId] = useState("");
+  const locations = data?.locations ?? [];
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPasswords, setShowPasswords] = useState(false);
@@ -268,6 +277,7 @@ export default function StaffManagementPanel({
           email,
           password,
           ...(canCreateAdmins ? { role } : {}),
+          ...(locationId ? { locationId } : {}),
         }),
       });
 
@@ -285,6 +295,7 @@ export default function StaffManagementPanel({
       setEmail("");
       setPassword("");
       setRole("CASHIER");
+      setLocationId("");
       setSuccess("Account created successfully.");
       await load();
     } catch (error) {
@@ -588,6 +599,18 @@ export default function StaffManagementPanel({
                 Admin
               </option>
             </select>
+          ) : locations.length > 0 ? (
+            <select
+              aria-label={t("Cashier branch")}
+              className="h-11 min-w-0 rounded-xl border px-3 text-base sm:text-sm"
+              style={inputStyle}
+              value={locationId}
+              disabled={saving}
+              onChange={event => setLocationId(event.target.value)}
+            >
+              <option value="">{t("Choose a branch")}</option>
+              {locations.map(location => <option key={location.id} value={location.id}>{location.name}</option>)}
+            </select>
           ) : (
             <div
               className={`flex h-11 items-center border px-3 text-sm ${
@@ -613,7 +636,7 @@ export default function StaffManagementPanel({
         <button
           type="button"
           onClick={createAccount}
-          disabled={saving}
+          disabled={saving || loading || (locations.length > 0 && !locationId)}
           className={`mt-3 flex h-11 w-full touch-manipulation items-center justify-center gap-2 px-4 text-sm font-semibold transition active:opacity-80 disabled:opacity-50 sm:w-auto ${
             themed
               ? ""
@@ -703,6 +726,7 @@ export default function StaffManagementPanel({
                     {staff.role === "CAFE_ADMIN"
                       ? "Admin"
                       : "Cashier"}{" "}
+                    {staff.location && <>· {staff.location.name} </>}
                     · {staff.activityCount} actions ·{" "}
                     {formatDateTime(
                       staff.lastActivityAt,
@@ -994,6 +1018,7 @@ export default function StaffManagementPanel({
                         style={mutedStyle}
                       >
                         {row.customer.name} · {row.customer.memberNumber}
+                        {row.location && <> · {row.location.name}</>}
                       </p>
                     </div>
 

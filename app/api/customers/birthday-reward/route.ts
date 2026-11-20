@@ -575,6 +575,7 @@ export async function POST(request: NextRequest) {
               customerId: customer.id,
               cafeId: authData.cafeId,
               userId: authData.user.id,
+              locationId: authData.isCashier ? authData.user.cashierLocationId : null,
               type: "BIRTHDAY_REDEEM",
               description: `${config.rewardName} birthday reward redeemed`,
             },

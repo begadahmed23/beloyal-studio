@@ -10,7 +10,7 @@ import WalletNotificationSettings from "./WalletNotificationSettings";
 import type { WalletCampaign } from "@/lib/wallet/campaigns";
 
 type Business = { id: string; name: string };
-type Audience = { cafe: Business & { timezone: string; rewardName: string }; members: CampaignMember[]; history: WalletCampaign[]; totalMembers?: number; walletMembers?: number; googleUnavailable?: boolean; counts?: Record<CampaignSegment, number> };
+type Audience = { cafe: Business & { timezone: string; rewardName: string }; members: CampaignMember[]; history: WalletCampaign[]; totalMembers?: number; walletMembers?: number; googleUnavailable?: boolean; messagingUnavailable?: boolean; counts?: Record<CampaignSegment, number> };
 const field = "w-full rounded-2xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] px-4 py-3 text-base outline-none transition focus:border-[var(--wallet-accent,#18181b)] focus:ring-2 focus:ring-black/10 disabled:opacity-50 sm:text-sm";
 const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] px-4 py-2 text-sm font-medium transition active:opacity-80 disabled:opacity-40 pointer-fine:hover:opacity-90";
 const primary = "inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--wallet-accent,#18181b)] px-5 py-3 text-sm font-medium text-[var(--wallet-accent-text,#ffffff)] active:opacity-80 disabled:opacity-60 pointer-fine:hover:opacity-90";
@@ -18,8 +18,9 @@ function totals(campaign: WalletCampaign) {
   return { accepted: campaign.recipients.filter(r => r.status === "accepted").length, failed: campaign.recipients.filter(r => r.status === "failed").length,
     skipped: campaign.recipients.filter(r => r.status === "skipped").length, pending: campaign.recipients.filter(r => r.status === "pending").length };
 }
-export default function WalletCampaigns({ businesses, initialCafeId, studio = false, branded = false }: { businesses: Business[]; initialCafeId: string; studio?: boolean; branded?: boolean }) {
+export default function WalletCampaigns({ businesses, initialCafeId, studio = false, branded = false, businessCanSend = false }: { businesses: Business[]; initialCafeId: string; studio?: boolean; branded?: boolean; businessCanSend?: boolean }) {
   const { t, arabic } = useBeLoyalLanguage();
+  const canSend = studio || businessCanSend;
   const [cafeId, setCafeId] = useState(initialCafeId);
   const [data, setData] = useState<Audience | null>(null);
   const [segment, setSegment] = useState<CampaignSegment>("all");
@@ -50,7 +51,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
   }, [review]);
   const members = useMemo(() => data?.members.filter(member => member.segments.includes(segment)) ?? [], [data, segment]);
   const eligible = members.filter(member => member.offersStatus === "enabled");
-  const visible = members.filter(member => `${member.name} ${member.memberNumber}`.toLowerCase().includes(search.trim().toLowerCase()));
+  const visible = members.filter(member => `${member.name} ${member.memberNumber} ${member.joinLocationName ?? ""}`.toLowerCase().includes(search.trim().toLowerCase()));
   const shown = visible.slice(0, 200);
   const selectable = shown.filter(member => member.offersStatus === "enabled");
   function resetReview() { setReview(null); setResult(null); setError(""); }
@@ -105,12 +106,13 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
     <header className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
       <div>
         <Heading className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("Wallet campaigns")}</Heading>
-        <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--wallet-secondary,#52525b)]">{studio ? "Choose who gets the message, write it, then review before sending." : t("View message history and manage automatic Wallet updates.")}</p>
+        <p className="mt-2 max-w-xl text-sm leading-6 text-[var(--wallet-secondary,#52525b)]">{canSend ? t("Choose who gets the message, write it, then review before sending.") : t("View message history and manage automatic Wallet updates.")}</p>
       </div>
       {studio && <div className="w-full sm:w-64"><label htmlFor="campaign-business" className="mb-2 block text-xs font-medium text-[var(--wallet-secondary,#52525b)]">Business</label>
         <select id="campaign-business" className={field} value={cafeId} disabled={!!busy} onChange={event => changeBusiness(event.target.value)}>{businesses.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>}
     </header>
-    {studio && <>
+    {data?.messagingUnavailable && <p role="status" className="mt-5 text-sm">{t("Wallet messaging is not configured in this environment.")}</p>}
+    {canSend && !data?.messagingUnavailable && <>
     {!businesses.length && <p className="mt-8 text-sm">Create an active business to start a Wallet campaign.</p>}
     <div className="mt-7 grid grid-cols-1 gap-2 min-[380px]:grid-cols-3 sm:gap-4">{[
       { label: "Total members", value: data?.totalMembers, icon: Users },
@@ -156,7 +158,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs text-[var(--wallet-muted,#71717a)]">{t(chosenSegment.description)}</p>
         <button type="button" disabled={!!busy} onClick={() => { setAudienceError(""); setSelected([]); resetReview(); setRevision(value => value + 1); }} className="min-h-11 text-xs font-medium underline underline-offset-4">{t("Refresh members and history")}</button></div>
       {data?.googleUnavailable && <p role="status" className="mt-3 text-sm text-[var(--wallet-secondary,#52525b)]">Google Wallet members are temporarily unavailable. Apple Wallet members are shown below.</p>}
-      <div className="mt-3 flex flex-col gap-3 sm:flex-row"><div className="relative flex-1"><Search size={16} className="absolute start-3 top-3.5 text-[var(--wallet-muted,#71717a)]"/><input aria-label={t("Search Wallet members")} className={`${field} ps-10`} placeholder={t("Search by name or member number")} value={search} disabled={!!busy} onChange={event => setSearch(event.target.value)}/></div>
+      <div className="mt-3 flex flex-col gap-3 sm:flex-row"><div className="relative flex-1"><Search size={16} className="absolute start-3 top-3.5 text-[var(--wallet-muted,#71717a)]"/><input aria-label={t("Search Wallet members")} className={`${field} ps-10`} placeholder={t("Search by name, member number or store")} value={search} disabled={!!busy} onChange={event => setSearch(event.target.value)}/></div>
         <button disabled={!!busy || !selectable.length} className={secondary} onClick={() => { resetReview(); setSelected(selectable.slice(0, MAX_CAMPAIGN_RECIPIENTS).map(member => member.id)); }}>Select {Math.min(selectable.length, MAX_CAMPAIGN_RECIPIENTS)} shown</button>
         {!!selected.length && <button disabled={!!busy} className={secondary} onClick={() => { setSelected([]); resetReview(); }}>{t("Clear")}</button>}</div>
       <p className="mt-3 text-xs text-[var(--wallet-muted,#71717a)]">{eligible.length} eligible · {selected.length}/{MAX_CAMPAIGN_RECIPIENTS} selected per campaign. The 30+ day group is also included in 14+ days.</p>
@@ -169,14 +171,14 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
           const checked = selected.includes(member.id);
           return <label key={member.id} className="flex min-h-20 items-center gap-3 border-b border-[var(--wallet-border,#e4e4e7)] p-4 last:border-0">
             <input type="checkbox" className="h-4 w-4 shrink-0 accent-[var(--wallet-accent,#18181b)]" checked={checked} disabled={!canSelect || !!busy || (!checked && selected.length >= MAX_CAMPAIGN_RECIPIENTS)} onChange={() => toggle(member.id)}/>
-            <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{member.name}</span><span className="mt-1 block text-xs text-[var(--wallet-muted,#71717a)]">{member.memberNumber} · {member.lastVisitAt ? `${member.inactiveDays}d since last visit` : `No visit recorded · joined ${member.inactiveDays}d ago`}</span></span>
+            <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{member.name}</span><span className="mt-1 block text-xs text-[var(--wallet-muted,#71717a)]">{member.memberNumber} · {member.lastVisitAt ? `${member.inactiveDays}d since last visit` : `No visit recorded · joined ${member.inactiveDays}d ago`}</span>{member.joinLocationName && <span className="mt-1 block text-xs">{t("Joined at")} {member.joinLocationName}</span>}</span>
             <span className={`rounded-full px-2 py-1 text-center text-[10px] font-medium ${canSelect ? "bg-[#edf2ee] text-[#46624d]" : "bg-[var(--wallet-raised,#f4f4f5)] text-[var(--wallet-secondary,#52525b)]"}`}>
               {canSelect ? t("Can receive offers") : member.offersStatus === "withdrawn" ? t("Opted out") : t("Hasn’t agreed to offers")}
             </span>
           </label>;
         })}
       </div>
-      {visible.length > 200 && <p className="mt-3 text-xs text-[var(--wallet-muted,#71717a)]">Showing the first 200 matches. Search by name or member number to narrow the list.</p>}
+      {visible.length > 200 && <p className="mt-3 text-xs text-[var(--wallet-muted,#71717a)]">Showing the first 200 matches. Search by name, member number or store to narrow the list.</p>}
       <p className="mt-3 text-[11px] leading-5 text-[var(--wallet-muted,#71717a)]">Visits use recorded stamps and redemptions, excluding feedback bonuses. For members without a visit, inactivity starts from joining. Birthdays use {data?.cafe.timezone ?? "the business’s timezone"}.</p>
     </section>
     <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
@@ -213,7 +215,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
             pending={busy === "send"}
             disabled={!!busy || !!result}
             onClick={() => request("send")}
-          >{t(result?.status === "complete" ? "Done" : "Send message")}</ActionButton>
+          >{t(result?.status === "complete" ? "Done" : "Send notification")}</ActionButton>
           <button type="button" disabled={!!busy} className={secondary} onClick={() => {
             if (result) { setSelected([]); setMessage(""); }
             resetReview();

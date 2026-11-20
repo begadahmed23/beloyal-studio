@@ -10,6 +10,7 @@ export type CampaignSegment = typeof campaignSegments[number]["id"];
 export const MAX_CAMPAIGN_RECIPIENTS = 50;
 export type CampaignMember = {
   id: string; name: string; memberNumber: string; devices: number;
+  joinLocationName: string | null;
   offersStatus: "enabled" | "missing" | "withdrawn";
   lastVisitAt: string | null; inactiveDays: number; birthdayInDays: number;
   segments: CampaignSegment[];

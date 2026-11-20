@@ -11,6 +11,7 @@ import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 type JoinFormProps = {
   cafeSlug: string;
+  locationId?: string;
   cafeName: string;
   businessType: BusinessType;
   theme: JoinTheme;
@@ -29,6 +30,7 @@ type JoinResponse = {
 
 export default function JoinForm({
   cafeSlug,
+  locationId,
   cafeName,
   businessType,
   theme,
@@ -119,6 +121,7 @@ export default function JoinForm({
 
     const requestBody: {
       action: FormMode;
+      locationId?: string;
       phone?: string;
       instagram?: string;
       name?: string;
@@ -148,6 +151,7 @@ export default function JoinForm({
         setShowConsentError(true);
         return;
       }
+      requestBody.locationId = locationId;
       requestBody.privacyAccepted = privacyAccepted;
       requestBody.marketingConsent = marketingConsent;
       requestBody.name = cleanName;
