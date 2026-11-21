@@ -25,6 +25,7 @@ import {
 import { ActionButton } from "@/components/ui/action-button";
 import MbVapeStamp from "@/components/brand/MbVapeStamp";
 import PurchaseConfirmation from "@/components/dashboard/PurchaseConfirmation";
+import CustomerSpendingHistory from "./CustomerSpendingHistory";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
@@ -784,6 +785,7 @@ export default function MemberCard({
           </div>
 
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pb-6">
+            {spendingEnabled && <CustomerSpendingHistory customerId={customer.id} active={profileOpen} />}
             <div
               className="overflow-hidden border"
               style={{
