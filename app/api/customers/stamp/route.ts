@@ -14,6 +14,7 @@ const requestSchema = z
   .object({
     id: z.string().trim().min(1).max(100).optional(),
     token: z.string().trim().max(100).optional(),
+    purchaseAmount: z.number().finite().nonnegative().max(9999999999.99).refine(v => Math.round(v * 100) === v * 100 || Math.abs(Math.round(v * 100) - v * 100) < 0.000001, "Up to two decimal places allowed").nullable().optional(),
   })
   .strict()
   .refine((value) => Boolean(value.id || value.token), {
@@ -168,6 +169,13 @@ export async function POST(request: NextRequest) {
         400,
       );
     }
+
+    const spendingEnabled = /loretto/i.test(authData.cafe.slug) || /loretto/i.test(authData.cafe.name);
+    if (!spendingEnabled && validationResult.data.purchaseAmount !== undefined) {
+      return jsonResponse({ message: "Purchase tracking is not enabled for this business." }, 400);
+    }
+    const purchaseAmount = spendingEnabled && validationResult.data.purchaseAmount !== undefined
+      ? validationResult.data.purchaseAmount : null;
 
     const customerId =
       validationResult.data.id?.trim() ?? "";
@@ -348,6 +356,7 @@ export async function POST(request: NextRequest) {
                   userId: authData.user.id,
                   locationId: authData.isCashier ? authData.user.cashierLocationId : null,
                   type: "ADD",
+                  ...(spendingEnabled && purchaseAmount !== null ? { purchaseAmount: new Prisma.Decimal(purchaseAmount.toFixed(2)) } : {}),
                   description: isBarbershop
                     ? "Barbershop visit recorded"
                     : "Stamp added",
