@@ -1,1 +1,1 @@
-ALTER TABLE "StampTransaction" ADD COLUMN "purchaseAmount" DECIMAL(12,2);
+ALTER TABLE "StampTransaction" ADD COLUMN IF NOT EXISTS "purchaseAmount" DECIMAL(12,2);
