@@ -22,7 +22,7 @@ export default function Home() {
   const [showPassword, setShowPassword] =
     useState(false);
   const [rememberMe, setRememberMe] =
-    useState(false);
+    useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -46,7 +46,7 @@ export default function Home() {
         await authClient.signIn.email({
           email: cleanEmail,
           password,
-          rememberMe,
+          rememberMe: Boolean(rememberMe),
           fetchOptions: {
             onError: async (context) => {
               if (context.response.status === 429) {
