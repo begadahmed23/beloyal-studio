@@ -6,7 +6,7 @@ export default function PurchaseConfirmation({ onConfirm, onCancel, submitting =
   const [amount, setAmount] = useState("");
   const valid = amount.trim() === "" || (/^\d+(?:\.\d{1,2})?$/.test(amount) && Number(amount) <= 9999999999.99);
   return (
-    <section role="dialog" aria-modal="true" aria-label="Confirm purchase" className="relative z-20 mx-auto mt-5 w-full max-w-md rounded-3xl border bg-white p-6 text-slate-900 shadow-2xl">
+    <section role="dialog" aria-modal="true" aria-label="Confirm purchase" className="relative z-20 mx-auto w-full max-w-md rounded-3xl border border-white/15 bg-[#f9f8f5] p-5 text-[#24352e] shadow-2xl sm:p-6">
       <h3 className="text-xl font-semibold">Confirm customer stamp</h3>
       <p className="mt-2 text-sm text-slate-600">Enter the purchase amount, or skip if it was not recorded.</p>
       <label htmlFor="stamp-purchase-amount" className="mt-5 block text-sm font-medium">Purchase amount (EGP)</label>
