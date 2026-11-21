@@ -4,7 +4,7 @@ import { useState } from "react";
 type Props = { onConfirm: (amount: number | null) => void; onCancel: () => void; submitting?: boolean };
 export default function PurchaseConfirmation({ onConfirm, onCancel, submitting = false }: Props) {
   const [amount, setAmount] = useState("");
-  const valid = amount.trim() === "" || (/^\\d+(?:\\.\\d{1,2})?$/.test(amount) && Number(amount) <= 9999999999.99);
+  const valid = amount.trim() === "" || (/^\d+(?:\.\d{1,2})?$/.test(amount) && Number(amount) <= 9999999999.99);
   return (
     <section role="dialog" aria-modal="true" aria-label="Confirm purchase" className="relative z-20 mx-auto mt-5 w-full max-w-md rounded-3xl border bg-white p-6 text-slate-900 shadow-2xl">
       <h3 className="text-xl font-semibold">Confirm customer stamp</h3>
