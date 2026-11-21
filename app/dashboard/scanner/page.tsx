@@ -14,9 +14,11 @@ import {
   useState,
 } from "react";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
+import PurchaseConfirmation from "@/components/dashboard/PurchaseConfirmation";
 
 type ScannerStatus =
   | "waiting"
+  | "confirm"
   | "processing"
   | "success"
   | "reward"
@@ -92,6 +94,7 @@ export default function ScannerPage() {
   const { t } = useBeLoyalLanguage();
   const { cafe } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
+  const spendingEnabled = /loretto/i.test(cafe.slug) || /loretto/i.test(cafe.name);
   const personLabel = isBarbershop ? "client" : "customer";
   const loyaltyUnit = isBarbershop ? "visit" : "stamp";
   const inputRef = useRef<HTMLInputElement>(null);
@@ -108,6 +111,8 @@ export default function ScannerPage() {
     );
 
   const [scanValue, setScanValue] = useState("");
+  const [pendingToken, setPendingToken] = useState<string | null>(null);
+  const [pendingAmount, setPendingAmount] = useState<number | null>(null);
   const [status, setStatus] =
     useState<ScannerStatus>("waiting");
 
@@ -124,6 +129,8 @@ export default function ScannerPage() {
 
   function resetScanner() {
     setScanValue("");
+    setPendingToken(null);
+    setPendingAmount(null);
     setResult(null);
     setError("");
     setStatus("waiting");
@@ -183,7 +190,7 @@ export default function ScannerPage() {
     submitScan(value);
   }, AUTO_SCAN_DELAY);
 }
-  async function submitScan(value: string) {
+  async function submitScan(value: string, confirmed = false, amount: number | null = null) {
     const cleanedValue = value.trim();
     const now = Date.now();
 
@@ -220,6 +227,14 @@ if (autoScanTimeoutRef.current) {
       return;
     }
 
+    if (spendingEnabled && !confirmed) {
+      setPendingToken(cleanedValue);
+      setPendingAmount(null);
+      setScanValue("");
+      setStatus("confirm");
+      return;
+    }
+
     try {
       setStatus("processing");
       setError("");
@@ -234,6 +249,7 @@ if (autoScanTimeoutRef.current) {
           },
           body: JSON.stringify({
             token: cleanedValue,
+            ...(spendingEnabled ? { purchaseAmount: amount } : {}),
           }),
         }
       );
@@ -312,11 +328,15 @@ playSuccessSound();
 
         <p className="mt-2 max-w-2xl text-sm leading-6 opacity-60">
           Scan the {personLabel}&apos;s Apple Wallet pass or
-          BeLoyal QR code. One scan automatically {isBarbershop
+          BeLoyal QR code. One confirmed scan {isBarbershop
             ? "records one visit"
             : "adds one stamp"}.
         </p>
       </div>
+
+      {status === "confirm" && pendingToken && (
+        <PurchaseConfirmation onConfirm={(amount) => { setPendingAmount(amount); void submitScan(pendingToken, true, amount); }} onCancel={resetScanner} />
+      )}
 
       <form
         onSubmit={handleSubmit}
@@ -366,6 +386,7 @@ playSuccessSound();
               </>
             )}
 
+            {status === "confirm" && <p className="text-sm opacity-60">Confirm the purchase above to award the stamp.</p>}
             {status === "processing" && (
               <>
                 <div className="flex h-24 w-24 items-center justify-center rounded-[28px] border bg-current/[0.04]">
