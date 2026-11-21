@@ -24,6 +24,8 @@ import {
 
 import { ActionButton } from "@/components/ui/action-button";
 import MbVapeStamp from "@/components/brand/MbVapeStamp";
+import PurchaseConfirmation from "@/components/dashboard/PurchaseConfirmation";
+import CustomerSpendingHistory from "./CustomerSpendingHistory";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
@@ -75,6 +77,8 @@ export default function MemberCard({
   const { t, arabic } = useBeLoyalLanguage();
   const { theme, cafe } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
+  const spendingEnabled = /loretto/i.test(cafe.slug) || /loretto/i.test(cafe.name);
+  const [purchaseOpen, setPurchaseOpen] = useState(false);
   const LoyaltyIcon = { CAFE: Coffee, BARBERSHOP: Scissors, VAPE: MbVapeStamp, OTHER: Store }[cafe.businessType];
   const personLabel = isBarbershop ? "client" : "member";
   const loyaltyUnit = isBarbershop ? "visit" : "stamp";
@@ -274,7 +278,7 @@ export default function MemberCard({
     }
   }
 
-  async function addStamp() {
+  async function addStamp(amount: number | null = null) {
     if (requestInFlight.current || rewardReady) {
       return;
     }
@@ -295,6 +299,7 @@ export default function MemberCard({
           },
           body: JSON.stringify({
             id: customer.id,
+            ...(spendingEnabled ? { purchaseAmount: amount } : {}),
           }),
         },
       );
@@ -533,6 +538,7 @@ export default function MemberCard({
 
   return (
     <>
+      {spendingEnabled && <Dialog open={purchaseOpen} onOpenChange={setPurchaseOpen}><DialogContent><DialogTitle>Stamp confirmation</DialogTitle><PurchaseConfirmation submitting={pendingAction === "stamp"} onCancel={() => setPurchaseOpen(false)} onConfirm={amount => { setPurchaseOpen(false); void addStamp(amount); }} /></DialogContent></Dialog>}
       <button
         type="button"
         onClick={() => {
@@ -779,6 +785,7 @@ export default function MemberCard({
           </div>
 
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pb-6">
+            {spendingEnabled && <CustomerSpendingHistory customerId={customer.id} active={profileOpen} />}
             <div
               className="overflow-hidden border"
               style={{
@@ -1099,7 +1106,7 @@ export default function MemberCard({
             style={{ borderColor: theme.border }}
           >
             <ActionButton
-              onClick={rewardReady ? () => setRedeemOpen(true) : addStamp}
+              onClick={rewardReady ? () => setRedeemOpen(true) : spendingEnabled ? () => setPurchaseOpen(true) : () => void addStamp()}
               disabled={loading}
               pending={pendingAction === "stamp"}
               icon={rewardReady ? <Gift size={18} /> : stampFeedback?.type === "success" ? <CheckCircle2 size={18} /> : <LoyaltyIcon size={18} />}

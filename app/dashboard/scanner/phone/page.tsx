@@ -17,10 +17,12 @@ import {
   useState,
 } from "react";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
+import PurchaseConfirmation from "@/components/dashboard/PurchaseConfirmation";
 
 type ScannerStatus =
   | "starting"
   | "scanning"
+  | "confirm"
   | "processing"
   | "success"
   | "reward"
@@ -98,12 +100,14 @@ export default function PhoneScannerPage() {
   const { t } = useBeLoyalLanguage();
   const { cafe, theme } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
+  const spendingEnabled = /loretto/i.test(cafe.slug) || /loretto/i.test(cafe.name);
   const personLabel = isBarbershop ? "client" : "customer";
   const scannerRef = useRef<
     import("html5-qrcode").Html5Qrcode | null
   >(null);
 
   const processingRef = useRef(false);
+  const [pendingToken, setPendingToken] = useState<string | null>(null);
 
   const lastScanRef = useRef<{
     token: string;
@@ -122,7 +126,7 @@ export default function PhoneScannerPage() {
   const [error, setError] = useState("");
 
   const processScan = useCallback(
-    async (decodedText: string) => {
+    async (decodedText: string, confirmed = false, amount: number | null = null) => {
       const cleanedValue = decodedText.trim();
       const now = Date.now();
 
@@ -146,13 +150,21 @@ export default function PhoneScannerPage() {
         return;
       }
 
+      if (spendingEnabled && !confirmed) {
+        processingRef.current = true;
+        setPendingToken(cleanedValue);
+        setStatus("confirm");
+        try { await scannerRef.current?.pause(true); } catch (error) { console.error("Pause scanner", error); }
+        return;
+      }
       processingRef.current = true;
+      setPendingToken(null);
       setStatus("processing");
       setError("");
       setResult(null);
 
       try {
-        await scannerRef.current?.pause(true);
+        if (!confirmed) await scannerRef.current?.pause(true);
 
         const response = await fetch(
           "/api/customers/stamp",
@@ -163,6 +175,7 @@ export default function PhoneScannerPage() {
             },
             body: JSON.stringify({
               token: cleanedValue,
+              ...(spendingEnabled ? { purchaseAmount: amount } : {}),
             }),
           }
         );
@@ -244,7 +257,7 @@ export default function PhoneScannerPage() {
         );
       }
     },
-    [isBarbershop]
+    [isBarbershop, spendingEnabled]
   );
 
   useEffect(() => {
@@ -401,6 +414,7 @@ export default function PhoneScannerPage() {
 
   return (
     <div className="mx-auto w-full max-w-xl">
+      {status === "confirm" && pendingToken && <PurchaseConfirmation onConfirm={(amount) => { processingRef.current = false; void processScan(pendingToken, true, amount); }} onCancel={() => { setPendingToken(null); setStatus("scanning"); processingRef.current = false; try { scannerRef.current?.resume(); } catch (error) { console.error("Resume scanner", error); } }} />}
       <Link
         href="/dashboard/scanner"
         prefetch={false}
