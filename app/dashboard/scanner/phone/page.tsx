@@ -414,7 +414,7 @@ export default function PhoneScannerPage() {
 
   return (
     <div className="mx-auto w-full max-w-xl">
-      {status === "confirm" && pendingToken && <PurchaseConfirmation onConfirm={(amount) => { processingRef.current = false; void processScan(pendingToken, true, amount); }} onCancel={() => { setPendingToken(null); setStatus("scanning"); processingRef.current = false; try { scannerRef.current?.resume(); } catch (error) { console.error("Resume scanner", error); } }} />}
+      {status === "confirm" && pendingToken && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 px-4 py-5 backdrop-blur-sm"><div className="w-full max-w-sm"><PurchaseConfirmation onConfirm={(amount) => { processingRef.current = false; void processScan(pendingToken, true, amount); }} onCancel={() => { setPendingToken(null); setStatus("scanning"); processingRef.current = false; try { scannerRef.current?.resume(); } catch (error) { console.error("Resume scanner", error); } }} /></div></div>}
       <Link
         href="/dashboard/scanner"
         prefetch={false}
@@ -425,7 +425,7 @@ export default function PhoneScannerPage() {
       <div className="mt-6">
         <p className="text-sm opacity-60">{t("Mobile camera")}</p>
 
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight">{t("Scan")}{personLabel}
+        <h2 className="mt-2 text-3xl font-semibold tracking-tight">{t("Scan")} {t(personLabel)}
         </h2>
 
         <p className="mt-2 text-sm leading-6 opacity-60">
