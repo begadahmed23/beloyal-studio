@@ -112,7 +112,6 @@ export default function ScannerPage() {
 
   const [scanValue, setScanValue] = useState("");
   const [pendingToken, setPendingToken] = useState<string | null>(null);
-  const [pendingAmount, setPendingAmount] = useState<number | null>(null);
   const [status, setStatus] =
     useState<ScannerStatus>("waiting");
 
@@ -130,7 +129,6 @@ export default function ScannerPage() {
   function resetScanner() {
     setScanValue("");
     setPendingToken(null);
-    setPendingAmount(null);
     setResult(null);
     setError("");
     setStatus("waiting");
@@ -229,7 +227,6 @@ if (autoScanTimeoutRef.current) {
 
     if (spendingEnabled && !confirmed) {
       setPendingToken(cleanedValue);
-      setPendingAmount(null);
       setScanValue("");
       setStatus("confirm");
       return;
@@ -335,7 +332,7 @@ playSuccessSound();
       </div>
 
       {status === "confirm" && pendingToken && (
-        <PurchaseConfirmation onConfirm={(amount) => { setPendingAmount(amount); void submitScan(pendingToken, true, amount); }} onCancel={resetScanner} />
+        <PurchaseConfirmation onConfirm={(amount) => { void submitScan(pendingToken, true, amount); }} onCancel={resetScanner} />
       )}
 
       <form
