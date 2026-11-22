@@ -1152,10 +1152,9 @@ export default function MemberCard({
                   theme.textMuted,
               }}
             >
-              This will reset the
-              completed card for{" "}
-              {customer.name} to 0/
-              {paidStampTarget}.
+              This starts a new reward card for{" "}
+              {customer.name} at 0/{paidStampTarget}.
+              Any pending feedback bonus will carry over.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
