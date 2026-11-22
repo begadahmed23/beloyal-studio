@@ -4,7 +4,10 @@ export const LORETTO_DARK = "#193A32";
 export const LORETTO_CREAM = "#F8F5ED";
 export const LORETTO_GOLD = "#D2BA8A";
 
-export async function renderLorettoArtwork(stamps: number, target: number, kind: "strip" | "logo" = "strip") {
+export async function renderLorettoArtwork(stamps: number, target: number, kind: "strip" | "logo" | "icon" = "strip") {
+  if (kind === "icon") {
+    return sharp(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><rect width="512" height="512" rx="56" fill="#193A32"/><rect x="24" y="24" width="464" height="464" rx="40" fill="none" stroke="#D2BA8A" stroke-width="6"/><text x="256" y="305" text-anchor="middle" fill="#F8F5ED" font-size="260" font-family="DejaVu Serif, serif">L</text><path d="M140 355 H372" stroke="#D2BA8A" stroke-width="5"/></svg>')).png().toBuffer();
+  }
   if (kind === "logo") {
     return sharp(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="750" height="230" viewBox="0 0 750 230">' +
       '<rect width="750" height="230" fill="#193A32"/>' +
