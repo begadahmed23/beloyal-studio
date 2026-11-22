@@ -564,21 +564,9 @@ export default function MemberCard({
       >
         <div className="flex items-start justify-between gap-5">
           <div className="min-w-0">
-            <div
-              className="flex items-center gap-2 text-xs font-medium"
-              style={{
-                color:
-                  theme.textSecondary,
-              }}
-            >
-              <Hash size={13} />
-              <span>
-                {customer.memberNumber}
-              </span>
-            </div>
 
             <h4
-              className="mt-3 truncate text-lg font-semibold tracking-tight"
+              className="truncate text-lg font-semibold tracking-tight"
               style={{
                 color:
                   theme.textPrimary,
@@ -620,7 +608,7 @@ export default function MemberCard({
             }}
           >
             {rewardReady
-              ? t("Reward ready")
+              ? t("Reward available")
               : `${visibleStamps}/${paidStampTarget}`}
           </div>
         </div>
