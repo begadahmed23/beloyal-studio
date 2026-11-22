@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             type: true,
+            purchaseAmount: true,
             location: { select: { name: true } },
             createdAt: true,
           },
@@ -68,6 +69,8 @@ export async function GET(request: NextRequest) {
       return {
         ...customer,
         totalVisits: addTransactions.length,
+        recordedSpending: Math.round(addTransactions.reduce((sum, transaction) => sum + (transaction.purchaseAmount?.toNumber() ?? 0), 0) * 100) / 100,
+        recordedPurchaseCount: addTransactions.filter(transaction => transaction.purchaseAmount !== null).length,
         rewardsRedeemed: redeemTransactions.length,
         lastVisitAt: addTransactions[0]?.createdAt ?? null,
         lastStampBranch: addTransactions[0]?.location?.name ?? null,
