@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
         formatDate(customer.birthday),
         customer.stamps,
         visits.length,
-        (Math.round(visits.reduce((sum, transaction) => sum + (transaction.purchaseAmount?.toNumber() ?? 0), 0) * 100) / 100).toFixed(2),
+        visits.some(transaction => transaction.purchaseAmount !== null) ? (Math.round(visits.reduce((sum, transaction) => sum + (transaction.purchaseAmount?.toNumber() ?? 0), 0) * 100) / 100).toFixed(2) : "",
         visits.filter(transaction => transaction.purchaseAmount !== null).length,
         rewardsRedeemed,
         formatDate(visits[0]?.createdAt ?? null),
