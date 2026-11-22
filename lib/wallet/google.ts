@@ -6,7 +6,6 @@ import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 import { getMbVapeBrandColors, isMbVape, MB_VAPE_ARTWORK_PATH, walletBusinessName } from "../business/mb-vape";
 import { walletLocations } from "./notification-text";
 import type { WalletMember } from "./apple";
-import { LORETTO_DARK } from "./loretto-artwork";
 
 export class GoogleWalletError extends Error {
   constructor(public readonly stage: string, public readonly status?: number) {
@@ -71,11 +70,10 @@ export function googleWalletObject(member: WalletMember) {
   const stamps = Math.max(0, Math.min(member.stamps, target));
   const site = process.env.GOOGLE_WALLET_SITE_URL!;
   const mbVape = isMbVape(member.cafe);
-  const loretto = member.cafe.businessType === "CAFE" && /loretto/i.test(member.cafe.slug + member.cafe.name);
   const artTarget = Math.min(target, 99);
   const artStamps = ready ? artTarget : Math.min(stamps, artTarget);
   const progress = ready ? "Reward ready" : `${stamps}/${target} stamps`;
-  const heroImage = loretto ? walletImage(new URL("/api/wallet/artwork/loretto?asset=strip&stamps=" + artStamps + "&target=" + artTarget, site), progress) : mbVape
+  const heroImage = mbVape
     ? walletImage(new URL(`${MB_VAPE_ARTWORK_PATH}?asset=strip&stamps=${artStamps}&target=${artTarget}`, site),
         ready ? "All stamps collected. Reward ready." : `${stamps} of ${target} stamps collected.`)
     : undefined;
@@ -96,19 +94,16 @@ type GoogleLocation = Parameters<typeof walletLocations>[0];
 export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocation) {
   const cafe = getMbVapeBrandColors(savedCafe);
   const mbVape = isMbVape(cafe);
-  const loretto = cafe.businessType === "CAFE" && /loretto/i.test(cafe.slug + cafe.name);
   const displayName = walletBusinessName(cafe);
   const fallback = new URL(process.env.GOOGLE_WALLET_LOGO_URL!);
   let logo = fallback;
   try { if (cafe.logoUrl) { const candidate = new URL(cafe.logoUrl); if (candidate.protocol === "https:") logo = candidate; } } catch { /* use fallback */ }
   const site = process.env.GOOGLE_WALLET_SITE_URL!;
   if (mbVape) logo = new URL(MB_VAPE_ARTWORK_PATH + "?asset=icon&v=2", site);
-  if (loretto) logo = new URL("/api/wallet/artwork/loretto?asset=icon&v=1", site);
   return {
     issuerName: displayName,
-    programName: mbVape || loretto ? displayName : `${displayName} Rewards`,
+    programName: mbVape ? displayName : `${displayName} Rewards`,
     programLogo: walletImage(logo, displayName),
-    ...(loretto ? { wideProgramLogo: walletImage(new URL("/api/wallet/artwork/loretto?asset=logo&v=1", site), displayName) } : {}),
     ...(mbVape ? {
       wideProgramLogo: walletImage(new URL(MB_VAPE_ARTWORK_PATH + "?asset=google-logo&v=2", site), displayName),
       accountNameLabel: "MEMBER",
@@ -127,7 +122,7 @@ export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocati
       },
     } : {}),
     reviewStatus: "UNDER_REVIEW",
-    hexBackgroundColor: loretto ? LORETTO_DARK : /^#[0-9a-f]{6}$/i.test(cafe.backgroundColor) ? cafe.backgroundColor : "#111111",
+    hexBackgroundColor: /^#[0-9a-f]{6}$/i.test(cafe.backgroundColor) ? cafe.backgroundColor : "#111111",
     ...(settings ? { merchantLocations: walletLocations(settings).map(({ latitude, longitude }) => ({ latitude, longitude })) } : {}),
   };
 }
