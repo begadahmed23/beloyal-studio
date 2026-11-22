@@ -30,6 +30,8 @@ type Customer = {
   createdAt: string;
   updatedAt: string;
   totalVisits: number;
+  recordedSpending: number;
+  recordedPurchaseCount: number;
   rewardsRedeemed: number;
   lastVisitAt: string | null;
   joinLocation?: { name: string } | null;
@@ -535,6 +537,14 @@ export default function AdminCustomerDatabase() {
             />
 
             <input
+              type="search"
+              name="customer-database-query"
+              aria-label="Search customer database"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              enterKeyHint="search"
               value={search}
               onChange={(event) =>
                 setSearch(event.target.value)
@@ -893,6 +903,7 @@ export default function AdminCustomerDatabase() {
                 <th className="px-5 py-3">Stamps</th>
                 <th className="px-5 py-3">Last visit</th>
                 <th className="px-5 py-3">Rewards</th>
+                <th className="px-5 py-3">Recorded spending</th>
                 <th className="px-5 py-3">Joined</th>
               </tr>
             </thead>
