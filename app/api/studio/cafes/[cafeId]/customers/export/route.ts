@@ -110,7 +110,7 @@ export async function GET(
       formatDate(customer.birthday),
       customer.stamps,
       customer._count.transactions,
-      (Math.round(customer.transactions.reduce((sum, transaction) => sum + (transaction.purchaseAmount?.toNumber() ?? 0), 0) * 100) / 100).toFixed(2),
+      customer.transactions.some(transaction => transaction.purchaseAmount !== null) ? (Math.round(customer.transactions.reduce((sum, transaction) => sum + (transaction.purchaseAmount?.toNumber() ?? 0), 0) * 100) / 100).toFixed(2) : "",
       customer.transactions.filter(transaction => transaction.purchaseAmount !== null).length,
       formatDate(customer.createdAt),
       formatDate(customer.updatedAt),
