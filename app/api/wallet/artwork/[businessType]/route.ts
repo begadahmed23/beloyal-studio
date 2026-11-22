@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { renderLorettoArtwork } from "@/lib/wallet/loretto-artwork";
 import { businessCardArtwork, isArtworkBusinessType } from "@/lib/business/card-artwork";
 import { getBusinessBrandColors, getDefaultBusinessTheme } from "@/lib/cafe-theme";
 import { renderMbVapeAppleStrip, renderMbVapeGoogleArtwork, renderMbVapeGoogleLogo, renderMbVapeLogo } from "@/lib/wallet/mb-vape-artwork";
@@ -16,6 +17,15 @@ const imageResponse = (png: Buffer) => new Response(new Uint8Array(png), {
 export async function GET(request: Request, { params }: { params: Promise<{ businessType: string }> }) {
   const { businessType } = await params;
   const colors = new URL(request.url).searchParams;
+  if (businessType === "loretto") {
+    const asset = colors.get("asset");
+    if (asset === "logo") return imageResponse(await renderLorettoArtwork(0, 6, "logo"));
+    if (asset !== "strip") return new Response(null, { status: 404 });
+    const stampsText = colors.get("stamps") ?? "0";
+    const targetText = colors.get("target") ?? "6";
+    if (!/^\d{1,2}$/.test(stampsText) || !/^[1-9]\d?$/.test(targetText) || Number(stampsText) > Number(targetText)) return new Response(null, { status: 400 });
+    return imageResponse(await renderLorettoArtwork(Number(stampsText), Number(targetText)));
+  }
   if (businessType === "mb-vape") {
     const asset = colors.get("asset");
     if (asset === "logo") return imageResponse(await renderMbVapeLogo(696, 485));
