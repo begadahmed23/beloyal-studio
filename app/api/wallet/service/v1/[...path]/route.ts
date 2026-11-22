@@ -82,9 +82,10 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
     if (method !== "GET") return reply(405);
     const message = await getWalletMessage(member.id);
     const modified = Math.max(artworkVersion(member.cafe), member.updatedAt.getTime(), member.cafe.updatedAt.getTime(), message?.updatedAt ?? 0);
-    const since = Date.parse(request.headers.get("if-modified-since") ?? "");
-    // Strict comparison avoids suppressing updates made in the same second.
-    if (Number.isFinite(since) && modified < since) return reply(304);
+    // Authenticated Wallet pass downloads always return the freshly generated
+    // .pkpass. A stale If-Modified-Since value must never leave an old reward
+    // on an installed card after a settings change.
+    // The device registration endpoint handles delta discovery separately.
     const pass = await createAppleWalletPass(member, message?.text, await getWalletNotificationSettings(member.cafe.id));
     console.info("Wallet updated pass served", { messageVersion: message?.updatedAt ?? null });
     return new NextResponse(new Uint8Array(pass), { headers: { ...headers,
