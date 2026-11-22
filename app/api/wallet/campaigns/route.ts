@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { isMbVape, walletBusinessName } from "@/lib/business/mb-vape";
+import { walletBusinessName } from "@/lib/business/mb-vape";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
@@ -40,7 +40,7 @@ async function handle(request: NextRequest) {
   if (!auth.isSuperAdmin && auth.cafeId !== cafeId) return json({ message: "Business access denied." }, 403);
   const cafe = await prisma.cafe.findFirst({ where: { id: cafeId, isActive: true }, select: { id: true, name: true, timezone: true, rewardName: true, slug: true, businessType: true } });
   if (!cafe) return json({ message: "Active business not found." }, 404);
-  const canSend = auth.isSuperAdmin || isMbVape(cafe);
+  const canSend = true;
   if (request.method === "POST" && !canSend && body?.action !== "delete") {
     return json({ message: "Manage campaigns in BeLoyal Studio." }, 403);
   }
