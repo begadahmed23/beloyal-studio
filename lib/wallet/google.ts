@@ -6,7 +6,7 @@ import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 import { getMbVapeBrandColors, isMbVape, MB_VAPE_ARTWORK_PATH, walletBusinessName } from "../business/mb-vape";
 import { walletLocations } from "./notification-text";
 import type { WalletMember } from "./apple";
-import { LORETTO_BG } from "./loretto-artwork";
+import { LORETTO_BG, displayWalletReward } from "./loretto-artwork";
 
 export class GoogleWalletError extends Error {
   constructor(public readonly stage: string, public readonly status?: number) {
@@ -86,7 +86,7 @@ export function googleWalletObject(member: WalletMember) {
       balance: { string: `${stamps}/${target}` } },
     ...(heroImage ? { heroImage } : {}),
     textModulesData: [
-      { id: "reward", header: "YOUR REWARD", body: getRewardName(member.cafe) },
+      { id: "reward", header: "YOUR REWARD", body: loretto ? displayWalletReward(getRewardName(member.cafe)) : getRewardName(member.cafe) },
       ...(mbVape ? [{ id: "progress", header: "STAMPS", body: progress }] : []),
     ],
     linksModuleData: { uris: [{ id: "card", uri: new URL(`/card/${member.publicToken}`, site).href, description: "Open your BeLoyal card" }] } };
