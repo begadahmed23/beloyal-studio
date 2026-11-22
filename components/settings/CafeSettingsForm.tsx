@@ -127,6 +127,8 @@ export default function CafeSettingsForm() {
   const form = { ...createInitialState(), ...draft };
   const saveRequest = useRef(false);
   const [saving, setSaving] = useState<DashboardSettingsSection | null>(null);
+  const [refreshingWallet, setRefreshingWallet] = useState(false);
+  const [walletRefreshMessage, setWalletRefreshMessage] = useState("");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [logoPreviewFailed, setLogoPreviewFailed] = useState(false);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -298,6 +300,22 @@ export default function CafeSettingsForm() {
     } finally {
       saveRequest.current = false;
       setSaving(null);
+    }
+  }
+
+  async function refreshSavedWalletCards() {
+    if (refreshingWallet || saving) return;
+    setRefreshingWallet(true);
+    setWalletRefreshMessage("");
+    try {
+      const response = await fetch("/api/cafe/wallet/refresh", { method: "POST" });
+      const result: { message?: string } = await response.json();
+      if (!response.ok) throw new Error(result.message || "Unable to refresh Wallet cards.");
+      setWalletRefreshMessage("Wallet update requested. Saved passes may take a few minutes to update.");
+    } catch (error) {
+      setWalletRefreshMessage(error instanceof Error ? error.message : "Unable to refresh Wallet cards.");
+    } finally {
+      setRefreshingWallet(false);
     }
   }
 
@@ -813,6 +831,24 @@ export default function CafeSettingsForm() {
             </div>
           </div>
           {saveControls("loyalty", "Save Loyalty Program")}
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 sm:p-4"
+            style={{ borderColor: theme.border, backgroundColor: theme.surfaceRaised }}>
+            <div>
+              <p className="text-sm font-semibold" style={{ color: theme.textPrimary }}>Saved Wallet cards</p>
+              <p className="mt-1 text-xs" style={{ color: theme.textSecondary }}>
+                Use this if Apple or Google Wallet still shows an old reward.
+              </p>
+            </div>
+            <button type="button" onClick={() => void refreshSavedWalletCards()}
+              disabled={refreshingWallet || Boolean(saving)}
+              className="flex min-h-11 items-center gap-2 rounded-xl border px-4 text-sm font-semibold disabled:opacity-50"
+              style={{ borderColor: theme.border, color: theme.textPrimary }}>
+              {refreshingWallet ? <Loader2 size={16} className="motion-safe:animate-spin" /> : <RotateCcw size={16} />}
+              {refreshingWallet ? "Refreshing…" : "Refresh Wallet cards"}
+            </button>
+            {walletRefreshMessage && <p className="w-full text-xs" role="status"
+              style={{ color: theme.textSecondary }}>{walletRefreshMessage}</p>}
+          </div>
         </form>
 
         <form onSubmit={(event) => handleSubmit(event, "feedback")}
