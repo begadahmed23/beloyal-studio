@@ -26,6 +26,7 @@ import {
 
 import FeedbackTabs from "./FeedbackTabs";
 import SpendingAnalytics from "./SpendingAnalytics";
+import { isSpendingTrackingEnabled } from "@/lib/business/spending-tracking";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type RatingBreakdown = {
@@ -361,7 +362,7 @@ export default function SimpleAnalytics() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      {(/loretto/i.test(cafe.slug) || /loretto/i.test(cafe.name)) && <SpendingAnalytics />}
+      {isSpendingTrackingEnabled(cafe) && <SpendingAnalytics />}
       <section
         className="border p-4 sm:p-6"
         style={{
