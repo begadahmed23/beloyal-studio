@@ -309,9 +309,9 @@ export default function CafeSettingsForm() {
     setWalletRefreshMessage("");
     try {
       const response = await fetch("/api/cafe/wallet/refresh", { method: "POST" });
-      const result: { message?: string } = await response.json();
+      const result: { message?: string; rewardName?: string } = await response.json();
       if (!response.ok) throw new Error(result.message || "Unable to refresh Wallet cards.");
-      setWalletRefreshMessage("Wallet update requested. Saved passes may take a few minutes to update.");
+      setWalletRefreshMessage(`Sending saved cards the current reward: ${result.rewardName || "your saved reward"}. Wallet updates can take a few minutes.`);
     } catch (error) {
       setWalletRefreshMessage(error instanceof Error ? error.message : "Unable to refresh Wallet cards.");
     } finally {
