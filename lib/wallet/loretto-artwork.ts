@@ -6,6 +6,10 @@ export const LORETTO_BG = "#E9E4D8";
 export const LORETTO_DARK = "#2E2E2E";
 export const LORETTO_MUTED = "#524F47";
 
+export function displayWalletReward(name: string): string {
+  return name.trim().replace(/(\\d+)\\s*%\\s*off/gi, "$1% off").replace(/\\s+/g, " ");
+}
+
 const BACKGROUND = LORETTO_BG;
 const INK = LORETTO_DARK;
 
@@ -15,10 +19,11 @@ export async function renderLorettoArtwork(
   kind: "strip" | "logo" | "icon" = "strip",
 ): Promise<Buffer> {
   if (kind === "icon") {
+    // Never rely on a font being installed on the Vercel server: the old glyph
+    // rendered as a tiny missing-character square on actual iPhones.
+    // This vector monogram is a true path, crisp at 29px Apple logo size.
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
-      <rect width="240" height="240" rx="32" fill="${BACKGROUND}"/>
-      <text x="120" y="167" text-anchor="middle" font-size="160"
-        font-family="Georgia,Times New Roman,serif" fill="${INK}">L</text>
+      <path d="M70 38H112V166H175V203H70Z" fill="${INK}"/>
     </svg>`;
     return sharp(Buffer.from(svg)).png().toBuffer();
   }
