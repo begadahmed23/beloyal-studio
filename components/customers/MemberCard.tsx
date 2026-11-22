@@ -11,7 +11,6 @@ import {
   Copy,
   ExternalLink,
   Gift,
-  Hash,
   Link2,
   Pencil,
   Phone,
@@ -714,9 +713,6 @@ export default function MemberCard({
                     className="mt-1.5 flex items-center gap-1.5 text-xs font-medium"
                     style={{ color: theme.textMuted }}
                   >
-                    <Hash size={12} />
-                    <span className="truncate">{customer.memberNumber}</span>
-                    <span aria-hidden="true">·</span>
                     <span style={{ color: rewardReady ? theme.success : theme.textSecondary }}>
                       {rewardReady ? t("Reward ready") : `${visibleStamps}/${paidStampTarget} ${loyaltyUnit}s`}
                     </span>
