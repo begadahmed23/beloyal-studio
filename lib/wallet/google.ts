@@ -103,11 +103,12 @@ export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocati
   try { if (cafe.logoUrl) { const candidate = new URL(cafe.logoUrl); if (candidate.protocol === "https:") logo = candidate; } } catch { /* use fallback */ }
   const site = process.env.GOOGLE_WALLET_SITE_URL!;
   if (mbVape) logo = new URL(MB_VAPE_ARTWORK_PATH + "?asset=icon&v=2", site);
-  if (loretto) logo = new URL("/api/wallet/artwork/loretto?asset=icon&v=2", site);
+  if (loretto) logo = new URL("/api/wallet/artwork/loretto?asset=icon&v=3", site);
   return {
     issuerName: displayName,
     programName: mbVape || loretto ? displayName : `${displayName} Rewards`,
     programLogo: walletImage(logo, displayName),
+    ...(loretto ? { accountNameLabel: "MEMBER" } : {}),
     ...(mbVape ? {
       wideProgramLogo: walletImage(new URL(MB_VAPE_ARTWORK_PATH + "?asset=google-logo&v=2", site), displayName),
       accountNameLabel: "MEMBER",
