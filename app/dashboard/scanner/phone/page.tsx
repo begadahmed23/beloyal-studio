@@ -18,6 +18,7 @@ import {
 } from "react";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 import PurchaseConfirmation from "@/components/dashboard/PurchaseConfirmation";
+import { isSpendingTrackingEnabled } from "@/lib/business/spending-tracking";
 
 type ScannerStatus =
   | "starting"
@@ -100,7 +101,7 @@ export default function PhoneScannerPage() {
   const { t } = useBeLoyalLanguage();
   const { cafe, theme } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
-  const spendingEnabled = /loretto/i.test(cafe.slug) || /loretto/i.test(cafe.name);
+  const spendingEnabled = isSpendingTrackingEnabled(cafe);
   const personLabel = isBarbershop ? "client" : "customer";
   const scannerRef = useRef<
     import("html5-qrcode").Html5Qrcode | null
