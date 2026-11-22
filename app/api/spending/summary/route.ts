@@ -24,7 +24,6 @@ export async function GET(request: NextRequest) {
   const order = query.get("order") === "oldest" ? "asc" as const : query.get("order") === "highest" ? "highest" as const : "desc" as const;
   const filteredWhere = { ...where, ...(search ? { OR: [
     { customer: { is: { name: { contains: search, mode: "insensitive" as const } } } },
-    { customer: { is: { memberNumber: { contains: search, mode: "insensitive" as const } } } },
   ] } : {}) };
 
   const [recorded, overallCount, purchaseCount, recent, dailyTransactions] = await Promise.all([
@@ -38,7 +37,7 @@ export async function GET(request: NextRequest) {
       take: limit,
       select: {
         id: true, createdAt: true, purchaseAmount: true,
-        customer: { select: { name: true, memberNumber: true } },
+        customer: { select: { name: true } },
         location: { select: { name: true } },
       },
     }),
@@ -69,7 +68,7 @@ export async function GET(request: NextRequest) {
     dailySpending: Array.from(daily, ([date, amount]) => ({ date, amount: Math.round(amount * 100) / 100 })),
     recent: recent.map(item => ({
       id: item.id, date: item.createdAt, amount: item.purchaseAmount?.toNumber() ?? 0,
-      customer: item.customer.name, memberNumber: item.customer.memberNumber,
+      customer: item.customer.name,
       location: item.location?.name ?? "Unassigned",
     })),
   }, { headers: { "Cache-Control": "private, no-store" } });

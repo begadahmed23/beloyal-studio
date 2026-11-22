@@ -8,7 +8,7 @@ import { businessCardArtwork } from "../business/card-artwork";
 import { getLoyaltyProgressTarget } from "../business/loyalty-target";
 import { getMbVapeBrandColors, isMbVape, walletBusinessName } from "../business/mb-vape";
 import { renderMbVapeAppleStrip, renderMbVapeLogo } from "./mb-vape-artwork";
-import { renderLorettoArtwork, LORETTO_BG, LORETTO_DARK, LORETTO_MUTED } from "./loretto-artwork";
+import { renderLorettoArtwork, displayWalletReward, LORETTO_BG, LORETTO_DARK, LORETTO_MUTED } from "./loretto-artwork";
 import { PKPass } from "passkit-generator";
 import sharp from "sharp";
 import path from "node:path";
@@ -71,7 +71,7 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
   const cardUrl = new URL(`/card/${encodeURIComponent(member.publicToken)}`, site).href;
   const cafe = getMbVapeBrandColors(member.cafe);
   const { businessType } = cafe;
-  const rewardName = getRewardName(cafe);
+  const rewardName = /loretto/i.test(member.cafe.slug + member.cafe.name) ? displayWalletReward(getRewardName(cafe)) : getRewardName(cafe);
   const mbVape = isMbVape(cafe);
   const displayName = walletBusinessName(cafe);
   const vapeShop = businessType === "VAPE";

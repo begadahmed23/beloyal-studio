@@ -470,7 +470,7 @@ export default function AdminCustomerDatabase() {
               className="text-xs font-semibold uppercase tracking-[0.18em]"
               style={{ color: theme.accent }}
             >
-              Customer intelligence
+              Customers
             </p>
 
             <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
@@ -481,8 +481,7 @@ export default function AdminCustomerDatabase() {
               className="mt-2 max-w-2xl text-sm leading-6"
               style={{ color: theme.textMuted }}
             >
-              View customer contact details, birthdays, visit activity,
-              loyalty progress, and export exactly the segment you need.
+              See customers, visits, rewards, and spending. Download the list you need.
             </p>
           </div>
 
@@ -549,7 +548,7 @@ export default function AdminCustomerDatabase() {
               onChange={(event) =>
                 setSearch(event.target.value)
               }
-              placeholder="Name, phone, Instagram or branch…"
+              placeholder="Search by name, phone, or branch…"
               className="w-full bg-transparent text-base outline-none sm:text-sm"
               style={{ color: theme.textPrimary }}
             />
@@ -653,7 +652,7 @@ export default function AdminCustomerDatabase() {
               borderRadius: "999px",
             }}
           >
-            Reward ready
+            Reward available
           </button>
 
           <button
@@ -750,17 +749,6 @@ export default function AdminCustomerDatabase() {
                         <p className="break-words font-semibold">
                           {customer.name}
                         </p>
-                        <p
-                          className="mt-1 text-xs"
-                          style={{
-                            color:
-                              theme.textMuted,
-                          }}
-                        >
-                          {
-                            customer.memberNumber
-                          }
-                        </p>
                       </div>
 
                       {rewardReady && (
@@ -832,7 +820,7 @@ export default function AdminCustomerDatabase() {
                           customer.rewardsRedeemed,
                         ],
                         [
-                          "Recorded spending",
+                          "Customer spending",
                           customer.recordedPurchaseCount > 0 ? `${customer.recordedSpending.toLocaleString("en-EG", { maximumFractionDigits: 2 })} EGP` : "Not recorded",
                         ],
                         [
@@ -922,12 +910,6 @@ export default function AdminCustomerDatabase() {
                   <td className="px-5 py-4">
                     <p className="font-medium">
                       {customer.name}
-                    </p>
-                    <p
-                      className="mt-1 text-xs"
-                      style={{ color: theme.textMuted }}
-                    >
-                      {customer.memberNumber}
                     </p>
                   </td>
 

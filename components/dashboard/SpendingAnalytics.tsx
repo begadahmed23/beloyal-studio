@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, CreditCard, ReceiptText, Search, TrendingUp } from "lucide-react";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
-type Entry = { id: string; date: string; amount: number; customer: string; memberNumber: string; location: string };
+type Entry = { id: string; date: string; amount: number; customer: string; location: string };
 type Day = { date: string; amount: number };
 type Summary = {
   recordedSales: number; recordedPurchases: number; totalMatching: number;
@@ -64,7 +64,7 @@ export default function SpendingAnalytics() {
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[.16em]" style={{ color: theme.accent }}>Spending insights</p>
           <h2 className="mt-1 text-2xl font-semibold">Customer spending</h2>
-          <p className="mt-1 text-sm" style={{ color: muted }}>Only purchases with a recorded amount. Not total shop revenue.</p>
+          <p className="mt-1 text-sm" style={{ color: muted }}>Only amounts entered by staff are included.</p>
         </div>
         <select aria-label="Spending period" value={period}
           onChange={e => { setPeriod(e.target.value as "7d" | "30d" | "all"); setPage(1); setSelectedDay(null); }}
@@ -78,11 +78,11 @@ export default function SpendingAnalytics() {
       {data && <>
         <div className="mt-5 grid grid-cols-2 gap-2 sm:gap-3">
           <div className="rounded-2xl border p-3 sm:p-5" style={{ backgroundColor: theme.surfaceRaised, borderColor: theme.border }}>
-            <div className="flex items-center gap-2" style={{ color: muted }}><CreditCard size={15}/><span className="text-xs">Recorded spending</span></div>
+            <div className="flex items-center gap-2" style={{ color: muted }}><CreditCard size={15}/><span className="text-xs">Customer spending</span></div>
             <p className="mt-3 break-words text-2xl font-semibold tabular-nums sm:text-3xl">{cash(data.recordedSales)} <span className="text-sm font-medium">EGP</span></p>
           </div>
           <div className="rounded-2xl border p-3 sm:p-5" style={{ backgroundColor: theme.surfaceRaised, borderColor: theme.border }}>
-            <div className="flex items-center gap-2" style={{ color: muted }}><ReceiptText size={15}/><span className="text-xs">Recorded purchases</span></div>
+            <div className="flex items-center gap-2" style={{ color: muted }}><ReceiptText size={15}/><span className="text-xs">Purchases tracked</span></div>
             <p className="mt-3 text-2xl font-semibold tabular-nums sm:text-3xl">{data.recordedPurchases}</p>
           </div>
         </div>
@@ -109,19 +109,19 @@ export default function SpendingAnalytics() {
             </div>
             <div className="h-6"/>
           </div>
-          <p className="mt-1 text-xs" style={{ color: muted }}>{period === "all" ? "Chart displays the most recent 30 days; total above includes all recorded history." : "Values are recorded transactions, grouped by the cafe's local day."}</p>
+          <p className="mt-1 text-xs" style={{ color: muted }}>{period === "all" ? "Chart displays the most recent 30 days; total above includes all recorded history." : "Daily totals from saved purchases."}</p>
         </div>
 
         <div className="mt-7">
           <div className="flex items-start justify-between gap-2">
-            <div><h3 className="text-lg font-semibold">Recent recorded purchases</h3><p className="mt-1 text-xs" style={{ color: muted }}>{data.totalMatching} matching transactions</p></div>
+            <div><h3 className="text-lg font-semibold">Recent purchases</h3><p className="mt-1 text-xs" style={{ color: muted }}>{data.totalMatching} matching transactions</p></div>
             <CalendarDays size={19} style={{ color: theme.accent }}/>
           </div>
 
           <label className="mt-4 flex h-11 items-center gap-2 border px-3" style={field}>
             <Search size={16} style={{ color: muted }}/>
             <input type="search" name="beloyal-purchase-query" autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false} enterKeyHint="search" aria-label="Search purchases" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
-              placeholder="Search customer or member ID" className="w-full min-w-0 bg-transparent text-sm outline-none" />
+              placeholder="Search customer name" className="w-full min-w-0 bg-transparent text-sm outline-none" />
           </label>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <select aria-label="Sort purchases" value={order} onChange={e => { setOrder(e.target.value as "newest" | "oldest" | "highest"); setPage(1); }} className="h-11 min-w-0 border px-2 text-sm" style={field}>
@@ -135,17 +135,17 @@ export default function SpendingAnalytics() {
           <div className="mt-3 space-y-2 sm:hidden">
             {data.recent.map(entry => <div key={entry.id} className="rounded-xl border p-3" style={{ borderColor: theme.border, backgroundColor: theme.surfaceRaised }}>
               <div className="flex items-start justify-between gap-2"><p className="min-w-0 break-words text-sm font-semibold">{entry.customer}</p><p className="shrink-0 text-sm font-semibold tabular-nums">{cash(entry.amount)} EGP</p></div>
-              <p className="mt-1 text-xs" style={{ color: muted }}>#{entry.memberNumber} · {entry.location} · {new Date(entry.date).toLocaleDateString("en-GB")}</p>
+              <p className="mt-1 text-xs" style={{ color: muted }}>{entry.location} · {new Date(entry.date).toLocaleDateString("en-GB")}</p>
             </div>)}
           </div>
           <div className="mt-3 hidden overflow-x-auto sm:block">
             <table className="w-full text-left text-sm"><thead><tr className="border-b" style={{ borderColor: theme.border, color: muted }}><th className="py-3">Customer</th><th>Location</th><th>When</th><th className="text-right">Amount</th></tr></thead>
             <tbody>{data.recent.map(entry => <tr key={entry.id} className="border-b" style={{ borderColor: theme.border }}>
-              <td className="py-3">{entry.customer} <span className="text-xs" style={{ color: muted }}>#{entry.memberNumber}</span></td>
+              <td className="py-3">{entry.customer} </td>
               <td>{entry.location}</td><td>{new Date(entry.date).toLocaleDateString("en-GB")}</td><td className="text-right font-semibold">{cash(entry.amount)} EGP</td>
             </tr>)}</tbody></table>
           </div>
-          {!data.recent.length && <p className="py-6 text-center text-sm" style={{ color: muted }}>No recorded purchases match these filters.</p>}
+          {!data.recent.length && <p className="py-6 text-center text-sm" style={{ color: muted }}>No purchases found.</p>}
           <div className="mt-4 flex items-center justify-between gap-3 text-sm">
             <span style={{ color: muted }}>Page {page} of {totalPages}{loading ? " · Refreshing" : ""}</span>
             <div className="flex gap-2">

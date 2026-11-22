@@ -11,7 +11,6 @@ import {
   Copy,
   ExternalLink,
   Gift,
-  Hash,
   Link2,
   Pencil,
   Phone,
@@ -564,21 +563,9 @@ export default function MemberCard({
       >
         <div className="flex items-start justify-between gap-5">
           <div className="min-w-0">
-            <div
-              className="flex items-center gap-2 text-xs font-medium"
-              style={{
-                color:
-                  theme.textSecondary,
-              }}
-            >
-              <Hash size={13} />
-              <span>
-                {customer.memberNumber}
-              </span>
-            </div>
 
             <h4
-              className="mt-3 truncate text-lg font-semibold tracking-tight"
+              className="truncate text-lg font-semibold tracking-tight"
               style={{
                 color:
                   theme.textPrimary,
@@ -620,7 +607,7 @@ export default function MemberCard({
             }}
           >
             {rewardReady
-              ? t("Reward ready")
+              ? t("Reward available")
               : `${visibleStamps}/${paidStampTarget}`}
           </div>
         </div>
@@ -726,9 +713,6 @@ export default function MemberCard({
                     className="mt-1.5 flex items-center gap-1.5 text-xs font-medium"
                     style={{ color: theme.textMuted }}
                   >
-                    <Hash size={12} />
-                    <span className="truncate">{customer.memberNumber}</span>
-                    <span aria-hidden="true">·</span>
                     <span style={{ color: rewardReady ? theme.success : theme.textSecondary }}>
                       {rewardReady ? t("Reward ready") : `${visibleStamps}/${paidStampTarget} ${loyaltyUnit}s`}
                     </span>
