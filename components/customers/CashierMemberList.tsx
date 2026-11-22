@@ -21,6 +21,9 @@ import BirthdayRewardAction from "@/components/customers/BirthdayRewardAction";
 import MbVapeStamp from "@/components/brand/MbVapeStamp";
 import KatoMark from "@/components/brand/KatoMark";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
+import { isSpendingTrackingEnabled } from "@/lib/business/spending-tracking";
+import PurchaseConfirmation from "@/components/dashboard/PurchaseConfirmation";
+import RewardCycleSpending from "@/components/customers/RewardCycleSpending";
 
 type Member = {
   id: string;
@@ -49,6 +52,10 @@ type CashierMembersResponse = {
 export default function CashierMemberList() {
   const { t } = useBeLoyalLanguage();
   const { theme, cafe } = useCafeTheme();
+  const spendingEnabled = isSpendingTrackingEnabled(cafe);
+  const [pendingMember, setPendingMember] = useState<Member | null>(null);
+  const [pendingOperation, setPendingOperation] = useState<"stamp" | "redeem" | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const isBarbershop =
     cafe.businessType === "BARBERSHOP";
   const normalizedCafeName = cafe.name
@@ -140,6 +147,7 @@ export default function CashierMemberList() {
   async function runAction(
     memberId: string,
     operation: "stamp" | "redeem",
+    purchaseAmount?: number | null,
   ) {
     if (requests.current.has(memberId)) return;
     requests.current.add(memberId);
@@ -157,6 +165,7 @@ export default function CashierMemberList() {
         },
         body: JSON.stringify({
           id: memberId,
+          ...(operation === "stamp" && spendingEnabled ? { purchaseAmount: purchaseAmount ?? null } : {}),
         }),
       });
 
@@ -171,6 +180,8 @@ export default function CashierMemberList() {
       }
 
       await loadMembers(search);
+      setPendingMember(null);
+      setPendingOperation(null);
       setActions((previous) => ({
         ...previous,
         [memberId]: { status: "success", operation, text: body.message || (operation === "redeem" ? "Reward redeemed." : "Card updated.") },
@@ -460,12 +471,12 @@ export default function CashierMemberList() {
                   disabled={busy || member.rewardReady}
                   pending={busy && action?.operation === "stamp"}
                   icon={action?.status === "success" && action.operation === "stamp" ? <CheckCircle2 size={16} /> : <StampIcon size={16} />}
-                  onClick={() =>
-                    runAction(
-                      member.id,
-                      "stamp",
-                    )
-                  }
+                  onClick={() => {
+                    if (spendingEnabled) {
+                      setPendingMember(member);
+                      setPendingOperation("stamp");
+                    } else void runAction(member.id, "stamp");
+                  }}
                   className="flex min-h-11 px-2 items-center justify-center gap-2 text-sm font-semibold transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-45"
                   style={{
                     backgroundColor: theme.accent,
@@ -481,12 +492,12 @@ export default function CashierMemberList() {
                   disabled={busy || !member.rewardReady}
                   pending={busy && action?.operation === "redeem"}
                   icon={<CheckCircle2 size={16} />}
-                  onClick={() =>
-                    runAction(
-                      member.id,
-                      "redeem",
-                    )
-                  }
+                  onClick={() => {
+                    if (spendingEnabled) {
+                      setPendingMember(member);
+                      setPendingOperation("redeem");
+                    } else void runAction(member.id, "redeem");
+                  }}
                   className="flex min-h-11 px-2 items-center justify-center gap-2 border text-sm font-semibold transition-opacity duration-150 disabled:cursor-not-allowed disabled:opacity-40"
                   style={{
                     borderColor: member.rewardReady
@@ -513,6 +524,40 @@ export default function CashierMemberList() {
           );
         })}
       </div>
+
+      {pendingMember && pendingOperation && spendingEnabled && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm" role="presentation">
+          {pendingOperation === "stamp" ? (
+            <PurchaseConfirmation
+              submitting={confirming}
+              onConfirm={amount => {
+                setConfirming(true);
+                void runAction(pendingMember.id, "stamp", amount).finally(() => setConfirming(false));
+              }}
+              onCancel={() => { if (!confirming) { setPendingMember(null); setPendingOperation(null); } }}
+            />
+          ) : (
+            <div role="dialog" aria-modal="true" aria-label="Confirm reward redemption"
+              className="w-full max-w-md space-y-4 rounded-3xl border p-5 shadow-2xl"
+              style={{ backgroundColor: theme.surface, borderColor: theme.border, color: theme.textPrimary }}>
+              <h3 className="text-lg font-semibold">Redeem reward for {pendingMember.name}?</h3>
+              <RewardCycleSpending customerId={pendingMember.id} active={true} />
+              <p className="text-sm" style={{ color: theme.textMuted }}>This starts a new stamp card. Past purchase history is kept.</p>
+              <button type="button" disabled={confirming} onClick={() => {
+                setConfirming(true);
+                void runAction(pendingMember.id, "redeem").finally(() => setConfirming(false));
+              }} className="min-h-12 w-full rounded-xl px-4 font-semibold disabled:opacity-50"
+                style={{ backgroundColor: theme.success, color: theme.buttonText }}>
+                {confirming ? "Redeeming..." : "Confirm redemption"}
+              </button>
+              <button type="button" disabled={confirming} onClick={() => { setPendingMember(null); setPendingOperation(null); }}
+                className="min-h-11 w-full rounded-xl border px-4 text-sm" style={{ borderColor: theme.border }}>
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {filteredMembers.length === 0 && (
         <div

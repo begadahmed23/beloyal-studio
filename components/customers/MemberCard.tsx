@@ -24,6 +24,8 @@ import {
 import { ActionButton } from "@/components/ui/action-button";
 import MbVapeStamp from "@/components/brand/MbVapeStamp";
 import PurchaseConfirmation from "@/components/dashboard/PurchaseConfirmation";
+import RewardCycleSpending from "@/components/customers/RewardCycleSpending";
+import { isSpendingTrackingEnabled } from "@/lib/business/spending-tracking";
 import CustomerSpendingHistory from "./CustomerSpendingHistory";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
@@ -76,7 +78,7 @@ export default function MemberCard({
   const { t, arabic } = useBeLoyalLanguage();
   const { theme, cafe } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
-  const spendingEnabled = /loretto/i.test(cafe.slug) || /loretto/i.test(cafe.name);
+  const spendingEnabled = isSpendingTrackingEnabled(cafe);
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const LoyaltyIcon = { CAFE: Coffee, BARBERSHOP: Scissors, VAPE: MbVapeStamp, OTHER: Store }[cafe.businessType];
   const personLabel = isBarbershop ? "client" : "member";
@@ -1150,12 +1152,13 @@ export default function MemberCard({
                   theme.textMuted,
               }}
             >
-              This will reset the
-              completed card for{" "}
-              {customer.name} to 0/
-              {paidStampTarget}.
+              This starts a new reward card for{" "}
+              {customer.name} at 0/{paidStampTarget}.
+              Any pending feedback bonus will carry over.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {spendingEnabled && <RewardCycleSpending customerId={customer.id} active={redeemOpen} />}
 
           <AlertDialogFooter>
             <AlertDialogCancel

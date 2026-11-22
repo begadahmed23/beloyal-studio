@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/require-auth";
+import { isSpendingTrackingEnabled } from "@/lib/business/spending-tracking";
 
 export async function GET(request: NextRequest) {
   const auth = await requireAuth(request.headers);
   if (!auth) return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   if (auth.isCashier) return NextResponse.json({ message: "Business administrators only" }, { status: 403 });
   if (!auth.cafe) return NextResponse.json({ message: "Business not found" }, { status: 404 });
-  if (!/loretto/i.test(auth.cafe.slug) && !/loretto/i.test(auth.cafe.name)) {
-    return NextResponse.json({ message: "Spending pilot unavailable" }, { status: 404 });
+  if (!isSpendingTrackingEnabled(auth.cafe)) {
+    return NextResponse.json({ message: "Spending tracking unavailable" }, { status: 404 });
   }
 
   const cafeId = auth.cafe.id;

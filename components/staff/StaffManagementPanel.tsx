@@ -1020,7 +1020,7 @@ export default function StaffManagementPanel({
                       >
                         {row.customer.name} · {row.customer.memberNumber}
                         {row.location && <> · {row.location.name}</>}
-                        {row.type === "ADD" && (row.purchaseAmount != null || /loretto/i.test((cafeTheme?.cafe.slug ?? "") + (cafeTheme?.cafe.name ?? ""))) && <span className="ml-2 font-semibold">{row.purchaseAmount == null ? "Amount not recorded" : `${Number(row.purchaseAmount).toLocaleString("en-EG")} EGP`}</span>}
+                        {row.type === "ADD" && (row.purchaseAmount != null || (cafeTheme?.cafe.slug === "mb-vape" || /loretto/i.test((cafeTheme?.cafe.slug ?? "") + (cafeTheme?.cafe.name ?? "")))) && <span className="ml-2 font-semibold">{row.purchaseAmount == null ? "Amount not recorded" : `${Number(row.purchaseAmount).toLocaleString("en-EG")} EGP`}</span>}
                       </p>
                     </div>
 

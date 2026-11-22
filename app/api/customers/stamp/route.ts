@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+import { isSpendingTrackingEnabled } from "@/lib/business/spending-tracking";
 
 const MAX_REQUEST_BODY_BYTES = 500;
 const MAX_TRANSACTION_ATTEMPTS = 3;
@@ -170,7 +171,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const spendingEnabled = /loretto/i.test(authData.cafe.slug) || /loretto/i.test(authData.cafe.name);
+    const spendingEnabled = isSpendingTrackingEnabled(authData.cafe);
     if (!spendingEnabled && validationResult.data.purchaseAmount !== undefined) {
       return jsonResponse({ message: "Purchase tracking is not enabled for this business." }, 400);
     }

@@ -15,6 +15,7 @@ import {
 } from "react";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 import PurchaseConfirmation from "@/components/dashboard/PurchaseConfirmation";
+import { isSpendingTrackingEnabled } from "@/lib/business/spending-tracking";
 
 type ScannerStatus =
   | "waiting"
@@ -94,7 +95,7 @@ export default function ScannerPage() {
   const { t } = useBeLoyalLanguage();
   const { cafe } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";
-  const spendingEnabled = /loretto/i.test(cafe.slug) || /loretto/i.test(cafe.name);
+  const spendingEnabled = isSpendingTrackingEnabled(cafe);
   const personLabel = isBarbershop ? "client" : "customer";
   const loyaltyUnit = isBarbershop ? "visit" : "stamp";
   const inputRef = useRef<HTMLInputElement>(null);
