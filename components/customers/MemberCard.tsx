@@ -24,6 +24,7 @@ import {
 import { ActionButton } from "@/components/ui/action-button";
 import MbVapeStamp from "@/components/brand/MbVapeStamp";
 import PurchaseConfirmation from "@/components/dashboard/PurchaseConfirmation";
+import RewardCycleSpending from "@/components/customers/RewardCycleSpending";
 import { isSpendingTrackingEnabled } from "@/lib/business/spending-tracking";
 import CustomerSpendingHistory from "./CustomerSpendingHistory";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
@@ -1157,6 +1158,8 @@ export default function MemberCard({
               {paidStampTarget}.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {spendingEnabled && <RewardCycleSpending customerId={customer.id} active={redeemOpen} />}
 
           <AlertDialogFooter>
             <AlertDialogCancel
