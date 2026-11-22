@@ -7,7 +7,7 @@ export const LORETTO_DARK = "#2E2E2E";
 export const LORETTO_MUTED = "#524F47";
 
 export function displayWalletReward(name: string): string {
-  return name.trim().replace(/(\\d+)\\s*%\\s*off/gi, "$1% off").replace(/\\s+/g, " ");
+  return name.trim().replace(/(\d+)\s*%\s*off/gi, "$1% off").replace(/\s+/g, " ");
 }
 
 const BACKGROUND = LORETTO_BG;
