@@ -1,4 +1,5 @@
 import { googleWalletEnabled, syncGoogleWalletMember } from "./google";
+import { prisma } from "@/lib/prisma";
 import { createHash } from "node:crypto";
 import { connect } from "node:http2";
 import { Redis } from "@upstash/redis";
@@ -109,5 +110,53 @@ export function scheduleWalletUpdate(serial: string) {
         console.error("Google Wallet sync failed; stamp transaction was already committed.");
       }),
     ]);
+  });
+}
+
+/**
+ * Business settings (reward name/target/branding) change the same data used by
+ * the existing Wallet passes. Refresh all installed passes, not only cards
+ * whose stamp balance changed. Non-installed Google objects return 404 and
+ * unregistered Apple passes have no push recipient.
+ *
+ * This is intentionally a bounded-concurrency post-response task so saving
+ * settings is fast and the Apple and Google services are not flooded.
+ */
+export function scheduleBusinessWalletUpdate(cafeId: string) {
+  if (!walletUpdatesEnabled() && !googleWalletEnabled()) return;
+  after(async () => {
+    let cursor: string | undefined;
+    let updated = 0;
+    let failures = 0;
+    try {
+      while (true) {
+        const members = await prisma.customer.findMany({
+          where: { cafeId },
+          orderBy: { id: "asc" },
+          ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+          take: 60,
+          select: { id: true },
+        });
+        if (!members.length) break;
+        cursor = members[members.length - 1].id;
+        for (let i = 0; i < members.length; i += 12) {
+          const results = await Promise.allSettled(members.slice(i, i + 12).map(async ({ id }) => {
+            const updates = await Promise.allSettled([
+              walletUpdatesEnabled() ? notifyWalletMember(id) : Promise.resolve(),
+              googleWalletEnabled() ? syncGoogleWalletMember(id) : Promise.resolve(),
+            ]);
+            if (updates.some(result => result.status === "rejected")) {
+              throw new Error("Wallet member sync failed");
+            }
+          }));
+          updated += results.filter(result => result.status === "fulfilled").length;
+          failures += results.filter(result => result.status === "rejected").length;
+        }
+        if (members.length < 60) break;
+      }
+      console.info("Business Wallet sync completed", { cafeId, updated, failures });
+    } catch (error) {
+      console.error("Business Wallet sync interrupted", { cafeId, updated, failures, error });
+    }
   });
 }

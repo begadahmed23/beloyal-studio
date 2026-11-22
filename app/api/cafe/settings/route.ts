@@ -6,6 +6,7 @@ import { requireAuth } from "@/lib/require-auth";
 
 import { serializeCafeSettings } from "./serializer";
 import { scheduleGoogleWalletBrandUpdate } from "@/lib/wallet/google";
+import { scheduleBusinessWalletUpdate } from "@/lib/wallet/updates";
 import { updateCafeSettings } from "./update-settings";
 
 export async function GET(request: NextRequest) {
@@ -146,6 +147,7 @@ export async function PATCH(request: NextRequest) {
 
     if (settings.section === undefined || settings.section === "general") {
       scheduleGoogleWalletBrandUpdate(cafe);
+      scheduleBusinessWalletUpdate(cafe.id);
     }
 
     return NextResponse.json({

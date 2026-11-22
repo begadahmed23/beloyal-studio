@@ -68,7 +68,9 @@ export function getRewardName(business: { businessType: BusinessType; rewardName
   if (!name || (business.businessType !== "CAFE" && name.toLowerCase() === "free drink")) {
     return getBusinessTerminology(business.businessType).defaultRewardName;
   }
-  return name;
+  // Format the display label consistently on web cards and both Wallets.
+  // The database value is unchanged; e.g. "50%off" displays as "50% off".
+  return name.replace(/(\d+)\s*%\s*off/gi, "$1% off");
 }
 
 export const businessTypeLabels: Record<BusinessType, string> = {
