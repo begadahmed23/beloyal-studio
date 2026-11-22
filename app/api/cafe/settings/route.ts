@@ -145,8 +145,12 @@ export async function PATCH(request: NextRequest) {
     const settings = body as Record<string, unknown>;
     const cafe = await updateCafeSettings(authData.cafeId, settings);
 
-    if (settings.section === undefined || settings.section === "general") {
+    if (settings.section === undefined || settings.section === "general" || settings.section === "branding") {
       scheduleGoogleWalletBrandUpdate(cafe);
+    }
+    // Reward changes are submitted through the Loyalty section. Earlier this
+    // branch was skipped, leaving existing Apple and Google passes unchanged.
+    if (settings.section === undefined || settings.section === "general" || settings.section === "branding" || settings.section === "loyalty") {
       scheduleBusinessWalletUpdate(cafe.id);
     }
 
