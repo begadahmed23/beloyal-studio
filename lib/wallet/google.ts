@@ -108,7 +108,6 @@ export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocati
     issuerName: displayName,
     programName: mbVape || loretto ? displayName : `${displayName} Rewards`,
     programLogo: walletImage(logo, displayName),
-    ...(loretto ? { wideProgramLogo: walletImage(new URL("/api/wallet/artwork/loretto?asset=logo&v=2", site), displayName) } : {}),
     ...(mbVape ? {
       wideProgramLogo: walletImage(new URL(MB_VAPE_ARTWORK_PATH + "?asset=google-logo&v=2", site), displayName),
       accountNameLabel: "MEMBER",
