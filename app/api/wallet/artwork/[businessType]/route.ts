@@ -19,13 +19,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ busi
   const colors = new URL(request.url).searchParams;
   if (businessType === "loretto") {
     const asset = colors.get("asset");
-    if (asset === "logo") return imageResponse(await renderLorettoArtwork(0, 6, "logo"));
-    if (asset === "icon") return imageResponse(await renderLorettoArtwork(0, 6, "icon"));
+    if (asset === "logo" || asset === "icon") return imageResponse(await renderLorettoArtwork(0, 6, asset));
     if (asset !== "strip") return new Response(null, { status: 404 });
-    const stampsText = colors.get("stamps") ?? "0";
+    const stampText = colors.get("stamps") ?? "0";
     const targetText = colors.get("target") ?? "6";
-    if (!/^\d{1,2}$/.test(stampsText) || !/^[1-9]\d?$/.test(targetText) || Number(stampsText) > Number(targetText)) return new Response(null, { status: 400 });
-    return imageResponse(await renderLorettoArtwork(Number(stampsText), Number(targetText)));
+    if (!/^\d{1,2}$/.test(stampText) || !/^[1-9]\d?$/.test(targetText) || Number(stampText) > Number(targetText)) return new Response(null, { status: 400 });
+    return imageResponse(await renderLorettoArtwork(Number(stampText), Number(targetText)));
   }
   if (businessType === "mb-vape") {
     const asset = colors.get("asset");

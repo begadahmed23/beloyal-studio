@@ -8,7 +8,7 @@ import { businessCardArtwork } from "../business/card-artwork";
 import { getLoyaltyProgressTarget } from "../business/loyalty-target";
 import { getMbVapeBrandColors, isMbVape, walletBusinessName } from "../business/mb-vape";
 import { renderMbVapeAppleStrip, renderMbVapeLogo } from "./mb-vape-artwork";
-import { renderLorettoArtwork, LORETTO_DARK, LORETTO_CREAM, LORETTO_GOLD } from "./loretto-artwork";
+import { renderLorettoArtwork, LORETTO_BG, LORETTO_DARK, LORETTO_MUTED } from "./loretto-artwork";
 import { PKPass } from "passkit-generator";
 import sharp from "sharp";
 import path from "node:path";
@@ -78,14 +78,14 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
   const barber = businessType === "BARBERSHOP";
   const walid = barber && member.cafe.slug === "walid-saad";
   const loretto = businessType === "CAFE" && /loretto/i.test(member.cafe.slug + member.cafe.name);
-  const background = loretto ? LORETTO_DARK : color(cafe.backgroundColor, "#111111");
+  const background = loretto ? LORETTO_BG : color(cafe.backgroundColor, "#111111");
   const channels = [1, 3, 5].map((offset) => parseInt(background.slice(offset, offset + 2), 16));
   const light = channels[0] * 0.299 + channels[1] * 0.587 + channels[2] * 0.114 > 150;
-  const foreground = walid ? "#F2EEE7" : loretto ? LORETTO_CREAM : light ? "#111111" : "#FFFFFF";
+  const foreground = walid ? "#F2EEE7" : loretto ? LORETTO_DARK : light ? "#111111" : "#FFFFFF";
   const target = getLoyaltyProgressTarget(member.cafe);
   const stamps = Math.max(0, Math.min(member.stamps, target));
   const ready = Boolean(member.rewardEarnedAt) || member.stamps >= target;
-  const accent = loretto ? LORETTO_GOLD : color(cafe.primaryColor, foreground);
+  const accent = loretto ? LORETTO_MUTED : color(cafe.primaryColor, foreground);
   const artwork = loretto || walid ? "" : businessCardArtwork(
     businessType, color(cafe.secondaryColor ?? "", accent), 0.26,
   );
@@ -119,10 +119,10 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
   const initials = member.cafe.name.trim().split(/\s+/).slice(0, 2)
     .map(word => Array.from(word)[0]).join("").toUpperCase() || "B";
   const customLogo = mbVape || loretto ? null : await uploadedLogo(member.cafe.logoUrl);
-  const icon = mbVape ? await renderMbVapeLogo(87, 87, "#ffffff", 8) : await sharp({ create: { width: 87, height: 87, channels: 4, background } })
+  const icon = loretto ? await renderLorettoArtwork(0, target, "icon") : mbVape ? await renderMbVapeLogo(87, 87, "#ffffff", 8) : await sharp({ create: { width: 87, height: 87, channels: 4, background } })
     .composite([{ input: await textImage(initials, 66, 60), left: 10, top: 13 }]).png().toBuffer();
-  const logoWidth = loretto ? 140 : mbVape ? 60 : customLogo ? 40 : 32;
-  const logoHeight = loretto ? 42 : mbVape ? 42 : 32;
+  const logoWidth = loretto ? 130 : mbVape ? 60 : customLogo ? 40 : 32;
+  const logoHeight = loretto ? 32 : mbVape ? 42 : 32;
   const logo = loretto ? await renderLorettoArtwork(0, target, "logo") : mbVape ? await renderMbVapeLogo(logoWidth * 3, logoHeight * 3, background) : customLogo ?? await sharp(icon)
     .resize(logoWidth * 3, logoHeight * 3).png().toBuffer();
   const stripHeight = loretto || vapeShop ? 144 : 123;

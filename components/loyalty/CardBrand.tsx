@@ -28,7 +28,7 @@ export function CardBrandHeader({ business, progress, logoUrl, onLogoError, inhe
     <header className={progress
       ? "flex min-h-24 items-center justify-between gap-3 px-4 py-3.5 min-[380px]:px-5"
       : "grid min-h-20 place-items-center px-4 py-3 text-center"}
-      style={loretto ? { backgroundColor: "#193A32", color: "#F8F5ED", borderBottom: "1px solid rgba(210,186,138,.4)" } : !inheritColors && business.businessType === "VAPE" ? { backgroundColor: "#fff", color: "#432B1D" } : undefined}>
+      style={loretto ? { backgroundColor: "#E9E4D8", color: "#2E2E2E", borderBottom: "1px solid rgba(82,79,71,.25)" } : !inheritColors && business.businessType === "VAPE" ? { backgroundColor: "#fff", color: "#432B1D" } : undefined}>
       <div className={progress ? "min-w-0 flex-1" : "grid min-w-0 max-w-full place-items-center"}>
         {mbVape ? (
           <MbVapeLogo className={progress
@@ -40,7 +40,7 @@ export function CardBrandHeader({ business, progress, logoUrl, onLogoError, inhe
           <img src={logoUrl} alt={business.name} width={160} height={64} onError={onLogoError}
             className="h-auto max-h-16 w-auto max-w-full rounded-md object-contain object-left" />
         ) : namedCafe("loretto") ? (
-          <span className="block font-serif text-[clamp(1.55rem,7vw,2rem)] font-bold leading-none tracking-[.13em]" aria-label="Loretto">
+          <span className="block font-serif text-[clamp(1.55rem,7vw,2rem)] font-bold leading-none tracking-[.11em]" aria-label="Loretto">
             LO<span aria-hidden="true" className="inline-block -scale-x-100">R</span>ETTO
           </span>
         ) : namedCafe("keka") ? (
@@ -77,7 +77,7 @@ export function CardStampStrip({ business, target, stamps, accent, ink, backgrou
 }) {
   if (business.businessType === "CAFE" && /loretto/i.test(business.slug + business.name)) {
     const count = Math.min(12, Math.max(1, target));
-    return <div aria-label={`${stamps} out of ${target} stamps`} className="relative flex min-h-[142px] flex-col items-center justify-center gap-4 border-y px-5 py-5" style={{ background: "linear-gradient(145deg,#193A32 0%,#244E41 100%)", borderColor: "rgba(210,186,138,.34)" }}><p className="text-[.64rem] font-semibold uppercase tracking-[.25em] text-[#D2BA8A]">The little things add up</p><div className="flex w-full flex-wrap items-center justify-center gap-2">{Array.from({ length: count }, (_, i) => <span key={i} className={`grid size-9 place-items-center rounded-full border sm:size-10 ${i === newStampIndex ? "motion-safe:animate-pulse" : ""}`} style={{ borderColor: "#D2BA8A", backgroundColor: i < stamps ? "#D2BA8A" : "transparent", color: i < stamps ? "#193A32" : "#D2BA8A" }}>{i < stamps ? <Check size={17} strokeWidth={2.5} /> : <Coffee size={15} strokeWidth={1.5} />}</span>)}</div><p className="text-xs font-medium tracking-[.12em] text-[#F8F5ED]">{stamps} / {target} STAMPS</p></div>;
+    return <div aria-label={`${stamps} out of ${target} stamps`} className="flex min-h-[130px] flex-col items-center justify-center gap-4 border-y px-4 py-5" style={{ backgroundColor: "#E9E4D8", color: "#2E2E2E", borderColor: "rgba(82,79,71,.2)" }}><p className="text-[10px] font-semibold uppercase tracking-[.22em]" style={{ color: "#524F47" }}>A little closer to your reward</p><div className="flex flex-wrap items-center justify-center gap-2">{Array.from({ length: count }, (_, i) => <span key={i} className={`grid size-9 place-items-center rounded-full border ${i === newStampIndex ? "motion-safe:animate-pulse" : ""}`} style={{ backgroundColor: i < stamps ? "#2E2E2E" : "transparent", borderColor: "#2E2E2E", color: i < stamps ? "#E9E4D8" : "#524F47" }}>{i < stamps ? <Check size={16}/> : <Coffee size={14}/>}</span>)}</div><p className="text-xs font-semibold tracking-widest">{stamps} / {target} STAMPS</p></div>;
   }
   if (business.businessType === "VAPE") {
     const count = Math.min(target, 99);

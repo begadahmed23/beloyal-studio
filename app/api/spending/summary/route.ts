@@ -27,8 +27,9 @@ export async function GET(request: NextRequest) {
     { customer: { is: { memberNumber: { contains: search, mode: "insensitive" as const } } } },
   ] } : {}) };
 
-  const [recorded, purchaseCount, recent, dailyTransactions] = await Promise.all([
+  const [recorded, overallCount, purchaseCount, recent, dailyTransactions] = await Promise.all([
     prisma.stampTransaction.aggregate({ where, _sum: { purchaseAmount: true } }),
+    prisma.stampTransaction.count({ where }),
     prisma.stampTransaction.count({ where: filteredWhere }),
     prisma.stampTransaction.findMany({
       where: filteredWhere,
@@ -63,6 +64,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     period,
     recordedSales: recorded._sum.purchaseAmount?.toNumber() ?? 0,
+    recordedPurchases: overallCount,
     totalMatching: purchaseCount, page, limit,
     dailySpending: Array.from(daily, ([date, amount]) => ({ date, amount: Math.round(amount * 100) / 100 })),
     recent: recent.map(item => ({
