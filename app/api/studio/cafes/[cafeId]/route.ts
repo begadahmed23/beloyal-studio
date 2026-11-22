@@ -9,6 +9,7 @@ import {
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdmin } from "@/lib/require-super-admin";
 import { scheduleGoogleWalletBrandUpdate } from "@/lib/wallet/google";
+import { scheduleBusinessWalletUpdate } from "@/lib/wallet/updates";
 
 type RouteContext = {
   params: Promise<{ cafeId: string }>;
@@ -602,6 +603,9 @@ export async function PATCH(
 
     if (["name", "logoUrl"].some((field) => field in data)) {
       scheduleGoogleWalletBrandUpdate(cafe);
+    }
+    if (["name", "logoUrl", "rewardName", "rewardTarget", "rewardDescription", "eligiblePurchaseDescription"].some((field) => field in data)) {
+      scheduleBusinessWalletUpdate(cafe.id);
     }
 
     return NextResponse.json({
