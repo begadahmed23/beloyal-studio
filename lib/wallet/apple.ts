@@ -121,11 +121,11 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
   const customLogo = mbVape || loretto ? null : await uploadedLogo(member.cafe.logoUrl);
   const icon = loretto ? await renderLorettoArtwork(0, target, "icon") : mbVape ? await renderMbVapeLogo(87, 87, "#ffffff", 8) : await sharp({ create: { width: 87, height: 87, channels: 4, background } })
     .composite([{ input: await textImage(initials, 66, 60), left: 10, top: 13 }]).png().toBuffer();
-  const logoWidth = loretto ? 130 : mbVape ? 60 : customLogo ? 40 : 32;
-  const logoHeight = loretto ? 32 : mbVape ? 42 : 32;
+  const logoWidth = loretto ? 94 : mbVape ? 60 : customLogo ? 40 : 32;
+  const logoHeight = loretto ? 24 : mbVape ? 42 : 32;
   const logo = loretto ? await renderLorettoArtwork(0, target, "logo") : mbVape ? await renderMbVapeLogo(logoWidth * 3, logoHeight * 3, background) : customLogo ?? await sharp(icon)
     .resize(logoWidth * 3, logoHeight * 3).png().toBuffer();
-  const stripHeight = loretto || vapeShop ? 144 : 123;
+  const stripHeight = vapeShop ? 144 : 123;
   const locations = walletLocations(notificationSettings);
   const nearby = locations.length ? notificationSettings : null;
   const pass = new PKPass(
