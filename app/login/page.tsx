@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Eye,
@@ -22,9 +22,20 @@ export default function Home() {
   const [showPassword, setShowPassword] =
     useState(false);
   const [rememberMe, setRememberMe] =
-    useState(false);
+    useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    void authClient.getSession().then(({ data }) => {
+      if (!active || !data?.user) return;
+      const role = "role" in data.user && typeof data.user.role === "string" ? data.user.role : null;
+      router.replace(role === "SUPER_ADMIN" ? "/studio" : "/dashboard");
+      router.refresh();
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, [router]);
 
   async function handleLogin(
     event: FormEvent<HTMLFormElement>
@@ -46,7 +57,7 @@ export default function Home() {
         await authClient.signIn.email({
           email: cleanEmail,
           password,
-          rememberMe,
+          rememberMe: Boolean(rememberMe),
           fetchOptions: {
             onError: async (context) => {
               if (context.response.status === 429) {

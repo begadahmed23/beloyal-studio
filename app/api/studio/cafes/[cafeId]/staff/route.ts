@@ -183,6 +183,7 @@ export async function GET(
       id: true,
       type: true,
       description: true,
+      purchaseAmount: true,
       createdAt: true,
       user: {
         select: {

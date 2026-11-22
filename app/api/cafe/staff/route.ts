@@ -175,6 +175,7 @@ export async function GET(request: NextRequest) {
       id: true,
       type: true,
       description: true,
+      purchaseAmount: true,
       createdAt: true,
       location: { select: { name: true } },
       user: {
