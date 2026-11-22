@@ -832,6 +832,10 @@ export default function AdminCustomerDatabase() {
                           customer.rewardsRedeemed,
                         ],
                         [
+                          "Recorded spending",
+                          customer.recordedPurchaseCount > 0 ? `${customer.recordedSpending.toLocaleString("en-EG", { maximumFractionDigits: 2 })} EGP` : "Not recorded",
+                        ],
+                        [
                           "Joined",
                           formatDate(
                             customer.createdAt,
@@ -957,6 +961,10 @@ export default function AdminCustomerDatabase() {
 
                   <td className="px-5 py-4 tabular-nums">
                     {customer.rewardsRedeemed}
+                  </td>
+
+                  <td className="px-5 py-4 tabular-nums">
+                    {customer.recordedPurchaseCount > 0 ? `${customer.recordedSpending.toLocaleString("en-EG", { maximumFractionDigits: 2 })} EGP` : "Not recorded"}
                   </td>
 
                   <td className="px-5 py-4">
