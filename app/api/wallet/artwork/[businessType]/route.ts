@@ -20,6 +20,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ busi
   if (businessType === "loretto") {
     const asset = colors.get("asset");
     if (asset === "logo") return imageResponse(await renderLorettoArtwork(0, 6, "logo"));
+    if (asset === "icon") return imageResponse(await renderLorettoArtwork(0, 6, "icon"));
     if (asset !== "strip") return new Response(null, { status: 404 });
     const stampsText = colors.get("stamps") ?? "0";
     const targetText = colors.get("target") ?? "6";
