@@ -188,7 +188,7 @@ export default function BirthdayCustomerDisplay({
     subtitle = birthdayText;
   }
 
-  const interactive = enabled;
+  const interactive = true;
 
   const modal = open ? (
     <div
@@ -239,11 +239,11 @@ export default function BirthdayCustomerDisplay({
           className="mt-5 text-[10px] font-semibold uppercase tracking-[0.18em]"
           style={{ color: primaryColor }}
         >
-          Birthday offer
+          {enabled ? "Birthday offer" : "Birthday information"}
         </p>
 
         <h3 className="mt-2 pr-10 text-2xl font-semibold tracking-tight">
-          {redeemed && state?.isActive
+          {!enabled ? birthdayText : redeemed && state?.isActive
             ? "Birthday gift redeemed"
             : rewardName}
         </h3>
@@ -257,7 +257,7 @@ export default function BirthdayCustomerDisplay({
           </p>
         ) : null}
 
-        <div className="mt-5 space-y-3">
+        {enabled && <div className="mt-5 space-y-3">
           {customer.cafe.birthdayPurchaseRequirement ? (
             <div
               className="rounded-2xl border p-4"
@@ -323,7 +323,7 @@ export default function BirthdayCustomerDisplay({
               Present your BeLoyal card when ordering. Birthday gift available once per year.
             </p>
           </div>
-        </div>
+        </div>}
 
         <button
           type="button"
