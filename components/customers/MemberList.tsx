@@ -205,6 +205,12 @@ export default function MemberList() {
         <Search size={19} className="me-3 shrink-0" style={{ color: theme.textMuted }} />
         <input
           type="search"
+          name="beloyal-member-query"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck={false}
+          enterKeyHint="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder={t("Search members by name, phone or store")}

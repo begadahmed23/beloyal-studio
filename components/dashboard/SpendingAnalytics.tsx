@@ -120,7 +120,7 @@ export default function SpendingAnalytics() {
 
           <label className="mt-4 flex h-11 items-center gap-2 border px-3" style={field}>
             <Search size={16} style={{ color: muted }}/>
-            <input aria-label="Search purchases" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
+            <input type="search" name="beloyal-purchase-query" autoComplete="off" autoCorrect="off" autoCapitalize="none" spellCheck={false} enterKeyHint="search" aria-label="Search purchases" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }}
               placeholder="Search customer or member ID" className="w-full min-w-0 bg-transparent text-sm outline-none" />
           </label>
           <div className="mt-2 grid grid-cols-2 gap-2">

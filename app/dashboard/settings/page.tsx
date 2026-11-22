@@ -11,7 +11,7 @@ import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { cafe, userRole } = useCafeTheme();
+  const { cafe, userRole, theme } = useCafeTheme();
 
   useEffect(() => {
     if (userRole === "CASHIER") {
@@ -24,7 +24,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-7 border p-3 shadow-sm sm:p-5 lg:p-6" style={{ backgroundColor: theme.surfaceRaised, borderColor: theme.border, borderRadius: theme.radiusLarge }}>
       <CafeSettingsForm />
       <StoreLocations key={cafe.id} />
       <BirthdayRewardsSettings />

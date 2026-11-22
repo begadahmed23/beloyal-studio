@@ -1,51 +1,63 @@
 import sharp from "sharp";
 
-/** The Loretto identity: warm parchment, charcoal, and the reversed R wordmark. */
+// Match Loretto's saved café palette; leave the native Wallet card to display
+// business name, member, reward, QR code and stamp count.
 export const LORETTO_BG = "#E9E4D8";
 export const LORETTO_DARK = "#2E2E2E";
 export const LORETTO_MUTED = "#524F47";
 
-const brand = (y: number, fontSize: number, centerX = 562) => {
-  const size = fontSize;
-  // Draw a reversed Latin R with an SVG horizontal mirror, like the existing web logo.
-  const left = centerX - 2.75 * size;
-  return '<g font-family="Georgia,Times New Roman,serif" font-weight="bold" font-size="' + size + '" fill="' + LORETTO_DARK + '">' +
-    '<text x="' + left + '" y="' + y + '" letter-spacing="' + Math.round(size * .06) + '">LO</text>' +
-    '<g transform="translate(' + (left + size * 2.28) + ' 0) scale(-1 1)"><text x="0" y="' + y + '">R</text></g>' +
-    '<text x="' + (left + size * 3.18) + '" y="' + y + '" letter-spacing="' + Math.round(size * .06) + '">ETTO</text></g>';
-};
+const BACKGROUND = LORETTO_BG;
+const INK = LORETTO_DARK;
 
-export async function renderLorettoArtwork(stamps: number, target: number, kind: "strip" | "logo" | "icon" = "strip") {
+export async function renderLorettoArtwork(
+  stamps: number,
+  target: number,
+  kind: "strip" | "logo" | "icon" = "strip",
+): Promise<Buffer> {
   if (kind === "icon") {
-    return sharp(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="65" fill="' + LORETTO_BG + '"/><rect x="23" y="23" width="466" height="466" rx="48" stroke="' + LORETTO_MUTED + '" stroke-opacity=".45" stroke-width="3" fill="none"/><text x="256" y="326" text-anchor="middle" font-family="Georgia,serif" font-size="260" fill="' + LORETTO_DARK + '">L</text><path d="M153 369H359" stroke="' + LORETTO_MUTED + '" stroke-width="4"/></svg>')).png().toBuffer();
-  }
-  if (kind === "logo") {
-    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="220" viewBox="0 0 1125 275"><rect width="1125" height="275" fill="' + LORETTO_BG + '"/>' +
-      brand(157, 112) + '<path d="M265 191H860" stroke="' + LORETTO_MUTED + '" stroke-opacity=".6" stroke-width="2"/></svg>';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+      <rect width="240" height="240" rx="32" fill="${BACKGROUND}"/>
+      <text x="120" y="167" text-anchor="middle" font-size="160"
+        font-family="Georgia,Times New Roman,serif" fill="${INK}">L</text>
+    </svg>`;
     return sharp(Buffer.from(svg)).png().toBuffer();
   }
-  const safeTarget = Math.max(1, Math.min(12, Math.floor(target)));
-  const safeStamps = Math.max(0, Math.min(safeTarget, Math.floor(stamps)));
-  const perRow = safeTarget > 8 ? Math.ceil(safeTarget / 2) : safeTarget;
-  const countRows = Math.ceil(safeTarget / perRow);
-  const gap = 680 / perRow;
-  const stampsSvg = Array.from({ length: safeTarget }, (_, i) => {
-    const x = 222 + (i % perRow) * gap + gap / 2;
-    const y = countRows === 1 ? 259 : 231 + Math.floor(i / perRow) * 73;
-    const filled = i < safeStamps;
-    const shape = '<circle cx="' + x + '" cy="' + y + '" r="26" fill="' + (filled ? LORETTO_DARK : "none") + '" stroke="' + LORETTO_DARK + '" stroke-width="2"/>';
-    const mark = filled
-      ? '<path d="M' + (x-10) + ' ' + y + ' l7 7 15 -17" fill="none" stroke="' + LORETTO_BG + '" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>'
-      : '<circle cx="' + x + '" cy="' + y + '" r="5" fill="' + LORETTO_MUTED + '" opacity=".55"/>';
-    return shape + mark;
+
+  if (kind === "logo") {
+    // The standalone mark remains compact; no decorative slogan or border.
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="200" viewBox="0 0 900 200">
+      <text x="450" y="141" text-anchor="middle" font-size="116"
+        font-weight="bold" letter-spacing="7" font-family="Georgia,Times New Roman,serif"
+        fill="${INK}">LORETTO</text>
+    </svg>`;
+    return sharp(Buffer.from(svg)).png().toBuffer();
+  }
+
+  const count = Math.max(1, Math.min(12, Math.floor(target)));
+  const completed = Math.max(0, Math.min(count, Math.floor(stamps)));
+  const rows = count > 8 ? 2 : 1;
+  const columns = Math.ceil(count / rows);
+  const gap = 690 / columns;
+  const stampCircles = Array.from({ length: count }, (_, i) => {
+    const x = 218 + (i % columns) * gap + gap / 2;
+    const y = rows === 1 ? 176 : 124 + Math.floor(i / columns) * 102;
+    const active = i < completed;
+    const circle = `<circle cx="${x}" cy="${y}" r="34" stroke="${INK}" stroke-width="2.5"
+       fill="${active ? INK : "none"}"/>`;
+    const mark = active
+      ? `<path d="M${x-13} ${y}l9 9 18-21" fill="none" stroke="${BACKGROUND}"
+          stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`
+      : `<circle cx="${x}" cy="${y}" r="5" fill="${LORETTO_MUTED}" opacity=".38"/>`;
+    return circle + mark;
   }).join("");
-  const status = safeStamps >= safeTarget ? "REWARD READY" : String(safeStamps) + " / " + String(target) + " STAMPS";
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="1125" height="432" viewBox="0 0 1125 432">' +
-    '<rect width="1125" height="432" fill="' + LORETTO_BG + '"/>' +
-    '<rect x="12" y="12" width="1101" height="408" rx="9" stroke="' + LORETTO_MUTED + '" stroke-opacity=".4" stroke-width="2" fill="none"/>' +
-    brand(143, 91) +
-    '<path d="M160 171H965" stroke="' + LORETTO_MUTED + '" stroke-opacity=".4"/>' +
-    stampsSvg +
-    '<text x="562" y="386" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="27" letter-spacing="5" fill="' + LORETTO_DARK + '">' + status + '</text></svg>';
+
+  // Safe center region avoids Apple Wallet's edge cropping. The strip has no
+  // repeated header, text or progress label: native fields carry those.
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1125" height="369" viewBox="0 0 1125 369">
+     <rect width="1125" height="369" fill="${BACKGROUND}"/>
+     <path d="M110 64H1015" stroke="${INK}" stroke-opacity=".16"/>
+     ${stampCircles}
+     <path d="M110 307H1015" stroke="${INK}" stroke-opacity=".16"/>
+  </svg>`;
   return sharp(Buffer.from(svg)).png().toBuffer();
 }

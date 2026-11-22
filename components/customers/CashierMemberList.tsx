@@ -249,6 +249,13 @@ export default function CashierMemberList() {
         />
 
         <input
+          type="search"
+          name="beloyal-cashier-customer-query"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck={false}
+          enterKeyHint="search"
           value={search}
           onChange={(event) =>
             setSearch(event.target.value)
