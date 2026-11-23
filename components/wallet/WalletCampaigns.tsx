@@ -9,8 +9,9 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { SlidingSelection } from "@/components/ui/sliding-selection";
 import WalletNotificationSettings from "./WalletNotificationSettings";
 import type { WalletCampaign } from "@/lib/wallet/campaigns";
+import { dashboardThemeVariables, type CafeThemeConfig } from "@/lib/cafe-theme";
 
-type Business = { id: string; name: string };
+type Business = { id: string; name: string; theme?: CafeThemeConfig };
 type Audience = { cafe: Business & { timezone: string; rewardName: string }; members: CampaignMember[]; history: WalletCampaign[]; totalMembers?: number; walletMembers?: number; googleUnavailable?: boolean; messagingUnavailable?: boolean; counts?: Record<CampaignSegment, number> };
 const field = "w-full rounded-2xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] px-4 py-3 text-base outline-none transition focus:border-[var(--wallet-accent,#18181b)] focus:ring-2 focus:ring-black/10 disabled:opacity-50 sm:text-sm";
 const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] px-4 py-2 text-sm font-medium transition active:opacity-80 disabled:opacity-40 pointer-fine:hover:opacity-90";
@@ -115,7 +116,9 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
   }
   const chosenSegment = campaignSegments.find(value => value.id === segment)!;
   const Heading = branded ? "h2" : "h1";
-  const business = data?.cafe.name ?? businesses.find(value => value.id === cafeId)?.name ?? "Your business";
+  const selectedBusiness = businesses.find(value => value.id === cafeId);
+  const business = data?.cafe.name ?? selectedBusiness?.name ?? "Your business";
+  const reviewTheme = selectedBusiness?.theme;
   return <div  className={branded ? "min-w-0 rounded-3xl p-1 sm:p-3" : "rounded-[28px] bg-[#f6f6f7] p-4 text-[var(--wallet-text,#18181b)] sm:p-7 lg:p-9"}>
     {studio && <a href="/studio" className="mb-6 inline-flex min-h-11 items-center gap-2 text-sm text-[var(--wallet-secondary,#52525b)] hover:opacity-90"><ArrowLeft size={16} /> BeLoyal Studio</a>}
     <header className="flex flex-col justify-between gap-5 rounded-3xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-4 shadow-sm sm:flex-row sm:items-end sm:p-6">
@@ -218,6 +221,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
     <Dialog open={reviewOpen} onOpenChange={open => { if (!open) closeReview(); }}>
       <DialogContent
         showCloseButton={false}
+        style={reviewTheme ? dashboardThemeVariables(reviewTheme) : undefined}
         className="flex max-h-[calc(100dvh-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden border p-0 sm:max-w-lg"
       >
         <DialogHeader className="shrink-0 border-b border-border px-5 py-4 sm:px-6 sm:py-5">

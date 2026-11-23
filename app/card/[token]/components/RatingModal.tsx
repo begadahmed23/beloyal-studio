@@ -13,6 +13,7 @@ type RatingModalProps = {
   textPrimary: string;
   textSecondary: string;
   textMuted: string;
+  primaryColor: string;
   surfaceColor: string;
   reviewErrorBorderColor: string;
   reviewErrorBackgroundColor: string;
@@ -33,6 +34,7 @@ export default function RatingModal({
   textPrimary,
   textSecondary,
   textMuted,
+  primaryColor,
   surfaceColor,
   reviewErrorBorderColor,
   reviewErrorBackgroundColor,
@@ -49,7 +51,7 @@ export default function RatingModal({
       aria-label="Rate your visit"
     >
       <div
-        className="w-full max-w-sm rounded-[30px] border p-6 text-center shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-sm overflow-y-auto overscroll-contain rounded-[30px] border p-6 text-center shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
         style={{
           borderColor: cardBorder,
           backgroundColor: cardBackground,
@@ -65,7 +67,7 @@ export default function RatingModal({
         </p>
 
         <div
-          className="mt-7 flex items-center justify-center gap-2"
+          className="mt-7 flex flex-wrap items-center justify-center gap-1 min-[380px]:gap-2"
           onMouseLeave={() => onHoveredRatingChange(null)}
         >
           {[1, 2, 3, 4, 5].map((rating) => {
@@ -81,14 +83,14 @@ export default function RatingModal({
                 onBlur={() => onHoveredRatingChange(null)}
                 onClick={() => onRatingSelect(rating)}
                 aria-label={`${rating} star${rating === 1 ? "" : "s"}`}
-                className="rounded-full p-1 transition pointer-fine:motion-safe:hover:scale-110 active:opacity-80 disabled:cursor-wait disabled:opacity-60"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full p-1 transition pointer-fine:motion-safe:hover:scale-110 active:opacity-80 disabled:cursor-wait disabled:opacity-60"
               >
                 <Star
                   size={38}
                   strokeWidth={1.8}
                   style={{
-                    color: active ? "#FBBF24" : textMuted,
-                    fill: active ? "#FBBF24" : "transparent",
+                    color: active ? primaryColor : textMuted,
+                    fill: active ? primaryColor : "transparent",
                   }}
                 />
               </button>

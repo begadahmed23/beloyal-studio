@@ -4,6 +4,8 @@ import * as React from "react"
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 
 import { cn } from "@/lib/utils"
+import { useOptionalCafeTheme } from "@/components/theme/CafeThemeProvider"
+import { dashboardThemeVariables } from "@/lib/cafe-theme"
 
 function Popover({ ...props }: PopoverPrimitive.Root.Props) {
   return <PopoverPrimitive.Root data-slot="popover" {...props} />
@@ -19,12 +21,14 @@ function PopoverContent({
   alignOffset = 0,
   side = "bottom",
   sideOffset = 4,
+  style,
   ...props
 }: PopoverPrimitive.Popup.Props &
   Pick<
     PopoverPrimitive.Positioner.Props,
     "align" | "alignOffset" | "side" | "sideOffset"
   >) {
+  const theme = useOptionalCafeTheme()?.theme
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Positioner
@@ -36,8 +40,9 @@ function PopoverContent({
       >
         <PopoverPrimitive.Popup
           data-slot="popover-content"
+          style={theme ? { ...dashboardThemeVariables(theme), backgroundColor: theme.surface, color: theme.textPrimary, ...style } : style}
           className={cn(
-            "z-50 flex w-72 origin-(--transform-origin) flex-col gap-4 rounded-3xl bg-popover p-4 text-sm text-popover-foreground shadow-lg ring-1 ring-foreground/5 outline-hidden duration-100 pointer-fine:motion-safe:data-[side=bottom]:slide-in-from-top-2 pointer-fine:motion-safe:data-[side=inline-end]:slide-in-from-left-2 pointer-fine:motion-safe:data-[side=inline-start]:slide-in-from-right-2 pointer-fine:motion-safe:data-[side=left]:slide-in-from-right-2 pointer-fine:motion-safe:data-[side=right]:slide-in-from-left-2 pointer-fine:motion-safe:data-[side=top]:slide-in-from-bottom-2 dark:ring-foreground/10 data-open:animate-in data-open:fade-in-0 pointer-fine:motion-safe:data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 pointer-fine:motion-safe:data-closed:zoom-out-95",
+            "z-50 flex w-72 max-w-[calc(100vw-1rem)] origin-(--transform-origin) flex-col gap-4 rounded-3xl bg-popover p-4 text-sm text-popover-foreground shadow-lg ring-1 ring-foreground/5 outline-hidden duration-100 pointer-fine:motion-safe:data-[side=bottom]:slide-in-from-top-2 pointer-fine:motion-safe:data-[side=inline-end]:slide-in-from-left-2 pointer-fine:motion-safe:data-[side=inline-start]:slide-in-from-right-2 pointer-fine:motion-safe:data-[side=left]:slide-in-from-right-2 pointer-fine:motion-safe:data-[side=right]:slide-in-from-left-2 pointer-fine:motion-safe:data-[side=top]:slide-in-from-bottom-2 dark:ring-foreground/10 data-open:animate-in data-open:fade-in-0 pointer-fine:motion-safe:data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 pointer-fine:motion-safe:data-closed:zoom-out-95",
             className
           )}
           {...props}

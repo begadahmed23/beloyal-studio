@@ -11,7 +11,6 @@ type QrCodeModalProps = {
   businessType: BusinessType;
   cafeName: string;
   cafeSlug?: string;
-  cafeTheme?: string;
   memberNumber: string;
   publicToken: string;
   logoUrl: string | null;
@@ -43,7 +42,6 @@ export default function QrCodeModal({
   businessType,
   cafeName,
   cafeSlug = "",
-  cafeTheme = "",
   memberNumber,
   publicToken,
   logoUrl,
@@ -66,50 +64,7 @@ export default function QrCodeModal({
   const { t, lang, dir, arabic } = useBeLoyalLanguage();
   const isBarbershop = businessType === "BARBERSHOP";
   const normalizedCafeName = cafeName.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const isKeka = businessType === "CAFE" && (cafeSlug.toLowerCase().includes("keka") || normalizedCafeName.includes("keka"));
   const isLoretto = businessType === "CAFE" && (cafeSlug.toLowerCase().includes("loretto") || normalizedCafeName.includes("loretto"));
-  const isKekaCream = isKeka && cafeTheme === "MODERN_MINIMAL";
-
-  const modalBackground = isLoretto
-    ? "#F3EBDD"
-    : isKeka
-      ? (isKekaCream ? "#FFF6E6" : "#741A1D")
-      : cardBackground;
-  const modalText = isLoretto
-    ? "#2E2A27"
-    : isKeka
-      ? (isKekaCream ? "#4A0D10" : "#FFF6E6")
-      : textPrimary;
-  const modalSecondary = isLoretto
-    ? "rgba(46,42,39,.66)"
-    : isKeka
-      ? (isKekaCream ? "rgba(74,13,16,.68)" : "rgba(244,229,198,.72)")
-      : textSecondary;
-  const modalMuted = isLoretto
-    ? "rgba(46,42,39,.48)"
-    : isKeka
-      ? (isKekaCream ? "rgba(74,13,16,.5)" : "rgba(244,229,198,.5)")
-      : textMuted;
-  const modalBorder = isLoretto
-    ? "rgba(46,42,39,.11)"
-    : isKeka
-      ? (isKekaCream ? "rgba(116,26,29,.16)" : "rgba(244,229,198,.16)")
-      : cardBorder;
-  const modalSurface = isLoretto
-    ? "rgba(255,255,255,.42)"
-    : isKeka
-      ? (isKekaCream ? "rgba(116,26,29,.06)" : "rgba(58,7,9,.2)")
-      : surfaceColor;
-  const modalPrimary = isLoretto
-    ? "#2E2A27"
-    : isKeka
-      ? (isKekaCream ? "#741A1D" : "#F4E5C6")
-      : primaryColor;
-  const modalAccentText = isLoretto
-    ? "#F6F0E5"
-    : isKeka
-      ? (isKekaCream ? "#FFF6E6" : "#4A0D10")
-      : accentText;
   const baselineRef = useRef<{
     stamps: number;
     updatedAt: string;
@@ -231,18 +186,18 @@ export default function QrCodeModal({
       <div
         className="relative w-full max-w-sm overflow-hidden rounded-[26px] border p-4 shadow-[0_30px_100px_rgba(0,0,0,0.55)] min-[380px]:rounded-[32px] min-[380px]:p-6"
         style={{
-          borderColor: modalBorder,
-          backgroundColor: modalBackground,
-          color: modalText,
+          borderColor: cardBorder,
+          backgroundColor: cardBackground,
+          color: textPrimary,
           forcedColorAdjust: "none",
-          maxHeight: "calc(100vh - 2rem)",
+          maxHeight: "calc(100dvh - 2rem)",
           overflowY: "auto",
           WebkitOverflowScrolling: "touch",
         }}
       >
         <div
           className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full blur-3xl"
-          style={{ backgroundColor: isLoretto ? "rgba(126,137,127,.11)" : isKeka ? (isKekaCream ? "rgba(116,26,29,.12)" : "rgba(244,229,198,.12)") : primaryGlow }}
+          style={{ backgroundColor: isLoretto ? "rgba(126,137,127,.11)" : primaryGlow }}
         />
 
         <button
@@ -251,9 +206,9 @@ export default function QrCodeModal({
           aria-label={t("Close QR code")}
           className="absolute end-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border transition hover:opacity-75"
           style={{
-            borderColor: modalBorder,
-            backgroundColor: modalSurface,
-            color: modalSecondary,
+            borderColor: cardBorder,
+            backgroundColor: surfaceColor,
+            color: textSecondary,
             touchAction: "manipulation",
           }}
         >
@@ -263,7 +218,7 @@ export default function QrCodeModal({
         <div className="relative text-center">
           {isLoretto ? (
             <div className="mx-auto inline-flex flex-col items-end" aria-label="LORETTO">
-              <div className="flex items-baseline font-serif text-[2.4rem] font-bold uppercase leading-none tracking-[0.02em]" style={{ color: modalText }}>
+              <div className="flex items-baseline font-serif text-[2.4rem] font-bold uppercase leading-none tracking-[0.02em]" style={{ color: textPrimary }}>
                 <span>L</span>
                 <span>O</span>
                 <span className="inline-block" style={{ transform: "scaleX(-1)" }} aria-hidden="true">R</span>
@@ -272,7 +227,7 @@ export default function QrCodeModal({
                 <span>T</span>
                 <span>O</span>
               </div>
-              <p className="mt-1.5 text-[7px] font-semibold uppercase tracking-[0.27em]" style={{ color: modalText }}>
+              <p className="mt-1.5 text-[7px] font-semibold uppercase tracking-[0.27em]" style={{ color: textPrimary }}>
                 Artisan coffee &amp; bakery
               </p>
             </div>
@@ -296,11 +251,11 @@ export default function QrCodeModal({
             </div>
           )}
 
-          <p className="mt-4 text-lg font-semibold" style={{ color: modalText }}>
+          <p className="mt-4 text-lg font-semibold" style={{ color: textPrimary }}>
             {t("Your loyalty code")}
           </p>
 
-          <p className="mt-2 text-sm leading-6" style={{ color: modalSecondary }}>
+          <p className="mt-2 text-sm leading-6" style={{ color: textSecondary }}>
             {arabic
               ? isBarbershop ? "ورّي الكود للحلاق بعد الخدمة المؤهلة." : "ورّي الكود للكاشير بعد عملية شراء مؤهلة."
               : `Show this code to the ${isBarbershop ? "barber" : "cashier"} after an eligible ${isBarbershop ? "service" : "purchase"}.`}
@@ -342,27 +297,27 @@ export default function QrCodeModal({
             />
           </div>
 
-          <p className="mt-3 text-xs" style={{ color: modalMuted }}>
+          <p className="mt-3 text-xs" style={{ color: textMuted }}>
             Your card updates automatically after the scan.
           </p>
 
           <div
             className="mt-5 rounded-2xl border px-4 py-3"
             style={{
-              borderColor: modalBorder,
-              backgroundColor: modalSurface,
+              borderColor: cardBorder,
+              backgroundColor: surfaceColor,
             }}
           >
             <p
               className="text-[10px] font-semibold uppercase tracking-[0.18em]"
-              style={{ color: modalMuted }}
+              style={{ color: textMuted }}
             >
               Member number
             </p>
 
             <p
               className="mt-1 text-sm font-semibold tracking-[0.08em]"
-              style={{ color: modalText }}
+              style={{ color: textPrimary }}
             >
               {memberNumber}
             </p>
@@ -373,8 +328,8 @@ export default function QrCodeModal({
             onClick={onClose}
             className="mt-5 h-12 w-full rounded-2xl text-sm font-semibold transition hover:opacity-90 active:opacity-80"
             style={{
-              backgroundColor: modalPrimary,
-              color: modalAccentText,
+              backgroundColor: primaryColor,
+              color: accentText,
               touchAction: "manipulation",
             }}
           >

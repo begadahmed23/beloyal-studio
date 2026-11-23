@@ -17,6 +17,7 @@ import {
   useState,
 } from "react";
 import { ActionButton } from "@/components/ui/action-button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import BirthdayRewardAction from "@/components/customers/BirthdayRewardAction";
 import MbVapeStamp from "@/components/brand/MbVapeStamp";
 import KatoMark from "@/components/brand/KatoMark";
@@ -537,26 +538,30 @@ export default function CashierMemberList() {
         />
       )}
       {pendingMember && pendingOperation === "redeem" && spendingEnabled && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm" role="presentation">
-          <div role="dialog" aria-modal="true" aria-label="Confirm reward redemption"
-            className="w-full max-w-md space-y-4 rounded-3xl border p-5 shadow-2xl"
-            style={{ backgroundColor: theme.surface, borderColor: theme.border, color: theme.textPrimary }}>
-            <h3 className="text-lg font-semibold">Redeem reward for {pendingMember.name}?</h3>
+        <Dialog open onOpenChange={open => {
+          if (!open && !confirming) { setPendingMember(null); setPendingOperation(null); }
+        }}>
+          <DialogContent className="border" showCloseButton={false}>
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold">Redeem reward for {pendingMember.name}?</DialogTitle>
+              <DialogDescription>A new stamp card starts after redemption. Purchase history is kept.</DialogDescription>
+            </DialogHeader>
             <RewardCycleSpending customerId={pendingMember.id} active={true} />
-            <p className="text-sm" style={{ color: theme.textMuted }}>This starts a new stamp card. Past purchase history is kept.</p>
-            <button type="button" disabled={confirming} onClick={() => {
-              setConfirming(true);
-              void runAction(pendingMember.id, "redeem").finally(() => setConfirming(false));
-            }} className="min-h-12 w-full rounded-xl px-4 font-semibold disabled:opacity-50"
-              style={{ backgroundColor: theme.success, color: theme.buttonText }}>
-              {confirming ? "Redeeming..." : "Confirm redemption"}
-            </button>
-            <button type="button" disabled={confirming} onClick={() => { setPendingMember(null); setPendingOperation(null); }}
-              className="min-h-11 w-full rounded-xl border px-4 text-sm" style={{ borderColor: theme.border }}>
-              Cancel
-            </button>
-          </div>
-        </div>
+            {actions[pendingMember.id]?.status === "error" && (
+              <p role="alert" className="text-sm text-destructive">{t(actions[pendingMember.id].text)}</p>
+            )}
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button type="button" disabled={confirming} onClick={() => { setPendingMember(null); setPendingOperation(null); }}
+                className="min-h-11 rounded-xl border border-border px-4 text-sm font-medium">{t("Cancel")}</button>
+              <ActionButton type="button" pending={confirming} icon={<Gift size={16} />} onClick={() => {
+                setConfirming(true);
+                void runAction(pendingMember.id, "redeem").finally(() => setConfirming(false));
+              }} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground">
+                {t("Confirm redemption")}
+              </ActionButton>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {filteredMembers.length === 0 && (
