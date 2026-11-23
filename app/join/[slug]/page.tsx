@@ -1,8 +1,10 @@
 import { getRewardName } from "@/lib/business/terminology";
 import { CardBrandHeader, cardFrame } from "@/components/loyalty/CardBrand";
 import { baseDashboardPaletteSelect, getBaseDashboardPalette } from "@/lib/business/dashboard-palette";
+import { GOURMEAL, isGourmeal } from "@/lib/business/gourmeal";
 import { dashboardThemeVariables } from "@/lib/cafe-theme";
 import { cookies } from "next/headers";
+import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
@@ -53,6 +55,7 @@ export default async function JoinPage({
   }
 
   const businessTheme = getJoinTheme({ ...cafe, ...getBaseDashboardPalette(cafe) });
+  const gourmeal = isGourmeal(cafe);
 
   /*
    * Check whether this device already has a remembered
@@ -100,8 +103,16 @@ export default async function JoinPage({
           background: businessTheme.shellBackground,
           color: businessTheme.textPrimary,
         }}>
-          <CardBrandHeader business={cafe} logoUrl={cafe.logoUrl} inheritColors />
-          <div className="border-t px-4 pb-6 pt-5 min-[380px]:px-5 sm:px-6"
+          {gourmeal ? (
+            <header className="grid aspect-[2.6] w-full place-items-center border-b-8"
+              style={{ backgroundColor: GOURMEAL.green, borderColor: GOURMEAL.lime }}>
+              <Image src={GOURMEAL.wordmark} alt={cafe.name} width={275} height={55}
+                className="h-auto w-[78%] max-w-[275px]" unoptimized loading="eager" />
+            </header>
+          ) : (
+            <CardBrandHeader business={cafe} logoUrl={cafe.logoUrl} inheritColors />
+          )}
+          <div className={`px-4 pb-6 pt-5 min-[380px]:px-5 sm:px-6 ${gourmeal ? "" : "border-t"}`}
             style={{ borderColor: businessTheme.border }}>
             <JoinForm
               cafeSlug={cafe.slug}
