@@ -235,6 +235,88 @@ test('Wallet registration, idempotency, update discovery, authorization, and dow
 
 process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
 
+test('a dedicated business signs and updates its own Apple passes while existing passes still work', async (t) => {
+  const passType = 'pass.app.getbeloyal.gourmeal';
+  const env = {
+    APPLE_WALLET_BUSINESS_PASS_TYPES: JSON.stringify({ goumeal: passType }),
+    APPLE_WALLET_BUSINESS_GOUMEAL_CERT_PATH: `${tmp}/gourmeal-cert.pem`,
+    APPLE_WALLET_BUSINESS_GOUMEAL_KEY_PATH: `${tmp}/gourmeal-key.pem`,
+  };
+  execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout',
+    env.APPLE_WALLET_BUSINESS_GOUMEAL_KEY_PATH, '-out', env.APPLE_WALLET_BUSINESS_GOUMEAL_CERT_PATH,
+    '-days', '1', '-subj', '/CN=Gourmeal Offline Test'], { stdio: 'ignore' });
+  Object.assign(process.env, env);
+  t.after(() => Object.keys(env).forEach(key => delete process.env[key]));
+
+  const gourmand = { ...member, id: 'gourmeal-member', cafe: { ...member.cafe, name: 'Gourmeal', slug: 'goumeal' } };
+  const { createAppleWalletPass } = load('lib/wallet/apple.ts');
+  const shared = process.env.APPLE_WALLET_PASS_TYPE_ID;
+  assert.notDeepEqual(await config.walletCredential('CERT', passType), await config.walletCredential('CERT', shared));
+  const newPass = JSON.parse(unzipSync(await createAppleWalletPass(gourmand))['pass.json']);
+  assert.equal(newPass.passTypeIdentifier, passType);
+  assert.equal(newPass.serialNumber, gourmand.id);
+  assert.equal(newPass.authenticationToken, config.walletAuthToken(gourmand.id, passType));
+  assert.notEqual(newPass.authenticationToken, config.walletAuthToken(gourmand.id));
+
+  const registrations = [];
+  const route = loader({
+    '@/lib/wallet/messages': { getWalletMessage: async () => null },
+    '@/lib/prisma': { prisma: { customer: {
+      findFirst: async ({ where }) => where.id === gourmand.id ? gourmand : member,
+      findMany: async () => [gourmand, member],
+    } } },
+    '@/lib/public-api-security': { publicApiRateLimiters: { card: 'card' }, applyPublicRateLimit: async () => null },
+    '@/lib/wallet/updates': {
+      deviceKey: (device, type) => `${type}:${device}`,
+      walletRedis: () => ({ smembers: async key => key === `${passType}:device` ? [gourmand.id, member.id] : [member.id] }),
+      registerWalletDevice: async (...args) => { registrations.push(args); return 1; },
+    },
+  })('app/api/wallet/service/v1/[...path]/route.ts');
+  const request = (method, path, token, body) => route[method](new NextRequest(`https://example.com/api/wallet/service/v1/${path.join('/')}`, {
+    method, headers: token ? { authorization: `ApplePass ${token}` } : {}, ...(body ? { body: JSON.stringify(body) } : {}),
+  }), { params: Promise.resolve({ path }) });
+  const payload = { pushToken: 'a'.repeat(64) };
+  const registration = ['devices', 'device', 'registrations', passType, gourmand.id];
+  assert.equal((await request('POST', registration, config.walletAuthToken(gourmand.id), payload)).status, 401);
+  assert.equal((await request('POST', registration, newPass.authenticationToken, payload)).status, 201);
+  assert.deepEqual(registrations[0], ['device', gourmand.id, payload.pushToken, passType]);
+  assert.equal((await request('GET', ['passes', passType, member.id], config.walletAuthToken(member.id, passType))).status, 404);
+  const listing = await request('GET', registration.slice(0, 4));
+  assert.deepEqual((await listing.json()).serialNumbers, [gourmand.id]);
+  for (const type of [passType, shared]) {
+    const download = await request('GET', ['passes', type, gourmand.id], config.walletAuthToken(gourmand.id, type));
+    assert.equal(download.status, 200);
+    const updated = JSON.parse(unzipSync(Buffer.from(await download.arrayBuffer()))['pass.json']);
+    assert.equal(updated.passTypeIdentifier, type);
+  }
+
+  const { EventEmitter } = require('node:events');
+  const topics = [];
+  const dedicatedCert = await config.walletCredential('CERT', passType);
+  const update = loader({
+    '@/lib/prisma': { prisma: {} },
+    '@upstash/redis': { Redis: class {
+      async hgetall(key) { return key === update.passKey(gourmand.id, passType) ? { device: payload.pushToken } : null; }
+    } },
+    'node:http2': { connect: (_url, credentials) => {
+      assert.deepEqual(credentials.cert, dedicatedCert);
+      const session = new EventEmitter();
+      session.destroy = () => {};
+      session.request = headers => {
+        topics.push(headers['apns-topic']);
+        const req = new EventEmitter();
+        req.end = () => queueMicrotask(() => { req.emit('response', { ':status': 200 }); req.emit('end'); });
+        return req;
+      };
+      queueMicrotask(() => session.emit('connect'));
+      return session;
+    } },
+  })('lib/wallet/updates.ts');
+  assert.notEqual(update.passKey(gourmand.id), update.passKey(gourmand.id, passType));
+  assert.deepEqual(await update.notifyWalletMember(gourmand.id, false, gourmand.cafe.slug), { registered: 1, accepted: 1, failed: 0 });
+  assert.deepEqual(topics, [passType]);
+});
+
 test('push runs after response, removes expired device tokens, and contains delivery failures', async () => {
   const { EventEmitter } = require('node:events');
   const pending = [], removals = [], requests = [];

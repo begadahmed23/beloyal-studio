@@ -1,5 +1,5 @@
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
-import { walletUpdatesEnabled } from "./config";
+import { walletPassTypesForBusiness, walletUpdatesEnabled } from "./config";
 import { googleWalletEnabled, googleWalletSavedObjects, googleWalletObjectId, sendGoogleWalletMessage } from "./google";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
@@ -25,6 +25,7 @@ export async function walletAudience(cafeId: string, timezone: string, now = new
   if (members.length > 10000) throw new Error("AUDIENCE_TOO_LARGE");
   const cafe = await prisma.cafe.findUnique({ where: { id: cafeId }, select: { slug: true } });
   const appleEnabled = walletUpdatesEnabled();
+  const passTypes = appleEnabled ? walletPassTypesForBusiness(cafe?.slug) : [];
   let googleIds = new Set<string>();
   let googleUnavailable = false;
   if (cafe) {
@@ -43,13 +44,15 @@ export async function walletAudience(cafeId: string, timezone: string, now = new
     let counts: number[] = [];
     if (appleEnabled) {
       const pipeline = walletRedis().pipeline();
-      for (const member of batch) pipeline.hlen(passKey(member.id));
+      for (const member of batch) {
+        for (const type of passTypes) pipeline.hlen(passKey(member.id, type));
+      }
       counts = await pipeline.exec<number[]>();
     }
     for (let i = 0; i < batch.length; i++) {
       const member = batch[i];
       const google = googleIds.size > 0 && googleIds.has(googleWalletObjectId(member.id));
-      const apple = Number.isFinite(counts[i]) && counts[i] > 0 ? counts[i] : 0;
+      const apple = passTypes.reduce((total, _, offset) => total + (counts[i * passTypes.length + offset] || 0), 0);
       if (!apple && !google) continue;
       const offersStatus = member.marketingWithdrawnAt ? "withdrawn" : member.marketingConsentAt ? "enabled" : "missing";
       const lastVisit = member.transactions[0]?.createdAt ?? null;
@@ -98,7 +101,7 @@ export async function sendCampaign(campaign: WalletCampaign, eligibleIds: Set<st
       try {
         if (!eligibleIds.has(recipient.id)) { recipient.status = "skipped"; return; }
         // Recheck ownership and registration at send time (e.g. pass removed after preview).
-        const member = await prisma.customer.findFirst({ where: { id: recipient.id, cafeId: campaign.cafeId, marketingConsentAt: { not: null }, marketingWithdrawnAt: null }, select: { cafe: { select: { timezone: true } } } });
+        const member = await prisma.customer.findFirst({ where: { id: recipient.id, cafeId: campaign.cafeId, marketingConsentAt: { not: null }, marketingWithdrawnAt: null }, select: { cafe: { select: { slug: true, timezone: true } } } });
         if (!member) { recipient.status = "skipped"; return; }
         if (campaign.segment === "birthday_today") {
           const year = new Intl.DateTimeFormat("en", { year: "numeric", timeZone: member.cafe.timezone }).format(new Date());
@@ -106,10 +109,13 @@ export async function sendCampaign(campaign: WalletCampaign, eligibleIds: Set<st
           if (!await walletRedis().set(birthdayKey, campaign.id, { nx: true, ex: 366 * 86400 })) { recipient.status = "skipped"; return; }
         }
         let accepted = 0, failed = 0;
-        if (walletUpdatesEnabled() && await walletRedis().hlen(passKey(recipient.id)) && (await getWalletMessage(recipient.id))?.text !== campaign.message) {
+        const appleRegistrations = walletUpdatesEnabled() ? await Promise.all(
+          walletPassTypesForBusiness(member.cafe.slug).map(type => walletRedis().hlen(passKey(recipient.id, type))),
+        ) : [];
+        if (appleRegistrations.some(count => count > 0) && (await getWalletMessage(recipient.id))?.text !== campaign.message) {
           try {
             await setWalletMessage(recipient.id, campaign.message);
-            const result = await notifyWalletMember(recipient.id);
+            const result = await notifyWalletMember(recipient.id, false, member.cafe.slug);
             accepted += result?.accepted ?? 0; failed += result?.failed ?? 0;
           } catch { failed++; }
         }

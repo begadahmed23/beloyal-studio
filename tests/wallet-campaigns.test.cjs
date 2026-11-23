@@ -50,7 +50,7 @@ test('audience lists saved cards with consent status and keeps Apple available o
   ];
   const lib = loader({
     '@/lib/prisma': { prisma: { customer: { findMany: async q => { query = q; return rows; } }, cafe: { findUnique: async () => ({ slug: 'loretto' }) } } },
-    './config': { walletUpdatesEnabled: () => true },
+    './config': { walletUpdatesEnabled: () => true, walletPassTypesForBusiness: () => [undefined] },
     './google': { googleWalletObjectId: id => id, googleWalletSavedObjects: async () => {
       if (failGoogle) throw new Error('unavailable');
       return new Set(['google']);
@@ -109,7 +109,7 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
   const redis = { set: async (key, value, opts) => { if (opts?.nx && records.has(key)) return null; records.set(key, structuredClone(value)); return 'OK'; }, get: async key => records.get(key),
     zadd: async () => 1, zremrangebyrank: async () => 0, hlen: async key => key.includes('removed') ? 0 : 1 };
   const lib = loader({ '@/lib/prisma': { prisma: { customer: { findFirst: async ({ where }) => where.cafeId === 'cafe1' ? { cafe: { timezone: 'Africa/Cairo' } } : null } } },
-    './config': { walletUpdatesEnabled: () => true },
+    './config': { walletUpdatesEnabled: () => true, walletPassTypesForBusiness: () => [undefined] },
     './updates': { passKey: id => id, walletRedis: () => redis, notifyWalletMember: async () => { pushes++; return { accepted: 1, failed: 0 }; } },
     './messages': { getWalletMessage: async id => id === 'same' ? { text: 'Hello' } : null, setWalletMessage: async () => {} },
   })('lib/wallet/campaigns.ts');
@@ -237,7 +237,7 @@ test('Studio and the owning business admin can delete completed history entries'
     {...base,id:'barber1',cafe:barber,stamps:1}, {...base,id:'barber2',cafe:barber,stamps:2},
   ];
   const lib = loader({ '@/lib/prisma': {prisma:{customer:{findMany:async()=>rows},cafe:{findUnique:async()=>null}}},
-    './config': {walletUpdatesEnabled:()=>true},
+    './config': {walletUpdatesEnabled:()=>true, walletPassTypesForBusiness:()=>[undefined]},
     './updates':{passKey:id=>id,walletRedis:()=>({pipeline:()=>({hlen(){},exec:async()=>rows.map(()=>1)})})}
   })('lib/wallet/campaigns.ts');
   const audience = await lib.walletAudience('cafe1','Africa/Cairo');

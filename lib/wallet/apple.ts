@@ -2,7 +2,7 @@ import { getRewardName } from "../business/terminology";
 import type { BusinessType } from "@prisma/client";
 import { walletLocations } from "./notification-text";
 import { walletProgressChangeMessage, type WalletNotificationSettings } from "./notification-text";
-import { walletCredential as credential, walletUpdatesEnabled, walletAuthToken } from "./config";
+import { businessWalletPassType, walletCredential as credential, walletKeyPassphrase, walletUpdatesEnabled, walletAuthToken } from "./config";
 export { appleWalletEnabled } from "./config";
 import { businessCardArtwork } from "../business/card-artwork";
 import { getLoyaltyProgressTarget } from "../business/loyalty-target";
@@ -65,7 +65,12 @@ async function uploadedLogo(url: string | null | undefined) {
   }
 }
 
-export async function createAppleWalletPass(member: WalletMember, message?: string, notificationSettings?: WalletNotificationSettings) {
+export async function createAppleWalletPass(
+  member: WalletMember,
+  message?: string,
+  notificationSettings?: WalletNotificationSettings,
+  passType = businessWalletPassType(member.cafe.slug) ?? process.env.APPLE_WALLET_PASS_TYPE_ID!,
+) {
   const site = new URL(process.env.APPLE_WALLET_SITE_URL!);
   if (site.protocol !== "https:" && site.hostname !== "localhost") {
     throw new Error("Wallet site URL must use HTTPS.");
@@ -142,16 +147,16 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
       "strip.png": await sharp(strip).resize(375, stripHeight).png().toBuffer(),
       "strip@2x.png": await sharp(strip).resize(750, stripHeight * 2).png().toBuffer(),
       "strip@3x.png": strip },
-    { signerCert: await credential("CERT"), signerKey: await credential("KEY"),
-      wwdr: await credential("WWDR"), signerKeyPassphrase: process.env.APPLE_WALLET_KEY_PASSPHRASE },
+    { signerCert: await credential("CERT", passType), signerKey: await credential("KEY", passType),
+      wwdr: await credential("WWDR"), signerKeyPassphrase: walletKeyPassphrase(passType) },
     { serialNumber: member.id,
-      passTypeIdentifier: process.env.APPLE_WALLET_PASS_TYPE_ID!,
+      passTypeIdentifier: passType,
       teamIdentifier: process.env.APPLE_WALLET_TEAM_ID!,
       ...(nearby ? { maxDistance: nearby.nearbyMaxDistance ?? 150 } : walid ? { maxDistance: 150 } : {}),
       organizationName: displayName,
       ...(gourmeal ? {} : { logoText: displayName }),
       description: `${displayName} loyalty card`,
-      ...(walletUpdatesEnabled() ? { webServiceURL: process.env.APPLE_WALLET_WEB_SERVICE_URL!.replace(/\/$/, ""), authenticationToken: walletAuthToken(member.id) } : {}),
+      ...(walletUpdatesEnabled() ? { webServiceURL: process.env.APPLE_WALLET_WEB_SERVICE_URL!.replace(/\/$/, ""), authenticationToken: walletAuthToken(member.id, passType) } : {}),
       backgroundColor: rgb(background), foregroundColor: rgb(foreground), labelColor: rgb(gourmeal ? GOURMEAL.sand : foreground) },
   );
   pass.type = "storeCard";
