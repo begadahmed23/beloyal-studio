@@ -1,1 +1,1 @@
-export const BELOYAL_DOMAIN = "GETbeloyal.app";
+export const BELOYAL_DOMAIN = "getbeloyal.app";
