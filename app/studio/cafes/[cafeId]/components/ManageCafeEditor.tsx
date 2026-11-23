@@ -27,7 +27,7 @@ import {
 } from "react";
 
 import ThemeGallery from "@/components/theme/ThemeGallery";
-import { getDashboardThemeColors, type CafeThemeName as CafeTheme } from "@/lib/cafe-theme";
+import { getDashboardThemeColors, type DashboardThemeName as CafeTheme } from "@/lib/cafe-theme";
 import StaffManagementPanel from "@/components/staff/StaffManagementPanel";
 import SubscriptionControlPanel, {
   type SubscriptionDraft,

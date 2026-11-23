@@ -1,6 +1,6 @@
 import { getRewardName } from "@/lib/business/terminology";
 import { CardBrandHeader, cardFrame } from "@/components/loyalty/CardBrand";
-import { dashboardPaletteSelect, getDashboardPalette } from "@/lib/business/dashboard-palette";
+import { baseDashboardPaletteSelect, getBaseDashboardPalette } from "@/lib/business/dashboard-palette";
 import { dashboardThemeVariables } from "@/lib/cafe-theme";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
@@ -41,7 +41,7 @@ export default async function JoinPage({
       primaryColor: true,
       secondaryColor: true,
       backgroundColor: true,
-      ...dashboardPaletteSelect,
+      ...baseDashboardPaletteSelect,
       rewardTarget: true,
       rewardName: true,
       isActive: true,
@@ -52,7 +52,7 @@ export default async function JoinPage({
     notFound();
   }
 
-  const businessTheme = getJoinTheme({ ...cafe, ...getDashboardPalette(cafe) });
+  const businessTheme = getJoinTheme({ ...cafe, ...getBaseDashboardPalette(cafe) });
 
   /*
    * Check whether this device already has a remembered

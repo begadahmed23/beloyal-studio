@@ -1,10 +1,10 @@
-import { CafeTheme } from "@prisma/client";
+import { isDashboardTheme, type DashboardThemeName } from "@/lib/cafe-theme";
 import type { DashboardSettingsSection } from "@/lib/business/settings-sections";
 
 export type CafeSettingsInput = {
   name: string;
   logoUrl: string | null;
-  theme: CafeTheme;
+  theme: DashboardThemeName;
 
   primaryColor: string;
   secondaryColor: string;
@@ -177,14 +177,12 @@ function validateBranding(body: SettingsBody) {
     throw new Error("Theme is required.");
   }
 
-  const validThemes = Object.values(CafeTheme);
-
-  if (!validThemes.includes(body.theme as CafeTheme)) {
+  if (!isDashboardTheme(body.theme)) {
     throw new Error("Invalid business theme.");
   }
 
   return {
-    theme: body.theme as CafeTheme,
+    theme: body.theme,
     ...("primaryColor" in body ? { primaryColor: validateColor(body.primaryColor, "#8e6045") } : {}),
     ...("secondaryColor" in body ? { secondaryColor: validateColor(body.secondaryColor, "#d6b08c") } : {}),
     ...("backgroundColor" in body ? { backgroundColor: validateColor(body.backgroundColor, "#0c0c0c") } : {}),

@@ -1,7 +1,7 @@
-import { dashboardPaletteSelect, getDashboardPalette } from "@/lib/business/dashboard-palette";
+import { dashboardPaletteSelect, dashboardPaletteUpdate, getDashboardPalette } from "@/lib/business/dashboard-palette";
+import { isDashboardTheme } from "@/lib/cafe-theme";
 import { NextRequest, NextResponse } from "next/server";
 import {
-  CafeTheme,
   Prisma,
   SubscriptionStatus,
 } from "@prisma/client";
@@ -222,6 +222,7 @@ export async function PATCH(
       select: {
         id: true,
         slug: true,
+        dashboardPaletteOverride: true,
         user: {
           select: {
             id: true,
@@ -327,27 +328,16 @@ export async function PATCH(
       data.logoUrl = value;
     }
 
-    if ("theme" in body) {
-      if (
-        typeof body.theme !== "string" ||
-        !Object.values(CafeTheme).includes(
-          body.theme as CafeTheme
-        )
-      ) {
-        return NextResponse.json(
-          { message: "Invalid café theme." },
-          { status: 400 }
-        );
-      }
-
-      data.dashboardTheme = body.theme as CafeTheme;
+    const theme = isDashboardTheme(body.theme) ? body.theme : undefined;
+    if ("theme" in body && theme === undefined) {
+      return NextResponse.json(
+        { message: "Invalid café theme." },
+        { status: 400 }
+      );
     }
 
-    for (const [field, column] of [
-      ["primaryColor", "dashboardPrimaryColor"],
-      ["secondaryColor", "dashboardSecondaryColor"],
-      ["backgroundColor", "dashboardBackgroundColor"],
-    ] as const) {
+    const palette: Parameters<typeof dashboardPaletteUpdate>[0] = { theme };
+    for (const field of ["primaryColor", "secondaryColor", "backgroundColor"] as const) {
       if (field in body) {
         const value = requiredText(body[field]);
 
@@ -358,9 +348,10 @@ export async function PATCH(
           );
         }
 
-        data[column] = value;
+        palette[field] = value;
       }
     }
+    Object.assign(data, dashboardPaletteUpdate(palette, existing.dashboardPaletteOverride));
 
     if ("rewardTarget" in body) {
       const value = Number(body.rewardTarget);

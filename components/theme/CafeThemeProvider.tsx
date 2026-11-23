@@ -15,7 +15,7 @@ import { useRouter } from "next/navigation";
 
 import {
   CafeThemeConfig,
-  CafeThemeName,
+  DashboardThemeName,
   getBusinessTheme,
   getDashboardTheme,
 } from "@/lib/cafe-theme";
@@ -71,19 +71,19 @@ export type CafeSettings = {
 };
 
 type CafeThemeContextValue = {
-  themeName: CafeThemeName;
+  themeName: DashboardThemeName;
   userRole: "CAFE_ADMIN" | "CASHIER";
   accountEmail: string;
-  savedThemeName: CafeThemeName;
+  savedThemeName: DashboardThemeName;
   theme: CafeThemeConfig;
   cafe: CafeSettings;
 
-  setPreviewTheme: (themeName: CafeThemeName) => void;
+  setPreviewTheme: (themeName: DashboardThemeName) => void;
   resetPreviewTheme: () => void;
 
   applySavedSettings: (
     cafe: CafeSettings,
-    themeName: CafeThemeName,
+    themeName: DashboardThemeName,
   ) => void;
 };
 
@@ -176,7 +176,7 @@ const DASHBOARD_REFRESH_AFTER_HIDDEN_MS = 30_000;
 const DASHBOARD_REFRESH_THROTTLE_MS = 10_000;
 
 type Props = {
-  themeName: CafeThemeName;
+  themeName: DashboardThemeName;
   cafe: CafeSettings;
   userRole: "CAFE_ADMIN" | "CASHIER";
   accountEmail: string;
@@ -199,10 +199,10 @@ export default function CafeThemeProvider({
     useState<CafeSettings>(cafe);
 
   const [savedThemeName, setSavedThemeName] =
-    useState<CafeThemeName>(themeName);
+    useState<DashboardThemeName>(themeName);
 
   const [previewThemeName, setPreviewThemeName] =
-    useState<CafeThemeName | null>(null);
+    useState<DashboardThemeName | null>(null);
 
   const [receivedCafe, setReceivedCafe] = useState(cafe);
   const [receivedThemeName, setReceivedThemeName] = useState(themeName);
@@ -276,7 +276,7 @@ export default function CafeThemeProvider({
   }, [router]);
 
   const setPreviewTheme = useCallback(
-    (newThemeName: CafeThemeName) => {
+    (newThemeName: DashboardThemeName) => {
       setPreviewThemeName(newThemeName);
     },
     [],
@@ -289,7 +289,7 @@ export default function CafeThemeProvider({
   const applySavedSettings = useCallback(
     (
       updatedCafe: CafeSettings,
-      updatedThemeName: CafeThemeName,
+      updatedThemeName: DashboardThemeName,
     ) => {
       setCurrentCafe(updatedCafe);
       setSavedThemeName(updatedThemeName);

@@ -9,8 +9,11 @@ export type CafeThemeName =
 
 export type ThemeBusinessType = BusinessType;
 
+export const APPLE_GREEN_DASHBOARD_THEME = "APPLE_GREEN";
+export type DashboardThemeName = CafeThemeName | typeof APPLE_GREEN_DASHBOARD_THEME;
+
 export type BusinessThemeOption = {
-  value: CafeThemeName;
+  value: DashboardThemeName;
   label: string;
   description: string;
 };
@@ -416,7 +419,7 @@ const sharedTheme = {
   radiusMedium: "8px",
 };
 
-const dashboardThemes: Record<CafeThemeName, CafeThemeConfig> = {
+const dashboardThemes: Record<DashboardThemeName, CafeThemeConfig> = {
   MODERN_MINIMAL: {
     ...sharedTheme,
     pageBackground: "#e9e4d8",
@@ -468,6 +471,23 @@ const dashboardThemes: Record<CafeThemeName, CafeThemeConfig> = {
     inputBackground: "#e8ecdf",
     inputBorder: "#7d8976",
   },
+  APPLE_GREEN: {
+    ...sharedTheme,
+    pageBackground: "#e9e8e4",
+    surface: "#f7f6f2",
+    surfaceRaised: "#ddd1c1",
+    border: "#c5bbab",
+    textPrimary: "#294b38",
+    textSecondary: "#405747",
+    textMuted: "#4e6153",
+    accent: "#294b38",
+    accentHover: "#203b2c",
+    accentSoft: "#9acd32",
+    accentText: "#e9e8e4",
+    buttonText: "#e9e8e4",
+    inputBackground: "#f7f6f2",
+    inputBorder: "#758478",
+  },
   MEDITERRANEAN_BLUE: {
     ...sharedTheme,
     pageBackground: "#ffffff",
@@ -516,14 +536,19 @@ export const dashboardThemeOptions: BusinessThemeOption[] = [
   { value: "DARK_LUXURY", label: "Black", description: "White accents on black." },
   { value: "MODERN_MINIMAL", label: "Beige", description: "Beige with charcoal accents." },
   { value: "ORGANIC", label: "Green", description: "Green accents on light green." },
+  { value: "APPLE_GREEN", label: "Apple Green", description: "Apple green and dark green with stone and sand." },
 ];
 
-export function getDashboardThemeColors(themeName: CafeThemeName): [string, string, string] {
+export function isDashboardTheme(value: unknown): value is DashboardThemeName {
+  return dashboardThemeOptions.some((option) => option.value === value);
+}
+
+export function getDashboardThemeColors(themeName: DashboardThemeName): [string, string, string] {
   const theme = dashboardThemes[themeName];
   return [theme.accent, theme.accentHover, theme.pageBackground];
 }
 
-export function getDashboardTheme(themeName: CafeThemeName, saved?: BrandColors): CafeThemeConfig {
+export function getDashboardTheme(themeName: DashboardThemeName, saved?: BrandColors): CafeThemeConfig {
   const base = dashboardThemes[themeName];
   const defaults = getDashboardThemeColors(themeName);
   const values = [saved?.primaryColor, saved?.secondaryColor, saved?.backgroundColor].map((color, i) =>
