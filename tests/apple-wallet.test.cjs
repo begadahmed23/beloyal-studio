@@ -222,6 +222,7 @@ test('Wallet registration, idempotency, update discovery, authorization, and dow
   assert.equal((await request('GET',listing,{},null,`?passesUpdatedSince=${data.lastUpdated}`)).status,200);
   const download = await request('GET',['passes',type,member.id],auth);
   const updatedPass = JSON.parse(unzipSync(Buffer.from(await download.clone().arrayBuffer()))['pass.json']);
+  assert.equal(updatedPass.storeCard.backFields.find(f => f.key === 'provider').value, 'getbeloyal.app');
   assert.equal(updatedPass.storeCard.backFields.find(f => f.key === 'member-message').value, walletMessage.text);
   assert.equal(updatedPass.storeCard.headerFields[0].value, '3/6');
   assert.equal(download.status,200); assert.equal(download.headers.get('content-type'),'application/vnd.apple.pkpass');
