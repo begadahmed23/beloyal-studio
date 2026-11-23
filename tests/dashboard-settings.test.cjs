@@ -3,11 +3,29 @@ const assert = require("node:assert/strict");
 const { readFileSync } = require("node:fs");
 const ts = require("typescript");
 
-const validation = {};
-const source = ts.transpileModule(readFileSync("app/api/cafe/settings/validation.ts", "utf8"), {
-  compilerOptions: { module: ts.ModuleKind.CommonJS },
-}).outputText;
-new Function("exports", "require", source)(validation, require);
+function load(path, resolve = require) {
+  const exports = {};
+  const { outputText } = ts.transpileModule(readFileSync(path, "utf8"), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS },
+  });
+  new Function("exports", "require", outputText)(exports, resolve);
+  return exports;
+}
+
+const themes = load("lib/cafe-theme.ts");
+const validation = load("app/api/cafe/settings/validation.ts", (id) =>
+  id === "@/lib/cafe-theme" ? themes : require(id),
+);
+const mbVape = load("lib/business/mb-vape.ts");
+const { dashboardPaletteUpdate, getBaseDashboardPalette, getDashboardPalette } = load(
+  "lib/business/dashboard-palette.ts",
+  (id) => id === "./mb-vape" ? mbVape : id === "../cafe-theme" ? themes : require(id),
+);
+const savedBusiness = {
+  slug: "sample-cafe", businessType: "CAFE",
+  theme: "COFFEE_CLASSIC", primaryColor: "#7b4f35", secondaryColor: "#6f4a35", backgroundColor: "#f3ede5",
+  dashboardTheme: null, dashboardPrimaryColor: null, dashboardSecondaryColor: null, dashboardBackgroundColor: null,
+};
 
 test("a section validates and returns only the fields it owns", () => {
   const validate = validation.validateCafeSettingsPatch;
@@ -38,29 +56,13 @@ test("cached clients can still submit the previously supported full payload", ()
 });
 
 test("saving dashboard branding leaves the customer card palette intact", () => {
-  function load(path, resolve = require) {
-    const exports = {};
-    const { outputText } = ts.transpileModule(readFileSync(path, "utf8"), {
-      compilerOptions: { module: ts.ModuleKind.CommonJS },
-    });
-    new Function("exports", "require", outputText)(exports, resolve);
-    return exports;
-  }
-
-  const mbVape = load("lib/business/mb-vape.ts");
-  const { dashboardPaletteUpdate, getDashboardPalette } = load(
-    "lib/business/dashboard-palette.ts",
-    (id) => id === "./mb-vape" ? mbVape : require(id),
-  );
-  const savedBusiness = {
-    slug: "sample-cafe", businessType: "CAFE",
-    theme: "COFFEE_CLASSIC", primaryColor: "#7b4f35", secondaryColor: "#6f4a35", backgroundColor: "#f3ede5",
-    dashboardTheme: null, dashboardPrimaryColor: null, dashboardSecondaryColor: null, dashboardBackgroundColor: null,
-  };
   assert.equal(getDashboardPalette(savedBusiness).hasDashboardPalette, false);
 
   const paletteChange = dashboardPaletteUpdate({ theme: "DARK_LUXURY", primaryColor: "#debb93" });
-  assert.deepEqual(paletteChange, { dashboardTheme: "DARK_LUXURY", dashboardPrimaryColor: "#debb93" });
+  assert.deepEqual(paletteChange, {
+    dashboardTheme: "DARK_LUXURY", dashboardPrimaryColor: "#debb93",
+    dashboardPaletteOverride: require("@prisma/client").Prisma.DbNull,
+  });
 
   const updatedBusiness = { ...savedBusiness, ...paletteChange };
   assert.equal(updatedBusiness.theme, savedBusiness.theme);
@@ -68,4 +70,22 @@ test("saving dashboard branding leaves the customer card palette intact", () => 
   assert.equal(getDashboardPalette(updatedBusiness).theme, "DARK_LUXURY");
   assert.equal(getDashboardPalette(updatedBusiness).primaryColor, "#debb93");
   assert.equal(getDashboardPalette(updatedBusiness).secondaryColor, savedBusiness.secondaryColor);
+});
+
+test("Apple Green changes dashboard colors while preserving the palette used by the join page", () => {
+  const business = { ...savedBusiness, dashboardTheme: "ORGANIC", dashboardPrimaryColor: "#395447" };
+  const branding = validation.validateCafeSettingsPatch({ section: "branding", theme: "APPLE_GREEN" });
+  const updated = { ...business, ...dashboardPaletteUpdate(branding) };
+  const dashboard = getDashboardPalette(updated);
+
+  assert.equal(dashboard.theme, "APPLE_GREEN");
+  assert.equal(dashboard.hasDashboardPalette, true);
+  assert.equal(themes.getDashboardTheme(dashboard.theme, dashboard).accentSoft, "#9acd32");
+  assert.equal(dashboard.primaryColor, "#294b38");
+  assert.equal(dashboard.backgroundColor, "#e9e8e4");
+  assert.deepEqual(getBaseDashboardPalette(updated), getBaseDashboardPalette(business));
+
+  const custom = dashboardPaletteUpdate({ backgroundColor: "#eeeeee" }, updated.dashboardPaletteOverride);
+  assert.equal(getDashboardPalette({ ...updated, ...custom }).backgroundColor, "#eeeeee");
+  assert.equal(getDashboardPalette({ ...updated, ...dashboardPaletteUpdate({ theme: "ORGANIC" }) }).theme, "ORGANIC");
 });

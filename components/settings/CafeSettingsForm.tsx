@@ -39,13 +39,13 @@ import {
 import {
   getDashboardThemeColors,
   type CafeThemeConfig,
-  type CafeThemeName,
+  type DashboardThemeName,
 } from "@/lib/cafe-theme";
 
 type FormState = {
   name: string;
   logoUrl: string;
-  theme: CafeThemeName;
+  theme: DashboardThemeName;
 
   rewardTarget: string;
   rewardName: string;
@@ -151,7 +151,7 @@ export default function CafeSettingsForm() {
     setMessage(null);
   }
 
-  function selectTheme(newTheme: CafeThemeName) {
+  function selectTheme(newTheme: DashboardThemeName) {
     updateField("theme", newTheme);
     setPreviewTheme(newTheme);
   }

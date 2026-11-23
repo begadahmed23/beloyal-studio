@@ -1,11 +1,11 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { dashboardThemeOptions, getDashboardTheme, type CafeThemeName } from "@/lib/cafe-theme";
+import { dashboardThemeOptions, getDashboardTheme, type DashboardThemeName } from "@/lib/cafe-theme";
 
 export default function ThemeGallery({ value, onChange, disabled }: {
   value: string;
-  onChange: (theme: CafeThemeName) => void;
+  onChange: (theme: DashboardThemeName) => void;
   disabled?: boolean;
 }) {
   return (
@@ -27,7 +27,7 @@ export default function ThemeGallery({ value, onChange, disabled }: {
               {selected && <Check size={16} className="shrink-0" aria-hidden />}
             </span>
             <span aria-hidden className="mt-3 flex -space-x-1.5 rtl:space-x-reverse">
-              {[palette.pageBackground, palette.surface, palette.border, palette.textPrimary, palette.accent].map((color, index) => (
+              {[palette.pageBackground, palette.surface, palette.surfaceRaised, palette.accent, palette.accentSoft].map((color, index) => (
                 <span key={index} className="size-6 rounded-full border" style={{ backgroundColor: color, borderColor: palette.surfaceRaised }} />
               ))}
             </span>

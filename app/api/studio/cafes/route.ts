@@ -1,4 +1,4 @@
-import { dashboardPaletteSelect, getDashboardPalette } from "@/lib/business/dashboard-palette";
+import { dashboardPaletteSelect, dashboardPaletteUpdate, getDashboardPalette } from "@/lib/business/dashboard-palette";
 import { NextRequest, NextResponse } from "next/server";
 import { BusinessType, Prisma } from "@prisma/client";
 
@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSuperAdmin } from "@/lib/require-super-admin";
 import {
   getBusinessThemeColors,
+  APPLE_GREEN_DASHBOARD_THEME,
   dashboardThemeOptions,
   DEFAULT_DASHBOARD_THEME,
   getDashboardThemeColors,
@@ -736,7 +737,8 @@ export async function POST(
     const cardTheme = getDefaultBusinessTheme(businessType);
     const [primaryColor, secondaryColor, backgroundColor] = getBusinessThemeColors(cardTheme, businessType);
 
-    const [dashboardPrimaryColor, dashboardSecondaryColor, dashboardBackgroundColor] = getDashboardThemeColors(savedTheme);
+    const baseDashboardTheme = savedTheme === APPLE_GREEN_DASHBOARD_THEME ? DEFAULT_DASHBOARD_THEME : savedTheme;
+    const [dashboardPrimaryColor, dashboardSecondaryColor, dashboardBackgroundColor] = getDashboardThemeColors(baseDashboardTheme);
 
     const cafe =
       await prisma.cafe.create({
@@ -753,10 +755,11 @@ export async function POST(
           primaryColor,
           secondaryColor,
           backgroundColor,
-          dashboardTheme: savedTheme,
+          dashboardTheme: baseDashboardTheme,
           dashboardPrimaryColor,
           dashboardSecondaryColor,
           dashboardBackgroundColor,
+          ...(savedTheme === APPLE_GREEN_DASHBOARD_THEME && dashboardPaletteUpdate({ theme: savedTheme })),
 
           rewardTarget,
 

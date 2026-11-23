@@ -21,6 +21,7 @@ model Cafe {
   dashboardPrimaryColor         String?
   dashboardSecondaryColor       String?
   dashboardBackgroundColor      String?
+  dashboardPaletteOverride      Json?
   rewardTarget                  Int                        @default(7)
   rewardName                    String                     @default("Free Drink")
   rewardDescription             String?
