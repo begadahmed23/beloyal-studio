@@ -42,6 +42,7 @@ import {
 } from "next/navigation";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 import { getMbVapeBrandColors, isMbVape, MB_VAPE_LOGO_URL } from "@/lib/business/mb-vape";
+import { GOURMEAL, isGourmeal } from "@/lib/business/gourmeal";
 import { getBusinessBrandColors } from "@/lib/cafe-theme";
 
 type FeedbackResponse = {
@@ -79,6 +80,9 @@ function getLoaderTheme(
   customer: Customer,
 ): LoaderTheme {
   const cafe = getMbVapeBrandColors(customer.cafe);
+  if (isGourmeal(cafe)) {
+    return { background: GOURMEAL.stone, foreground: GOURMEAL.green };
+  }
 
   const normalizedCafeName = cafe.name
     .normalize("NFD")
@@ -1321,6 +1325,7 @@ const visibleStamps = rewardReady
       unlockAt,
     );
 
+  const gourmeal = isGourmeal(customer.cafe);
   const brand = getMbVapeBrandColors(customer.cafe);
   const [
     barberPrimaryColor,
@@ -1333,7 +1338,7 @@ const visibleStamps = rewardReady
   );
 
   const primaryColor = normalizeHex(
-    isLoretto
+    gourmeal ? GOURMEAL.green : isLoretto
       ? "#4A3D34"
       : isKato
       ? "#0B2343"
@@ -1345,7 +1350,7 @@ const visibleStamps = rewardReady
 
   const secondaryColor =
     normalizeHex(
-      isLoretto
+      gourmeal ? GOURMEAL.lime : isLoretto
         ? "#7E897F"
         : isKato
         ? "#5E7188"
@@ -1357,7 +1362,7 @@ const visibleStamps = rewardReady
 
   const backgroundColor =
     normalizeHex(
-      isLoretto
+      gourmeal ? GOURMEAL.stone : isLoretto
         ? customer.cafe.theme === "DARK_LUXURY" ? "#E9DFC9" : "#F3EBDD"
         : isKato
         ? "#F4F7FA"
@@ -1371,7 +1376,7 @@ const visibleStamps = rewardReady
     isLightColor(backgroundColor);
 
   const isKekaCream = isKeka && customer.cafe.theme === "MODERN_MINIMAL";
-  const cardBackground = isLoretto
+  const cardBackground = gourmeal ? GOURMEAL.stone : isLoretto
     ? backgroundColor
     : isKeka
       ? (isKekaCream ? "#FFF6E6" : "#741A1D")
@@ -1389,13 +1394,13 @@ const visibleStamps = rewardReady
     isLightColor(cardBackground);
 
   const textPrimary =
-    getReadableText(cardBackground);
+    gourmeal ? GOURMEAL.green : getReadableText(cardBackground);
 
-  const textSecondary = cardIsLight
+  const textSecondary = gourmeal ? "#344E3D" : cardIsLight
     ? withAlpha("#171717", 0.68)
     : withAlpha("#FFFFFF", 0.7);
 
-  const textMuted = cardIsLight
+  const textMuted = gourmeal ? "#3B5042" : cardIsLight
     ? withAlpha("#171717", 0.5)
     : withAlpha("#FFFFFF", 0.48);
 
@@ -1500,7 +1505,7 @@ const visibleStamps = rewardReady
         WebkitTextSizeAdjust: "100%",
         textSizeAdjust: "100%",
         color: textPrimary,
-        background: isLoretto
+        background: gourmeal ? `linear-gradient(180deg,${GOURMEAL.stone},${GOURMEAL.sand})` : isLoretto
           ? getLorettoPageTheme(customer.cafe.theme).background
           : isKeka
             ? "linear-gradient(180deg,#F5E7D2 0%,#E8D2B8 100%)"

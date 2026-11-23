@@ -15,14 +15,35 @@ const compile = filename => ts.transpileModule(fs.readFileSync(filename, 'utf8')
 }).outputText;
 function loadPureModule(filename) {
  const exports = {};
- vm.runInNewContext(compile(filename), { exports });
+ vm.runInNewContext(compile(filename), { exports, require });
  return exports;
 }
 const source = compile('lib/wallet/google.ts');
 const moduleObject = { exports: {} };
-vm.runInNewContext(source, { exports: moduleObject.exports, require: id => id === '@/lib/prisma' ? { prisma: { customer: { findUnique: async () => savedMember } } } : id.includes('loyalty-target') ? loadPureModule('lib/business/loyalty-target.ts') : id === '../business/terminology' ? loadPureModule('lib/business/terminology.ts') : id === '../business/mb-vape' ? loadPureModule('lib/business/mb-vape.ts') : id === './notification-text' ? loadPureModule('lib/wallet/notification-text.ts') : require(id), Buffer, URL, URLSearchParams, AbortSignal, process, console,
+vm.runInNewContext(source, { exports: moduleObject.exports, require: id => {
+  if (id === '@/lib/prisma') return { prisma: { customer: { findUnique: async () => savedMember } } };
+  if (id.includes('loyalty-target')) return loadPureModule('lib/business/loyalty-target.ts');
+  if (id.startsWith('../business/')) return loadPureModule(`lib/business/${id.slice('../business/'.length)}.ts`);
+  if (id.startsWith('./')) return loadPureModule(`lib/wallet/${id.slice(2)}.ts`);
+  return require(id);
+ }, Buffer, URL, URLSearchParams, AbortSignal, process, console,
   fetch: async (url, options) => { calls.push({ url, ...options }); if (url.includes('oauth2')) return { ok: true, json: async () => ({ access_token: 'test', expires_in: 3600 }) }; const status = options.method === 'PATCH' ? patchStatus : 409; return { ok: status === 200, status }; } });
 const wallet = moduleObject.exports;
+test('Gourmeal shows the matching shaker art and signed-in member progress', () => {
+ const cafe = { ...member.cafe, name: 'Gourmeal', slug: 'goumeal', rewardTarget: 8, rewardName: 'Free Drink' };
+ const brand = wallet.googleClassBrand(cafe);
+ const object = wallet.googleWalletObject({ ...member, cafe });
+ assert.equal(brand.programName, 'Gourmeal');
+ assert.equal(brand.hexBackgroundColor, '#294B38');
+ assert.match(brand.wideProgramLogo.sourceUri.uri, /artwork\/gourmeal\?asset=wide-logo/);
+ assert.match(object.heroImage.sourceUri.uri, /artwork\/gourmeal\?asset=google-strip&stamps=3&target=7/);
+ assert.equal(object.loyaltyPoints.balance.string, '3/7');
+ assert.equal(object.barcode.value, `BL:${member.publicToken}`);
+ const ready = wallet.googleWalletObject({ ...member, cafe, rewardEarnedAt: new Date() });
+ assert.equal(ready.loyaltyPoints.balance.string, '7/7');
+ assert.equal(ready.loyaltyPoints.label, 'REWARD READY');
+ assert.match(ready.heroImage.sourceUri.uri, /stamps=7&target=7/);
+});
 test('save flow signs a verifiable JWT and handles existing classes and objects', async () => {
  const url = await wallet.createGoogleWalletLink(member);
  const token = url.split('/save/')[1]; const [header, payload, signature] = token.split('.');

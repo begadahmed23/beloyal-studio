@@ -3,6 +3,7 @@ import { renderLorettoArtwork } from "@/lib/wallet/loretto-artwork";
 import { businessCardArtwork, isArtworkBusinessType } from "@/lib/business/card-artwork";
 import { getBusinessBrandColors, getDefaultBusinessTheme } from "@/lib/cafe-theme";
 import { renderMbVapeAppleStrip, renderMbVapeGoogleArtwork, renderMbVapeGoogleLogo, renderMbVapeLogo } from "@/lib/wallet/mb-vape-artwork";
+import { renderGourmealIcon, renderGourmealStrip, renderGourmealWordmark } from "@/lib/wallet/gourmeal-artwork";
 
 export const runtime = "nodejs";
 
@@ -17,6 +18,21 @@ const imageResponse = (png: Buffer) => new Response(new Uint8Array(png), {
 export async function GET(request: Request, { params }: { params: Promise<{ businessType: string }> }) {
   const { businessType } = await params;
   const colors = new URL(request.url).searchParams;
+  if (businessType === "gourmeal") {
+    const asset = colors.get("asset");
+    if (asset === "icon") return imageResponse(await renderGourmealIcon(660));
+    if (asset === "wide-logo") return imageResponse(await renderGourmealWordmark(1280, 400));
+    if (asset !== "strip" && asset !== "google-strip") return new Response(null, { status: 404 });
+
+    const targetText = colors.get("target") ?? "7";
+    const stampsText = colors.get("stamps") ?? "0";
+    const target = Number(targetText);
+    const stamps = Number(stampsText);
+    if (!/^[1-9]\d?$/.test(targetText) || !/^(0|[1-9]\d?)$/.test(stampsText) || stamps > target) {
+      return new Response(null, { status: 400 });
+    }
+    return imageResponse(await renderGourmealStrip(stamps, target, asset === "google-strip" ? "google" : "apple"));
+  }
   if (businessType === "loretto") {
     const asset = colors.get("asset");
     if (asset === "logo" || asset === "icon") return imageResponse(await renderLorettoArtwork(0, 6, asset));
