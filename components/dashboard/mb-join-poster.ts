@@ -73,5 +73,8 @@ export function drawMbJoinPoster(
   text("Scan the QR code to join.", 593, "13px Arial, sans-serif", MB_VAPE_WALNUT);
   ctx.fillStyle = border;
   ctx.fillRect(42, 624, 336, 0.75);
-  text(BELOYAL_DOMAIN, 657, "bold 14px Arial, sans-serif");
+  ctx.letterSpacing = "1.4px";
+  text("Powered by", 642, "bold 8px Arial, sans-serif", MB_VAPE_WALNUT);
+  ctx.letterSpacing = "0px";
+  text(BELOYAL_DOMAIN, 662, "bold 14px Arial, sans-serif");
 }

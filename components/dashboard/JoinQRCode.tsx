@@ -544,6 +544,20 @@ export default function JoinQRCode({ location }: { location?: { id: string; name
                   <p
                     style={{
                       margin: 0,
+                      color: "#8a8a8a",
+                      fontSize: "9px",
+                      fontWeight: 600,
+                      lineHeight: 1.4,
+                      letterSpacing: "0.18em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Powered by
+                  </p>
+
+                  <p
+                    style={{
+                      margin: "4px 0 0",
                       color: "#111111",
                       fontSize: "14px",
                       fontWeight: 700,

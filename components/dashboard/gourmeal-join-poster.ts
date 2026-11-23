@@ -45,5 +45,6 @@ export function drawGourmealJoinPoster(
   text(reward, 579, 18, 500, green);
   context.fillStyle = green;
   context.fillRect(0, 638, 420, 82);
-  text(BELOYAL_DOMAIN, 679, 16, 700, stone);
+  text("Powered by", 669, 9, 600, stone);
+  text(BELOYAL_DOMAIN, 688, 16, 700, stone);
 }

@@ -62,7 +62,8 @@ export async function exportJoinPoster(
     text("Scan the QR code to join.", 570, 13, 500, "#737373");
     context.fillStyle = "#e5e5e5";
     context.fillRect(42, 616, 336, 1);
-    text(BELOYAL_DOMAIN, 655, 14, 700);
+    text("Powered by", 640, 9, 600, "#737373");
+    text(BELOYAL_DOMAIN, 660, 14, 700);
   }
 
   // Use whole output pixels per module and leave at least four white modules on all sides.
