@@ -69,6 +69,54 @@ function unzipSync(input) {
   }
   return result;
 }
+test('Gourmeal signs its shaker artwork, native progress and existing scanner QR', async () => {
+  const { createAppleWalletPass } = load('lib/wallet/apple.ts');
+  const sharp = require('sharp');
+  const gourmand = {
+    ...member,
+    cafe: { ...member.cafe, name: 'Gourmeal', slug: 'goumeal', rewardTarget: 8, rewardName: 'Free Drink' },
+  };
+  const strips = [];
+  for (const [stamps, rewardEarnedAt, label, progress] of [
+    [0, null, 'STAMPS', '0/7'],
+    [3, null, 'STAMPS', '3/7'],
+    [6, new Date(), 'REWARD READY', '7/7'],
+  ]) {
+    const zip = unzipSync(await createAppleWalletPass({ ...gourmand, stamps, rewardEarnedAt }));
+    const pass = JSON.parse(strFromU8(zip['pass.json']));
+    assert.equal(pass.organizationName, 'Gourmeal');
+    assert.equal(pass.logoText, undefined);
+    assert.equal(pass.backgroundColor, 'rgb(41, 75, 56)');
+    assert.equal(pass.foregroundColor, 'rgb(233, 232, 228)');
+    assert.equal(pass.storeCard.headerFields[0].label, label);
+    assert.equal(pass.storeCard.headerFields[0].value, progress);
+    assert.equal(pass.storeCard.auxiliaryFields[0].value, 'Free Drink');
+    assert.equal(pass.barcodes[0].message, `BL:${member.publicToken}`);
+    assert.equal(pass.webServiceURL, process.env.APPLE_WALLET_WEB_SERVICE_URL);
+    assert.equal(pass.authenticationToken, config.walletAuthToken(member.id));
+    for (const [suffix, scale] of [['', 1], ['@2x', 2], ['@3x', 3]]) {
+      for (const [asset, width, height] of [['strip', 375, 123], ['logo', 118, 42], ['icon', 29, 29]]) {
+        const meta = await sharp(zip[`${asset}${suffix}.png`]).metadata();
+        assert.equal(meta.width, width * scale);
+        assert.equal(meta.height, height * scale);
+      }
+    }
+    const manifest = JSON.parse(strFromU8(zip['manifest.json']));
+    for (const [name, hash] of Object.entries(manifest)) {
+      assert.equal(require('node:crypto').createHash('sha1').update(zip[name]).digest('hex'), hash);
+    }
+    fs.writeFileSync(`${tmp}/gourmeal-signature`, zip.signature);
+    fs.writeFileSync(`${tmp}/gourmeal-manifest`, zip['manifest.json']);
+    execFileSync('openssl', ['smime', '-verify', '-inform', 'DER', '-in', `${tmp}/gourmeal-signature`,
+      '-content', `${tmp}/gourmeal-manifest`, '-noverify'], { stdio: 'ignore' });
+    strips.push(zip['strip@3x.png']);
+    if (process.env.WALLET_PREVIEW_DIR) {
+      fs.writeFileSync(path.join(process.env.WALLET_PREVIEW_DIR, `gourmeal-strip-${stamps}.png`), zip['strip@3x.png']);
+    }
+  }
+  assert.equal(new Set(strips.map(strip => strip.toString('base64'))).size, 3);
+});
+
 test('signed artwork, stamp progress, auth and existing scanner payload', async () => {
   const { createAppleWalletPass } = load('lib/wallet/apple.ts');
   const bytes = await createAppleWalletPass(member);

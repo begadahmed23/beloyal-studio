@@ -7,6 +7,8 @@ export { appleWalletEnabled } from "./config";
 import { businessCardArtwork } from "../business/card-artwork";
 import { getLoyaltyProgressTarget } from "../business/loyalty-target";
 import { getMbVapeBrandColors, isMbVape, walletBusinessName } from "../business/mb-vape";
+import { GOURMEAL, isGourmeal } from "../business/gourmeal";
+import { renderGourmealIcon, renderGourmealStrip, renderGourmealWordmark } from "./gourmeal-artwork";
 import { renderMbVapeAppleStrip, renderMbVapeLogo } from "./mb-vape-artwork";
 import { renderLorettoArtwork, displayWalletReward, LORETTO_BG, LORETTO_DARK, LORETTO_MUTED } from "./loretto-artwork";
 import { PKPass } from "passkit-generator";
@@ -73,15 +75,16 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
   const { businessType } = cafe;
   const rewardName = /loretto/i.test(member.cafe.slug + member.cafe.name) ? displayWalletReward(getRewardName(cafe)) : getRewardName(cafe);
   const mbVape = isMbVape(cafe);
+  const gourmeal = isGourmeal(cafe);
   const displayName = walletBusinessName(cafe);
   const vapeShop = businessType === "VAPE";
   const barber = businessType === "BARBERSHOP";
   const walid = barber && member.cafe.slug === "walid-saad";
   const loretto = businessType === "CAFE" && /loretto/i.test(member.cafe.slug + member.cafe.name);
-  const background = loretto ? LORETTO_BG : color(cafe.backgroundColor, "#111111");
+  const background = gourmeal ? GOURMEAL.green : loretto ? LORETTO_BG : color(cafe.backgroundColor, "#111111");
   const channels = [1, 3, 5].map((offset) => parseInt(background.slice(offset, offset + 2), 16));
   const light = channels[0] * 0.299 + channels[1] * 0.587 + channels[2] * 0.114 > 150;
-  const foreground = walid ? "#F2EEE7" : loretto ? LORETTO_DARK : light ? "#111111" : "#FFFFFF";
+  const foreground = gourmeal ? GOURMEAL.stone : walid ? "#F2EEE7" : loretto ? LORETTO_DARK : light ? "#111111" : "#FFFFFF";
   const target = getLoyaltyProgressTarget(member.cafe);
   const stamps = Math.max(0, Math.min(member.stamps, target));
   const ready = Boolean(member.rewardEarnedAt) || member.stamps >= target;
@@ -111,19 +114,19 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
     return marker + check;
   }).join("");
   // Wallet crops the sides of store-card strips; keep stamps within the safe centre.
-  const strip = loretto ? await renderLorettoArtwork(ready ? target : stamps, target) : vapeShop ? await renderMbVapeAppleStrip(ready ? target : stamps, target) : await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1125" height="369" viewBox="0 0 375 123"><rect width="375" height="123" fill="${background}"/>${artwork}${circles}</svg>`))
+  const strip = gourmeal ? await renderGourmealStrip(ready ? target : stamps, target) : loretto ? await renderLorettoArtwork(ready ? target : stamps, target) : vapeShop ? await renderMbVapeAppleStrip(ready ? target : stamps, target) : await sharp(Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="1125" height="369" viewBox="0 0 375 123"><rect width="375" height="123" fill="${background}"/>${artwork}${circles}</svg>`))
     .composite([
       { input: await textImage(ready ? "YOUR REWARD IS READY" : "A LITTLE CLOSER TO YOUR REWARD", 840, 35), left: 142, top: 30 },
       { input: await textImage(ready ? rewardName : `${stamps} of ${target} ${barber ? "visits" : "stamps"}`, 800, 44), left: 162, top: 292 },
     ]).png().toBuffer();
   const initials = member.cafe.name.trim().split(/\s+/).slice(0, 2)
     .map(word => Array.from(word)[0]).join("").toUpperCase() || "B";
-  const customLogo = mbVape || loretto ? null : await uploadedLogo(member.cafe.logoUrl);
-  const icon = loretto ? await renderLorettoArtwork(0, target, "icon") : mbVape ? await renderMbVapeLogo(87, 87, "#ffffff", 8) : await sharp({ create: { width: 87, height: 87, channels: 4, background } })
+  const customLogo = mbVape || loretto || gourmeal ? null : await uploadedLogo(member.cafe.logoUrl);
+  const icon = gourmeal ? await renderGourmealIcon(87) : loretto ? await renderLorettoArtwork(0, target, "icon") : mbVape ? await renderMbVapeLogo(87, 87, "#ffffff", 8) : await sharp({ create: { width: 87, height: 87, channels: 4, background } })
     .composite([{ input: await textImage(initials, 66, 60), left: 10, top: 13 }]).png().toBuffer();
-  const logoWidth = loretto ? 32 : mbVape ? 60 : customLogo ? 40 : 32;
-  const logoHeight = loretto ? 32 : mbVape ? 42 : 32;
-  const logo = loretto ? await renderLorettoArtwork(0, target, "icon") : mbVape ? await renderMbVapeLogo(logoWidth * 3, logoHeight * 3, background) : customLogo ?? await sharp(icon)
+  const logoWidth = gourmeal ? 118 : loretto ? 32 : mbVape ? 60 : customLogo ? 40 : 32;
+  const logoHeight = gourmeal || mbVape ? 42 : 32;
+  const logo = gourmeal ? await renderGourmealWordmark(logoWidth * 3, logoHeight * 3, "left") : loretto ? await renderLorettoArtwork(0, target, "icon") : mbVape ? await renderMbVapeLogo(logoWidth * 3, logoHeight * 3, background) : customLogo ?? await sharp(icon)
     .resize(logoWidth * 3, logoHeight * 3).png().toBuffer();
   const stripHeight = vapeShop ? 144 : 123;
   const locations = walletLocations(notificationSettings);
@@ -145,10 +148,10 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
       teamIdentifier: process.env.APPLE_WALLET_TEAM_ID!,
       ...(nearby ? { maxDistance: nearby.nearbyMaxDistance ?? 150 } : walid ? { maxDistance: 150 } : {}),
       organizationName: displayName,
-      logoText: displayName,
+      ...(gourmeal ? {} : { logoText: displayName }),
       description: `${displayName} loyalty card`,
       ...(walletUpdatesEnabled() ? { webServiceURL: process.env.APPLE_WALLET_WEB_SERVICE_URL!.replace(/\/$/, ""), authenticationToken: walletAuthToken(member.id) } : {}),
-      backgroundColor: rgb(background), foregroundColor: rgb(foreground), labelColor: rgb(foreground) },
+      backgroundColor: rgb(background), foregroundColor: rgb(foreground), labelColor: rgb(gourmeal ? GOURMEAL.sand : foreground) },
   );
   pass.type = "storeCard";
   if (nearby) {
@@ -166,7 +169,7 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
   const balanceChangeMessage = notificationSettings
     ? walletProgressChangeMessage(ready, rewardName, notificationSettings, !ready && stamps === 0)
     : "Your loyalty progress is now %@.";
-  pass.headerFields.push({ key: "balance", label: ready ? "REWARD READY" : barber ? "VISITS" : "STAMPS", value: `${stamps}/${target}`, ...(walid ? {} : { changeMessage: balanceChangeMessage }) });
+  pass.headerFields.push({ key: "balance", label: ready ? "REWARD READY" : barber ? "VISITS" : "STAMPS", value: `${gourmeal && ready ? target : stamps}/${target}`, ...(walid ? {} : { changeMessage: balanceChangeMessage }) });
   pass.secondaryFields.push({ key: "member", label: "MEMBER", value: member.name });
   pass.auxiliaryFields.push({ key: "reward", label: "YOUR REWARD", value: rewardName });
   pass.backFields.push({ key: "member-message", label: "CARD UPDATE",
