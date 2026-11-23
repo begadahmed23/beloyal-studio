@@ -33,6 +33,7 @@ export async function updateCafeSettings(
       rewardDescription: true,
       eligiblePurchaseDescription: true,
       minimumPurchaseAmount: true,
+      spendingTrackingEnabled: true,
 
       feedbackEnabled: true,
       feedbackRewardEnabled: true,

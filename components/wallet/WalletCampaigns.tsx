@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Bell, Cake, Check, Clock3, Gift, Loader2, Search, Send, Smartphone, Trash2, Users, Wallet } from "lucide-react";
 import { campaignSegments, MAX_CAMPAIGN_RECIPIENTS, type CampaignMember, type CampaignSegment } from "@/lib/wallet/campaign-segments";
 import { ActionButton } from "@/components/ui/action-button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SlidingSelection } from "@/components/ui/sliding-selection";
 import WalletNotificationSettings from "./WalletNotificationSettings";
 import type { WalletCampaign } from "@/lib/wallet/campaigns";
@@ -27,6 +28,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
   const [selected, setSelected] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState("");
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [review, setReview] = useState<WalletCampaign | null>(null);
   const [result, setResult] = useState<WalletCampaign | null>(null);
   const [error, setError] = useState("");
@@ -35,7 +37,6 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [historyFeedback, setHistoryFeedback] = useState<{ message: string; failed?: boolean } | null>(null);
   const [revision, setRevision] = useState(0);
-  const reviewRef = useRef<HTMLDivElement>(null);
   const requestInFlight = useRef(false);
   useEffect(() => {
     if (!cafeId) return;
@@ -46,15 +47,12 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
       .catch(reason => { if (!controller.signal.aborted) setAudienceError(reason.message || "Could not load Wallet members."); });
     return () => controller.abort();
   }, [cafeId, revision]);
-  useEffect(() => {
-    if (review) reviewRef.current?.scrollIntoView({ block: "nearest" });
-  }, [review]);
   const members = useMemo(() => data?.members.filter(member => member.segments.includes(segment)) ?? [], [data, segment]);
   const eligible = members.filter(member => member.offersStatus === "enabled");
   const visible = members.filter(member => `${member.name} ${member.memberNumber} ${member.joinLocationName ?? ""}`.toLowerCase().includes(search.trim().toLowerCase()));
   const shown = visible.slice(0, 200);
   const selectable = shown.filter(member => member.offersStatus === "enabled");
-  function resetReview() { setReview(null); setResult(null); setError(""); }
+  function resetReview() { setReviewOpen(false); setReview(null); setResult(null); setError(""); }
   function changeBusiness(id: string) { setCafeId(id); setData(null); setAudienceError(""); setSelected([]); setMessage(""); setSearch(""); setSegment("all"); setDeleteId(null); setHistoryFeedback(null); resetReview(); }
   function toggle(id: string) {
     resetReview();
@@ -63,17 +61,34 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
   async function request(action: "preview" | "send") {
     if (requestInFlight.current || result || (action === "send" && !review)) return;
     requestInFlight.current = true;
-    setBusy(action); setError("");
+    if (action === "preview") {
+      setReview(null);
+      setReviewOpen(true);
+    }
+    setBusy(action);
+    setError("");
     try {
       const response = await fetch("/api/wallet/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(action === "preview"
         ? { action, cafeId, segment, message, customerIds: selected }
         : { action, cafeId, campaignId: review?.id }) });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.message);
+      const body = await response.json().catch(() => null);
+      if (!response.ok || !body?.campaign) {
+        if (action === "preview" && response.status === 409) {
+          setSelected([]);
+          setRevision(value => value + 1);
+        }
+        if (action === "send" && response.status === 404) setReview(null);
+        throw new Error(body?.message || t("Could not complete the campaign request."));
+      }
       if (action === "preview") setReview(body.campaign);
       else { setResult(body.campaign); setRevision(value => value + 1); }
     } catch (reason) { setError(reason instanceof Error ? reason.message : t("Request failed. Refresh history before trying again.")); }
     finally { requestInFlight.current = false; setBusy(null); }
+  }
+  function closeReview() {
+    if (requestInFlight.current) return;
+    if (result) { setSelected([]); setMessage(""); }
+    resetReview();
   }
   async function deleteHistoryEntry(campaignId: string) {
     if (requestInFlight.current) return;
@@ -200,39 +215,53 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
       </div>
       <div className="flex flex-col justify-center rounded-3xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-6 shadow-sm sm:p-8"><p className="mb-5 text-xs font-medium uppercase tracking-[0.15em] text-[var(--wallet-muted,#71717a)]">{t("Notification preview")}</p><div className="rounded-3xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.06)]"><div className="flex items-center gap-2 text-xs text-[var(--wallet-muted,#71717a)]"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--wallet-accent,#18181b)] text-[var(--wallet-accent-text,#ffffff)]"><Wallet size={17}/></span> Wallet<span className="ms-auto">now</span></div><p className="mt-4 text-sm font-semibold">{business}</p><p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">{message.trim() || t("Your message will appear here.")}</p></div><p className="mt-5 flex items-start gap-2 text-xs leading-5 text-[var(--wallet-muted,#71717a)]"><Smartphone size={17} className="mt-0.5 shrink-0"/> Updates can take a few minutes. Members may see a Wallet alert depending on their phone settings.</p></div>
     </section>
-    {error && !review && <p role="alert" className="mt-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{t(error)}</p>}
-    {review && (
-      <div ref={reviewRef} className="mt-5 scroll-mt-24 rounded-3xl border-2 border-[var(--wallet-accent,#18181b)] bg-[var(--wallet-surface,#ffffff)] p-5 sm:p-7">
-        <p className="text-xs font-medium uppercase tracking-wider text-[var(--wallet-muted,#71717a)]">{t("Final review")}</p>
-        <h2 className="mt-3 text-xl font-semibold">{arabic ? `تبعت الرسالة لـ ${review.recipients.length} من أعضاء Wallet؟` : `Send to ${review.recipients.length} Wallet member${review.recipients.length === 1 ? "" : "s"}?`}</h2>
-        <p className="mt-2 text-sm text-[var(--wallet-muted,#71717a)]">{review.business} · {t(chosenSegment.label)}</p>
-        <p className="mt-4 whitespace-pre-wrap break-words rounded-2xl bg-[var(--wallet-raised,#f4f4f5)] p-4 text-sm leading-6">{review.message}</p>
-        <p className="mt-3 max-h-24 overflow-y-auto text-xs leading-6 text-[var(--wallet-muted,#71717a)]">{review.recipients.map(member => `${member.name} (${member.memberNumber})`).join(", ")}</p>
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <ActionButton
-            className={primary}
-            icon={result?.status === "complete" ? <Check size={16} /> : <Send size={16} />}
-            pending={busy === "send"}
-            disabled={!!busy || !!result}
-            onClick={() => request("send")}
-          >{t(result?.status === "complete" ? "Done" : "Send notification")}</ActionButton>
-          <button type="button" disabled={!!busy} className={secondary} onClick={() => {
-            if (result) { setSelected([]); setMessage(""); }
-            resetReview();
-          }}>{result ? t("Done") : t("Back to editing")}</button>
-        </div>
-        {error && <p role="alert" className="mt-3 text-sm text-red-700">{t(error)}</p>}
-        <div role="status" className="mt-3 min-h-5 text-sm">
-          {busy === "send" && t("Sending your message… Keep this page open.")}
-          {result && <>
-            <p className="flex items-center gap-2 font-semibold"><Check size={16} aria-hidden="true"/> {t(result.status === "complete" ? "Sending finished" : "Still sending")}</p>
-            <p className="mt-1 text-xs">{totals(result).accepted} accepted by Wallet · {totals(result).failed} failed · {totals(result).skipped} skipped{totals(result).pending ? ` · ${totals(result).pending} still sending` : ""}.</p>
-            <p className="mt-1 text-xs text-[var(--wallet-secondary,#52525b)]">Wallet can accept an update even if the member never opens it.</p>
+    <Dialog open={reviewOpen} onOpenChange={open => { if (!open) closeReview(); }}>
+      <DialogContent
+        showCloseButton={false}
+        className="flex max-h-[calc(100dvh-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden border p-0 sm:max-w-lg"
+      >
+        <DialogHeader className="shrink-0 border-b border-border px-5 py-4 sm:px-6 sm:py-5">
+          <DialogTitle className="text-xl font-semibold">{t(result ? "Campaign result" : "Review campaign")}</DialogTitle>
+          <DialogDescription className="text-secondary-foreground">
+            {review?.business ?? business}
+            {review && <> · {t(campaignSegments.find(item => item.id === review.segment)?.label ?? chosenSegment.label)}</>}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6">
+          {busy === "preview" && <p role="status" className="flex items-center gap-2 text-sm"><Loader2 size={16} className="animate-spin" />{t("Preparing review…")}</p>}
+          {review && <>
+            <div>
+              <p className="text-sm font-medium">{t("Message")}</p>
+              <p dir="auto" className="mt-2 whitespace-pre-wrap wrap-anywhere rounded-2xl bg-secondary p-4 text-sm leading-6">{review.message}</p>
+            </div>
+            <details>
+              <summary className="cursor-pointer rounded-xl border border-border px-3 py-3 text-sm font-medium">
+                {arabic ? `المستلمين (${review.recipients.length})` : `Recipients (${review.recipients.length})`}
+              </summary>
+              <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto overscroll-contain px-3 text-sm text-secondary-foreground">
+                {review.recipients.map(member => <li key={member.id} className="wrap-anywhere">{member.name} · {member.memberNumber}</li>)}
+              </ul>
+            </details>
           </>}
+          {error && <p role="alert" className="rounded-xl border border-destructive/40 p-3 text-sm text-destructive">{t(error)}</p>}
+          {busy === "send" && <p role="status" className="text-sm">{t("Sending your message… Keep this page open.")}</p>}
+          {result && <div role="status" className="rounded-2xl bg-secondary p-4 text-sm">
+            <p className="flex items-center gap-2 font-semibold"><Check size={16} aria-hidden="true"/> {t(result.status === "complete" ? "Sending finished" : "Still sending")}</p>
+            <p className="mt-2 text-xs">{totals(result).accepted} {t("Accepted by Wallet")} · {totals(result).failed} {t("Failed")} · {totals(result).skipped} {t("Skipped")}{totals(result).pending ? ` · ${totals(result).pending} ${t("Pending")}` : ""}</p>
+          </div>}
         </div>
-        {!result && <p className="mt-2 text-xs text-[var(--wallet-muted,#71717a)]">Review expires in 10 minutes. BeLoyal skips removed cards, members who no longer match the group, and repeat Apple Wallet messages.</p>}
-      </div>
-    )}
+        <div className="flex shrink-0 flex-col gap-2 border-t border-border px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:flex-row sm:justify-end sm:px-6">
+          <button type="button" disabled={!!busy} onClick={closeReview}
+            className="min-h-11 rounded-xl border border-border px-4 text-sm font-medium disabled:opacity-50">
+            {t(result ? "Done" : "Back to editing")}
+          </button>
+          {review && !result && <ActionButton
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            icon={<Send size={16} />} pending={busy === "send"} disabled={!!busy} onClick={() => request("send")}
+          >{t("Send notification")}</ActionButton>}
+        </div>
+      </DialogContent>
+    </Dialog>
     </>}
     <WalletNotificationSettings key={cafeId} cafeId={cafeId} manageLocation={studio} editNearbyMessages={!studio} />
     <section className="mt-7">

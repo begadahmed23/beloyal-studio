@@ -57,6 +57,7 @@ export default async function DashboardLayout({
         logoUrl: cafe.logoUrl,
         ...palette,
 
+        spendingTrackingEnabled: cafe.spendingTrackingEnabled,
         rewardTarget: cafe.rewardTarget,
         rewardName: cafe.rewardName,
         rewardDescription:

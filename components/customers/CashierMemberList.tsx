@@ -525,18 +525,19 @@ export default function CashierMemberList() {
         })}
       </div>
 
-      {pendingMember && pendingOperation && spendingEnabled && (
+      {pendingMember && pendingOperation === "stamp" && spendingEnabled && (
+        <PurchaseConfirmation
+          submitting={confirming}
+          error={actions[pendingMember.id]?.status === "error" ? actions[pendingMember.id]?.text : undefined}
+          onConfirm={amount => {
+            setConfirming(true);
+            void runAction(pendingMember.id, "stamp", amount).finally(() => setConfirming(false));
+          }}
+          onCancel={() => { if (!confirming) { setPendingMember(null); setPendingOperation(null); } }}
+        />
+      )}
+      {pendingMember && pendingOperation === "redeem" && spendingEnabled && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/70 px-4 py-6 backdrop-blur-sm" role="presentation">
-          {pendingOperation === "stamp" ? (
-            <PurchaseConfirmation
-              submitting={confirming}
-              onConfirm={amount => {
-                setConfirming(true);
-                void runAction(pendingMember.id, "stamp", amount).finally(() => setConfirming(false));
-              }}
-              onCancel={() => { if (!confirming) { setPendingMember(null); setPendingOperation(null); } }}
-            />
-          ) : (
             <div role="dialog" aria-modal="true" aria-label="Confirm reward redemption"
               className="w-full max-w-md space-y-4 rounded-3xl border p-5 shadow-2xl"
               style={{ backgroundColor: theme.surface, borderColor: theme.border, color: theme.textPrimary }}>
@@ -555,7 +556,6 @@ export default function CashierMemberList() {
                 Cancel
               </button>
             </div>
-          )}
         </div>
       )}
 

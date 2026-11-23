@@ -143,6 +143,7 @@ export default function ScannerPage() {
       const target = event.target as HTMLElement;
 
       if (
+        target.closest('[role="dialog"]') ||
         target instanceof HTMLButtonElement ||
         target instanceof HTMLInputElement ||
         target instanceof HTMLTextAreaElement ||
@@ -181,7 +182,7 @@ export default function ScannerPage() {
     clearTimeout(autoScanTimeoutRef.current);
   }
 
-  if (!value.trim() || status === "processing") {
+  if (!value.trim() || status === "processing" || status === "confirm") {
     return;
   }
 
@@ -207,7 +208,7 @@ if (autoScanTimeoutRef.current) {
     clearTimeout(autoScanTimeoutRef.current);
     autoScanTimeoutRef.current = null;
   }
-    if (!cleanedValue || status === "processing") {
+    if (!cleanedValue || status === "processing" || (status === "confirm" && !confirmed)) {
       return;
     }
 

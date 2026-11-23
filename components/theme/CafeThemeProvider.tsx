@@ -36,6 +36,7 @@ export type CafeSettings = {
   rewardDescription: string | null;
   eligiblePurchaseDescription: string | null;
   minimumPurchaseAmount: string | null;
+  spendingTrackingEnabled: boolean;
 
   feedbackEnabled: boolean;
   feedbackRewardEnabled: boolean;
