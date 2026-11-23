@@ -15,6 +15,7 @@ export default function StoreLocations() {
   const { t } = useBeLoyalLanguage();
   const { theme } = useCafeTheme();
   const [locations, setLocations] = useState<Location[] | null>(null);
+  const [storeLimit, setStoreLimit] = useState<number | null>(null);
   const [locationId, setLocationId] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
@@ -29,8 +30,9 @@ export default function StoreLocations() {
     void fetch("/api/cafe/locations", { signal: controller.signal, cache: "no-store" })
       .then(async response => {
         if (!response.ok) throw new Error();
-        const data: { locations: Location[] } = await response.json();
+        const data: { locations: Location[]; storeLimit: number } = await response.json();
         setLocations(data.locations);
+        setStoreLimit(data.storeLimit);
       })
       .catch(() => {
         if (!controller.signal.aborted) setError("Could not load store locations.");
@@ -49,14 +51,17 @@ export default function StoreLocations() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
       });
-      if (!response.ok) throw new Error();
+      if (!response.ok) {
+        const result = await response.json().catch(() => null);
+        throw new Error(result?.message || "Could not save the store location. Try again.");
+      }
       const { location }: { location: Location } = await response.json();
       setLocations(current => [...(current ?? []).filter(item => item.id !== location.id), location]
         .sort((first, second) => first.name.localeCompare(second.name)));
       setLocationId(location.id);
       setName("");
-    } catch {
-      setError("Could not save the store location. Try again.");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Could not save the store location. Try again.");
     } finally {
       setSaving(false);
     }
@@ -95,6 +100,11 @@ export default function StoreLocations() {
       <p className="text-sm" style={{ color: theme.textSecondary }}>
         {t("Give each store a QR and NFC join link. The store appears on the new member’s profile.")}
       </p>
+      {locations && storeLimit !== null && (
+        <p className="text-sm" style={{ color: theme.textSecondary }}>
+          {t("Active stores")} <bdi>{locations.length} / {storeLimit}</bdi>
+        </p>
+      )}
       {locations === null ? (
         error ? <button type="button" className="min-h-11 underline" onClick={() => {
           setError("");
@@ -102,7 +112,7 @@ export default function StoreLocations() {
         }}>{t("Try again")}</button> : <p role="status" className="text-sm">{t("Loading store locations…")}</p>
       ) : (
         <>
-          <form className="flex flex-col items-start gap-2 sm:flex-row sm:items-end" onSubmit={addLocation}>
+          {(storeLimit === null || locations.length < storeLimit) && <form className="flex flex-col items-start gap-2 sm:flex-row sm:items-end" onSubmit={addLocation}>
             <label className="grid w-full gap-1 text-sm sm:max-w-sm">
               {t("Store name")}
               <input className="min-h-11 rounded-xl border px-3" style={fieldStyle}
@@ -112,7 +122,7 @@ export default function StoreLocations() {
               style={{ background: theme.accent, color: theme.accentText }} pending={saving} disabled={saving || !name.trim()}>
               {t("Add store")}
             </ActionButton>
-          </form>
+          </form>}
           {locations.length > 0 && (
             <label className="grid max-w-sm gap-1 text-sm">
               {t("Store QR and NFC link")}

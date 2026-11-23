@@ -1,5 +1,6 @@
 import { GOURMEAL } from "@/lib/business/gourmeal";
 import { gourmealWordmark } from "@/lib/business/gourmeal-wordmark";
+import { drawJoinPosterCredit } from "./join-poster-credit";
 
 export function drawGourmealJoinPoster(
   context: CanvasRenderingContext2D,
@@ -44,5 +45,5 @@ export function drawGourmealJoinPoster(
   text(reward, 579, 18, 500, green);
   context.fillStyle = green;
   context.fillRect(0, 638, 420, 82);
-  text("Loyalty by BeLoyal", 678, 14, 600, stone);
+  drawJoinPosterCredit(context, 210, 669, stone, stone);
 }

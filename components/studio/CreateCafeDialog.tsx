@@ -57,6 +57,7 @@ export default function CreateCafeDialog({
     useState<BusinessType>("CAFE");
   const [cafeName, setCafeName] = useState("");
   const [slug, setSlug] = useState("");
+  const [storeLimit, setStoreLimit] = useState("1");
   const [accountName, setAccountName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -77,6 +78,7 @@ export default function CreateCafeDialog({
     setBusinessType("CAFE");
     setCafeName("");
     setSlug("");
+    setStoreLimit("1");
     setAccountName("");
     setEmail("");
     setPassword("");
@@ -146,6 +148,7 @@ export default function CreateCafeDialog({
           businessType,
           cafeName,
           slug,
+          storeLimit: Number(storeLimit),
           ownerName: accountName,
           email,
           password,
@@ -315,6 +318,15 @@ export default function CreateCafeDialog({
                 <p className="mt-2 text-xs text-[#929298]">
                   Used in the business&apos;s unique web address.
                 </p>
+              </div>
+              <div>
+                <label htmlFor="studio-store-limit" className="mb-2 block text-sm font-medium text-[#48484D]">
+                  Number of stores
+                </label>
+                <input id="studio-store-limit" type="number" min={1} max={2147483647} step={1}
+                  value={storeLimit} onChange={event => setStoreLimit(event.target.value)} required
+                  disabled={loading} className={inputClassName} />
+                <p className="mt-2 text-xs text-[#686871]">Each store includes one cashier account and one signup QR.</p>
               </div>
             </div>
           </section>

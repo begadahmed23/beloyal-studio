@@ -78,7 +78,7 @@ test('Gourmeal signs its shaker artwork, native progress and existing scanner QR
     cafe: { ...member.cafe, name: 'Gourmeal', slug: 'goumeal', rewardTarget: 8, rewardName: 'Free Drink' },
   };
   const strips = [];
-  const icon = await renderGourmealIcon(87);
+  const icon = await renderGourmealIcon(114);
   const googleStampPanel = await sharp(await renderGourmealStrip(3, 7, 'google')).ensureAlpha().raw().toBuffer();
   const panelPixel = (x, y) => [...googleStampPanel.subarray((y * 1032 + x) * 4, (y * 1032 + x) * 4 + 4)];
   assert.deepEqual(panelPixel(62, 46), [41, 75, 56, 255]);
@@ -102,7 +102,7 @@ test('Gourmeal signs its shaker artwork, native progress and existing scanner QR
     assert.equal(pass.webServiceURL, process.env.APPLE_WALLET_WEB_SERVICE_URL);
     assert.equal(pass.authenticationToken, config.walletAuthToken(member.id));
     for (const [suffix, scale] of [['', 1], ['@2x', 2], ['@3x', 3]]) {
-      for (const [asset, width, height] of [['strip', 375, 123], ['logo', 118, 42], ['icon', 29, 29]]) {
+      for (const [asset, width, height] of [['strip', 375, 123], ['logo', 118, 42], ['icon', 38, 38]]) {
         const meta = await sharp(zip[`${asset}${suffix}.png`]).metadata();
         assert.equal(meta.width, width * scale);
         assert.equal(meta.height, height * scale);
@@ -222,7 +222,7 @@ test('Wallet registration, idempotency, update discovery, authorization, and dow
   assert.equal((await request('GET',listing,{},null,`?passesUpdatedSince=${data.lastUpdated}`)).status,200);
   const download = await request('GET',['passes',type,member.id],auth);
   const updatedPass = JSON.parse(unzipSync(Buffer.from(await download.clone().arrayBuffer()))['pass.json']);
-  assert.equal(updatedPass.storeCard.backFields.find(f => f.key === 'provider').value, 'getbeloyal.app');
+  assert.equal(updatedPass.storeCard.backFields.find(f => f.key === 'provider').value, 'BeLoyal');
   assert.equal(updatedPass.storeCard.backFields.find(f => f.key === 'member-message').value, walletMessage.text);
   assert.equal(updatedPass.storeCard.headerFields[0].value, '3/6');
   assert.equal(download.status,200); assert.equal(download.headers.get('content-type'),'application/vnd.apple.pkpass');

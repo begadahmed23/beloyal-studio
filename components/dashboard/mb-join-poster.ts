@@ -1,4 +1,5 @@
 import { MB_VAPE_IVORY, MB_VAPE_WALNUT } from "@/lib/business/mb-vape";
+import { drawJoinPosterCredit } from "./join-poster-credit";
 
 export function drawMbJoinPoster(
   ctx: CanvasRenderingContext2D, logo: HTMLImageElement, name: string, tagline: string,
@@ -72,9 +73,5 @@ export function drawMbJoinPoster(
   text("Scan the QR code to join.", 593, "13px Arial, sans-serif", MB_VAPE_WALNUT);
   ctx.fillStyle = border;
   ctx.fillRect(42, 624, 336, 0.75);
-  ctx.letterSpacing = "1.4px";
-  text("POWERED BY", 642, "bold 8px Arial, sans-serif", MB_VAPE_WALNUT);
-  ctx.letterSpacing = "0px";
-  text("BeLoyal Studio", 660, "bold 14px Arial, sans-serif");
-  text("getbeloyal.app", 679, "10px Arial, sans-serif", MB_VAPE_WALNUT);
+  drawJoinPosterCredit(ctx, 210, 647, ink, MB_VAPE_WALNUT);
 }

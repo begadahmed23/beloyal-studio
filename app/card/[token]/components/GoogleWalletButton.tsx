@@ -1,5 +1,4 @@
 "use client";
-import { Wallet } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import WalletButtonStatus, { WalletButtonProgress } from "./WalletButtonStatus";
 
@@ -40,14 +39,12 @@ export default function GoogleWalletButton({ token, enabled }: { token: string; 
     }
   }
   return <div className="mx-auto mt-3 text-center">
-    <div className="inline-flex min-h-[54px] items-center">
-      <button type="button" onClick={() => void save()} disabled={busy} aria-busy={busy} aria-label="Add to Google Wallet"
-        className="relative inline-flex h-11 items-center justify-center gap-2 whitespace-nowrap rounded-[7px] border border-[#a6a6a6] bg-black px-3 text-xs font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a6a6a6] disabled:cursor-wait">
-        <Wallet size={18} strokeWidth={1.65} aria-hidden="true" className={busy ? "invisible" : undefined} />
-        <span className={busy ? "invisible" : undefined}>Add to Google Wallet</span>
-        {busy && <WalletButtonProgress />}
-      </button>
-    </div>
+    <button type="button" onClick={() => void save()} disabled={busy} aria-busy={busy}
+      aria-label="Add to Google Wallet"
+      className="relative inline-flex min-h-[54px] items-center justify-center focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-wait">
+      <img src="/wallet/add-to-google-wallet.svg" alt="Add to Google Wallet" className={`h-12 w-auto ${busy ? "invisible" : ""}`} />
+      {busy && <WalletButtonProgress />}
+    </button>
     <WalletButtonStatus busy={busy} error={error}
       message={opening ? "Opening Google Wallet…" : busy ? "Preparing Google Wallet…" : ""} />
   </div>;

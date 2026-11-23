@@ -5,7 +5,6 @@ import type { BusinessType } from "@prisma/client";
 import { ChevronDown, MessageCircle, QrCode, RefreshCw } from "lucide-react";
 import { CardBrandHeader, CardStampStrip, cardFrame } from "@/components/loyalty/CardBrand";
 import { MB_VAPE_IVORY, MB_VAPE_WALNUT } from "@/lib/business/mb-vape";
-import { BELOYAL_DOMAIN } from "@/lib/business/provider";
 import AppleWalletButton from "./AppleWalletButton";
 import BirthdayCustomerDisplay from "./BirthdayCustomerDisplay";
 import GoogleWalletButton from "./GoogleWalletButton";
@@ -180,16 +179,6 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
             </button>
           </div>
         </div>
-        <footer className="flex justify-center border-t" style={{ borderColor: cardBorder }}>
-          <a
-            href={`https://${BELOYAL_DOMAIN}`}
-            dir="ltr"
-            className="inline-flex min-h-11 items-center px-4 text-[11px] font-semibold tracking-[0.12em] underline-offset-4 hover:underline focus-visible:underline"
-            style={{ color: textSecondary }}
-          >
-            {BELOYAL_DOMAIN}
-          </a>
-        </footer>
       </article>
     </div>
   );

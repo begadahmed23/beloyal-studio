@@ -52,7 +52,7 @@ export function renderGourmealStrip(stamps: number, target: number, platform: "a
 
 export function renderGourmealIcon(width: number, height = width) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 64 64" preserveAspectRatio="xMinYMid meet">
-    <rect width="64" height="64" rx="15" fill="${green}"/>
+    <rect width="64" height="64" fill="${green}"/>
     <path d="${gourmealInitial}" fill="${stone}" transform="translate(16 11) scale(.265)"/>
   </svg>`;
   return sharp(Buffer.from(svg)).png().toBuffer();

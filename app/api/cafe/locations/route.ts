@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
+import { businessCashiers, StoreCapacityError, withStoreCapacity } from "@/lib/business/store-capacity";
 
 const locationFields = { id: true, name: true } as const;
 const locationInput = z.object({
@@ -26,7 +27,13 @@ async function handle(request: NextRequest) {
       orderBy: { name: "asc" },
       select: locationFields,
     });
-    return NextResponse.json({ locations }, { headers: { "Cache-Control": "private, no-store" } });
+    const cafe = await prisma.cafe.findUniqueOrThrow({
+      where: { id: cafeId },
+      select: { storeLimit: true, _count: { select: { locations: { where: { archivedAt: null } } } } },
+    });
+    return NextResponse.json({
+      locations, storeLimit: cafe.storeLimit, hasActiveStores: cafe._count.locations > 0,
+    }, { headers: { "Cache-Control": "private, no-store" } });
   }
 
   if (user.role !== "CAFE_ADMIN") {
@@ -42,10 +49,10 @@ async function handle(request: NextRequest) {
     const parsed = removalInput.safeParse(body);
     if (!parsed.success) return NextResponse.json({ message: "Choose a store to remove." }, { status: 400 });
 
-    const { count } = await prisma.cafeLocation.updateMany({
+    const { count } = await withStoreCapacity(cafeId, tx => tx.cafeLocation.updateMany({
       where: { id: parsed.data.id, cafeId, archivedAt: null },
       data: { archivedAt: new Date() },
-    });
+    }));
     if (count === 0) return NextResponse.json({ message: "Active store not found." }, { status: 404 });
     return new NextResponse(null, { status: 204 });
   }
@@ -56,13 +63,38 @@ async function handle(request: NextRequest) {
   }
 
   const { name } = parsed.data;
-  const location = await prisma.cafeLocation.upsert({
-    where: { cafeId_name: { cafeId, name } },
-    create: { cafeId, name },
-    update: { archivedAt: null },
-    select: locationFields,
-  });
-  return NextResponse.json({ location });
+  try {
+    const location = await withStoreCapacity(cafeId, async (tx, limit) => {
+      const existing = await tx.cafeLocation.findUnique({
+        where: { cafeId_name: { cafeId, name } },
+        select: { ...locationFields, archivedAt: true },
+      });
+      if (existing && !existing.archivedAt) return { id: existing.id, name: existing.name };
+      const activeStores = await tx.cafeLocation.count({ where: { cafeId, archivedAt: null } });
+      if (activeStores >= limit) {
+        throw new StoreCapacityError("This business has reached its store limit.");
+      }
+      const store = await tx.cafeLocation.upsert({
+        where: { cafeId_name: { cafeId, name } },
+        create: { cafeId, name },
+        update: { archivedAt: null },
+        select: locationFields,
+      });
+      // A single legacy cashier used the business-wide QR before its first store was added.
+      if (!activeStores) {
+        const where = { ...businessCashiers(cafeId), cashierLocationId: null };
+        const cashiers = await tx.user.findMany({ where, select: { id: true }, take: 2 });
+        if (cashiers.length === 1) {
+          await tx.user.updateMany({ where: { ...where, id: cashiers[0].id }, data: { cashierLocationId: store.id } });
+        }
+      }
+      return store;
+    });
+    return NextResponse.json({ location });
+  } catch (error) {
+    if (error instanceof StoreCapacityError) return NextResponse.json({ message: error.message }, { status: error.status });
+    throw error;
+  }
 }
 
 export const GET = handle;

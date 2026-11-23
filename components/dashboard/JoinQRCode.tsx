@@ -16,6 +16,7 @@ import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 import { exportJoinPoster, POSTER_HEIGHT, POSTER_WIDTH } from "./export-join-poster";
+import { JOIN_POSTER_CREDIT } from "./join-poster-credit";
 
 export default function JoinQRCode({ location }: { location?: { id: string; name: string } }) {
   const { t } = useBeLoyalLanguage();
@@ -323,7 +324,7 @@ export default function JoinQRCode({ location }: { location?: { id: string; name
                 </div>
                 {brandedPosterUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={brandedPosterUrl} alt={`${cafe.name} loyalty signup poster. ${progress} ${reward}`} className="block h-full w-full" />
+                  <img src={brandedPosterUrl} alt={`${cafe.name} loyalty signup poster. ${progress} ${reward} ${JOIN_POSTER_CREDIT.title} ${JOIN_POSTER_CREDIT.domain}.`} className="block h-full w-full" />
                 ) : (
                   <p role="status" className="grid h-full place-items-center px-5 text-center text-sm text-[#432B1D]">
                     {currentPreview ? "The QR poster could not load. Refresh to try again." : "Preparing QR poster…"}
@@ -543,40 +544,25 @@ export default function JoinQRCode({ location }: { location?: { id: string; name
                   <p
                     style={{
                       margin: 0,
-                      color: "#8a8a8a",
-                      fontSize: "9px",
-                      fontWeight: 600,
-                      lineHeight: 1.4,
-                      letterSpacing: "0.18em",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Powered by
-                  </p>
-
-                  <p
-                    style={{
-                      margin: "4px 0 0",
                       color: "#111111",
-                      fontSize: "14px",
-                      fontWeight: 700,
-                      lineHeight: 1.4,
-                      letterSpacing: "-0.01em",
+                      fontSize: JOIN_POSTER_CREDIT.titleSize,
+                      fontWeight: JOIN_POSTER_CREDIT.titleWeight,
+                      lineHeight: 1.25,
                     }}
                   >
-                    BeLoyal Studio
+                    {JOIN_POSTER_CREDIT.title}
                   </p>
 
                   <p
                     style={{
-                      margin: "3px 0 0",
+                      margin: "2px 0 0",
                       color: "#737373",
-                      fontSize: "10px",
-                      fontWeight: 500,
+                      fontSize: JOIN_POSTER_CREDIT.domainSize,
+                      fontWeight: JOIN_POSTER_CREDIT.domainWeight,
                       lineHeight: 1.4,
                     }}
                   >
-                    getbeloyal.app
+                    {JOIN_POSTER_CREDIT.domain}
                   </p>
                 </div>
               </div>

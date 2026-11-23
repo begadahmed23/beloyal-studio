@@ -115,6 +115,7 @@ export default function StaffManagementPanel({
   const [showPasswords, setShowPasswords] = useState(false);
   const [role, setRole] =
     useState<Role>("CASHIER");
+  const selectingCashier = !canCreateAdmins || role === "CASHIER";
 
   const [staffFilter, setStaffFilter] =
     useState("ALL");
@@ -600,7 +601,8 @@ export default function StaffManagementPanel({
                 Admin
               </option>
             </select>
-          ) : locations.length > 0 ? (
+          ) : null}
+          {selectingCashier && locations.length > 0 ? (
             <select
               aria-label={t("Cashier branch")}
               className="h-11 min-w-0 rounded-xl border px-3 text-base sm:text-sm"
@@ -612,7 +614,7 @@ export default function StaffManagementPanel({
               <option value="">{t("Choose a branch")}</option>
               {locations.map(location => <option key={location.id} value={location.id}>{location.name}</option>)}
             </select>
-          ) : (
+          ) : selectingCashier ? (
             <div
               className={`flex h-11 items-center border px-3 text-sm ${
                 themed
@@ -631,13 +633,13 @@ export default function StaffManagementPanel({
             >
               Cashier access
             </div>
-          )}
+          ) : null}
         </div>
 
         <button
           type="button"
           onClick={createAccount}
-          disabled={saving || loading || (locations.length > 0 && !locationId)}
+          disabled={saving || loading || (selectingCashier && locations.length > 0 && !locationId)}
           className={`mt-3 flex h-11 w-full touch-manipulation items-center justify-center gap-2 px-4 text-sm font-semibold transition active:opacity-80 disabled:opacity-50 sm:w-auto ${
             themed
               ? ""

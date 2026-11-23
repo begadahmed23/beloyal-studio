@@ -6,7 +6,6 @@ import { walletCredential as credential, walletUpdatesEnabled, walletAuthToken }
 export { appleWalletEnabled } from "./config";
 import { businessCardArtwork } from "../business/card-artwork";
 import { getLoyaltyProgressTarget } from "../business/loyalty-target";
-import { BELOYAL_DOMAIN } from "../business/provider";
 import { getMbVapeBrandColors, isMbVape, walletBusinessName } from "../business/mb-vape";
 import { GOURMEAL, isGourmeal } from "../business/gourmeal";
 import { renderGourmealIcon, renderGourmealStrip, renderGourmealWordmark } from "./gourmeal-artwork";
@@ -123,7 +122,8 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
   const initials = member.cafe.name.trim().split(/\s+/).slice(0, 2)
     .map(word => Array.from(word)[0]).join("").toUpperCase() || "B";
   const customLogo = mbVape || loretto || gourmeal ? null : await uploadedLogo(member.cafe.logoUrl);
-  const icon = gourmeal ? await renderGourmealIcon(87) : loretto ? await renderLorettoArtwork(0, target, "icon") : mbVape ? await renderMbVapeLogo(87, 87, "#ffffff", 8) : await sharp({ create: { width: 87, height: 87, channels: 4, background } })
+  const iconSize = gourmeal ? 38 : 29;
+  const icon = gourmeal ? await renderGourmealIcon(iconSize * 3) : loretto ? await renderLorettoArtwork(0, target, "icon") : mbVape ? await renderMbVapeLogo(87, 87, "#ffffff", 8) : await sharp({ create: { width: 87, height: 87, channels: 4, background } })
     .composite([{ input: await textImage(initials, 66, 60), left: 10, top: 13 }]).png().toBuffer();
   const logoWidth = gourmeal ? 118 : loretto ? 32 : mbVape ? 60 : customLogo ? 40 : 32;
   const logoHeight = gourmeal || mbVape ? 42 : 32;
@@ -133,8 +133,8 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
   const locations = walletLocations(notificationSettings);
   const nearby = locations.length ? notificationSettings : null;
   const pass = new PKPass(
-    { "icon.png": await sharp(icon).resize(29, 29).png().toBuffer(),
-      "icon@2x.png": await sharp(icon).resize(58, 58).png().toBuffer(),
+    { "icon.png": await sharp(icon).resize(iconSize, iconSize).png().toBuffer(),
+      "icon@2x.png": await sharp(icon).resize(iconSize * 2, iconSize * 2).png().toBuffer(),
       "icon@3x.png": icon,
       "logo.png": await sharp(logo).resize(logoWidth, logoHeight).png().toBuffer(),
       "logo@2x.png": await sharp(logo).resize(logoWidth * 2, logoHeight * 2).png().toBuffer(),
@@ -178,7 +178,7 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
   pass.backFields.push(
     { key: "progress", label: "Live stamps & rewards", value: cardUrl },
     { key: "instructions", label: "How to use", value: "Show this QR code at checkout. Open your online card for your current stamps and rewards." },
-    { key: "provider", label: "Powered by", value: BELOYAL_DOMAIN },
+    { key: "provider", label: "Powered by", value: "BeLoyal" },
   );
   pass.setBarcodes({ format: "PKBarcodeFormatQR", message: `BL:${member.publicToken}`, messageEncoding: "iso-8859-1", altText: member.memberNumber });
   return pass.getAsBuffer();

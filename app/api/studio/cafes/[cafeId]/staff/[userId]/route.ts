@@ -3,6 +3,7 @@ import { hashPassword } from "better-auth/crypto";
 
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdmin } from "@/lib/require-super-admin";
+import { getCashierLocation, StoreCapacityError, withStoreCapacity } from "@/lib/business/store-capacity";
 
 type Context = {
   params: Promise<{ cafeId: string; userId: string }>;
@@ -132,29 +133,22 @@ export async function PATCH(
       return json({ message: "No account changes supplied." }, 400);
     }
 
+    const staffFields = { id: true, name: true, email: true, role: true, isEnabled: true } as const;
     const user =
       Object.keys(data).length > 0
-        ? await prisma.user.update({
-      where: { id: target.id },
-      data,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isEnabled: true,
-      },
-    })
-        : await prisma.user.findUniqueOrThrow({
-            where: { id: target.id },
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-              isEnabled: true,
-            },
-          });
+        ? await withStoreCapacity(cafeId, async (tx, limit) => {
+            const current = await tx.user.findUniqueOrThrow({
+              where: { id: target.id }, select: { role: true },
+            });
+            const changingToCashier = data.role === "CASHIER" && current.role !== "CASHIER";
+            const cashierLocationId = changingToCashier
+              ? await getCashierLocation(tx, cafeId, limit, "", false)
+              : undefined;
+            return tx.user.update({
+              where: { id: target.id }, data: { ...data, cashierLocationId }, select: staffFields,
+            });
+          })
+        : await prisma.user.findUniqueOrThrow({ where: { id: target.id }, select: staffFields });
 
     if (data.isEnabled === false) {
       await prisma.session.deleteMany({
@@ -169,6 +163,7 @@ export async function PATCH(
         : "Account updated.",
     });
   } catch (error) {
+    if (error instanceof StoreCapacityError) return json({ message: error.message }, error.status);
     console.error("Studio update staff error:", error);
     return json({ message: "Failed to update account." }, 500);
   }

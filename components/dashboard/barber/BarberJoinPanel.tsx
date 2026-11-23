@@ -1,7 +1,7 @@
 "use client";
 
-import JoinQRCode from "@/components/dashboard/JoinQRCode";
+import StoreJoinQRCodes from "@/components/dashboard/StoreJoinQRCodes";
 
 export default function BarberJoinPanel() {
-  return <JoinQRCode />;
+  return <StoreJoinQRCodes />;
 }
