@@ -29,14 +29,16 @@ vm.runInNewContext(source, { exports: moduleObject.exports, require: id => {
  }, Buffer, URL, URLSearchParams, AbortSignal, process, console,
   fetch: async (url, options) => { calls.push({ url, ...options }); if (url.includes('oauth2')) return { ok: true, json: async () => ({ access_token: 'test', expires_in: 3600 }) }; const status = options.method === 'PATCH' ? patchStatus : 409; return { ok: status === 200, status }; } });
 const wallet = moduleObject.exports;
-test('Gourmeal shows the matching shaker art and signed-in member progress', () => {
+test('Gourmeal shows a single brand title with a monogram and the updated stamp panel', () => {
  const cafe = { ...member.cafe, name: 'Gourmeal', slug: 'goumeal', rewardTarget: 8, rewardName: 'Free Drink' };
  const brand = wallet.googleClassBrand(cafe);
  const object = wallet.googleWalletObject({ ...member, cafe });
  assert.equal(brand.programName, 'Gourmeal');
+ assert.equal(brand.issuerName, 'BeLoyal');
  assert.equal(brand.hexBackgroundColor, '#294B38');
- assert.match(brand.wideProgramLogo.sourceUri.uri, /artwork\/gourmeal\?asset=wide-logo/);
- assert.match(object.heroImage.sourceUri.uri, /artwork\/gourmeal\?asset=google-strip&stamps=3&target=7/);
+ assert.match(brand.programLogo.sourceUri.uri, /artwork\/gourmeal\?asset=icon&v=2$/);
+ assert.match(brand.wideProgramLogo.sourceUri.uri, /artwork\/gourmeal\?asset=wide-icon&v=2$/);
+ assert.match(object.heroImage.sourceUri.uri, /artwork\/gourmeal\?asset=google-strip&stamps=3&target=7&v=2$/);
  assert.equal(object.loyaltyPoints.balance.string, '3/7');
  assert.equal(object.barcode.value, `BL:${member.publicToken}`);
  const ready = wallet.googleWalletObject({ ...member, cafe, rewardEarnedAt: new Date() });

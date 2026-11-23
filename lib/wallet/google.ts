@@ -108,14 +108,14 @@ export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocati
   const site = process.env.GOOGLE_WALLET_SITE_URL!;
   if (mbVape) logo = new URL(MB_VAPE_ARTWORK_PATH + "?asset=icon&v=2", site);
   if (loretto) logo = new URL("/api/wallet/artwork/loretto?asset=icon&v=3", site);
-  if (gourmeal) logo = new URL(GOURMEAL.artwork + "?asset=icon&v=1", site);
+  if (gourmeal) logo = new URL(GOURMEAL.artwork + "?asset=icon&v=2", site);
   return {
-    issuerName: displayName,
+    issuerName: gourmeal ? "BeLoyal" : displayName,
     programName: mbVape || loretto || gourmeal ? displayName : `${displayName} Rewards`,
     programLogo: walletImage(logo, displayName),
     ...(loretto ? { accountNameLabel: "MEMBER" } : {}),
     ...(gourmeal ? {
-      wideProgramLogo: walletImage(new URL(GOURMEAL.artwork + "?asset=wide-logo&v=2", site), displayName),
+      wideProgramLogo: walletImage(new URL(GOURMEAL.artwork + "?asset=wide-icon&v=2", site), displayName),
       accountNameLabel: "MEMBER",
       classTemplateInfo: {
         cardTemplateOverride: {
