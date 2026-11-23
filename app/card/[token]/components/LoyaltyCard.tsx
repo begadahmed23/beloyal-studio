@@ -141,6 +141,7 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
             </div>
           )}
 
+          {props.birthdayText && <BirthdayCustomerDisplay {...props} />}
           <div className="flex items-start justify-between gap-2 border-t pt-1" style={{ borderColor: cardBorder }}>
             <details className="group min-w-0 flex-1 text-xs leading-5" style={{ color: textSecondary }}>
               <summary className="flex min-h-10 cursor-pointer list-none items-center gap-1.5 font-semibold [&::-webkit-details-marker]:hidden">
@@ -170,7 +171,6 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
               <RefreshCw size={16} aria-hidden="true" className={refreshing ? "motion-safe:animate-spin" : undefined} />
             </button>
           </div>
-          {props.birthdayText && <BirthdayCustomerDisplay {...props} />}
         </div>
       </article>
     </div>
