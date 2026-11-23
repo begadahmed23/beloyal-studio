@@ -1,5 +1,6 @@
 "use client";
 
+import { Dialog } from "@base-ui/react/dialog";
 import {
   calculateBirthdayCountdown,
   withAlpha,
@@ -16,6 +17,7 @@ import QrCodeModal from "./components/QrCodeModal";
 import RewardCelebrationModal from "./components/RewardCelebrationModal";
 import GoogleReviewModal from "./components/GoogleReviewModal";
 import RatingModal from "./components/RatingModal";
+import FeedbackDialog from "./components/FeedbackDialog";
 import LoyaltyCard, {
   type Customer,
 } from "./components/LoyaltyCard";
@@ -734,8 +736,7 @@ export default function DigitalCardPage() {
       showQrCode ||
       showRewardCelebration ||
       showRatingModal ||
-      showGooglePrompt ||
-      showFeedbackModal;
+      showGooglePrompt;
 
     if (!modalOpen) {
       return;
@@ -768,10 +769,6 @@ export default function DigitalCardPage() {
       setShowRatingModal(false);
 
       setShowGooglePrompt(false);
-
-      if (!feedbackSubmitting) {
-        closeFeedbackModal();
-      }
     };
 
     window.addEventListener(
@@ -796,8 +793,6 @@ export default function DigitalCardPage() {
     showRewardCelebration,
     showRatingModal,
     showGooglePrompt,
-    showFeedbackModal,
-    feedbackSubmitting,
   ]);
 
   const birthdayText = useMemo(() => {
@@ -1742,41 +1737,27 @@ const visibleStamps = rewardReady
       ) : null}
 
       {/* Feedback modal */}
-      {customer.cafe.feedbackEnabled && showFeedbackModal ? (
-        <div
-          className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 p-3 backdrop-blur-sm sm:items-center sm:p-6"
-          onMouseDown={(event) => {
-            if (
-              event.target ===
-                event.currentTarget &&
-              !feedbackSubmitting
-            ) {
-              closeFeedbackModal();
-            }
+      {customer.cafe.feedbackEnabled ? (
+        <FeedbackDialog
+          open={showFeedbackModal}
+          onClose={closeFeedbackModal}
+          style={{
+            borderColor: feedbackBorder,
+            background: isLoretto
+              ? "radial-gradient(circle at 88% 4%,rgba(126,137,127,.10),transparent 25%),linear-gradient(155deg,#F8F3EA 0%,#F3EBDD 58%,#E9DFC9 100%)"
+              : feedbackCardBackground,
+            boxShadow: isLoretto
+              ? "0 30px 100px rgba(28,23,20,.34)"
+              : "0 30px 100px rgba(0,0,0,0.48)",
           }}
         >
-          <div
-            className="relative w-full max-w-md overflow-hidden rounded-[28px] border p-5 shadow-2xl sm:rounded-[32px] sm:p-6"
-            style={{
-              borderColor: feedbackBorder,
-              background: isLoretto
-                ? "radial-gradient(circle at 88% 4%,rgba(126,137,127,.10),transparent 25%),linear-gradient(155deg,#F8F3EA 0%,#F3EBDD 58%,#E9DFC9 100%)"
-                : feedbackCardBackground,
-              boxShadow: isLoretto
-                ? "0 30px 100px rgba(28,23,20,.34)"
-                : "0 30px 100px rgba(0,0,0,0.48)",
-            }}
-          >
-            <button
-              type="button"
-              onClick={
-                closeFeedbackModal
-              }
+          <div className="relative">
+            <Dialog.Close
               disabled={
                 feedbackSubmitting
               }
               aria-label="Close feedback"
-              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border transition hover:opacity-70 disabled:opacity-40"
+              className="absolute end-0 top-0 flex size-11 items-center justify-center rounded-full border transition hover:opacity-70 disabled:opacity-40"
               style={{
                 borderColor:
                   feedbackBorder,
@@ -1786,7 +1767,7 @@ const visibleStamps = rewardReady
               }}
             >
               <X size={17} />
-            </button>
+            </Dialog.Close>
 
             {!feedbackSubmitted ? (
               <>
@@ -1820,14 +1801,14 @@ const visibleStamps = rewardReady
                   </div>
                 )}
 
-                <h2
-                  className="mt-5 pr-10 text-2xl font-semibold tracking-tight"
+                <Dialog.Title
+                  className="mt-4 text-xl font-semibold tracking-tight sm:text-2xl"
                   style={{
                     color: feedbackTextPrimary,
                   }}
                 >
                   {isLoretto ? "How was your Loretto visit?" : <>How was your experience?</>}
-                </h2>
+                </Dialog.Title>
 
                 <p
                   className="mt-2 text-sm leading-6"
@@ -1841,7 +1822,7 @@ const visibleStamps = rewardReady
                     : <>The good, the bad, or something we could do better — we’d love to hear it.</>}
                 </p>
 
-                <div className="mt-6">
+                <div className="mt-4">
                   <textarea
                     value={
                       feedbackComment
@@ -1863,10 +1844,10 @@ const visibleStamps = rewardReady
                       }
                     }}
                     maxLength={1000}
-                    rows={5}
-                    autoFocus
+                    rows={4}
+                    aria-label="Your feedback"
                     placeholder="Tell us what stood out, or what we could improve..."
-                    className="w-full resize-none rounded-2xl border px-4 py-4 text-sm leading-6 outline-none transition placeholder:opacity-40 focus:ring-2"
+                    className="w-full resize-none rounded-2xl border px-4 py-3 text-base leading-6 outline-none transition placeholder:opacity-40 focus:ring-2 sm:text-sm"
                     style={{
                       borderColor:
                         feedbackError
@@ -1947,7 +1928,7 @@ const visibleStamps = rewardReady
                       .length < 10
                   }
                   aria-busy={feedbackSubmitting}
-                  className="relative mt-6 flex h-13 min-h-13 w-full items-center justify-center rounded-2xl px-5 text-sm font-semibold transition hover:brightness-105 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="relative mt-4 flex h-13 w-full items-center justify-center rounded-2xl px-5 text-sm font-semibold transition hover:brightness-105 active:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
                     backgroundColor:
                       feedbackPrimary,
@@ -1991,15 +1972,15 @@ const visibleStamps = rewardReady
                   <Check size={24} />
                 </div>
 
-                <h2
-                  className="mt-5 pr-10 text-2xl font-semibold tracking-tight"
+                <Dialog.Title
+                  className="mt-4 text-xl font-semibold tracking-tight sm:text-2xl"
                   style={{
                     color: feedbackTextPrimary,
                   }}
                 >
                   Thank you for
                   sharing.
-                </h2>
+                </Dialog.Title>
 
                 <p
                   className="mt-2 text-sm leading-6"
@@ -2124,7 +2105,7 @@ const visibleStamps = rewardReady
               </>
             )}
           </div>
-        </div>
+        </FeedbackDialog>
       ) : null}
     </main>
   );

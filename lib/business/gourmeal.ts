@@ -7,6 +7,8 @@ export const GOURMEAL = {
   artwork: "/api/wallet/artwork/gourmeal",
 } as const;
 
+export const GOURMEAL_MAIN_STORE = "Green Plaza";
+
 export function isGourmeal({ slug }: { slug: string }) {
   return slug === "goumeal" || slug === "gourmeal";
 }

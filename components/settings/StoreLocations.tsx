@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapPin, Plus } from "lucide-react";
+import { MapPin, Plus, Trash2 } from "lucide-react";
 
 import JoinQRCode from "@/components/dashboard/JoinQRCode";
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 import { ActionButton } from "@/components/ui/action-button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 type Location = { id: string; name: string };
 
@@ -18,6 +19,9 @@ export default function StoreLocations() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [confirmRemoval, setConfirmRemoval] = useState(false);
+  const [removing, setRemoving] = useState(false);
+  const [removeError, setRemoveError] = useState("");
   const [request, setRequest] = useState(0);
 
   useEffect(() => {
@@ -61,6 +65,27 @@ export default function StoreLocations() {
   const location = locations?.find(item => item.id === locationId);
   const fieldStyle = { borderColor: theme.border, background: theme.surfaceRaised, color: theme.textPrimary };
 
+  async function removeLocation() {
+    if (!location || removing) return;
+    setRemoving(true);
+    setRemoveError("");
+    try {
+      const response = await fetch("/api/cafe/locations", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: location.id }),
+      });
+      if (!response.ok && response.status !== 404) throw new Error();
+      setConfirmRemoval(false);
+      setLocations(current => current?.filter(item => item.id !== location.id) ?? null);
+      setLocationId(current => current === location.id ? "" : current);
+    } catch {
+      setRemoveError("Could not remove the store. Try again.");
+    } finally {
+      setRemoving(false);
+    }
+  }
+
   return (
     <section className="space-y-4 rounded-2xl border p-4 sm:p-6"
       style={{ borderColor: theme.border, background: theme.surface, color: theme.textPrimary }}>
@@ -98,7 +123,36 @@ export default function StoreLocations() {
               </select>
             </label>
           )}
-          {location && <JoinQRCode key={location.id} location={location} />}
+          {location && (
+            <>
+              <JoinQRCode key={location.id} location={location} />
+              <AlertDialog open={confirmRemoval} onOpenChange={open => {
+                if (removing) return;
+                setRemoveError("");
+                setConfirmRemoval(open);
+              }}>
+                <AlertDialogTrigger className="inline-flex min-h-11 items-center gap-2 rounded-xl border px-4 text-sm font-medium"
+                  disabled={saving} style={{ color: theme.danger, borderColor: theme.border }}>
+                  <Trash2 size={16} aria-hidden="true" />{t("Remove store")}
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{t("Remove store")} · <bdi>{location.name}</bdi></AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {t("This removes the store from active use. Existing member and stamp history is kept. Add the same store name again to restore it.")}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  {removeError && <p role="alert" className="text-sm" style={{ color: theme.danger }}>{t(removeError)}</p>}
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={removing}>{t("Cancel")}</AlertDialogCancel>
+                    <AlertDialogAction variant="destructive" disabled={removing} onClick={() => void removeLocation()}>
+                      {t(removing ? "Removing…" : "Remove store")}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </>
+          )}
         </>
       )}
       {error && <p role="alert" className="text-sm">{t(error)}</p>}

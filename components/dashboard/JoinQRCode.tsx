@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 
 import { isMbVape, MB_VAPE_LOGO_URL } from "@/lib/business/mb-vape";
+import { isGourmeal } from "@/lib/business/gourmeal";
+import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 import { exportJoinPoster, POSTER_HEIGHT, POSTER_WIDTH } from "./export-join-poster";
@@ -19,23 +21,29 @@ export default function JoinQRCode({ location }: { location?: { id: string; name
   const { t } = useBeLoyalLanguage();
   const { theme, cafe } = useCafeTheme();
   const mbVape = isMbVape(cafe);
-  const logoUrl = mbVape ? MB_VAPE_LOGO_URL : cafe.logoUrl;
+  const gourmeal = isGourmeal(cafe);
+  const brand = gourmeal ? "gourmeal" : mbVape ? "mb-vape" : undefined;
+  const logoUrl = cafe.logoUrl;
   const isBarbershop = cafe.businessType === "BARBERSHOP";
 
-  const tagline = location?.name ?? (isBarbershop ? "Sharp style. Loyal clients." : cafe.businessType === "CAFE" ? "Let coffee connect us" : "Member rewards");
-  const progress = `Collect ${isBarbershop ? "visits" : "stamps"}.`;
+  const tagline = location?.name ?? (gourmeal ? "Loyalty card" : isBarbershop ? "Sharp style. Loyal clients." : cafe.businessType === "CAFE" ? "Let coffee connect us" : "Member rewards");
+  const progress = gourmeal ? `Collect ${getLoyaltyProgressTarget(cafe)} stamps.` : `Collect ${isBarbershop ? "visits" : "stamps"}.`;
   const rewardName = cafe.rewardName?.trim() || "a reward";
-  const reward = mbVape ? `Earn ${/[.!?]$/.test(rewardName) ? rewardName : rewardName + "."}` : `Earn ${rewardName.toLowerCase()}.`;
-  const filename = `${cafe.slug}${location ? `-${location.id}` : ""}-${isBarbershop ? "barber" : "loyalty"}-qr.png`;
+  const reward = gourmeal && rewardName.toLowerCase() === "free drink"
+    ? "Get a free drink."
+    : mbVape ? `Earn ${/[.!?]$/.test(rewardName) ? rewardName : rewardName + "."}` : `Earn ${rewardName.toLowerCase()}.`;
+  const filename = gourmeal
+    ? `Gourmeal-${tagline.replace(/[^\p{L}\p{N}]+/gu, "-")}-QR.png`
+    : `${cafe.slug}${location ? `-${location.id}` : ""}-${isBarbershop ? "barber" : "loyalty"}-qr.png`;
 
   const previewRef = useRef<HTMLDivElement>(null);
   const posterRef = useRef<HTMLDivElement>(null);
   const [previewScale, setPreviewScale] = useState(0);
-  const [mbPreview, setMbPreview] = useState<{ key: string; url: string | null } | null>(null);
+  const [brandedPreview, setBrandedPreview] = useState<{ key: string; url: string | null } | null>(null);
 
   useEffect(() => {
     const preview = previewRef.current;
-    if (!preview || mbVape) return;
+    if (!preview || brand) return;
 
     const observer = new ResizeObserver(([entry]) => {
       setPreviewScale(entry.contentRect.width / POSTER_WIDTH);
@@ -43,7 +51,7 @@ export default function JoinQRCode({ location }: { location?: { id: string; name
     observer.observe(preview);
 
     return () => observer.disconnect();
-  }, [mbVape]);
+  }, [brand]);
 
   const [copied, setCopied] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
@@ -68,29 +76,29 @@ export default function JoinQRCode({ location }: { location?: { id: string; name
   }, [cafe.slug, location]);
 
   const posterKey = JSON.stringify([joinUrl, cafe.name, tagline, progress, reward]);
-  const currentPreview = mbPreview?.key === posterKey ? mbPreview : null;
-  const mbPosterUrl = currentPreview?.url;
-  const saveUrl = mbVape ? mbPosterUrl : downloadUrl;
+  const currentPreview = brandedPreview?.key === posterKey ? brandedPreview : null;
+  const brandedPosterUrl = currentPreview?.url;
+  const saveUrl = brand ? brandedPosterUrl : downloadUrl;
 
   useEffect(() => {
     const source = posterRef.current;
-    if (!mbVape || !source) return;
+    if (!brand || !source) return;
     let active = true;
     let url: string | undefined;
-    void exportJoinPoster(source, cafe.name, tagline, progress, reward, true).then((blob) => {
+    void exportJoinPoster(source, cafe.name, tagline, progress, reward, brand).then((blob) => {
       if (!active) return;
       url = URL.createObjectURL(blob);
-      setMbPreview({ key: posterKey, url });
+      setBrandedPreview({ key: posterKey, url });
     }).catch((error) => {
       if (!active) return;
-      console.error("Could not prepare the MB QR poster:", error);
-      setMbPreview({ key: posterKey, url: null });
+      console.error("Could not prepare the branded QR poster:", error);
+      setBrandedPreview({ key: posterKey, url: null });
     });
     return () => {
       active = false;
       if (url) URL.revokeObjectURL(url);
     };
-  }, [mbVape, posterKey, cafe.name, tagline, progress, reward]);
+  }, [brand, posterKey, cafe.name, tagline, progress, reward]);
 
   async function copyJoinLink() {
     try {
@@ -112,8 +120,8 @@ export default function JoinQRCode({ location }: { location?: { id: string; name
     setDownloading(true);
     setDownloadMessage(null);
     try {
-      let url = mbPosterUrl;
-      if (!mbVape) {
+      let url = brandedPosterUrl;
+      if (!brand) {
         const blob = await exportJoinPoster(posterRef.current, cafe.name, tagline, progress, reward);
         url = URL.createObjectURL(blob);
         setDownloadUrl(url);
@@ -249,7 +257,7 @@ export default function JoinQRCode({ location }: { location?: { id: string; name
               <button
                 type="button"
                 onClick={downloadPoster}
-                disabled={downloading || (mbVape && !mbPosterUrl)}
+                disabled={downloading || Boolean(brand && !brandedPosterUrl)}
                 className="flex min-h-11 min-w-0 items-center justify-center gap-1.5 px-2 text-sm font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                 style={{
                   backgroundColor: theme.accent,
@@ -304,16 +312,18 @@ export default function JoinQRCode({ location }: { location?: { id: string; name
             className="relative mx-auto w-full overflow-hidden rounded-[18px] bg-white shadow-[0_12px_32px_rgba(0,0,0,0.14)] sm:rounded-[28px]"
             style={{ maxWidth: POSTER_WIDTH, aspectRatio: `${POSTER_WIDTH} / ${POSTER_HEIGHT}` }}
           >
-            {mbVape ? (
+            {brand ? (
               <>
                 <div ref={posterRef} className="sr-only" aria-hidden="true">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={MB_VAPE_LOGO_URL} alt="" />
+                  {mbVape && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={MB_VAPE_LOGO_URL} alt="" />
+                  )}
                   <QRCode value={joinUrl} size={210} level="H" />
                 </div>
-                {mbPosterUrl ? (
+                {brandedPosterUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={mbPosterUrl} alt={`${cafe.name} loyalty signup poster. ${progress} ${reward}`} className="block h-full w-full" />
+                  <img src={brandedPosterUrl} alt={`${cafe.name} loyalty signup poster. ${progress} ${reward}`} className="block h-full w-full" />
                 ) : (
                   <p role="status" className="grid h-full place-items-center px-5 text-center text-sm text-[#432B1D]">
                     {currentPreview ? "The QR poster could not load. Refresh to try again." : "Preparing QR poster…"}

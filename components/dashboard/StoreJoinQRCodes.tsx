@@ -5,12 +5,13 @@ import { useEffect, useState } from "react";
 import JoinQRCode from "@/components/dashboard/JoinQRCode";
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
+import { GOURMEAL_MAIN_STORE, isGourmeal } from "@/lib/business/gourmeal";
 
 type Location = { id: string; name: string };
 
 export default function StoreJoinQRCodes() {
   const { t } = useBeLoyalLanguage();
-  const { theme } = useCafeTheme();
+  const { cafe, theme } = useCafeTheme();
   const [locations, setLocations] = useState<Location[] | null>(null);
   const [locationId, setLocationId] = useState("");
   const [error, setError] = useState(false);
@@ -41,7 +42,10 @@ export default function StoreJoinQRCodes() {
   }
   if (!locations) return <p role="status" className="text-sm">{t("Loading store locations…")}</p>;
 
-  const location = locations.find(item => item.id === locationId) ?? locations[0];
+  const mainStore = isGourmeal(cafe)
+    ? locations.find(item => item.name.toLowerCase() === GOURMEAL_MAIN_STORE.toLowerCase())
+    : undefined;
+  const location = locations.find(item => item.id === locationId) ?? mainStore ?? locations[0];
 
   return (
     <div className="space-y-3">
