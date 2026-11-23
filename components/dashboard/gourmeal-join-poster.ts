@@ -1,5 +1,6 @@
 import { GOURMEAL } from "@/lib/business/gourmeal";
 import { gourmealWordmark } from "@/lib/business/gourmeal-wordmark";
+import { BELOYAL_DOMAIN } from "@/lib/business/provider";
 
 export function drawGourmealJoinPoster(
   context: CanvasRenderingContext2D,
@@ -44,5 +45,6 @@ export function drawGourmealJoinPoster(
   text(reward, 579, 18, 500, green);
   context.fillStyle = green;
   context.fillRect(0, 638, 420, 82);
-  text("Loyalty by BeLoyal", 678, 14, 600, stone);
+  text("POWERED BY", 669, 9, 600, stone);
+  text(BELOYAL_DOMAIN, 688, 16, 700, stone);
 }

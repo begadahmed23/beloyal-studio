@@ -1,3 +1,4 @@
+import { BELOYAL_DOMAIN } from "@/lib/business/provider";
 import { MB_VAPE_IVORY, MB_VAPE_WALNUT } from "@/lib/business/mb-vape";
 
 export function drawMbJoinPoster(
@@ -75,6 +76,5 @@ export function drawMbJoinPoster(
   ctx.letterSpacing = "1.4px";
   text("POWERED BY", 642, "bold 8px Arial, sans-serif", MB_VAPE_WALNUT);
   ctx.letterSpacing = "0px";
-  text("BeLoyal Studio", 660, "bold 14px Arial, sans-serif");
-  text("getbeloyal.app", 679, "10px Arial, sans-serif", MB_VAPE_WALNUT);
+  text(BELOYAL_DOMAIN, 662, "bold 14px Arial, sans-serif");
 }

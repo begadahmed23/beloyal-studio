@@ -519,6 +519,10 @@ export async function POST(
 
   try {
     const body = await request.json();
+    const storeLimit = body.storeLimit ?? 1;
+    if (!Number.isSafeInteger(storeLimit) || storeLimit < 1 || storeLimit > 2147483647) {
+      return NextResponse.json({ message: "Enter a whole number of stores greater than zero." }, { status: 400 });
+    }
 
     const cafeName =
       typeof body.cafeName === "string"
@@ -746,6 +750,7 @@ export async function POST(
           name: cafeName,
           slug,
           businessType,
+          storeLimit,
 
           feedbackEnabled:
             businessType !==

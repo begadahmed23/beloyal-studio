@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
-import { provisioningAuth } from "@/lib/provisioning-auth";
+import { provisionStaff } from "@/lib/business/provision-staff";
+import { StoreCapacityError } from "@/lib/business/store-capacity";
 import { requireSuperAdmin } from "@/lib/require-super-admin";
 
 type Context = {
@@ -47,6 +48,11 @@ export async function GET(
 
   const query = request.nextUrl.searchParams;
   const includeActivity = query.get("activity") === "1";
+  const locations = await prisma.cafeLocation.findMany({
+    where: { cafeId, archivedAt: null },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
 
   const users = await prisma.user.findMany({
     where: {
@@ -65,6 +71,7 @@ export async function GET(
       role: true,
       isEnabled: true,
       createdAt: true,
+      cashierLocation: { select: { id: true, name: true } },
       transactions: {
         orderBy: { createdAt: "desc" },
         take: 1,
@@ -81,6 +88,7 @@ export async function GET(
     role: user.role,
     isEnabled: user.isEnabled,
     createdAt: user.createdAt,
+    location: user.cashierLocation,
     lastActivityAt: user.transactions[0]?.createdAt ?? null,
     activityCount: user._count.transactions,
     isCurrentUser: false,
@@ -90,6 +98,7 @@ export async function GET(
     return json({
       business: cafe,
       staff,
+      locations,
       activity: [],
       activityLoaded: false,
     });
@@ -206,6 +215,7 @@ export async function GET(
   return json({
     business: cafe,
     staff,
+    locations,
     activity,
     activityLoaded: true,
     activityLimit: limit,
@@ -230,6 +240,7 @@ export async function POST(
       email?: unknown;
       password?: unknown;
       role?: unknown;
+      locationId?: unknown;
     };
 
     const name =
@@ -289,35 +300,12 @@ export async function POST(
       );
     }
 
-    const signup = await provisioningAuth.api.signUpEmail({
-      body: { name, email, password },
-    });
-
-    if (!signup.user) {
-      throw new Error("Account was not created.");
-    }
-
-    const user = await prisma.user.update({
-      where: { id: signup.user.id },
-      data: {
-        role,
-        staffCafeId: cafeId,
-        cafeId: null,
-        cashierCafeId: null,
-        isEnabled: true,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isEnabled: true,
-        createdAt: true,
-      },
-    });
+    const locationId = typeof body.locationId === "string" ? body.locationId : "";
+    const user = await provisionStaff({ cafeId, name, email, password, role, locationId });
 
     return json({ user }, 201);
   } catch (error) {
+    if (error instanceof StoreCapacityError) return json({ message: error.message }, error.status);
     console.error("Studio create staff error:", error);
     return json(
       {

@@ -1,6 +1,7 @@
 import { drawMbJoinPoster } from "./mb-join-poster";
 import { drawGourmealJoinPoster } from "./gourmeal-join-poster";
 import { GOURMEAL } from "@/lib/business/gourmeal";
+import { BELOYAL_DOMAIN } from "@/lib/business/provider";
 
 export const POSTER_WIDTH = 420;
 export const POSTER_HEIGHT = 720;
@@ -62,8 +63,7 @@ export async function exportJoinPoster(
     context.fillStyle = "#e5e5e5";
     context.fillRect(42, 616, 336, 1);
     text("POWERED BY", 640, 9, 600, "#737373");
-    text("BeLoyal Studio", 658, 14, 700);
-    text("getbeloyal.app", 678, 10, 500, "#737373");
+    text(BELOYAL_DOMAIN, 660, 14, 700);
   }
 
   // Use whole output pixels per module and leave at least four white modules on all sides.

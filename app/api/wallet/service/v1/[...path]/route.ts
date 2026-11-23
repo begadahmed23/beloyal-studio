@@ -12,8 +12,8 @@ export const dynamic = "force-dynamic";
 const headers = { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" };
 const reply = (status: number) => new NextResponse(null, { status, headers });
 const identifier = (value: string) => /^[a-z0-9_-]{1,200}$/i.test(value);
-// The provider credit changed for every pass, including already installed passes.
-const PASS_DESIGN_VERSION = Date.UTC(2026, 10, 23, 19, 25);
+// Discover the new pass artwork and credit on already installed passes.
+const PASS_DESIGN_VERSION = Date.UTC(2026, 10, 23, 19, 48);
 const select = { id: true, publicToken: true, memberNumber: true, name: true, stamps: true,
   rewardEarnedAt: true, updatedAt: true,
   cafe: { select: { id: true, name: true, slug: true, logoUrl: true, theme: true, businessType: true,

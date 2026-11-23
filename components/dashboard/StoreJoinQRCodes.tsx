@@ -13,6 +13,7 @@ export default function StoreJoinQRCodes() {
   const { t } = useBeLoyalLanguage();
   const { cafe, theme } = useCafeTheme();
   const [locations, setLocations] = useState<Location[] | null>(null);
+  const [hasActiveStores, setHasActiveStores] = useState(false);
   const [locationId, setLocationId] = useState("");
   const [error, setError] = useState(false);
   const [version, setVersion] = useState(0);
@@ -22,8 +23,11 @@ export default function StoreJoinQRCodes() {
     void fetch("/api/cafe/locations", { signal: controller.signal, cache: "no-store" })
       .then(async response => {
         if (!response.ok) throw new Error("Could not load store locations.");
-        const body: { locations: Location[] } = await response.json();
-        if (!controller.signal.aborted) setLocations(body.locations);
+        const body: { locations: Location[]; hasActiveStores: boolean } = await response.json();
+        if (!controller.signal.aborted) {
+          setLocations(body.locations);
+          setHasActiveStores(body.hasActiveStores);
+        }
       })
       .catch(() => {
         if (!controller.signal.aborted) setError(true);
@@ -41,6 +45,9 @@ export default function StoreJoinQRCodes() {
     </div>;
   }
   if (!locations) return <p role="status" className="text-sm">{t("Loading store locations…")}</p>;
+  if (hasActiveStores && !locations.length) {
+    return <p className="text-sm">{t("Ask your business admin to assign you to a store to see its signup QR.")}</p>;
+  }
 
   const mainStore = isGourmeal(cafe)
     ? locations.find(item => item.name.toLowerCase() === GOURMEAL_MAIN_STORE.toLowerCase())

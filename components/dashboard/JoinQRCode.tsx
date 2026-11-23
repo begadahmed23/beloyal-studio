@@ -12,6 +12,7 @@ import {
 
 import { isMbVape, MB_VAPE_LOGO_URL } from "@/lib/business/mb-vape";
 import { isGourmeal } from "@/lib/business/gourmeal";
+import { BELOYAL_DOMAIN } from "@/lib/business/provider";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
@@ -564,19 +565,7 @@ export default function JoinQRCode({ location }: { location?: { id: string; name
                       letterSpacing: "-0.01em",
                     }}
                   >
-                    BeLoyal Studio
-                  </p>
-
-                  <p
-                    style={{
-                      margin: "3px 0 0",
-                      color: "#737373",
-                      fontSize: "10px",
-                      fontWeight: 500,
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    getbeloyal.app
+                    {BELOYAL_DOMAIN}
                   </p>
                 </div>
               </div>

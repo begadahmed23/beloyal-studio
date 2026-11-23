@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
-import { provisioningAuth } from "@/lib/provisioning-auth";
+import { provisionStaff } from "@/lib/business/provision-staff";
+import { StoreCapacityError } from "@/lib/business/store-capacity";
 import { requireAuth } from "@/lib/require-auth";
 
 function json(body: unknown, status = 200) {
@@ -254,18 +255,6 @@ export async function POST(request: NextRequest) {
     }
 
     const locationId = typeof body.locationId === "string" ? body.locationId : "";
-    const location = locationId && locationId.length <= 40
-      ? await prisma.cafeLocation.findUnique({
-          where: { cafeId_id: { cafeId: authData.cafeId, id: locationId }, archivedAt: null },
-          select: { id: true },
-        })
-      : null;
-    if (locationId && !location) {
-      return json({ message: "Choose a branch from this business." }, 400);
-    }
-    if (!location && await prisma.cafeLocation.count({ where: { cafeId: authData.cafeId, archivedAt: null } })) {
-      return json({ message: "Choose a branch for this cashier." }, 400);
-    }
 
     const existing = await prisma.user.findUnique({
       where: { email },
@@ -279,36 +268,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const signup = await provisioningAuth.api.signUpEmail({
-      body: { name, email, password },
-    });
-
-    if (!signup.user) {
-      throw new Error("Cashier account was not created.");
-    }
-
-    const user = await prisma.user.update({
-      where: { id: signup.user.id },
-      data: {
-        role: "CASHIER",
-        staffCafeId: authData.cafeId,
-        cafeId: null,
-        cashierCafeId: null,
-        cashierLocationId: location?.id ?? null,
-        isEnabled: true,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isEnabled: true,
-        createdAt: true,
-      },
-    });
+    const user = await provisionStaff({ cafeId: authData.cafeId, name, email, password, role: "CASHIER", locationId });
 
     return json({ user }, 201);
   } catch (error) {
+    if (error instanceof StoreCapacityError) return json({ message: error.message }, error.status);
     console.error("Create cashier error:", error);
     return json(
       {

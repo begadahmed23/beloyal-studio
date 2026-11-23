@@ -12,6 +12,7 @@ model Cafe {
   name                          String
   slug                          String                     @unique
   businessType                  BusinessType               @default(CAFE)
+  storeLimit                    Int                        @default(1)
   logoUrl                       String?
   theme                         CafeTheme                  @default(COFFEE_CLASSIC)
   primaryColor                  String                     @default("#8e6045")

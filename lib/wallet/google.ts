@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 import { getMbVapeBrandColors, isMbVape, MB_VAPE_ARTWORK_PATH, walletBusinessName } from "../business/mb-vape";
 import { GOURMEAL, gourmealStripPath, isGourmeal } from "../business/gourmeal";
-import { BELOYAL_DOMAIN } from "../business/provider";
 import { walletLocations } from "./notification-text";
 import type { WalletMember } from "./apple";
 import { LORETTO_BG, displayWalletReward } from "./loretto-artwork";
@@ -93,7 +92,7 @@ export function googleWalletObject(member: WalletMember) {
       { id: "reward", header: "YOUR REWARD", body: loretto ? displayWalletReward(getRewardName(member.cafe)) : getRewardName(member.cafe) },
       ...(mbVape ? [{ id: "progress", header: "STAMPS", body: progress }] : []),
     ],
-    linksModuleData: { uris: [{ id: "card", uri: new URL(`/card/${member.publicToken}`, site).href, description: `Open card on ${BELOYAL_DOMAIN}` }] } };
+    linksModuleData: { uris: [{ id: "card", uri: new URL(`/card/${member.publicToken}`, site).href, description: "Open your BeLoyal card" }] } };
 }
 type GoogleBrand = WalletMember["cafe"] & { logoUrl?: string | null };
 type GoogleLocation = Parameters<typeof walletLocations>[0];
@@ -109,14 +108,14 @@ export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocati
   const site = process.env.GOOGLE_WALLET_SITE_URL!;
   if (mbVape) logo = new URL(MB_VAPE_ARTWORK_PATH + "?asset=icon&v=2", site);
   if (loretto) logo = new URL("/api/wallet/artwork/loretto?asset=icon&v=3", site);
-  if (gourmeal) logo = new URL(GOURMEAL.artwork + "?asset=icon&v=2", site);
+  if (gourmeal) logo = new URL(GOURMEAL.artwork + "?asset=icon&v=3", site);
   return {
-    issuerName: gourmeal ? BELOYAL_DOMAIN : displayName,
+    issuerName: gourmeal ? "BeLoyal" : displayName,
     programName: mbVape || loretto || gourmeal ? displayName : `${displayName} Rewards`,
     programLogo: walletImage(logo, displayName),
     ...(loretto ? { accountNameLabel: "MEMBER" } : {}),
     ...(gourmeal ? {
-      wideProgramLogo: walletImage(new URL(GOURMEAL.artwork + "?asset=wide-icon&v=2", site), displayName),
+      wideProgramLogo: walletImage(new URL(GOURMEAL.artwork + "?asset=wide-icon&v=3", site), displayName),
       accountNameLabel: "MEMBER",
       classTemplateInfo: {
         cardTemplateOverride: {

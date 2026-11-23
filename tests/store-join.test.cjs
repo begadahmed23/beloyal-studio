@@ -69,24 +69,40 @@ test("only the owning business admin can remove a store, and adding its name res
   const store = { id: "greenplaza", cafeId: "gourmeal", name: "Green Plaza", archivedAt: null };
   let cafeId = "other";
   let role = "CAFE_ADMIN";
+  let activeStores = 1;
   const route = {};
+  const capacity = {};
+  const prisma = { cafeLocation: {
+    updateMany: async ({ where, data }) => {
+      if (store.id !== where.id || store.cafeId !== where.cafeId || store.archivedAt !== where.archivedAt) return { count: 0 };
+      store.archivedAt = data.archivedAt;
+      activeStores--;
+      return { count: 1 };
+    },
+    findUnique: async ({ where }) => where.cafeId_name.name === store.name ? store : null,
+    count: async () => activeStores,
+    upsert: async ({ where, update }) => {
+      assert.deepEqual(where, { cafeId_name: { cafeId: "gourmeal", name: "Green Plaza" } });
+      store.archivedAt = update.archivedAt;
+      return { id: store.id, name: store.name };
+    },
+  }, user: { findMany: async () => [] } };
+  prisma.$transaction = callback => callback({
+    ...prisma,
+    $queryRaw: async (_query, id) => {
+      assert.equal(id, cafeId);
+      return [{ storeLimit: 1 }];
+    },
+  });
+  new Function("exports", "require", compileRoute("lib/business/store-capacity.ts"))(capacity,
+    id => id === "@/lib/prisma" ? { prisma } : require(id));
   new Function("exports", "require", compileRoute("app/api/cafe/locations/route.ts"))(route, id => {
     if (id === "@/lib/require-active-cafe") {
       return { requireActiveCafe: async () => ({ allowed: true, authData: { cafeId, user: { role } } }) };
     }
-    if (id !== "@/lib/prisma") return require(id);
-    return { prisma: { cafeLocation: {
-      updateMany: async ({ where, data }) => {
-        if (store.id !== where.id || store.cafeId !== where.cafeId || store.archivedAt !== where.archivedAt) return { count: 0 };
-        store.archivedAt = data.archivedAt;
-        return { count: 1 };
-      },
-      upsert: async ({ where, update }) => {
-        assert.deepEqual(where, { cafeId_name: { cafeId: "gourmeal", name: "Green Plaza" } });
-        store.archivedAt = update.archivedAt;
-        return { id: store.id, name: store.name };
-      },
-    } } };
+    if (id === "@/lib/prisma") return { prisma };
+    if (id === "@/lib/business/store-capacity") return capacity;
+    return require(id);
   });
   const change = (method, body) => route[method](new NextRequest("https://example.com/api/cafe/locations", {
     method, headers: { "Content-Type": "application/json", origin: "https://example.com" }, body: JSON.stringify(body),
@@ -97,10 +113,39 @@ test("only the owning business admin can remove a store, and adding its name res
   role = "CASHIER";
   assert.equal((await change("DELETE", { id: store.id })).status, 403);
   role = "CAFE_ADMIN";
+  assert.equal((await change("POST", { name: "Second store" })).status, 409);
+  assert.equal((await change("POST", { name: "Green Plaza" })).status, 200);
   assert.equal((await change("DELETE", { id: store.id })).status, 204);
   assert.ok(store.archivedAt instanceof Date);
   const restored = await change("POST", { name: "Green  Plaza" });
   assert.equal(restored.status, 200);
   assert.equal((await restored.json()).location.id, store.id);
   assert.equal(store.archivedAt, null);
+});
+
+test("the cashier allowance is capped and each store has at most one cashier account", async () => {
+  const capacity = {};
+  new Function("exports", "require", compileRoute("lib/business/store-capacity.ts"))(capacity,
+    id => id === "@/lib/prisma" ? { prisma: {} } : require(id));
+  const cashiers = [{ cashierLocationId: "greenplaza" }];
+  const locations = [{ id: "greenplaza" }, { id: "secondstore" }];
+  const db = {
+    user: { findMany: async ({ where }) => {
+      assert.equal(where.OR[0].staffCafeId, "gourmeal");
+      return cashiers;
+    } },
+    cafeLocation: { findMany: async ({ where }) => {
+      assert.deepEqual(where, { cafeId: "gourmeal", archivedAt: null });
+      return locations;
+    } },
+  };
+  const branch = (limit, request, requireSelection) =>
+    capacity.getCashierLocation(db, "gourmeal", limit, request, requireSelection);
+  await assert.rejects(() => branch(1, "secondstore"), { status: 409, message: /cashier account limit/ });
+  await assert.rejects(() => branch(2, "greenplaza"), { status: 409, message: /already has a cashier/ });
+  await assert.rejects(() => branch(2, "foreign"), { status: 400 });
+  assert.equal(await branch(2, "secondstore"), "secondstore");
+  assert.equal(await branch(2, "", false), "secondstore");
+  cashiers.push({ cashierLocationId: "secondstore" });
+  await assert.rejects(() => branch(2, ""), { status: 409 });
 });
