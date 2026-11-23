@@ -6,6 +6,7 @@ import { walletCredential as credential, walletUpdatesEnabled, walletAuthToken }
 export { appleWalletEnabled } from "./config";
 import { businessCardArtwork } from "../business/card-artwork";
 import { getLoyaltyProgressTarget } from "../business/loyalty-target";
+import { BELOYAL_DOMAIN } from "../business/provider";
 import { getMbVapeBrandColors, isMbVape, walletBusinessName } from "../business/mb-vape";
 import { GOURMEAL, isGourmeal } from "../business/gourmeal";
 import { renderGourmealIcon, renderGourmealStrip, renderGourmealWordmark } from "./gourmeal-artwork";
@@ -177,7 +178,7 @@ export async function createAppleWalletPass(member: WalletMember, message?: stri
   pass.backFields.push(
     { key: "progress", label: "Live stamps & rewards", value: cardUrl },
     { key: "instructions", label: "How to use", value: "Show this QR code at checkout. Open your online card for your current stamps and rewards." },
-    { key: "provider", label: "Powered by", value: "BeLoyal" },
+    { key: "provider", label: "Powered by", value: BELOYAL_DOMAIN },
   );
   pass.setBarcodes({ format: "PKBarcodeFormatQR", message: `BL:${member.publicToken}`, messageEncoding: "iso-8859-1", altText: member.memberNumber });
   return pass.getAsBuffer();

@@ -43,6 +43,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
+import { BELOYAL_DOMAIN } from "@/lib/business/provider";
 import { getMbVapeBrandColors, isMbVape, MB_VAPE_LOGO_URL } from "@/lib/business/mb-vape";
 import { GOURMEAL, isGourmeal } from "@/lib/business/gourmeal";
 import { getBusinessBrandColors } from "@/lib/cafe-theme";
@@ -1148,7 +1149,7 @@ export default function DigitalCardPage() {
           </div>
 
           <p
-            className="mt-6 text-[11px] font-semibold uppercase tracking-[0.32em]"
+            className="mt-6 text-[11px] font-semibold tracking-[0.18em]"
             style={{
               color: withAlpha(
                 loaderTheme.foreground,
@@ -1156,7 +1157,7 @@ export default function DigitalCardPage() {
               ),
             }}
           >
-            BeLoyal
+            {BELOYAL_DOMAIN}
           </p>
 
           <p
