@@ -1,7 +1,7 @@
 import { drawMbJoinPoster } from "./mb-join-poster";
 import { drawGourmealJoinPoster } from "./gourmeal-join-poster";
 import { GOURMEAL } from "@/lib/business/gourmeal";
-import { BELOYAL_DOMAIN } from "@/lib/business/provider";
+import { drawJoinPosterCredit } from "./join-poster-credit";
 
 export const POSTER_WIDTH = 420;
 export const POSTER_HEIGHT = 720;
@@ -62,8 +62,7 @@ export async function exportJoinPoster(
     text("Scan the QR code to join.", 570, 13, 500, "#737373");
     context.fillStyle = "#e5e5e5";
     context.fillRect(42, 616, 336, 1);
-    text("Powered by", 640, 9, 600, "#737373");
-    text(BELOYAL_DOMAIN, 660, 14, 700);
+    drawJoinPosterCredit(context, POSTER_WIDTH / 2, 641, "#111111", "#737373");
   }
 
   // Use whole output pixels per module and leave at least four white modules on all sides.
