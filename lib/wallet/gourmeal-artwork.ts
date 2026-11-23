@@ -1,6 +1,6 @@
 import sharp from "sharp";
 import { GOURMEAL } from "../business/gourmeal";
-import { gourmealWordmark } from "../business/gourmeal-wordmark";
+import { gourmealInitial, gourmealWordmark } from "../business/gourmeal-wordmark";
 
 const { green, lime, stone, sand, butter } = GOURMEAL;
 
@@ -17,9 +17,10 @@ function shaker(color: string, filled: boolean) {
 export function renderGourmealStrip(stamps: number, target: number, platform: "apple" | "google" = "apple") {
   const width = 375;
   const height = 123;
+  const google = platform === "google";
   const rows = Math.ceil(target / 9);
   const columns = Math.ceil(target / rows);
-  const step = Math.min(43, 295 / columns, 102 / rows);
+  const step = Math.min(43, (google ? 282 : 295) / columns, (google ? 78 : 102) / rows);
   const scale = (step * 0.85) / 36;
   const cells = Array.from({ length: target }, (_, index) => {
     const row = Math.floor(index / columns);
@@ -36,21 +37,23 @@ export function renderGourmealStrip(stamps: number, target: number, platform: "a
       ${last ? `<path d="M29 3.5v5.5m-2.75-2.75h5.5" stroke="${green}" stroke-width="1.1" stroke-linecap="round"/>` : ""}
     </g>`;
   }).join("");
-  const [pixelsWide, pixelsHigh] = platform === "apple" ? [1125, 369] : [1032, 336];
+  const [pixelsWide, pixelsHigh] = google ? [1032, 336] : [1125, 369];
+  const panel = google
+    ? `<rect x="15" y="13.5" width="345" height="96" rx="48" fill="${sand}"/>`
+    : `<rect x="18" y="4" width="339" height="115" rx="15" fill="${sand}"/>
+       <path d="M33 14h309m-309 95h309" stroke="${green}" stroke-width=".65" opacity=".23"/>`;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${pixelsWide}" height="${pixelsHigh}" viewBox="0 0 ${width} ${height}">
     <rect width="${width}" height="${height}" fill="${green}"/>
-    <rect x="18" y="4" width="339" height="115" rx="15" fill="${sand}"/>
-    <path d="M33 14h309m-309 95h309" stroke="${green}" stroke-width=".65" opacity=".23"/>
+    ${panel}
     ${cells}
   </svg>`;
   return sharp(Buffer.from(svg)).png().toBuffer();
 }
 
-export function renderGourmealIcon(size: number) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 64 64">
+export function renderGourmealIcon(width: number, height = width) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 64 64" preserveAspectRatio="xMinYMid meet">
     <rect width="64" height="64" rx="15" fill="${green}"/>
-    <circle cx="32" cy="32" r="22" fill="${lime}"/>
-    <g transform="translate(14.5 13.75)" color="${green}">${shaker(green, true)}</g>
+    <path d="${gourmealInitial}" fill="${stone}" transform="translate(16 11) scale(.265)"/>
   </svg>`;
   return sharp(Buffer.from(svg)).png().toBuffer();
 }

@@ -71,12 +71,18 @@ function unzipSync(input) {
 }
 test('Gourmeal signs its shaker artwork, native progress and existing scanner QR', async () => {
   const { createAppleWalletPass } = load('lib/wallet/apple.ts');
+  const { renderGourmealIcon, renderGourmealStrip } = load('lib/wallet/gourmeal-artwork.ts');
   const sharp = require('sharp');
   const gourmand = {
     ...member,
     cafe: { ...member.cafe, name: 'Gourmeal', slug: 'goumeal', rewardTarget: 8, rewardName: 'Free Drink' },
   };
   const strips = [];
+  const icon = await renderGourmealIcon(87);
+  const googleStampPanel = await sharp(await renderGourmealStrip(3, 7, 'google')).ensureAlpha().raw().toBuffer();
+  const panelPixel = (x, y) => [...googleStampPanel.subarray((y * 1032 + x) * 4, (y * 1032 + x) * 4 + 4)];
+  assert.deepEqual(panelPixel(62, 46), [41, 75, 56, 255]);
+  assert.deepEqual(panelPixel(516, 46), [221, 209, 193, 255]);
   for (const [stamps, rewardEarnedAt, label, progress] of [
     [0, null, 'STAMPS', '0/7'],
     [3, null, 'STAMPS', '3/7'],
@@ -84,6 +90,7 @@ test('Gourmeal signs its shaker artwork, native progress and existing scanner QR
   ]) {
     const zip = unzipSync(await createAppleWalletPass({ ...gourmand, stamps, rewardEarnedAt }));
     const pass = JSON.parse(strFromU8(zip['pass.json']));
+    assert.deepEqual(zip['icon@3x.png'], icon);
     assert.equal(pass.organizationName, 'Gourmeal');
     assert.equal(pass.logoText, undefined);
     assert.equal(pass.backgroundColor, 'rgb(41, 75, 56)');

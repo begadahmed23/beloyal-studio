@@ -21,6 +21,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ busi
   if (businessType === "gourmeal") {
     const asset = colors.get("asset");
     if (asset === "icon") return imageResponse(await renderGourmealIcon(660));
+    if (asset === "wide-icon") return imageResponse(await renderGourmealIcon(1280, 400));
     if (asset === "wide-logo") return imageResponse(await renderGourmealWordmark(1280, 400));
     if (asset !== "strip" && asset !== "google-strip") return new Response(null, { status: 404 });
 
