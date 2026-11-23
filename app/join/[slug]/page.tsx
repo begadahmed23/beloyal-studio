@@ -1,10 +1,10 @@
 import { getRewardName } from "@/lib/business/terminology";
 import { CardBrandHeader, cardFrame } from "@/components/loyalty/CardBrand";
-import { baseDashboardPaletteSelect, getBaseDashboardPalette } from "@/lib/business/dashboard-palette";
-import { GOURMEAL, isGourmeal } from "@/lib/business/gourmeal";
+import GourmealWordmark from "@/components/brand/GourmealWordmark";
+import { dashboardPaletteSelect, getBaseDashboardPalette, getDashboardPalette } from "@/lib/business/dashboard-palette";
+import { isGourmeal } from "@/lib/business/gourmeal";
 import { dashboardThemeVariables } from "@/lib/cafe-theme";
 import { cookies } from "next/headers";
-import Image from "next/image";
 import { notFound, redirect } from "next/navigation";
 
 import { prisma } from "@/lib/prisma";
@@ -43,7 +43,7 @@ export default async function JoinPage({
       primaryColor: true,
       secondaryColor: true,
       backgroundColor: true,
-      ...baseDashboardPaletteSelect,
+      ...dashboardPaletteSelect,
       rewardTarget: true,
       rewardName: true,
       isActive: true,
@@ -54,8 +54,9 @@ export default async function JoinPage({
     notFound();
   }
 
-  const businessTheme = getJoinTheme({ ...cafe, ...getBaseDashboardPalette(cafe) });
   const gourmeal = isGourmeal(cafe);
+  const palette = gourmeal ? getDashboardPalette(cafe) : getBaseDashboardPalette(cafe);
+  const businessTheme = getJoinTheme({ ...cafe, ...palette });
 
   /*
    * Check whether this device already has a remembered
@@ -105,9 +106,8 @@ export default async function JoinPage({
         }}>
           {gourmeal ? (
             <header className="grid aspect-[2.6] w-full place-items-center border-b-8"
-              style={{ backgroundColor: GOURMEAL.green, borderColor: GOURMEAL.lime }}>
-              <Image src={GOURMEAL.wordmark} alt={cafe.name} width={275} height={55}
-                className="h-auto w-[78%] max-w-[275px]" unoptimized loading="eager" />
+              style={{ backgroundColor: businessTheme.primary, borderColor: businessTheme.accentSoft, color: businessTheme.buttonText }}>
+              <GourmealWordmark name={cafe.name} className="block h-auto w-[78%] max-w-[275px]" />
             </header>
           ) : (
             <CardBrandHeader business={cafe} logoUrl={cafe.logoUrl} inheritColors />

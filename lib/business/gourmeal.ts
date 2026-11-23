@@ -4,7 +4,6 @@ export const GOURMEAL = {
   stone: "#E9E8E4",
   sand: "#DDD1C1",
   butter: "#F4E3A1",
-  wordmark: "/brands/gourmeal/wordmark.png",
   artwork: "/api/wallet/artwork/gourmeal",
 } as const;
 

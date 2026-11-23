@@ -393,7 +393,9 @@ export default function JoinForm({
               }
               autoComplete="bday"
               required
-              className={`${inputClassName} ${theme.light ? "[color-scheme:light]" : "[color-scheme:dark]"}`}
+              className={`${inputClassName} block min-w-0 max-w-full appearance-none focus-visible:ring-2 focus-visible:ring-primary/30
+                [&::-webkit-date-and-time-value]:min-w-0 [&::-webkit-date-and-time-value]:text-start
+                ${theme.light ? "[color-scheme:light]" : "[color-scheme:dark]"}`}
               style={inputStyle}
             />
 
