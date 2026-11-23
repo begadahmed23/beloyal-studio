@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { applyPublicRateLimit, publicApiRateLimiters } from "@/lib/public-api-security";
 import { createAppleWalletPass } from "@/lib/wallet/apple";
-import { validWalletAuth, walletUpdatesEnabled } from "@/lib/wallet/config";
+import { validWalletAuth, walletPassTypeAvailable, walletPassTypeForBusiness, walletUpdatesEnabled } from "@/lib/wallet/config";
 import { deviceKey, walletRedis, registerWalletDevice, unregisterWalletDevice } from "@/lib/wallet/updates";
 
 export const runtime = "nodejs";
@@ -32,16 +32,17 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
     const listing = path.length === 4 && path[0] === "devices" && path[2] === "registrations";
     const downloading = path.length === 3 && path[0] === "passes";
     const type = downloading ? path[1] : path[3];
-    if ((!registering && !listing && !downloading) || type !== process.env.APPLE_WALLET_PASS_TYPE_ID) return reply(404);
+    if ((!registering && !listing && !downloading) || !walletPassTypeAvailable(type)) return reply(404);
     if (listing) {
       if (method !== "GET" || !identifier(path[1])) return reply(400);
       // Per Apple's protocol this endpoint uses the opaque device ID, not ApplePass auth.
-      const ids = await walletRedis().smembers<string[]>(deviceKey(path[1]));
+      const ids = await walletRedis().smembers<string[]>(deviceKey(path[1], type));
       if (!ids.length) return reply(204);
       const since = request.nextUrl.searchParams.get("passesUpdatedSince");
       if (since && !/^\d{1,16}$/.test(since)) return reply(400);
-      const members = await prisma.customer.findMany({ where: { id: { in: ids }, cafe: { isActive: true } },
-        select: { id: true, updatedAt: true, cafe: { select: { updatedAt: true } } } });
+      const registered = await prisma.customer.findMany({ where: { id: { in: ids }, cafe: { isActive: true } },
+        select: { id: true, updatedAt: true, cafe: { select: { slug: true, updatedAt: true } } } });
+      const members = registered.filter(member => walletPassTypeForBusiness(type, member.cafe.slug));
       const messageVersions = new Map(await Promise.all(members.map(async (member) => [member.id, (await getWalletMessage(member.id))?.updatedAt ?? 0] as const)));
       const version = (member: typeof members[number]) => Math.max(PASS_DESIGN_VERSION, member.updatedAt.getTime(), member.cafe.updatedAt.getTime(), messageVersions.get(member.id) ?? 0);
       const changed = members.filter((member) => !since || version(member) > Number(since));
@@ -51,11 +52,11 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
     }
     const serial = downloading ? path[2] : path[4];
     if (!identifier(serial) || (registering && !identifier(path[1]))) return reply(400);
-    if (!validWalletAuth(serial, request.headers.get("authorization"))) return reply(401);
+    if (!validWalletAuth(serial, request.headers.get("authorization"), type)) return reply(401);
     const member = await prisma.customer.findFirst({ where: { id: serial, cafe: { isActive: true } }, select });
-    if (!member) return reply(404);
+    if (!member || !walletPassTypeForBusiness(type, member.cafe.slug)) return reply(404);
     if (registering) {
-      if (method === "DELETE") { await unregisterWalletDevice(path[1], serial); return reply(200); }
+      if (method === "DELETE") { await unregisterWalletDevice(path[1], serial, type); return reply(200); }
       if (method !== "POST") return reply(405);
       if (Number(request.headers.get("content-length") || 0) > 2048) return reply(413);
       // Read with a byte cap, including chunked requests.
@@ -73,7 +74,7 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
       let body: { pushToken?: unknown };
       try { body = JSON.parse(Buffer.concat(chunks).toString()); } catch { return reply(400); }
       if (!body || typeof body.pushToken !== "string" || !/^[a-f0-9]{32,256}$/i.test(body.pushToken)) return reply(400);
-      const added = await registerWalletDevice(path[1], serial, body.pushToken);
+      const added = await registerWalletDevice(path[1], serial, body.pushToken, type);
       return reply(added ? 201 : 200);
     }
     if (method !== "GET") return reply(405);
@@ -83,7 +84,7 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
     // .pkpass. A stale If-Modified-Since value must never leave an old reward
     // on an installed card after a settings change.
     // The device registration endpoint handles delta discovery separately.
-    const pass = await createAppleWalletPass(member, message?.text, await getWalletNotificationSettings(member.cafe.id));
+    const pass = await createAppleWalletPass(member, message?.text, await getWalletNotificationSettings(member.cafe.id), type);
     console.info("Wallet updated pass served", { messageVersion: message?.updatedAt ?? null });
     return new NextResponse(new Uint8Array(pass), { headers: { ...headers,
       "Content-Type": "application/vnd.apple.pkpass", "Last-Modified": new Date(modified).toUTCString() } });
