@@ -1,14 +1,13 @@
 import { getMbVapeBrandColors } from "@/lib/business/mb-vape";
-import { isGourmeal } from "@/lib/business/gourmeal";
 import type { BusinessType } from "@prisma/client";
-import { APPLE_GREEN_DASHBOARD_THEME, getBusinessBrandColors, getBusinessTheme, getDashboardTheme, type CafeThemeName } from "@/lib/cafe-theme";
+import { getBusinessBrandColors, getBusinessTheme, getDashboardTheme, type DashboardThemeName } from "@/lib/cafe-theme";
 import { getReadableText, isLightColor, mixColors } from "@/app/card/[token]/card-theme-utils";
 import { withAlpha } from "@/app/card/[token]/card-utils";
 
 type JoinCafe = {
   name: string;
   slug: string;
-  theme: CafeThemeName;
+  theme: DashboardThemeName;
   businessType: BusinessType;
   primaryColor?: string | null;
   secondaryColor?: string | null;
@@ -17,9 +16,8 @@ type JoinCafe = {
 };
 
 export function getJoinTheme(cafe: JoinCafe) {
-  const gourmeal = isGourmeal(cafe);
-  if (gourmeal || cafe.hasDashboardPalette) {
-    const palette = gourmeal ? getDashboardTheme(APPLE_GREEN_DASHBOARD_THEME) : getDashboardTheme(cafe.theme, cafe);
+  if (cafe.hasDashboardPalette) {
+    const palette = getDashboardTheme(cafe.theme, cafe);
     return {
       ...palette,
       primary: palette.accent,

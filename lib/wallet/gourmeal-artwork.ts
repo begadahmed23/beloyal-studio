@@ -1,6 +1,6 @@
-import path from "node:path";
 import sharp from "sharp";
 import { GOURMEAL } from "../business/gourmeal";
+import { gourmealWordmark } from "../business/gourmeal-wordmark";
 
 const { green, lime, stone, sand, butter } = GOURMEAL;
 
@@ -56,7 +56,11 @@ export function renderGourmealIcon(size: number) {
 }
 
 export function renderGourmealWordmark(width: number, height: number, position: "left" | "centre" = "centre") {
-  return sharp(path.join(process.cwd(), "public", GOURMEAL.wordmark))
-    .resize(width, height, { fit: "contain", position, background: "#00000000" })
-    .png().toBuffer();
+  const mark = gourmealWordmark;
+  const alignment = position === "left" ? "xMinYMid" : "xMidYMid";
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"
+    viewBox="0 0 ${mark.width} ${mark.height}" preserveAspectRatio="${alignment} meet">
+    <path fill="${stone}" fill-rule="evenodd" d="${mark.path}"/>
+  </svg>`;
+  return sharp(Buffer.from(svg)).png().toBuffer();
 }

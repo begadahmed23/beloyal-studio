@@ -2,6 +2,7 @@ import type { BusinessType } from "@prisma/client";
 import { Check, Coffee, Layers, Scissors, Store } from "lucide-react";
 import Image from "next/image";
 
+import GourmealWordmark from "@/components/brand/GourmealWordmark";
 import KatoMark from "@/components/brand/KatoMark";
 import MbVapeLogo from "@/components/brand/MbVapeLogo";
 import { businessCardBackground } from "@/lib/business/card-artwork";
@@ -33,8 +34,7 @@ export function CardBrandHeader({ business, progress, logoUrl, onLogoError, inhe
       style={gourmealCard ? { backgroundColor: GOURMEAL.green, color: GOURMEAL.stone } : loretto ? { backgroundColor: "#E9E4D8", color: "#2E2E2E", borderBottom: "1px solid rgba(82,79,71,.25)" } : !inheritColors && business.businessType === "VAPE" ? { backgroundColor: "#fff", color: "#432B1D" } : undefined}>
       <div className={progress ? "min-w-0 flex-1" : "grid min-w-0 max-w-full place-items-center"}>
         {gourmealCard ? (
-          <Image src={GOURMEAL.wordmark} alt={business.name} width={275} height={55}
-            className="h-auto w-44 max-w-full sm:w-48" unoptimized />
+          <GourmealWordmark name={business.name} className="block h-auto w-44 max-w-full sm:w-48" />
         ) : mbVape ? (
           <MbVapeLogo className={progress
             ? "h-auto w-[clamp(8.75rem,43vw,11.75rem)] max-w-full"

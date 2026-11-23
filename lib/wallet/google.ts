@@ -115,7 +115,7 @@ export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocati
     programLogo: walletImage(logo, displayName),
     ...(loretto ? { accountNameLabel: "MEMBER" } : {}),
     ...(gourmeal ? {
-      wideProgramLogo: walletImage(new URL(GOURMEAL.artwork + "?asset=wide-logo&v=1", site), displayName),
+      wideProgramLogo: walletImage(new URL(GOURMEAL.artwork + "?asset=wide-logo&v=2", site), displayName),
       accountNameLabel: "MEMBER",
       classTemplateInfo: {
         cardTemplateOverride: {
