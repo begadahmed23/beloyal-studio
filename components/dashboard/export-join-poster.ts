@@ -1,4 +1,6 @@
 import { drawMbJoinPoster } from "./mb-join-poster";
+import { drawGourmealJoinPoster } from "./gourmeal-join-poster";
+import { GOURMEAL } from "@/lib/business/gourmeal";
 
 export const POSTER_WIDTH = 420;
 export const POSTER_HEIGHT = 720;
@@ -9,7 +11,7 @@ export async function exportJoinPoster(
   tagline: string,
   progress: string,
   reward: string,
-  mbVape = false,
+  brand?: "mb-vape" | "gourmeal",
 ): Promise<Blob> {
   const qr = poster.querySelector("svg");
   const modules = qr?.viewBox.baseVal.width;
@@ -37,7 +39,9 @@ export async function exportJoinPoster(
 
   const logo = poster.querySelector("img");
   if (logo) await logo.decode().catch(() => {});
-  if (mbVape) {
+  if (brand === "gourmeal") {
+    drawGourmealJoinPoster(context, tagline, progress, reward);
+  } else if (brand === "mb-vape") {
     if (!logo?.naturalWidth || !logo.naturalHeight) throw new Error("MB logo is unavailable.");
     drawMbJoinPoster(context, logo, name, tagline, progress, reward);
   } else {
@@ -68,8 +72,8 @@ export async function exportJoinPoster(
   context.save();
   context.setTransform(pixelsPerModule, 0, 0, pixelsPerModule,
     Math.floor((canvas.width - qrSize) / 2),
-    mbVape ? Math.floor(363 * scale - qrSize / 2) : 251 * scale);
-  context.fillStyle = "#111";
+    brand ? Math.floor((brand === "gourmeal" ? 378 : 363) * scale - qrSize / 2) : 251 * scale);
+  context.fillStyle = brand === "gourmeal" ? GOURMEAL.green : "#111";
   context.fill(new Path2D(path));
   context.restore();
 

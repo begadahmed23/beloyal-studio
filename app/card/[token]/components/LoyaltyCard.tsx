@@ -2,7 +2,7 @@
 import LanguageToggle, { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import type { BusinessType } from "@prisma/client";
-import { ChevronDown, QrCode, RefreshCw } from "lucide-react";
+import { ChevronDown, MessageCircle, QrCode, RefreshCw } from "lucide-react";
 import { CardBrandHeader, CardStampStrip, cardFrame } from "@/components/loyalty/CardBrand";
 import { MB_VAPE_IVORY, MB_VAPE_WALNUT } from "@/lib/business/mb-vape";
 import AppleWalletButton from "./AppleWalletButton";
@@ -134,6 +134,18 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
             <QrCode size={18} aria-hidden="true" /> {t("Show QR Code")}
           </button>
 
+          {cafe.feedbackEnabled && (
+            <button
+              type="button"
+              onClick={onShowFeedback}
+              aria-haspopup="dialog"
+              className="flex min-h-11 w-full touch-manipulation items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-opacity hover:opacity-85 active:opacity-75"
+              style={{ backgroundColor: props.surfaceColor, borderColor: props.primaryBorder, color: textPrimary }}
+            >
+              <MessageCircle size={18} aria-hidden="true" /> {t("Share your thoughts")}
+            </button>
+          )}
+
           {(walletEnabled || googleEnabled) && (
             <div className="-mx-3 flex flex-wrap items-start justify-center gap-x-2 [&>div]:m-0 [&>div]:w-auto">
               <AppleWalletButton token={customer.publicToken} enabled={Boolean(walletEnabled)} />
@@ -141,6 +153,7 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
             </div>
           )}
 
+          {props.birthdayText && <BirthdayCustomerDisplay {...props} />}
           <div className="flex items-start justify-between gap-2 border-t pt-1" style={{ borderColor: cardBorder }}>
             <details className="group min-w-0 flex-1 text-xs leading-5" style={{ color: textSecondary }}>
               <summary className="flex min-h-10 cursor-pointer list-none items-center gap-1.5 font-semibold [&::-webkit-details-marker]:hidden">
@@ -152,11 +165,6 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
                 {cafe.rewardDescription && <p>{cafe.rewardDescription}</p>}
                 <p>{t("Member since")} {props.memberSince}</p>
                 <p>{t("Last updated")} {props.lastUpdated}</p>
-                {cafe.feedbackEnabled && (
-                  <button type="button" onClick={onShowFeedback} className="min-h-10 text-sm underline underline-offset-4">
-                    {t("Share your thoughts")}
-                  </button>
-                )}
               </div>
             </details>
             <button
@@ -170,7 +178,6 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
               <RefreshCw size={16} aria-hidden="true" className={refreshing ? "motion-safe:animate-spin" : undefined} />
             </button>
           </div>
-          {props.birthdayText && <BirthdayCustomerDisplay {...props} />}
         </div>
       </article>
     </div>

@@ -35,11 +35,12 @@ export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const includeActivity = params.get("activity") === "1";
 
-  const locations = await prisma.cafeLocation.findMany({
+  const storeLocations = await prisma.cafeLocation.findMany({
     where: { cafeId: authData.cafeId },
     orderBy: { name: "asc" },
-    select: { id: true, name: true },
+    select: { id: true, name: true, archivedAt: true },
   });
+  const locations = storeLocations.filter(location => !location.archivedAt).map(({ id, name }) => ({ id, name }));
 
   const users = await prisma.user.findMany({
     where: {
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
     name: user.name,
     email: user.email,
     role: user.role,
-    location: locations.find(location => location.id === user.cashierLocationId) ?? null,
+    location: storeLocations.find(location => location.id === user.cashierLocationId) ?? null,
     isEnabled: user.isEnabled,
     createdAt: user.createdAt,
     lastActivityAt: user.transactions[0]?.createdAt ?? null,
@@ -255,14 +256,14 @@ export async function POST(request: NextRequest) {
     const locationId = typeof body.locationId === "string" ? body.locationId : "";
     const location = locationId && locationId.length <= 40
       ? await prisma.cafeLocation.findUnique({
-          where: { cafeId_id: { cafeId: authData.cafeId, id: locationId } },
+          where: { cafeId_id: { cafeId: authData.cafeId, id: locationId }, archivedAt: null },
           select: { id: true },
         })
       : null;
     if (locationId && !location) {
       return json({ message: "Choose a branch from this business." }, 400);
     }
-    if (!location && await prisma.cafeLocation.count({ where: { cafeId: authData.cafeId } })) {
+    if (!location && await prisma.cafeLocation.count({ where: { cafeId: authData.cafeId, archivedAt: null } })) {
       return json({ message: "Choose a branch for this cashier." }, 400);
     }
 

@@ -459,7 +459,7 @@ export async function POST(
     const locationId = validationResult.data.locationId;
     const joinLocation = locationId
       ? await prisma.cafeLocation.findUnique({
-          where: { cafeId_id: { cafeId: cafe.id, id: locationId } },
+          where: { cafeId_id: { cafeId: cafe.id, id: locationId }, archivedAt: null },
           select: { id: true },
         })
       : null;

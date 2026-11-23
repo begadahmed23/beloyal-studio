@@ -75,6 +75,7 @@ model CafeLocation {
   id        String     @id @default(cuid())
   cafeId    String
   name      String
+  archivedAt DateTime?
   cafe      Cafe       @relation(fields: [cafeId], references: [id], onDelete: Cascade)
   members   Customer[] @relation("CustomerJoinLocation")
   cashiers  User[] @relation("CashierLocation")

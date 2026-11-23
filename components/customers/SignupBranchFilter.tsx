@@ -12,7 +12,7 @@ export default function SignupBranchFilter({ value, onChange }: { value: string;
 
   useEffect(() => {
     const controller = new AbortController();
-    void fetch("/api/cafe/locations", { signal: controller.signal, cache: "no-store" })
+    void fetch("/api/cafe/locations?includeArchived=1", { signal: controller.signal, cache: "no-store" })
       .then(async response => {
         if (!response.ok) return;
         const body: { locations: { name: string }[] } = await response.json();

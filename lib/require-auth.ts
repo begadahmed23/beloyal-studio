@@ -14,7 +14,7 @@ export async function requireAuth(
     return null;
   }
 
-  const user = await prisma.user.findUnique({
+  const record = await prisma.user.findUnique({
     where: {
       id: session.user.id,
     },
@@ -26,6 +26,7 @@ export async function requireAuth(
       cafeId: true,
       cashierCafeId: true,
       cashierLocationId: true,
+      cashierLocation: { select: { archivedAt: true } },
       staffCafeId: true,
       isEnabled: true,
 
@@ -184,9 +185,11 @@ export async function requireAuth(
     },
   });
 
-  if (!user || !user.isEnabled) {
+  if (!record || !record.isEnabled) {
     return null;
   }
+  const { cashierLocation, ...user } = record;
+  if (cashierLocation?.archivedAt) user.cashierLocationId = null;
 
   if (user.role === "SUPER_ADMIN") {
     return {
