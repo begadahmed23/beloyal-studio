@@ -217,7 +217,7 @@ export default function CreateCafeDialog({
         Create Business
       </DialogTrigger>
 
-      <DialogContent className="max-h-[92vh] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-[28px] border border-black/[0.08] bg-[#F7F7F8] p-0 text-[#202124] shadow-[0_32px_100px_rgba(15,23,42,0.22)]">
+      <DialogContent className="max-h-[92dvh] w-[calc(100%-2rem)] max-w-3xl overflow-y-auto rounded-[28px] border border-black/[0.08] bg-[#F7F7F8] p-0 text-[#202124] shadow-[0_32px_100px_rgba(15,23,42,0.22)]">
         <DialogHeader className="relative overflow-hidden border-b border-black/[0.07] bg-white px-6 py-6 text-left sm:px-8">
           <div className="pointer-events-none absolute -right-16 -top-20 h-48 w-48 rounded-full bg-[#DDE0E5]/60 blur-3xl" />
 

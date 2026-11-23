@@ -70,7 +70,7 @@ export default function HomeScreenHelpModal({
       }}
     >
       <div
-        className="relative w-full max-w-sm rounded-[30px] border p-6 shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
+        className="relative max-h-[calc(100dvh-2rem)] w-full max-w-sm overflow-y-auto overscroll-contain rounded-[30px] border p-6 shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
         style={{
           borderColor: cardBorder,
           backgroundColor: cardBackground,

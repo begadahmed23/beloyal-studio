@@ -3,12 +3,25 @@
 import { Gift, Sparkles, X } from "lucide-react";
 
 import KatoMark from "@/components/brand/KatoMark";
+import { withAlpha } from "../card-utils";
+import { isLightColor } from "../card-theme-utils";
 
 type RewardCelebrationModalProps = {
   rewardName: string;
   rewardDescription: string | null;
   cafeName?: string;
   cafeSlug?: string;
+  palette: {
+    cardBackground: string;
+    cardBorder: string;
+    textPrimary: string;
+    textSecondary: string;
+    surfaceColor: string;
+    primaryColor: string;
+    primarySoft: string;
+    primaryGlow: string;
+    accentText: string;
+  };
   onClose: () => void;
 };
 
@@ -17,6 +30,7 @@ export default function RewardCelebrationModal({
   rewardDescription,
   cafeName = "",
   cafeSlug = "",
+  palette,
   onClose,
 }: RewardCelebrationModalProps) {
   const normalizedName = cafeName
@@ -68,7 +82,7 @@ export default function RewardCelebrationModal({
           ))}
         </div>
 
-        <div className="loretto-reward relative w-full max-w-sm overflow-hidden rounded-[32px] border border-[#2E2A27]/10 bg-[linear-gradient(155deg,#F8F3EA_0%,#F3EBDD_55%,#E9DFC9_100%)] p-6 text-center text-[#2E2A27] shadow-[0_40px_130px_rgba(24,20,17,0.50)] sm:rounded-[36px] sm:p-7">
+        <div className="loretto-reward relative max-h-[calc(100dvh-2rem)] w-full max-w-sm overflow-y-auto overscroll-contain rounded-[32px] border border-[#2E2A27]/10 bg-[linear-gradient(155deg,#F8F3EA_0%,#F3EBDD_55%,#E9DFC9_100%)] p-6 text-center text-[#2E2A27] shadow-[0_40px_130px_rgba(24,20,17,0.50)] sm:rounded-[36px] sm:p-7">
           <div className="pointer-events-none absolute inset-x-9 top-0 h-px bg-gradient-to-r from-transparent via-[#776474]/45 to-transparent" />
           <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-[#7E897F]/10 blur-3xl" />
 
@@ -159,7 +173,7 @@ export default function RewardCelebrationModal({
     );
   }
 
-  if (isKeka) {
+  if (isKeka && !isLightColor(palette.cardBackground)) {
     return (
       <div
         className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-[#3A080A]/95 px-4 py-7 backdrop-blur-2xl sm:px-5 sm:py-8"
@@ -189,7 +203,7 @@ export default function RewardCelebrationModal({
           ))}
         </div>
 
-        <div className="keka-reward relative w-full max-w-sm overflow-hidden rounded-[32px] border border-[#F4E5C6]/20 bg-[linear-gradient(155deg,#8A2426_0%,#741A1D_54%,#4A0D10_100%)] p-6 text-center text-[#FFF6E6] shadow-[0_40px_130px_rgba(25,2,4,0.68)] sm:rounded-[36px] sm:p-7">
+        <div className="keka-reward relative max-h-[calc(100dvh-2rem)] w-full max-w-sm overflow-y-auto overscroll-contain rounded-[32px] border border-[#F4E5C6]/20 bg-[linear-gradient(155deg,#8A2426_0%,#741A1D_54%,#4A0D10_100%)] p-6 text-center text-[#FFF6E6] shadow-[0_40px_130px_rgba(25,2,4,0.68)] sm:rounded-[36px] sm:p-7">
           <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#F4E5C6]/80 to-transparent" />
 
           <button type="button" onClick={onClose} aria-label="Close reward celebration" className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-[#F4E5C6]/15 bg-black/10 text-[#F4E5C6]/70 transition hover:bg-black/15">
@@ -276,7 +290,7 @@ export default function RewardCelebrationModal({
           ))}
         </div>
 
-        <div className="kato-reward relative w-full max-w-sm overflow-hidden rounded-[36px] border border-white/20 bg-gradient-to-b from-[#16395C] via-[#102B49] to-[#081D36] p-7 text-center text-white shadow-[0_40px_140px_rgba(0,0,0,0.62)]">
+        <div className="kato-reward relative max-h-[calc(100dvh-2rem)] w-full max-w-sm overflow-y-auto overscroll-contain rounded-[36px] border border-white/20 bg-gradient-to-b from-[#16395C] via-[#102B49] to-[#081D36] p-7 text-center text-white shadow-[0_40px_140px_rgba(0,0,0,0.62)]">
           <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/90 to-transparent" />
           <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-24 -right-20 h-64 w-64 rounded-full bg-[#5F9CFF]/20 blur-3xl" />
@@ -396,92 +410,74 @@ export default function RewardCelebrationModal({
       </div>
     );
   }
-  const rewardEmeraldLight = "#2D6A5A";
-  const rewardChampagne = "#D8BE82";
-  const rewardIvory = "#F7EFD9";
+  const { cardBackground, cardBorder, textPrimary, textSecondary, surfaceColor, primaryColor, primarySoft, primaryGlow, accentText } = palette;
+  const confetti = [primaryColor, textPrimary, cardBackground, accentText];
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-[#06110E]/90 px-5 py-8 backdrop-blur-xl"
+      className="fixed inset-0 z-[80] flex items-center justify-center overflow-hidden bg-black/75 px-4 py-4 backdrop-blur-xl sm:px-5 sm:py-8"
       role="dialog"
       aria-modal="true"
       aria-label="Reward redeemed"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
-          onClose();
-        }
+        if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        {Array.from({ length: 30 }).map((_, index) => {
-          const colors = [
-            rewardChampagne,
-            rewardIvory,
-            rewardEmeraldLight,
-            "#FFFFFF",
-          ];
-
-          return (
-            <span
-              key={index}
-              className="reward-confetti absolute -top-8 block rounded-[2px]"
-              style={{
-                left: `${(index * 37) % 100}%`,
-                width: `${6 + (index % 3) * 2}px`,
-                height: `${10 + (index % 4) * 3}px`,
-                backgroundColor: colors[index % colors.length],
-                animationDelay: `${(index % 10) * 0.11}s`,
-                animationDuration: `${2.7 + (index % 6) * 0.22}s`,
-              }}
-            />
-          );
-        })}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+        {Array.from({ length: 30 }).map((_, index) => (
+          <span
+            key={index}
+            className="reward-confetti absolute -top-8 block rounded-[2px]"
+            style={{
+              left: `${(index * 37) % 100}%`,
+              width: `${6 + (index % 3) * 2}px`,
+              height: `${10 + (index % 4) * 3}px`,
+              backgroundColor: confetti[index % confetti.length],
+              animationDelay: `${(index % 10) * 0.11}s`,
+              animationDuration: `${2.7 + (index % 6) * 0.22}s`,
+            }}
+          />
+        ))}
       </div>
 
       <div
         aria-hidden="true"
         className="pointer-events-none absolute left-1/2 top-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(216,190,130,0.22) 0%, rgba(45,106,90,0.16) 38%, transparent 72%)",
-        }}
+        style={{ background: `radial-gradient(circle, ${primaryGlow}, transparent 72%)` }}
       />
 
-      <div className="reward-reveal relative w-full max-w-sm overflow-hidden rounded-[34px] border border-[#D8BE82]/35 bg-gradient-to-b from-[#173E35] via-[#0F2D27] to-[#081C18] p-7 text-center text-[#F7EFD9] shadow-[0_35px_120px_rgba(0,0,0,0.7)]">
-        <div className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#F7EFD9]/70 to-transparent" />
-        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#D8BE82]/15 blur-3xl" />
-
+      <div className="reward-reveal relative max-h-[calc(100dvh-2rem)] w-full max-w-sm overflow-y-auto overscroll-contain rounded-[34px] border p-6 text-center shadow-[0_35px_120px_rgba(0,0,0,0.5)] sm:p-7"
+        style={{ backgroundColor: cardBackground, borderColor: cardBorder, color: textPrimary }}>
         <button
           type="button"
           onClick={onClose}
           aria-label="Close reward celebration"
-          className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/[0.06] text-[#F7EFD9]/70 transition hover:bg-white/10 hover:text-[#F7EFD9]"
+          className="absolute end-4 top-4 flex size-11 items-center justify-center rounded-full border transition hover:opacity-80"
+          style={{ backgroundColor: surfaceColor, borderColor: cardBorder, color: textSecondary }}
         >
           <X size={18} />
         </button>
 
-        <div className="reward-gift mx-auto mt-3 flex h-20 w-20 items-center justify-center rounded-[26px] border border-[#D8BE82]/45 bg-gradient-to-br from-[#D8BE82]/25 to-[#D8BE82]/5 shadow-[0_16px_55px_rgba(216,190,130,0.2)]">
-          <Gift size={36} strokeWidth={1.6} color={rewardIvory} />
+        <div className="reward-gift mx-auto mt-3 flex h-20 w-20 items-center justify-center rounded-[26px] border"
+          style={{ backgroundColor: primarySoft, borderColor: withAlpha(primaryColor, 0.35), color: primaryColor }}>
+          <Gift size={36} strokeWidth={1.6} />
         </div>
 
-        <p className="mt-7 text-[10px] font-semibold uppercase tracking-[0.32em] text-[#D8BE82]">
+        <p className="mt-7 text-[10px] font-semibold uppercase tracking-[0.28em]" style={{ color: textSecondary }}>
           Reward redeemed
         </p>
 
-        <h2 className="mt-3 text-3xl font-semibold tracking-tight text-[#F7EFD9]">
+        <h2 className="mt-3 wrap-anywhere text-3xl font-semibold tracking-tight">
           Enjoy your {rewardName || "reward"}
         </h2>
 
-        <p className="mx-auto mt-3 max-w-[17rem] text-sm leading-6 text-[#F7EFD9]/65">
-          Your reward was redeemed successfully. Your next loyalty journey
-          starts now.
+        <p className="mx-auto mt-3 max-w-[17rem] text-sm leading-6" style={{ color: textSecondary }}>
+          Your reward was redeemed. Your stamp card is ready for your next visit.
         </p>
 
         {rewardDescription ? (
-          <div className="mt-6 rounded-2xl border border-[#D8BE82]/20 bg-black/10 px-4 py-3 text-sm leading-6 text-[#F7EFD9]/75">
+          <div className="mt-5 wrap-anywhere rounded-2xl border px-4 py-3 text-sm leading-6"
+            style={{ backgroundColor: surfaceColor, borderColor: cardBorder, color: textSecondary }}>
             {rewardDescription}
           </div>
         ) : null}
@@ -489,7 +485,8 @@ export default function RewardCelebrationModal({
         <button
           type="button"
           onClick={onClose}
-          className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#D8BE82] text-sm font-semibold text-[#102A24] shadow-[0_12px_35px_rgba(216,190,130,0.22)] transition hover:bg-[#E3CC98] active:opacity-80"
+          className="mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl text-sm font-semibold transition hover:opacity-90 active:opacity-80"
+          style={{ backgroundColor: primaryColor, color: accentText }}
         >
           <Sparkles size={17} />
           Continue

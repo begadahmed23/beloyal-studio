@@ -43,7 +43,7 @@ export default function GoogleReviewModal({
       aria-label="Google review"
     >
       <div
-        className="w-full max-w-sm rounded-[30px] border p-6 text-center shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
+        className="max-h-[calc(100dvh-2rem)] w-full max-w-sm overflow-y-auto overscroll-contain rounded-[30px] border p-6 text-center shadow-[0_30px_100px_rgba(0,0,0,0.55)]"
         style={{
           borderColor: cardBorder,
           backgroundColor: cardBackground,
@@ -57,10 +57,10 @@ export default function GoogleReviewModal({
               size={24}
               style={{
                 color:
-                  rating <= (selectedRating ?? 0) ? "#FBBF24" : textMuted,
+                  rating <= (selectedRating ?? 0) ? primaryColor : textMuted,
                 fill:
                   rating <= (selectedRating ?? 0)
-                    ? "#FBBF24"
+                    ? primaryColor
                     : "transparent",
               }}
             />
@@ -75,7 +75,7 @@ export default function GoogleReviewModal({
           Would you like to share your experience on Google?
         </p>
 
-        <div className="mt-7 grid grid-cols-2 gap-3">
+        <div className="mt-7 grid gap-2 min-[380px]:grid-cols-2">
           <button
             type="button"
             onClick={onClose}

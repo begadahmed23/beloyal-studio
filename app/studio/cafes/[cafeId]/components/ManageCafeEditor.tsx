@@ -978,7 +978,7 @@ export default function ManageCafeEditor() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-cafe-title"
-            className="w-full max-w-md rounded-[28px] border border-black/[0.08] bg-white p-6 shadow-2xl"
+            className="max-h-[calc(100dvh-2.5rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-[28px] border border-black/[0.08] bg-white p-6 shadow-2xl"
           >
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-700">
               <Trash2 size={22} />

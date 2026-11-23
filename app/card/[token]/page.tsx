@@ -18,6 +18,8 @@ import RewardCelebrationModal from "./components/RewardCelebrationModal";
 import GoogleReviewModal from "./components/GoogleReviewModal";
 import RatingModal from "./components/RatingModal";
 import FeedbackDialog from "./components/FeedbackDialog";
+import GourmealWordmark from "@/components/brand/GourmealWordmark";
+import MbVapeLogo from "@/components/brand/MbVapeLogo";
 import LoyaltyCard, {
   type Customer,
 } from "./components/LoyaltyCard";
@@ -43,7 +45,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
-import { getMbVapeBrandColors, isMbVape, MB_VAPE_LOGO_URL } from "@/lib/business/mb-vape";
+import { getMbVapeBrandColors, isMbVape, MB_VAPE_IVORY, MB_VAPE_LOGO_URL, MB_VAPE_WALNUT } from "@/lib/business/mb-vape";
 import { GOURMEAL, isGourmeal } from "@/lib/business/gourmeal";
 import { getBusinessBrandColors } from "@/lib/cafe-theme";
 
@@ -1321,6 +1323,7 @@ const visibleStamps = rewardReady
     );
 
   const gourmeal = isGourmeal(customer.cafe);
+  const mbVape = isMbVape(customer.cafe);
   const brand = getMbVapeBrandColors(customer.cafe);
   const [
     barberPrimaryColor,
@@ -1429,58 +1432,72 @@ const visibleStamps = rewardReady
     0.32,
   );
 
-  const feedbackCardBackground = isLoretto
+  const feedbackCardBackground = mbVape ? MB_VAPE_IVORY : isLoretto
     ? "#F3EBDD"
     : isKeka
       ? (isKekaCream ? "#FFF6E6" : "#741A1D")
       : cardBackground;
-  const feedbackTextPrimary = isLoretto
+  const feedbackTextPrimary = mbVape ? "#432B1D" : isLoretto
     ? "#2E2A27"
     : isKeka
       ? (isKekaCream ? "#4A0D10" : "#FFF6E6")
       : textPrimary;
-  const feedbackTextSecondary = isLoretto
+  const feedbackTextSecondary = mbVape ? "#624732" : isLoretto
     ? "rgba(46,42,39,.66)"
     : isKeka
       ? (isKekaCream ? "rgba(74,13,16,0.68)" : "rgba(255,246,230,0.72)")
       : textSecondary;
-  const feedbackTextMuted = isLoretto
+  const feedbackTextMuted = mbVape ? "#725747" : isLoretto
     ? "rgba(46,42,39,.48)"
     : isKeka
       ? (isKekaCream ? "rgba(74,13,16,0.5)" : "rgba(244,229,198,0.5)")
       : textMuted;
-  const feedbackBorder = isLoretto
+  const feedbackBorder = mbVape ? withAlpha(MB_VAPE_WALNUT, 0.23) : isLoretto
     ? "rgba(46,42,39,.11)"
     : isKeka
       ? (isKekaCream ? "rgba(116,26,29,0.16)" : "rgba(244,229,198,0.16)")
       : cardBorder;
-  const feedbackSurface = isLoretto
+  const feedbackSurface = mbVape ? withAlpha(MB_VAPE_WALNUT, 0.075) : isLoretto
     ? "rgba(255,255,255,.38)"
     : isKeka
       ? (isKekaCream ? "rgba(116,26,29,0.06)" : "rgba(58,7,9,0.2)")
       : surfaceColor;
-  const feedbackPrimary = isLoretto
+  const feedbackPrimary = mbVape ? MB_VAPE_WALNUT : isLoretto
     ? "#2E2A27"
     : isKeka
       ? (isKekaCream ? "#741A1D" : "#F4E5C6")
       : primaryColor;
-  const feedbackPrimarySoft = isLoretto
+  const feedbackPrimarySoft = mbVape ? withAlpha(MB_VAPE_WALNUT, 0.12) : isLoretto
     ? "rgba(126,137,127,.12)"
     : isKeka
       ? (isKekaCream ? "rgba(116,26,29,0.09)" : "rgba(244,229,198,0.11)")
       : primarySoft;
-  const feedbackPrimaryBorder = isLoretto
+  const feedbackPrimaryBorder = mbVape ? withAlpha(MB_VAPE_WALNUT, 0.33) : isLoretto
     ? "rgba(46,42,39,.16)"
     : isKeka
       ? (isKekaCream ? "rgba(116,26,29,0.24)" : "rgba(244,229,198,0.28)")
       : primaryBorder;
-  const feedbackAccentText = isLoretto
+  const feedbackAccentText = mbVape ? MB_VAPE_IVORY : isLoretto
     ? "#F6F0E5"
     : isKeka
       ? (isKekaCream ? "#FFF6E6" : "#4A0D10")
       : accentText;
 
-  const logoUrl = isMbVape(customer.cafe) ? MB_VAPE_LOGO_URL : getDirectLogoUrl(customer.cafe.logoUrl);
+  const modalPalette = {
+    cardBackground: feedbackCardBackground,
+    cardBorder: feedbackBorder,
+    textPrimary: feedbackTextPrimary,
+    textSecondary: feedbackTextSecondary,
+    textMuted: feedbackTextMuted,
+    surfaceColor: feedbackSurface,
+    primaryColor: feedbackPrimary,
+    primarySoft: feedbackPrimarySoft,
+    primaryGlow: withAlpha(feedbackPrimary, 0.22),
+    accentText: feedbackAccentText,
+  };
+  const feedbackErrorColor = isLightColor(feedbackCardBackground) ? "#9F211A" : "#FCA5A5";
+
+  const logoUrl = mbVape ? MB_VAPE_LOGO_URL : getDirectLogoUrl(customer.cafe.logoUrl);
 
   const showLogo = Boolean(
     logoUrl &&
@@ -1584,6 +1601,7 @@ const visibleStamps = rewardReady
           }
           cafeName={isCafe ? customer.cafe.name : undefined}
           cafeSlug={isCafe ? customer.cafe.slug : undefined}
+          palette={modalPalette}
           onClose={() =>
             setShowRewardCelebration(
               false,
@@ -1594,6 +1612,7 @@ const visibleStamps = rewardReady
 
       {showRatingModal ? (
         <RatingModal
+          {...modalPalette}
           cafeName={
             customer.cafe.name
           }
@@ -1609,18 +1628,6 @@ const visibleStamps = rewardReady
           reviewError={
             reviewError
           }
-          cardBorder={cardBorder}
-          cardBackground={
-            cardBackground
-          }
-          textPrimary={textPrimary}
-          textSecondary={
-            textSecondary
-          }
-          textMuted={textMuted}
-          surfaceColor={
-            surfaceColor
-          }
           reviewErrorBorderColor={withAlpha(
             "#EF4444",
             0.32,
@@ -1631,7 +1638,7 @@ const visibleStamps = rewardReady
           )}
           reviewErrorTextColor={mixColors(
             "#EF4444",
-            textPrimary,
+            feedbackTextPrimary,
             0.72,
           )}
           onHoveredRatingChange={
@@ -1654,6 +1661,7 @@ const visibleStamps = rewardReady
 
       {showGooglePrompt ? (
         <GoogleReviewModal
+          {...modalPalette}
           businessType={customer.cafe.businessType}
           selectedRating={
             selectedRating
@@ -1662,22 +1670,6 @@ const visibleStamps = rewardReady
             customer.cafe
               .googleReviewUrl
           }
-          cardBorder={cardBorder}
-          cardBackground={
-            cardBackground
-          }
-          textPrimary={textPrimary}
-          textSecondary={
-            textSecondary
-          }
-          textMuted={textMuted}
-          surfaceColor={
-            surfaceColor
-          }
-          primaryColor={
-            primaryColor
-          }
-          accentText={accentText}
           onClose={() =>
             setShowGooglePrompt(
               false,
@@ -1691,12 +1683,12 @@ const visibleStamps = rewardReady
 
       {showQrCode ? (
         <QrCodeModal
+          {...modalPalette}
           businessType={customer.cafe.businessType}
           cafeName={
             customer.cafe.name
           }
           cafeSlug={customer.cafe.slug}
-          cafeTheme={customer.cafe.theme}
           memberNumber={
             customer.memberNumber
           }
@@ -1706,24 +1698,6 @@ const visibleStamps = rewardReady
           logoUrl={logoUrl}
           showLogo={showLogo}
           cafeInitial={cafeInitial}
-          cardBorder={cardBorder}
-          cardBackground={
-            cardBackground
-          }
-          textPrimary={textPrimary}
-          textSecondary={
-            textSecondary
-          }
-          textMuted={textMuted}
-          surfaceColor={
-            surfaceColor
-          }
-          primaryColor={
-            primaryColor
-          }
-          primaryGlow={primaryGlow}
-          primarySoft={primarySoft}
-          accentText={accentText}
           onClose={() =>
             setShowQrCode(false)
           }
@@ -1743,6 +1717,7 @@ const visibleStamps = rewardReady
           onClose={closeFeedbackModal}
           style={{
             borderColor: feedbackBorder,
+            color: feedbackTextPrimary,
             background: isLoretto
               ? "radial-gradient(circle at 88% 4%,rgba(126,137,127,.10),transparent 25%),linear-gradient(155deg,#F8F3EA 0%,#F3EBDD 58%,#E9DFC9 100%)"
               : feedbackCardBackground,
@@ -1786,6 +1761,10 @@ const visibleStamps = rewardReady
                       Artisan coffee &amp; bakery
                     </p>
                   </div>
+                ) : gourmeal ? (
+                  <GourmealWordmark name={customer.cafe.name} className="h-auto w-36 max-w-[calc(100%-3.25rem)]" />
+                ) : mbVape ? (
+                  <MbVapeLogo className="h-12 w-auto max-w-[calc(100%-3.25rem)]" />
                 ) : (
                   <div
                     className="flex h-12 w-12 items-center justify-center rounded-2xl"
@@ -1877,8 +1856,7 @@ const visibleStamps = rewardReady
                         <p
                           className="text-xs leading-5"
                           style={{
-                            color:
-                              "#EF8A8A",
+                            color: feedbackErrorColor,
                           }}
                         >
                           {
