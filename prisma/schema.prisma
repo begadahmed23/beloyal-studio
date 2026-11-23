@@ -13,6 +13,7 @@ model Cafe {
   slug                          String                     @unique
   businessType                  BusinessType               @default(CAFE)
   storeLimit                    Int                        @default(1)
+  spendingTrackingEnabled       Boolean                    @default(true)
   logoUrl                       String?
   theme                         CafeTheme                  @default(COFFEE_CLASSIC)
   primaryColor                  String                     @default("#8e6045")

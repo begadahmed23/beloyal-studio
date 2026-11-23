@@ -1,19 +1,50 @@
 "use client";
-import { useState } from "react";
+import { useId, useState } from "react";
+import { Stamp } from "lucide-react";
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
+import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
+import { ActionButton } from "@/components/ui/action-button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-type Props = { onConfirm: (amount: number | null) => void; onCancel: () => void; submitting?: boolean };
-export default function PurchaseConfirmation({ onConfirm, onCancel, submitting = false }: Props) {
+type Props = { onConfirm: (amount: number | null) => void; onCancel: () => void; submitting?: boolean; error?: string };
+
+export default function PurchaseConfirmation({ onConfirm, onCancel, submitting = false, error }: Props) {
+  const { t } = useBeLoyalLanguage();
+  const { cafe } = useCafeTheme();
+  const isBarber = cafe.businessType === "BARBERSHOP";
+  const fieldId = useId();
   const [amount, setAmount] = useState("");
-  const valid = amount.trim() === "" || (/^\d+(?:\.\d{1,2})?$/.test(amount) && Number(amount) <= 9999999999.99);
+  const normalized = amount.trim()
+    .replace(/[٠-٩]/g, digit => String(digit.charCodeAt(0) - "٠".charCodeAt(0)))
+    .replace(/[۰-۹]/g, digit => String(digit.charCodeAt(0) - "۰".charCodeAt(0)))
+    .replace("٫", ".");
+  const valid = normalized === "" || (/^\d+(?:\.\d{1,2})?$/.test(normalized) && Number(normalized) <= 9999999999.99);
   return (
-    <section role="dialog" aria-modal="true" aria-label="Confirm purchase" className="relative z-20 mx-auto w-full max-w-md rounded-3xl border border-white/15 bg-[#f9f8f5] p-5 text-[#24352e] shadow-2xl sm:p-6">
-      <h3 className="text-xl font-semibold">Confirm customer stamp</h3>
-      <p className="mt-2 text-sm text-slate-600">Enter the purchase amount, or skip if it was not recorded.</p>
-      <label htmlFor="stamp-purchase-amount" className="mt-5 block text-sm font-medium">Purchase amount (EGP)</label>
-      <input id="stamp-purchase-amount" inputMode="decimal" autoFocus value={amount} onChange={e => setAmount(e.target.value)} disabled={submitting} placeholder="Optional e.g. 250" className="mt-2 h-12 w-full rounded-xl border border-slate-300 px-3 text-lg focus:outline-none focus:ring-2 focus:ring-slate-500" />
-      {!valid && <p role="alert" className="mt-2 text-xs text-red-600">Enter a valid amount with up to 2 decimal places.</p>}
-      <button type="button" disabled={!valid || submitting} onClick={() => onConfirm(amount.trim() === "" ? null : Number(amount))} className="mt-5 h-12 w-full rounded-xl bg-slate-900 font-semibold text-white disabled:opacity-40">{submitting ? "Saving..." : amount.trim() === "" ? "Add stamp without amount" : "Confirm & add stamp"}</button>
-      <button type="button" disabled={submitting} onClick={onCancel} className="mt-2 h-11 w-full rounded-xl border border-slate-300 text-sm">Cancel scan</button>
-    </section>
+    <Dialog open onOpenChange={open => { if (!open && !submitting) onCancel(); }}>
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain border" showCloseButton={false}>
+        <DialogHeader>
+          <DialogTitle className="text-xl font-semibold">{t(isBarber ? "Confirm client visit" : "Confirm customer stamp")}</DialogTitle>
+          <DialogDescription>{t("Enter the purchase amount if you have it.")}</DialogDescription>
+        </DialogHeader>
+        <form className="min-w-0" onSubmit={event => {
+          event.preventDefault();
+          if (valid && !submitting) onConfirm(normalized === "" ? null : Number(normalized));
+        }}>
+          <label htmlFor={fieldId} className="block text-sm font-medium">{t("Purchase amount (EGP)")}</label>
+          <input id={fieldId} inputMode="decimal" enterKeyHint="done" value={amount} onChange={event => setAmount(event.target.value)}
+            disabled={submitting} aria-invalid={!valid} placeholder={t("Optional, e.g. 250")}
+            className="mt-2 min-h-12 w-full rounded-xl border border-input bg-background px-3 text-base focus:outline-none focus:ring-2 focus:ring-ring" />
+          {!valid && <p role="alert" className="mt-2 text-xs text-destructive">{t("Enter a valid amount with up to 2 decimal places.")}</p>}
+          {error && <p role="alert" className="mt-2 text-sm text-destructive">{t(error)}</p>}
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <button type="button" disabled={submitting} onClick={onCancel} className="min-h-11 rounded-xl border border-border px-4 text-sm font-medium">{t("Cancel")}</button>
+            <ActionButton type="submit" pending={submitting} disabled={!valid} icon={<Stamp size={16} />}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+              {t(isBarber ? (normalized ? "Confirm & record visit" : "Record visit without amount") : (normalized ? "Confirm & add stamp" : "Add stamp without amount"))}
+            </ActionButton>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

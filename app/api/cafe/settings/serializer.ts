@@ -24,6 +24,7 @@ export type CafeSettingsRecord = Parameters<typeof getDashboardPalette>[0] & {
   rewardDescription: string | null;
   eligiblePurchaseDescription: string | null;
   minimumPurchaseAmount: Prisma.Decimal | null;
+  spendingTrackingEnabled: boolean;
 
   feedbackEnabled: boolean | null;
   feedbackRewardEnabled: boolean;
@@ -61,6 +62,7 @@ export function serializeCafeSettings(cafe: CafeSettingsRecord) {
     logoUrl: cafe.logoUrl,
     ...getDashboardPalette(cafe),
 
+    spendingTrackingEnabled: cafe.spendingTrackingEnabled,
     rewardTarget: cafe.rewardTarget,
     rewardName: getRewardName(cafe),
     rewardDescription: cafe.rewardDescription,

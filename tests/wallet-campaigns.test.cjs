@@ -92,15 +92,26 @@ test('cashiers and cross-business access are rejected before audience access', a
 });
 test('preview rejects stale/unregistered selections; preview never sends a push', async () => {
   let previews = 0;
-  const route = routeFor(studioAdmin, { '@/lib/wallet/campaigns': { walletAudience: async () => ({ members: [
+  const lookedUp = [];
+  const route = routeFor(admin, { '@/lib/wallet/campaigns': { walletAudience: async (businessId, _timezone, _now, selectedIds) => {
+    assert.equal(businessId, 'cafe1');
+    lookedUp.push(selectedIds);
+    return { members: [
       { id: 'yes', name: 'Begad', memberNumber: '1', offersStatus: 'enabled', segments: ['all'] },
       { id: 'no', name: 'Test', memberNumber: '2', offersStatus: 'missing', segments: ['all'] },
-    ] }),
+    ].filter(member => selectedIds.includes(member.id)) };
+  },
     createCampaign: async data => { previews++; return data; }, sendCampaign: () => { throw Error('Preview sent a notification'); } } });
   assert.equal((await route.POST(post({ action: 'preview', cafeId: 'cafe1', segment: 'all', message: 'Hello', customerIds: ['removed'] }))).status, 409);
   assert.equal((await route.POST(post({ action: 'preview', cafeId: 'cafe1', segment: 'all', message: 'Hello', customerIds: ['no'] }))).status, 409);
   assert.equal(previews, 0);
-  assert.equal((await route.POST(post({ action: 'preview', cafeId: 'cafe1', segment: 'all', message: 'Hello', customerIds: ['yes'] }))).status, 200);
+  const reviewed = await route.POST(post({ action: 'preview', cafeId: 'cafe1', segment: 'all', message: ' Hello ', customerIds: ['yes'] }));
+  assert.equal(reviewed.status, 200);
+  const { campaign } = await reviewed.json();
+  assert.equal(campaign.message, 'Hello');
+  assert.equal(campaign.createdBy, admin.user.id);
+  assert.deepEqual(campaign.recipients.map(member => member.id), ['yes']);
+  assert.deepEqual(lookedUp, [['removed'], ['no'], ['yes']]);
   assert.equal(previews, 1);
   assert.equal((await route.POST(post({ action: 'preview', cafeId: 'cafe1', segment: 'all', message: ' ', customerIds: ['yes'] }))).status, 400);
 });
@@ -133,14 +144,17 @@ test('sending rechecks eligibility, skips unchanged/removed cards and claims onc
   assert.equal(pushes, 4);
 });
 
-test('other business admins can read their own history while Studio manages sends', async () => {
+test('business admins can read their own history and audience', async () => {
   const route = routeFor({ ...admin, cafeId: 'other' }, {
     '@/lib/prisma': { prisma: { cafe: { findFirst: async ({ where }) => {
       assert.deepEqual(where, { id: 'other', isActive: true });
       return { id: 'other', name: 'Other business', timezone: 'Africa/Cairo' };
     } } } },
     '@/lib/wallet/campaigns': {
-      walletAudience: async () => { throw new Error('Business dashboard should only load history'); },
+      walletAudience: async id => {
+        assert.equal(id, 'other');
+        return { members: [], totalMembers: 0, walletMembers: 0 };
+      },
       campaignHistory: async (id) => {
         assert.equal(id, 'other');
         return [{ id: 'sent' }];
@@ -151,7 +165,7 @@ test('other business admins can read their own history while Studio manages send
   assert.equal(response.status, 200);
   assert.deepEqual((await response.json()).history, [{ id: 'sent' }]);
   for (const action of ['preview', 'send']) {
-    assert.equal((await route.POST(post({ action, cafeId: 'other' }))).status, 403);
+    assert.equal((await route.POST(post({ action, cafeId: 'cafe1' }))).status, 403);
   }
 });
 

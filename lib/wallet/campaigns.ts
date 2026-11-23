@@ -17,12 +17,16 @@ export type WalletCampaign = {
   message: string; createdAt: number; sentAt?: number; status: "draft" | "sending" | "complete";
   recipients: CampaignRecipient[];
 };
-export async function walletAudience(cafeId: string, timezone: string, now = new Date()) {
-  const members = await prisma.customer.findMany({ where: { cafeId }, orderBy: [{ name: "asc" }, { id: "asc" }], take: 10001,
+export async function walletAudience(cafeId: string, timezone: string, now = new Date(), selectedIds?: string[]) {
+  const members = await prisma.customer.findMany({
+    where: { cafeId, ...(selectedIds ? { id: { in: selectedIds } } : {}) },
+    orderBy: [{ name: "asc" }, { id: "asc" }],
+    take: selectedIds?.length ?? 10001,
     select: { id: true, marketingConsentAt: true, marketingWithdrawnAt: true, name: true, memberNumber: true, birthday: true, createdAt: true, stamps: true, rewardEarnedAt: true, cafe: { select: { businessType: true, rewardTarget: true } },
       joinLocation: { select: { name: true } },
       transactions: { where: { OR: [{ description: null }, { NOT: { description: { startsWith: "Feedback", mode: "insensitive" } } }] }, orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } } } });
   if (members.length > 10000) throw new Error("AUDIENCE_TOO_LARGE");
+  if (!members.length) return { totalMembers: 0, walletMembers: 0, members: [], googleUnavailable: false };
   const cafe = await prisma.cafe.findUnique({ where: { id: cafeId }, select: { slug: true } });
   const appleEnabled = walletUpdatesEnabled();
   const passTypes = appleEnabled ? walletPassTypesForBusiness(cafe?.slug) : [];

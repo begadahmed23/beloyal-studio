@@ -539,7 +539,6 @@ export default function MemberCard({
 
   return (
     <>
-      {spendingEnabled && <Dialog open={purchaseOpen} onOpenChange={setPurchaseOpen}><DialogContent><DialogTitle>Stamp confirmation</DialogTitle><PurchaseConfirmation submitting={pendingAction === "stamp"} onCancel={() => setPurchaseOpen(false)} onConfirm={amount => { setPurchaseOpen(false); void addStamp(amount); }} /></DialogContent></Dialog>}
       <button
         type="button"
         onClick={() => {
@@ -1117,6 +1116,13 @@ export default function MemberCard({
                 : stampFeedback && t(stampFeedback.text)}
             </p>
           </div>
+          {spendingEnabled && purchaseOpen && (
+            <PurchaseConfirmation
+              submitting={pendingAction === "stamp"}
+              onCancel={() => setPurchaseOpen(false)}
+              onConfirm={amount => { setPurchaseOpen(false); void addStamp(amount); }}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

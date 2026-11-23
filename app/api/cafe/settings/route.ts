@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
         rewardDescription: true,
         eligiblePurchaseDescription: true,
         minimumPurchaseAmount: true,
+        spendingTrackingEnabled: true,
 
         feedbackEnabled: true,
         feedbackRewardEnabled: true,

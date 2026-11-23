@@ -40,10 +40,6 @@ async function handle(request: NextRequest) {
   if (!auth.isSuperAdmin && auth.cafeId !== cafeId) return json({ message: "Business access denied." }, 403);
   const cafe = await prisma.cafe.findFirst({ where: { id: cafeId, isActive: true }, select: { id: true, name: true, timezone: true, rewardName: true, slug: true, businessType: true } });
   if (!cafe) return json({ message: "Active business not found." }, 404);
-  const canSend = true;
-  if (request.method === "POST" && !canSend && body?.action !== "delete") {
-    return json({ message: "Manage campaigns in BeLoyal Studio." }, 403);
-  }
   if (body?.action === "delete") {
     const parsed = deleteSchema.safeParse(body);
     if (!parsed.success) return json({ message: "Invalid campaign request." }, 400);
@@ -53,10 +49,10 @@ async function handle(request: NextRequest) {
     return json({ deleted: true });
   }
   const messagingEnabled = walletUpdatesEnabled() || (googleWalletEnabled() && process.env.GOOGLE_WALLET_CAMPAIGNS_ENABLED === "true");
-  if (request.method === "GET" && (!canSend || (!auth.isSuperAdmin && !messagingEnabled))) {
+  if (request.method === "GET" && !auth.isSuperAdmin && !messagingEnabled) {
     const counts = Object.fromEntries(campaignSegments.map(segment => [segment.id, 0]));
     return json({ cafe, members: [], history: await campaignHistory(cafeId), totalMembers: 0, walletMembers: 0,
-      googleUnavailable: false, messagingUnavailable: canSend && !messagingEnabled, counts, maxRecipients: MAX_CAMPAIGN_RECIPIENTS });
+      googleUnavailable: false, messagingUnavailable: true, counts, maxRecipients: MAX_CAMPAIGN_RECIPIENTS });
   }
   if (!messagingEnabled) return json({ message: "Wallet messaging is not configured in this environment." }, 503);
   if (request.method === "GET") {
@@ -67,7 +63,7 @@ async function handle(request: NextRequest) {
   if (body?.action === "preview") {
     const parsed = previewSchema.safeParse(body);
     if (!parsed.success) return json({ message: "Choose up to 50 members and write a card update of 1–180 characters." }, 400);
-    const audience = await walletAudience(cafeId, cafe.timezone);
+    const audience = await walletAudience(cafeId, cafe.timezone, new Date(), parsed.data.customerIds);
     const selected = new Set(parsed.data.customerIds);
     const recipients = audience.members.filter(member => selected.has(member.id) && eligibleFor(member, parsed.data.segment));
     if (recipients.length !== selected.size) return json({ message: "Your audience has changed. Refresh the list and choose recipients again." }, 409);
@@ -84,7 +80,7 @@ async function handle(request: NextRequest) {
   const lock = `${passKey("campaigns")}:business-lock:${cafeId}`;
   if (!await walletRedis().set(lock, campaign.id, { nx: true, ex: 300 })) return json({ message: "A campaign is already running for this business. Try again shortly." }, 409);
   try {
-    const audience = await walletAudience(cafeId, cafe.timezone);
+    const audience = await walletAudience(cafeId, cafe.timezone, new Date(), campaign.recipients.map(member => member.id));
     const eligibleIds = new Set(audience.members.filter(member => eligibleFor(member, campaign.segment)).map(member => member.id));
     return json({ campaign: await sendCampaign(campaign, eligibleIds) });
   }
