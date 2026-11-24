@@ -313,7 +313,9 @@ export default function QrCodeModal({
           backgroundColor: cardBackground,
           color: textPrimary,
           forcedColorAdjust: "none",
-          maxHeight: "calc(100dvh - 2rem)",
+          maxHeight: redeemReward
+            ? "calc(100dvh - max(1rem, env(safe-area-inset-top)) - max(1rem, env(safe-area-inset-bottom)))"
+            : "calc(100dvh - 2rem)",
           overflowY: "auto",
           WebkitOverflowScrolling: "touch",
         }}
@@ -374,7 +376,7 @@ export default function QrCodeModal({
             </div>
           )}
 
-          <p className="mt-4 text-lg font-semibold" style={{ color: textPrimary }}>
+          <p className="mt-4 wrap-anywhere text-lg font-semibold" style={{ color: textPrimary }}>
             {redeemReward?.name ?? t("Your loyalty code")}
           </p>
 

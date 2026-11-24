@@ -119,20 +119,20 @@ export default function PointsScanCheckout({ value, memberId, onCancel, onComple
         rate: data?.rate, onConfirm: amount => void submit(amount),
         controls: member && <div className="mb-4 space-y-3">
           {data && data.locations.length > 1 && <label className="block text-sm">{copy("Branch", "الفرع")}
-            <select className="mt-1 min-h-11 w-full rounded-xl border border-input bg-background px-3" value={locationId} onChange={event => setBranch(event.target.value)} disabled={busy}>
+            <select className="mt-1 min-h-11 w-full min-w-0 rounded-xl border border-input bg-background px-3 text-base" value={locationId} onChange={event => setBranch(event.target.value)} disabled={busy}>
               {data.locations.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
             </select>
           </label>}
-          {claimCode && selected && <p className="rounded-xl border border-border px-3 py-2 font-semibold">{selected.name} · {selected.cost} {unit}</p>}
+          {claimCode && selected && <p className="wrap-anywhere rounded-xl border border-border px-3 py-2 font-semibold">{selected.name} · {selected.cost} {unit}</p>}
           {!claimCode && (rewards.length > 0 || redeem) && <label className="block text-sm">{copy("Checkout action", "نوع العملية")}
-            <select className="mt-1 min-h-11 w-full rounded-xl border border-input bg-background px-3" value={choice} onChange={event => setChoice(event.target.value)} disabled={busy}>
+            <select className="mt-1 min-h-11 w-full min-w-0 rounded-xl border border-input bg-background px-3 text-base" value={choice} onChange={event => setChoice(event.target.value)} disabled={busy}>
               <option value="">{copy("Record a purchase", "تسجيل شراء")}</option>
               {redeem && !selected && <option value={choice}>{copy("Requested reward", "المكافأة المطلوبة")}</option>}
               {rewards.map(item => <option key={item.id} value={item.id}>{item.name} · {item.cost} {unit}</option>)}
             </select>
           </label>}
           {!redeem && <label className="block text-sm">{copy("Receipt reference (optional)", "رقم الإيصال (اختياري)")}
-            <input className="mt-1 min-h-11 w-full rounded-xl border border-input bg-background px-3" value={receipt} onChange={event => setReceipt(event.target.value)} maxLength={80} disabled={busy} />
+            <input className="mt-1 min-h-11 w-full min-w-0 rounded-xl border border-input bg-background px-3 text-base" value={receipt} onChange={event => setReceipt(event.target.value)} maxLength={80} disabled={busy} />
           </label>}
         </div>,
       }}

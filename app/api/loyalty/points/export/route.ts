@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { pointsMemberSearch, pointsMemberSpending } from "@/lib/business/points-members";
 import { prisma } from "@/lib/prisma";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
 
@@ -15,10 +16,13 @@ export async function GET(request: NextRequest) {
   if (user.role !== "CAFE_ADMIN" || !cafeId || cafe?.loyaltyMode !== "POINTS") {
     return NextResponse.json({ message: "Points administrator access required." }, { status: 403 });
   }
-  const customerId = request.nextUrl.searchParams.get("customer");
-  const profiles = request.nextUrl.searchParams.get("view") === "customers" && !customerId;
+  const customerId = request.nextUrl.searchParams.get("customer")?.slice(0, 100);
+  const view = request.nextUrl.searchParams.get("view");
+  const profiles = view === "customers";
+  const branch = profiles ? request.nextUrl.searchParams.get("branch")?.slice(0, 100) : undefined;
+  const search = profiles ? request.nextUrl.searchParams.get("search")?.trim().slice(0, 100) : undefined;
   const headers = profiles
-    ? "member_number,name,birthday,registration_branch,current_points,points_earned,points_redeemed,points_reversed,recorded_spending_egp,joined_at"
+    ? "name,member_number,recorded_spending_egp,purchases,current_points,registration_branch"
     : "transaction_id,timestamp,member_number,member_name,branch,staff,kind,amount_egp,points_change,balance_after,receipt,reward,refund_of,reason";
   const encoder = new TextEncoder();
   let cursor: string | undefined;
@@ -30,24 +34,17 @@ export async function GET(request: NextRequest) {
         let lines: string[];
         if (profiles) {
           const customers = await prisma.customer.findMany({
-            ...page, where: { cafeId }, select: { id: true, name: true, memberNumber: true,
-              birthday: true, createdAt: true, pointsBalance: true, joinLocation: { select: { name: true } } },
+            ...page, where: { cafeId, ...(customerId && { id: customerId }), ...(branch && { joinLocationId: branch }),
+              ...pointsMemberSearch(search ?? "") },
+            select: { id: true, name: true, memberNumber: true, pointsBalance: true, joinLocation: { select: { name: true } } },
           });
           cursor = customers.at(-1)?.id;
-          const totals = await prisma.pointsTransaction.groupBy({
-            by: ["customerId", "kind"], where: { cafeId, customerId: { in: customers.map(item => item.id) } },
-            _sum: { delta: true, amount: true },
-          });
-          const groups = new Map(totals.map(row => [row.customerId + row.kind, row._sum]));
+          const spending = await pointsMemberSpending(cafeId, customers.map(item => item.id));
           lines = customers.map(item => {
-            const buy = groups.get(item.id + "PURCHASE");
-            const redeem = groups.get(item.id + "REDEMPTION");
-            const refund = groups.get(item.id + "REFUND");
+            const totals = spending.get(item.id);
             return [
-              csvText(item.memberNumber), csvText(item.name), item.birthday.toISOString().slice(0, 10),
-              csvText(item.joinLocation?.name), item.pointsBalance.toFixed(), buy?.delta?.toFixed() ?? "0",
-              redeem?.delta?.abs().toFixed() ?? "0", refund?.delta?.abs().toFixed() ?? "0",
-              buy?.amount?.minus(refund?.amount ?? 0).toFixed(2) ?? "0.00", item.createdAt.toISOString(),
+              csvText(item.name), csvText(item.memberNumber), totals?.netSpending ?? "0.00",
+              totals?.purchases ?? 0, item.pointsBalance.toFixed(), csvText(item.joinLocation?.name),
             ].join(",");
           });
         } else {

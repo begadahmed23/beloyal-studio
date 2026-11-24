@@ -190,9 +190,9 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
                           {reward.cost} {unit}
                         </p>
                       </div>
-                      {reward.description && <p className="text-sm leading-relaxed" style={{ color: textSecondary }}>{reward.description}</p>}
-                      {reward.conditions && <p className="text-xs leading-relaxed" style={{ color: textSecondary }}>{reward.conditions}</p>}
-                      {!!reward.locations.length && <p className="text-xs" style={{ color: textMuted }}>{reward.locations.map(item => item.location.name).join(" · ")}</p>}
+                      {reward.description && <p className="wrap-anywhere text-sm leading-relaxed" style={{ color: textSecondary }}>{reward.description}</p>}
+                      {reward.conditions && <p className="wrap-anywhere text-xs leading-relaxed" style={{ color: textSecondary }}>{reward.conditions}</p>}
+                      {!!reward.locations.length && <p className="wrap-anywhere text-xs" style={{ color: textMuted }}>{reward.locations.map(item => item.location.name).join(" · ")}</p>}
                       {available ? (
                         <button type="button" onClick={() => props.onRedeemReward(reward)}
                           className="min-h-11 w-full rounded-xl px-4 text-sm font-semibold transition-opacity active:opacity-75"

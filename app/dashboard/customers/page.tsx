@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import PointsDashboard from "@/components/dashboard/PointsDashboard";
+import PointsMemberDirectory from "@/components/customers/PointsMemberDirectory";
 import AdminCustomerDatabase from "@/components/customers/AdminCustomerDatabase";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
@@ -21,5 +21,5 @@ export default function CustomersPage() {
     return null;
   }
 
-  return cafe.loyaltyMode === "POINTS" ? <PointsDashboard view="customers" /> : <AdminCustomerDatabase />;
+  return cafe.loyaltyMode === "POINTS" ? <PointsMemberDirectory database /> : <AdminCustomerDatabase />;
 }
