@@ -46,7 +46,6 @@ export default function JoinForm({
   const router = useRouter();
   const category = restaurantCategory && restaurantCategory !== "OTHER" ? restaurantCategories[restaurantCategory] : null;
   const firey = cafeSlug === fireyNashBrand.slug;
-  const units = firey ? "flames" : "points";
   const unitsArabic = firey ? "اللهب" : "النقاط";
   const isBarbershop = businessType === "BARBERSHOP";
   const loyaltyTarget = getLoyaltyProgressTarget({
@@ -282,7 +281,7 @@ export default function JoinForm({
           {mode === "join"
             ? arabic
               ? <>انضم لـ <bdi>{cafeName}</bdi> وابدأ {pointsMode ? `تجميع ${unitsArabic}` : isBarbershop ? "تسجيل زياراتك" : "تجميع الأختام"}.</>
-              : pointsMode ? `Join ${cafeName} and start collecting ${units}.` : `Join ${cafeName} and start collecting ${isBarbershop ? "visits" : "stamps"}.`
+              : pointsMode ? `Create your ${cafeName} membership to view your balance and rewards.` : `Join ${cafeName} and start collecting ${isBarbershop ? "visits" : "stamps"}.`
             : t("Enter the phone number you used to create your card.")}
         </p>
       </div>
@@ -485,8 +484,7 @@ export default function JoinForm({
                 style={{ color: theme.textSecondary }}
               >
                 {pointsMode
-                  ? arabic ? `جمّع ${unitsArabic} مع طلباتك واستبدلها بمكافآت.`
-                    : `Collect ${units} with your orders and redeem rewards.`
+                  ? arabic ? "اعرض كود العضوية عند الدفع." : "Show your membership QR at checkout."
                   : <>{arabic
                   ? `${isBarbershop ? "سجّل" : "اجمع"} ${loyaltyTarget} ${isBarbershop ? "زيارات مدفوعة" : "أختام"} واستلم المكافأة في زيارتك الجاية `
                   : isBarbershop

@@ -12,7 +12,7 @@ import { renderGourmealIcon, renderGourmealStrip, renderGourmealWordmark } from 
 import { renderMbVapeAppleStrip, renderMbVapeLogo } from "./mb-vape-artwork";
 import { renderLorettoArtwork, displayWalletReward, LORETTO_BG, LORETTO_DARK, LORETTO_MUTED } from "./loretto-artwork";
 import { fireyNashBrand, walletPointsValue } from "../business/points";
-import { fireyWalletLogo, renderPointsStrip } from "./points-artwork";
+import { renderFireyWalletMark, renderPointsStrip } from "./points-artwork";
 import { PKPass } from "passkit-generator";
 import sharp from "sharp";
 import path from "node:path";
@@ -92,7 +92,7 @@ export async function createAppleWalletPass(
   const barber = businessType === "BARBERSHOP";
   const walid = barber && member.cafe.slug === "walid-saad";
   const loretto = businessType === "CAFE" && /loretto/i.test(member.cafe.slug + member.cafe.name);
-  const background = gourmeal ? GOURMEAL.green : loretto ? LORETTO_BG : color(cafe.backgroundColor, "#111111");
+  const background = firey ? fireyNashBrand.walletBackground : gourmeal ? GOURMEAL.green : loretto ? LORETTO_BG : color(cafe.backgroundColor, "#111111");
   const channels = [1, 3, 5].map((offset) => parseInt(background.slice(offset, offset + 2), 16));
   const light = channels[0] * 0.299 + channels[1] * 0.587 + channels[2] * 0.114 > 150;
   const foreground = gourmeal ? GOURMEAL.stone : walid ? "#F2EEE7" : loretto ? LORETTO_DARK : light ? "#111111" : "#FFFFFF";
@@ -134,11 +134,11 @@ export async function createAppleWalletPass(
     .map(word => Array.from(word)[0]).join("").toUpperCase() || "B";
   const customLogo = mbVape || loretto || gourmeal ? null : await uploadedLogo(member.cafe.logoUrl);
   const iconSize = gourmeal ? 38 : 29;
-  const icon = firey ? await fireyWalletLogo(87, 87, "flame") : gourmeal ? await renderGourmealIcon(iconSize * 3) : loretto ? await renderLorettoArtwork(0, target, "icon") : mbVape ? await renderMbVapeLogo(87, 87, "#ffffff", 8) : await sharp({ create: { width: 87, height: 87, channels: 4, background } })
+  const icon = firey ? await renderFireyWalletMark("wallet-icon", 87, 87) : gourmeal ? await renderGourmealIcon(iconSize * 3) : loretto ? await renderLorettoArtwork(0, target, "icon") : mbVape ? await renderMbVapeLogo(87, 87, "#ffffff", 8) : await sharp({ create: { width: 87, height: 87, channels: 4, background } })
     .composite([{ input: await textImage(initials, 66, 60), left: 10, top: 13 }]).png().toBuffer();
-  const logoWidth = firey ? 35 : gourmeal ? 118 : loretto ? 32 : mbVape ? 60 : customLogo ? 40 : 32;
+  const logoWidth = firey ? 106 : gourmeal ? 118 : loretto ? 32 : mbVape ? 60 : customLogo ? 40 : 32;
   const logoHeight = gourmeal || mbVape ? 42 : 32;
-  const logo = firey ? await fireyWalletLogo(logoWidth * 3, logoHeight * 3) : gourmeal ? await renderGourmealWordmark(logoWidth * 3, logoHeight * 3, "left") : loretto ? await renderLorettoArtwork(0, target, "icon") : mbVape ? await renderMbVapeLogo(logoWidth * 3, logoHeight * 3, background) : customLogo ?? await sharp(icon)
+  const logo = firey ? await renderFireyWalletMark("wordmark", logoWidth * 3, logoHeight * 3) : gourmeal ? await renderGourmealWordmark(logoWidth * 3, logoHeight * 3, "left") : loretto ? await renderLorettoArtwork(0, target, "icon") : mbVape ? await renderMbVapeLogo(logoWidth * 3, logoHeight * 3, background) : customLogo ?? await sharp(icon)
     .resize(logoWidth * 3, logoHeight * 3).png().toBuffer();
   const stripHeight = !points && vapeShop ? 144 : 123;
   const locations = walletLocations(notificationSettings);
@@ -160,7 +160,7 @@ export async function createAppleWalletPass(
       teamIdentifier: process.env.APPLE_WALLET_TEAM_ID!,
       ...(nearby ? { maxDistance: nearby.nearbyMaxDistance ?? 150 } : walid ? { maxDistance: 150 } : {}),
       organizationName: displayName,
-      ...(gourmeal ? {} : { logoText: displayName }),
+      ...(gourmeal || firey ? {} : { logoText: displayName }),
       description: `${displayName} loyalty card`,
       ...(walletUpdatesEnabled() ? { webServiceURL: process.env.APPLE_WALLET_WEB_SERVICE_URL!.replace(/\/$/, ""), authenticationToken: walletAuthToken(member.id, passType) } : {}),
       backgroundColor: rgb(background), foregroundColor: rgb(foreground), labelColor: rgb(gourmeal ? GOURMEAL.sand : foreground) },
@@ -183,14 +183,14 @@ export async function createAppleWalletPass(
     : "Your loyalty progress is now %@.";
   pass.headerFields.push({ key: "balance", label: points ? (firey ? "FLAMES" : "POINTS") : ready ? "REWARD READY" : barber ? "VISITS" : "STAMPS", value: points ? pointsValue : `${gourmeal && ready ? target : stamps}/${target}`, ...(walid ? {} : { changeMessage: balanceChangeMessage }) });
   pass.secondaryFields.push({ key: "member", label: "MEMBER", value: member.name });
-  pass.auxiliaryFields.push(points
-    ? { key: "collect", label: "AT CHECKOUT", value: firey ? "Collect flames with your orders" : "Collect points with your purchases" }
+  if (!firey) pass.auxiliaryFields.push(points
+    ? { key: "collect", label: "AT CHECKOUT", value: "Show your membership QR" }
     : { key: "reward", label: "YOUR REWARD", value: rewardName });
   pass.backFields.push({ key: "member-message", label: "CARD UPDATE",
     value: message || "Your loyalty card is connected.", changeMessage: "%@" });
   pass.backFields.push(
     { key: "progress", label: points ? (firey ? "Flames & rewards" : "Points & rewards") : "Live stamps & rewards", value: cardUrl },
-    { key: "instructions", label: "How to use", value: points ? (firey ? "Show this QR code at checkout to collect flames or redeem rewards." : "Show this QR code at checkout to collect points or redeem rewards.") : "Show this QR code at checkout. Open your online card for your current stamps and rewards." },
+    { key: "instructions", label: "How to use", value: points ? (firey ? "Show your membership QR at checkout." : "Show this QR code at checkout to collect points or redeem rewards.") : "Show this QR code at checkout. Open your online card for your current stamps and rewards." },
     { key: "provider", label: "Powered by", value: "BeLoyal" },
   );
   pass.setBarcodes({ format: "PKBarcodeFormatQR", message: `BL:${member.publicToken}`, messageEncoding: "iso-8859-1", altText: member.memberNumber });

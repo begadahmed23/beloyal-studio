@@ -1,7 +1,5 @@
-"use client";
-
-import PointsDashboard from "@/components/dashboard/PointsDashboard";
+import { redirect } from "next/navigation";
 
 export default function RewardsPage() {
-  return <PointsDashboard view="rewards" />;
+  redirect("/dashboard/settings#loyalty-program");
 }

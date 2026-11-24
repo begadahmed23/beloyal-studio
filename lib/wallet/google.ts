@@ -80,7 +80,7 @@ export function googleWalletObject(member: WalletMember) {
   const progress = ready ? "Reward ready" : `${stamps}/${target} stamps`;
   const points = member.cafe.loyaltyMode === "POINTS";
   const firey = member.cafe.slug === fireyNashBrand.slug;
-  const heroImage = firey ? walletImage(new URL("/brand/firey-nash/wallet-strip.png", site), "Firey Nash") : points ? undefined : gourmeal ? walletImage(new URL(gourmealStripPath(artStamps, artTarget, "google-strip"), site), progress)
+  const heroImage = firey ? walletImage(new URL(fireyNashBrand.walletStrip, site), "Firey Nash") : points ? undefined : gourmeal ? walletImage(new URL(gourmealStripPath(artStamps, artTarget, "google-strip"), site), progress)
     : loretto ? walletImage(new URL("/api/wallet/artwork/loretto?asset=strip&stamps=" + artStamps + "&target=" + artTarget, site), progress) : mbVape
     ? walletImage(new URL(`${MB_VAPE_ARTWORK_PATH}?asset=strip&stamps=${artStamps}&target=${artTarget}`, site),
         ready ? "All stamps collected. Reward ready." : `${stamps} of ${target} stamps collected.`)
@@ -92,7 +92,7 @@ export function googleWalletObject(member: WalletMember) {
       balance: { string: points ? walletPointsValue(member.pointsBalance, "0") : `${gourmeal && ready ? target : stamps}/${target}` } },
     ...(heroImage ? { heroImage } : {}),
     textModulesData: points ? [
-      { id: "checkout", header: "AT CHECKOUT", body: firey ? "Show your code to collect flames or redeem a reward." : "Show your code to collect points or redeem a reward." },
+      { id: "checkout", header: "AT CHECKOUT", body: firey ? "Show your membership QR at checkout." : "Show your code to collect points or redeem a reward." },
     ] : [
       { id: "reward", header: "YOUR REWARD", body: loretto ? displayWalletReward(getRewardName(member.cafe)) : getRewardName(member.cafe) },
       ...(mbVape ? [{ id: "progress", header: "STAMPS", body: progress }] : []),
@@ -111,13 +111,14 @@ export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocati
   let logo = fallback;
   try { if (cafe.logoUrl) { const candidate = new URL(cafe.logoUrl); if (candidate.protocol === "https:") logo = candidate; } } catch { /* use fallback */ }
   const site = process.env.GOOGLE_WALLET_SITE_URL!;
-  if (cafe.slug === fireyNashBrand.slug) logo = new URL(fireyNashBrand.logo, site);
+  const firey = cafe.slug === fireyNashBrand.slug;
+  if (firey) logo = new URL(fireyNashBrand.walletIcon, site);
   if (mbVape) logo = new URL(MB_VAPE_ARTWORK_PATH + "?asset=icon&v=2", site);
   if (loretto) logo = new URL("/api/wallet/artwork/loretto?asset=icon&v=3", site);
   if (gourmeal) logo = new URL(GOURMEAL.artwork + "?asset=icon&v=3", site);
   return {
-    issuerName: gourmeal ? "BeLoyal" : displayName,
-    programName: mbVape || loretto || gourmeal ? displayName : `${displayName} Rewards`,
+    issuerName: gourmeal || firey ? "BeLoyal" : displayName,
+    programName: mbVape || loretto || gourmeal || firey ? displayName : `${displayName} Rewards`,
     programLogo: walletImage(logo, displayName),
     ...(loretto ? { accountNameLabel: "MEMBER" } : {}),
     ...(gourmeal ? {
@@ -152,7 +153,7 @@ export function googleClassBrand(savedCafe: GoogleBrand, settings?: GoogleLocati
       },
     } : {}),
     reviewStatus: "UNDER_REVIEW",
-    hexBackgroundColor: gourmeal ? GOURMEAL.green : loretto ? LORETTO_BG : /^#[0-9a-f]{6}$/i.test(cafe.backgroundColor) ? cafe.backgroundColor : "#111111",
+    hexBackgroundColor: firey ? fireyNashBrand.walletBackground : gourmeal ? GOURMEAL.green : loretto ? LORETTO_BG : /^#[0-9a-f]{6}$/i.test(cafe.backgroundColor) ? cafe.backgroundColor : "#111111",
     ...(settings ? { merchantLocations: walletLocations(settings).map(({ latitude, longitude }) => ({ latitude, longitude })) } : {}),
   };
 }

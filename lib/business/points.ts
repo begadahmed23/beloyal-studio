@@ -41,6 +41,10 @@ export const fireyNashBrand = {
   slug: "firey-nash",
   logo: "/brand/firey-nash/logo.png",
   flame: "/brand/firey-nash/flame.png",
+  wordmark: "/brand/firey-nash/wordmark.png",
+  walletIcon: "/brand/firey-nash/wallet-icon.png",
+  walletStrip: "/brand/firey-nash/wallet-strip-v2.png",
+  walletBackground: "#181716",
   instagramUrl: "https://www.instagram.com/firey_nash/",
   branches: [
     { id: "fireynashsidigaber", name: "Sidi Gaber" },

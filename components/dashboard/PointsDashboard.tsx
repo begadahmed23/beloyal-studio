@@ -2,12 +2,14 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
+import { ArrowUpRight, CreditCard, Download, Flame, Gift, MapPin, ScanLine, Users } from "lucide-react";
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import StoreJoinQRCodes from "./StoreJoinQRCodes";
 import NewCustomerDialog from "@/components/customers/NewCustomerDialog";
-import { earnedPoints, earningRateSchema, normalizePointsInput, purchaseAmountSchema } from "@/lib/business/points";
+import { earnedPoints, earningRateSchema, fireyNashBrand, normalizePointsInput, purchaseAmountSchema } from "@/lib/business/points";
 
 const CameraScanner = dynamic(() => import("@yudiel/react-qr-scanner").then(module => module.Scanner), { ssr: false });
 type Location = { id: string; name: string };
@@ -30,9 +32,9 @@ type Data = {
 type Pending = { payload: object; title: string; summary: string };
 
 const endpoint = "/api/loyalty/points";
-const panel = "space-y-4 rounded-2xl border border-border bg-card p-4 sm:p-6";
-const control = "min-h-11 w-full rounded-xl border border-border bg-background px-3 py-2 text-foreground";
-const button = "min-h-11 rounded-xl border border-border px-4 py-2 font-medium hover:bg-muted active:scale-[.98] disabled:opacity-50";
+const panel = "min-w-0 space-y-4 rounded-[24px] border border-border bg-card p-4 shadow-sm sm:p-6";
+const control = "min-h-11 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-ring";
+const button = "min-h-11 rounded-xl border border-border px-4 py-2 text-sm font-semibold hover:bg-muted active:scale-[.98] disabled:opacity-50";
 const primary = `${button} bg-primary text-primary-foreground hover:bg-primary/90`;
 const empty: Data = { rate: "10", locations: [], rewards: [], members: [], history: [], totals: [] };
 
@@ -60,6 +62,7 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
   const copy = (en: string, ar: string) => lang === "ar" ? ar : en;
   const admin = userRole === "CAFE_ADMIN";
   const [data, setData] = useState(empty);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [member, setMember] = useState<Member | null>(null);
   const [selectedLocation, setLocation] = useState("");
@@ -79,7 +82,7 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
 
   useEffect(() => {
     let current = true;
-    readPoints().then(value => { if (current) setData(value); }).catch(error => { if (current) setError(error.message); });
+    readPoints().then(value => { if (current) setData(value); }).catch(error => { if (current) setError(error.message); }).finally(() => { if (current) setLoading(false); });
     return () => { current = false; };
   }, []);
 
@@ -170,21 +173,54 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
   const money = (value: number) => new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-EG", { style: "currency", currency: "EGP" }).format(value);
   const available = data.rewards.filter(item => item.enabled && (!item.expiresAt || Date.parse(item.expiresAt) > Date.now()) && item.locations.some(item => item.locationId === location));
   const editing = reward && reward !== "new" ? reward : null;
-  const title = view === "rewards" ? copy("Rewards", "المكافآت")
-    : view === "overview" ? copy("Points overview", "نظرة عامة على النقاط")
-    : view === "customers" ? copy("Customer database", "قاعدة بيانات العملاء") : copy("Points at checkout", "النقاط عند الدفع");
+  const firey = cafe.slug === fireyNashBrand.slug;
+  const units = firey ? copy("flames", "لهب") : copy("points", "نقطة");
+  const title = view === "overview" ? copy("Overview", "نظرة عامة")
+    : view === "customers" ? copy("Customer database", "قاعدة بيانات العملاء") : copy("Checkout", "الكاشير");
+  const number = (value: string | number) => new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-EG", {
+    maximumFractionDigits: 6,
+  }).format(Number(value));
 
   if (cafe.loyaltyMode !== "POINTS" || (!admin && view !== "counter")) return null;
 
+  const metrics = [
+    { label: copy("Members", "الأعضاء"), value: number(data.analytics?.members ?? 0), icon: Users,
+      detail: copy(`${number(data.analytics?.newMembers ?? 0)} new in 30 days`, `${number(data.analytics?.newMembers ?? 0)} جديد خلال ٣٠ يوم`) },
+    { label: copy("Recorded spending", "الإنفاق المسجل"), value: money(recordedSpending), icon: CreditCard,
+      detail: copy(`${number(purchases?._count._all ?? 0)} purchases`, `${number(purchases?._count._all ?? 0)} عملية شراء`) },
+    { label: firey ? copy("Flames in circulation", "اللهب المتاح") : copy("Points in circulation", "النقاط المتاحة"),
+      value: number(data.analytics?.outstanding ?? 0), icon: Flame,
+      detail: copy(`${number(purchases?._sum.delta ?? 0)} issued`, `${number(purchases?._sum.delta ?? 0)} مكتسبة`) },
+    { label: copy("Rewards redeemed", "المكافآت المستبدلة"), value: number(redemptions?._count._all ?? 0), icon: Gift,
+      detail: `${number(Math.abs(Number(redemptions?._sum.delta ?? 0)))} ${units}` },
+  ];
+  const daily = data.breakdown?.daily ?? [];
+  const max = Math.max(1, ...daily.map(day => Number(day.amount)));
+  const min = Math.min(0, ...daily.map(day => Number(day.amount)));
+  const baseline = -min / (max - min) * 100;
+  const dateLabel = (date: string) => new Intl.DateTimeFormat(lang === "ar" ? "ar-EG" : "en-GB", {
+    day: "numeric", month: "short", timeZone: "UTC",
+  }).format(new Date(date + "T00:00:00Z"));
+
   return (
-    <div lang={lang} dir={dir} className="space-y-5">
-      <header><p className="text-sm opacity-70">{cafe.name}</p><h1 className="mt-1 text-3xl font-semibold">{title}</h1></header>
+    <div id={view === "rewards" ? "loyalty-program" : undefined} lang={lang} dir={dir} className="scroll-mt-24 space-y-5">
+      {view !== "rewards" && <header className={`${panel} flex flex-wrap items-center justify-between gap-4 space-y-0`}>
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground">{cafe.name}</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
+        </div>
+        {view === "overview" && <div className="flex flex-wrap gap-2">
+          <Link className={`${primary} inline-flex items-center gap-2`} href="/dashboard/scanner/phone"><ScanLine size={16} />{copy("Scan a card", "امسح الكارت")}</Link>
+          <Link className={`${button} inline-flex items-center gap-2`} href="/dashboard/settings#loyalty-program">{copy("Loyalty settings", "إعدادات الولاء")}<ArrowUpRight size={15} /></Link>
+        </div>}
+      </header>}
+      {loading && <p role="status" className="px-2 text-sm text-muted-foreground">{copy("Loading…", "جارٍ التحميل…")}</p>}
       {error && !pending && !reward && <p role="alert" className="rounded-xl border border-destructive p-3">{error}</p>}
       {message && <p role="status">{message}</p>}
       {(view === "counter" || view === "customers") && (
         <section className={panel}>
           <form className="flex flex-wrap items-end gap-2" onSubmit={event => { event.preventDefault(); void search(query); }}>
-            <label className="min-w-48 flex-1">{copy("Scan or find a member", "امسح الكود أو ابحث عن عضو")}
+            <label className="min-w-0 basis-full text-sm sm:flex-1">{copy("Scan or find a member", "امسح الكود أو ابحث عن عضو")}
               <input className={control} autoFocus={view === "counter" && !camera} value={query} onChange={event => setQuery(event.target.value)} placeholder={copy("Name, phone, member number or QR", "الاسم أو الهاتف أو رقم العضو أو الكود")} />
             </label>
             <button className={primary} disabled={busy}>{copy("Find", "بحث")}</button>
@@ -203,7 +239,7 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
       )}
       {member && view === "counter" && (
         <section className={panel}>
-          <div><h2 className="text-xl font-semibold">{member.name}</h2><p className="mt-1">{member.pointsBalance} {copy("points", "نقطة")}</p></div>
+          <div><h2 className="text-xl font-semibold">{member.name}</h2><p className="mt-1 text-lg font-semibold text-primary">{member.pointsBalance} {units}</p></div>
           <label className="block">{copy("Branch", "الفرع")}
             <select className={control} value={location} onChange={event => setLocation(event.target.value)}>
               {!data.locations.length && <option value="">{copy("No assigned branch", "مفيش فرع مخصص")}</option>}
@@ -213,7 +249,7 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
           <form className="grid gap-3 sm:grid-cols-2" onSubmit={event => {
             event.preventDefault();
             confirmTransaction({ kind: "PURCHASE", amount: purchaseAmount, ...(receipt.trim() && { receipt }) },
-              copy("Confirm purchase", "أكد عملية الشراء"), `${amount} EGP · +${preview} ${copy("points", "نقطة")}`);
+              copy("Confirm purchase", "أكد عملية الشراء"), `${amount} EGP · +${preview} ${units}`);
           }}>
             <label>{copy("Purchase amount (EGP)", "قيمة الشراء (ج.م)")}<input className={control} inputMode="decimal" value={amount} onChange={event => setAmount(event.target.value)} required /></label>
             <label>{copy("Receipt reference", "رقم الإيصال")}<input className={control} value={receipt} onChange={event => setReceipt(event.target.value)} maxLength={80} /></label>
@@ -223,38 +259,86 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
             <h3 className="font-semibold">{copy("Redeem reward", "استبدل مكافأة")}</h3>
             {available.length === 0 && <p>{copy("No rewards at this branch.", "مفيش مكافآت في الفرع ده.")}</p>}
             {available.map(item => <button key={item.id} className={button + " me-2 text-start"} disabled={Number(item.cost) > Number(member.pointsBalance)} onClick={() => confirmTransaction(
-              { kind: "REDEMPTION", rewardId: item.id }, copy("Confirm redemption", "أكد استبدال المكافأة"), `${item.name} · −${item.cost} ${copy("points", "نقطة")}`)}>{item.name} · {item.cost}</button>)}
+              { kind: "REDEMPTION", rewardId: item.id }, copy("Confirm redemption", "أكد استبدال المكافأة"), `${item.name} · −${item.cost} ${units}`)}>{item.name} · {item.cost}</button>)}
           </div>
         </section>
       )}
       {view === "rewards" && (
-        <>
-          <section className={panel}>
-            <form className="flex flex-wrap items-end gap-2" onSubmit={event => { event.preventDefault(); void save({ action: "rate", rate: normalizePointsInput(rateDraft ?? data.rate) }); }}>
-              <label className="flex-1">{copy("Points earned per 100 EGP", "النقاط المكتسبة لكل ١٠٠ ج.م")}<input className={control} inputMode="decimal" value={rateDraft ?? data.rate} onChange={event => setRateDraft(event.target.value)} required /></label>
-              <button className={primary} disabled={busy}>{copy("Save rate", "احفظ المعدل")}</button>
-            </form>
-          </section>
-          <section className={panel}>
-            <button className={primary} onClick={() => { setError(""); setReward("new"); }}>{copy("Create reward", "أضف مكافأة")}</button>
-            {data.rewards.map(item => <div key={item.id} className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
-              <p>{item.name} · {item.cost} {copy("points", "نقطة")} · {item.enabled ? copy("Enabled", "مفعّلة") : copy("Disabled", "غير مفعّلة")}</p>
+        <section className={panel}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="flex items-center gap-3 text-lg font-semibold tracking-tight"><Gift size={19} className="text-primary" />{copy("Loyalty program", "برنامج الولاء")}</h2>
+            <button className={primary} disabled={loading} onClick={() => { setError(""); setReward("new"); }}>{copy("Create reward", "أضف مكافأة")}</button>
+          </div>
+          <form className="flex flex-wrap items-end gap-2 rounded-2xl border border-border bg-secondary/45 p-3 sm:p-4" onSubmit={event => {
+            event.preventDefault();
+            void save({ action: "rate", rate: normalizePointsInput(rateDraft ?? data.rate) }, () => setRateDraft(null));
+          }}>
+            <label className="min-w-36 flex-1 text-sm">{copy(`${firey ? "Flames" : "Points"} per 100 EGP`, `${firey ? "اللهب" : "النقاط"} لكل ١٠٠ ج.م`)}<input className={`mt-1 ${control}`} inputMode="decimal" value={rateDraft ?? data.rate} onChange={event => setRateDraft(event.target.value)} required /></label>
+            <button className={button} disabled={busy || loading}>{copy("Save rate", "احفظ المعدل")}</button>
+          </form>
+          <div className="divide-y divide-border">
+            {!loading && !data.rewards.length && <p className="py-3 text-sm text-muted-foreground">{copy("No rewards yet.", "مفيش مكافآت لسه.")}</p>}
+            {data.rewards.map(item => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+              <div><p className="font-semibold">{item.name}</p><p className="mt-1 text-xs text-muted-foreground">{item.cost} {units} · {item.enabled ? copy("Enabled", "مفعّلة") : copy("Disabled", "غير مفعّلة")}</p></div>
               <button className={button} onClick={() => { setError(""); setReward(item); }}>{copy("Edit", "عدّل")}</button>
             </div>)}
-          </section>
-        </>
+          </div>
+        </section>
       )}
+      {view === "overview" && data.analytics && <>
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+          {metrics.map(({label, value, detail, icon: Icon}) => <article key={label} className="min-w-0 rounded-[22px] border border-border bg-card p-4 shadow-sm sm:p-5">
+            <Icon size={18} className="text-primary" aria-hidden="true" />
+            <p className="mt-4 text-xs font-medium text-muted-foreground">{label}</p>
+            <p className="mt-1 wrap-anywhere text-xl font-semibold tracking-tight tabular-nums sm:text-2xl">{value}</p>
+            <p className="mt-2 text-xs text-muted-foreground">{detail}</p>
+          </article>)}
+        </div>
+        <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+          <section className={panel}>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div><h2 className="text-lg font-semibold tracking-tight">{copy("Daily spending", "الإنفاق اليومي")}</h2>
+              <p className="mt-1 text-xs text-muted-foreground">{copy("Last 30 days · after refunds", "آخر ٣٠ يوم بعد الاسترداد")}</p></div>
+              <a className={`${button} inline-flex items-center gap-2`} href={endpoint + "/export"} aria-label={copy("Download CSV", "حمّل CSV")}><Download size={15} /> CSV</a>
+            </div>
+            {daily.length ? <div className="mt-3">
+              <div className="relative flex h-32 gap-1 px-1 sm:gap-2" aria-hidden="true">
+                <div className="absolute inset-x-0 border-t border-border" style={{ bottom: `${baseline}%` }} />
+                {daily.map(day => {
+                  const amount = Number(day.amount);
+                  return <div key={day.name} className="relative h-full min-w-0 flex-1" title={`${dateLabel(day.name)} · ${money(amount)}`}>
+                    <div className={`absolute w-full rounded-sm ${amount < 0 ? "bg-destructive/70" : "bg-primary/80"}`}
+                      style={{ bottom: `${(Math.min(0, amount) - min) / (max - min) * 100}%`, height: `${Math.abs(amount) / (max - min) * 100}%` }} />
+                  </div>;
+                })}
+              </div>
+              <div className="mt-2 flex justify-between gap-2 text-xs text-muted-foreground"><span>{dateLabel(daily[0].name)}</span><span>{dateLabel(daily[daily.length - 1].name)}</span></div>
+              <details className="mt-4 text-xs text-muted-foreground">
+                <summary className="cursor-pointer font-medium">{copy("Daily totals", "الإجمالي اليومي")}</summary>
+                <ul className="mt-2 max-h-40 space-y-2 overflow-auto">{daily.map(day => <li key={day.name} className="flex justify-between gap-3"><span>{dateLabel(day.name)}</span><span>{money(Number(day.amount))}</span></li>)}</ul>
+              </details>
+            </div> : <p className="grid min-h-36 place-items-center rounded-2xl border border-dashed border-border bg-secondary/30 p-4 text-center text-sm text-muted-foreground">{copy("No spending recorded in the last 30 days.", "مفيش إنفاق مسجل خلال آخر ٣٠ يوم.")}</p>}
+          </section>
+          <section className={panel}>
+            <h2 className="text-lg font-semibold tracking-tight">{copy("Branches", "الفروع")}</h2>
+            <ul className="divide-y divide-border">{data.breakdown?.branches.map(branch => <li key={branch.name} className="flex flex-wrap items-start gap-3 py-3">
+              <MapPin size={16} className="mt-0.5 shrink-0 text-primary" aria-hidden="true" />
+              <div className="min-w-24 flex-1"><p className="wrap-anywhere text-sm font-semibold">{branch.name}</p><p className="mt-1 text-xs text-muted-foreground">{number(branch.count)} {copy("purchases", "عملية شراء")}</p></div>
+              <span className="shrink-0 text-sm tabular-nums">{money(Number(branch.amount))}</span>
+            </li>)}</ul>
+            <dl className="grid grid-cols-2 gap-3 border-t border-border pt-3 text-sm">
+              <div><dt className="text-xs text-muted-foreground">{copy("Returning customers", "العملاء العائدون")}</dt><dd className="mt-1 font-semibold">{number(data.analytics.returning)}</dd></div>
+              <div><dt className="text-xs text-muted-foreground">{copy("Average purchase", "متوسط الشراء")}</dt><dd className="mt-1 font-semibold">{money(recordedSpending / (purchases?._count._all || 1))}</dd></div>
+              {data.breakdown?.popular.length ? <div className="col-span-2"><dt className="text-xs text-muted-foreground">{copy("Popular rewards", "المكافآت الأكثر استخداماً")}</dt>
+                <dd><ul className="mt-1 divide-y divide-border">{data.breakdown.popular.map(item => <li key={item.name} className="flex justify-between gap-3 py-1"><span>{item.name}</span><span className="tabular-nums">{number(item.count)}</span></li>)}</ul></dd>
+              </div> : null}
+            </dl>
+          </section>
+        </div>
+      </>}
       {(view === "overview" || (view === "customers" && member)) && (
         <>
-          <section className={panel}>
-            {view === "overview" && data.analytics && (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <p>{copy("Total members", "إجمالي الأعضاء")} <strong>{data.analytics.members}</strong></p>
-                <p>{copy("New members (30 days)", "أعضاء جدد (٣٠ يوم)")} <strong>{data.analytics.newMembers}</strong></p>
-                <p>{copy("Returning customers", "عملاء رجعوا")} <strong>{data.analytics.returning}</strong></p>
-                <p>{copy("Outstanding points", "النقاط المتاحة")} <strong>{Number(data.analytics.outstanding).toLocaleString(undefined, { maximumFractionDigits: 6 })}</strong></p>
-              </div>
-            )}
+          {view === "customers" && <section className={panel}>
             {member && view === "customers" && <div className="space-y-1"><h2 className="text-xl font-semibold">{member.name}</h2>
               <p>{copy("Balance", "الرصيد")} {member.pointsBalance} · {copy("Joined at", "سجّل في")} {member.joinLocation?.name ?? "—"}</p>
               {data.locations.length > 1 && <label className="block">
@@ -273,22 +357,13 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
               <p>{copy("Rewards redeemed", "المكافآت المستبدلة")} <strong>{redemptions?._count._all ?? 0}</strong></p>
             </div>
             <a className={button + " inline-flex items-center"} href={`${endpoint}/export${member && view === "customers" ? `?customer=${encodeURIComponent(member.id)}` : ""}`}>{copy("Download CSV", "حمّل CSV")}</a>
-          </section>
-          {view === "overview" && data.breakdown && <section className={panel}>
-            <h2 className="text-lg font-semibold">{copy("Spending by day", "الإنفاق حسب اليوم")}</h2>
-            <div className="grid gap-2">{data.breakdown.daily.map(item => <div key={item.name} className="grid grid-cols-[7rem_1fr_auto] items-center gap-2 text-sm">
-              <span>{item.name}</span><meter className="w-full" min={0} max={Math.max(1, ...data.breakdown!.daily.map(day => Number(day.amount)))} value={Math.max(0, Number(item.amount))} aria-label={item.name} /><span>{money(Number(item.amount))}</span>
-            </div>)}</div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div><h3 className="font-semibold">{copy("Branches", "الفروع")}</h3>{data.breakdown.branches.map(item => <p key={item.name}>{item.name} · {item.count} · {money(Number(item.amount))}</p>)}</div>
-              <div><h3 className="font-semibold">{copy("Popular rewards", "المكافآت الأكثر استخداماً")}</h3>{data.breakdown.popular.map(item => <p key={item.name}>{item.name} · {item.count}</p>)}</div>
-            </div>
           </section>}
           <section className={panel}>
             <h2 className="text-lg font-semibold">{copy("Recent transactions and staff activity", "آخر المعاملات ونشاط الموظفين")}</h2>
+            {!loading && !data.history.length && <p className="text-sm text-muted-foreground">{copy("No transactions recorded yet.", "مفيش معاملات مسجلة لسه.")}</p>}
             {data.history.map(row => <div key={row.id} className="space-y-1 border-t border-border pt-3 text-sm">
               <p><strong>{row.customer.name}</strong> · {row.location.name} · {row.actorName} · {new Date(row.createdAt).toLocaleString(lang === "ar" ? "ar-EG" : "en-EG", { timeZone: cafe.timezone })}</p>
-              <p>{row.kind === "PURCHASE" ? copy("Purchase", "شراء") : row.kind === "REFUND" ? copy("Refund", "استرداد") : copy("Redemption", "استبدال")} · {row.delta} {copy("points", "نقطة")}{row.amount && ` · ${money(Number(row.amount))}`}{row.rewardName && ` · ${row.rewardName}`}{row.receipt && ` · ${row.receipt}`}</p>
+              <p>{row.kind === "PURCHASE" ? copy("Purchase", "شراء") : row.kind === "REFUND" ? copy("Refund", "استرداد") : copy("Redemption", "استبدال")} · {row.delta} {units}{row.amount && ` · ${money(Number(row.amount))}`}{row.rewardName && ` · ${row.rewardName}`}{row.receipt && ` · ${row.receipt}`}</p>
               {member && row.kind === "PURCHASE" && data.locations.length > 0 && <form className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]" onSubmit={event => {
                 event.preventDefault();
                 const values = new FormData(event.currentTarget);

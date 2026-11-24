@@ -47,7 +47,7 @@ import {
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 import { getMbVapeBrandColors, isMbVape, MB_VAPE_IVORY, MB_VAPE_LOGO_URL, MB_VAPE_WALNUT } from "@/lib/business/mb-vape";
 import { GOURMEAL, isGourmeal } from "@/lib/business/gourmeal";
-import { getBusinessBrandColors } from "@/lib/cafe-theme";
+import { getBusinessBrandColors, getDashboardTheme, isRestaurantPalette } from "@/lib/cafe-theme";
 
 type FeedbackResponse = {
   success?: boolean;
@@ -1324,7 +1324,12 @@ const visibleStamps = rewardReady
 
   const gourmeal = isGourmeal(customer.cafe);
   const mbVape = isMbVape(customer.cafe);
-  const brand = getMbVapeBrandColors(customer.cafe);
+  const savedBrand = getMbVapeBrandColors(customer.cafe);
+  const restaurantTheme = isRestaurantPalette(customer.cafe.theme) ? getDashboardTheme(customer.cafe.theme, savedBrand) : null;
+  const brand = restaurantTheme ? {
+    ...savedBrand, primaryColor: restaurantTheme.accent, secondaryColor: restaurantTheme.accentHover,
+    backgroundColor: restaurantTheme.pageBackground,
+  } : savedBrand;
   const [
     barberPrimaryColor,
     barberSecondaryColor,
@@ -1374,7 +1379,7 @@ const visibleStamps = rewardReady
     isLightColor(backgroundColor);
 
   const isKekaCream = isKeka && customer.cafe.theme === "MODERN_MINIMAL";
-  const cardBackground = customer.cafe.businessType === "RESTAURANT" ? backgroundColor : gourmeal ? GOURMEAL.stone : isLoretto
+  const cardBackground = customer.cafe.businessType === "RESTAURANT" ? restaurantTheme?.surface ?? backgroundColor : gourmeal ? GOURMEAL.stone : isLoretto
     ? backgroundColor
     : isKeka
       ? (isKekaCream ? "#FFF6E6" : "#741A1D")

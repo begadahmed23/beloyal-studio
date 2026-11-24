@@ -33,7 +33,8 @@ test("the subscription quotes use the same per-store rate in either period", () 
 
 test("both Red & Orange variants are available to restaurants", () => {
   assert.equal(themes.getDefaultBusinessTheme("RESTAURANT"), "RED_ORANGE_LIGHT");
-  assert.deepEqual(themes.getBusinessThemeColors("RED_ORANGE_DARK", "RESTAURANT"), ["#ff651e", "#ff864d", "#171717"]);
+  assert.deepEqual(themes.getBusinessThemeColors("RED_ORANGE_DARK", "RESTAURANT"), ["#e1a184", "#edb198", "#181716"]);
+  assert.equal(themes.getDashboardTheme("RED_ORANGE_DARK", { primaryColor: "#ff651e", secondaryColor: "#ff864d", backgroundColor: "#171717" }).surface, "#22201f");
   assert.notEqual(themes.getBusinessTheme("RED_ORANGE_DARK", "CAFE").pageBackground, "#171717");
 });
 

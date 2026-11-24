@@ -522,7 +522,9 @@ test("Firey Nash signs a points pass with flame artwork and the existing checkou
   const pass = JSON.parse(strFromU8(zip["pass.json"]));
   assert.equal(pass.storeCard.headerFields[0].label, "FLAMES");
   assert.equal(pass.storeCard.headerFields[0].value, "109.9");
-  assert.equal(pass.storeCard.auxiliaryFields[0].value, "Collect flames with your orders");
+  assert.equal(pass.logoText, undefined);
+  assert.equal(pass.backgroundColor, "rgb(24, 23, 22)");
+  assert.equal((await sharp(zip["logo@3x.png"]).metadata()).width, 318);
   assert.doesNotMatch(JSON.stringify(pass), /per EGP|earning-rate|pointsPerHundred/i);
   assert.equal(pass.barcodes[0].message, `BL:${member.publicToken}`);
   const strip = await sharp(zip["strip@3x.png"]).stats();

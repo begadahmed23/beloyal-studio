@@ -1,6 +1,5 @@
 import {
   Database,
-  Gift,
   LayoutDashboard,
   Bell,
   Monitor,
@@ -42,7 +41,6 @@ export const cafeNavigation = [
     href: "/dashboard/scanner/phone",
     icon: Smartphone,
   },
-  { label: "Rewards", mobileLabel: "Rewards", adminOnly: true, pointsOnly: true, href: "/dashboard/rewards", icon: Gift },
   {
     label: "Campaigns",
     adminOnly: true,

@@ -14,6 +14,7 @@ const reply = (status: number) => new NextResponse(null, { status, headers });
 const identifier = (value: string) => /^[a-z0-9_-]{1,200}$/i.test(value);
 // Discover the new pass artwork and credit on already installed passes.
 const PASS_DESIGN_VERSION = Date.UTC(2026, 10, 23, 19, 48);
+const designVersion = (slug: string) => slug === "firey-nash" ? Date.UTC(2026, 10, 24, 14) : PASS_DESIGN_VERSION;
 const select = { id: true, publicToken: true, memberNumber: true, name: true, stamps: true, pointsBalance: true,
   rewardEarnedAt: true, updatedAt: true,
   cafe: { select: { id: true, name: true, slug: true, logoUrl: true, theme: true, businessType: true, loyaltyMode: true,
@@ -44,7 +45,7 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
         select: { id: true, updatedAt: true, cafe: { select: { slug: true, updatedAt: true } } } });
       const members = registered.filter(member => walletPassTypeForBusiness(type, member.cafe.slug));
       const messageVersions = new Map(await Promise.all(members.map(async (member) => [member.id, (await getWalletMessage(member.id))?.updatedAt ?? 0] as const)));
-      const version = (member: typeof members[number]) => Math.max(PASS_DESIGN_VERSION, member.updatedAt.getTime(), member.cafe.updatedAt.getTime(), messageVersions.get(member.id) ?? 0);
+      const version = (member: typeof members[number]) => Math.max(designVersion(member.cafe.slug), member.updatedAt.getTime(), member.cafe.updatedAt.getTime(), messageVersions.get(member.id) ?? 0);
       const changed = members.filter((member) => !since || version(member) > Number(since));
       if (!changed.length) return reply(204);
       return NextResponse.json({ serialNumbers: changed.map((member) => member.id),
@@ -79,7 +80,7 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
     }
     if (method !== "GET") return reply(405);
     const message = await getWalletMessage(member.id);
-    const modified = Math.max(PASS_DESIGN_VERSION, member.updatedAt.getTime(), member.cafe.updatedAt.getTime(), message?.updatedAt ?? 0);
+    const modified = Math.max(designVersion(member.cafe.slug), member.updatedAt.getTime(), member.cafe.updatedAt.getTime(), message?.updatedAt ?? 0);
     // Authenticated Wallet pass downloads always return the freshly generated
     // .pkpass. A stale If-Modified-Since value must never leave an old reward
     // on an installed card after a settings change.

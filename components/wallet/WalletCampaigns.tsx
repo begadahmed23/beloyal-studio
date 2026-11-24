@@ -2,7 +2,7 @@
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Bell, Cake, Check, Clock3, Gift, Loader2, Search, Send, Smartphone, Trash2, Users, Wallet } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bell, Cake, Check, Clock3, Gift, Loader2, Search, Send, Trash2, Users, Wallet } from "lucide-react";
 import { campaignSegments, MAX_CAMPAIGN_RECIPIENTS, type CampaignMember, type CampaignSegment } from "@/lib/wallet/campaign-segments";
 import { ActionButton } from "@/components/ui/action-button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -20,7 +20,7 @@ function totals(campaign: WalletCampaign) {
   return { accepted: campaign.recipients.filter(r => r.status === "accepted").length, failed: campaign.recipients.filter(r => r.status === "failed").length,
     skipped: campaign.recipients.filter(r => r.status === "skipped").length, pending: campaign.recipients.filter(r => r.status === "pending").length };
 }
-export default function WalletCampaigns({ businesses, initialCafeId, studio = false, branded = false, businessCanSend = false }: { businesses: Business[]; initialCafeId: string; studio?: boolean; branded?: boolean; businessCanSend?: boolean }) {
+export default function WalletCampaigns({ businesses, initialCafeId, studio = false, branded = false, businessCanSend = false, pointsMode = false }: { businesses: Business[]; initialCafeId: string; studio?: boolean; branded?: boolean; businessCanSend?: boolean; pointsMode?: boolean }) {
   const { t, arabic } = useBeLoyalLanguage();
   const canSend = studio || businessCanSend;
   const [cafeId, setCafeId] = useState(initialCafeId);
@@ -197,14 +197,13 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
         })}
       </div>
       {visible.length > 200 && <p className="mt-3 text-xs text-[var(--wallet-muted,#71717a)]">Showing the first 200 matches. Search by name, member number or store to narrow the list.</p>}
-      <p className="mt-3 text-[11px] leading-5 text-[var(--wallet-muted,#71717a)]">Visits use recorded stamps and redemptions, excluding feedback bonuses. For members without a visit, inactivity starts from joining. Birthdays use {data?.cafe.timezone ?? "the business’s timezone"}.</p>
+      <p className="mt-3 text-[11px] leading-5 text-[var(--wallet-muted,#71717a)]">{pointsMode ? t("Activity uses recorded purchases.") : t("Activity uses visits recorded on the loyalty card.")}</p>
     </section>
-    <section className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+    <section className="mt-5">
       <div className="min-w-0 rounded-3xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-4 sm:p-6"><h2 className="font-semibold">{t("Write your message")}</h2>
         <label htmlFor="wallet-message" className="mb-2 mt-5 block text-xs font-medium">{t("Message")}</label><textarea id="wallet-message" dir="auto" className={`${field} min-h-32 resize-y leading-6`} maxLength={180} disabled={!!busy} value={message} placeholder={t("Example: We miss you! Stop by this week for a treat.")} onChange={event => { setMessage(event.target.value); resetReview(); }}/>
         <div className="mt-2 flex justify-between gap-4 text-xs text-[var(--wallet-muted,#71717a)]"><span>{t("Members can see this on their Wallet card. Their phone may show an alert.")}</span><span className="shrink-0">{message.length}/180</span></div>
         <div className="mt-4 flex flex-wrap gap-2">{segment === "reward_ready" && data && <button className={secondary} disabled={!!busy} onClick={() => { setMessage((arabic ? `مكافأتك جاهزة: ${data.cafe.rewardName}! عدّي على ${business} عشان تستلمها.` : `Your reward is ready: ${data.cafe.rewardName}! Visit ${business} to redeem it.`).slice(0, 180)); resetReview(); }}><Gift size={15}/>{" " + t("Reward reminder")}</button>}<button className={secondary} disabled={!!busy} onClick={() => { setMessage((arabic ? `كل سنة وإنت طيب! مبسوطين إنك معانا في ${business}.` : `Happy birthday! Thanks for being part of ${business}.`).slice(0, 180)); resetReview(); }}><Cake size={15}/>{" " + t("Birthday wish")}</button><button className={secondary} disabled={!!busy} onClick={() => { setMessage((arabic ? `وحشتنا! كارت الولاء بتاع ${business} جاهز لزيارتك الجاية.` : `We miss you! Your ${business} loyalty card is ready for your next visit.`).slice(0, 180)); resetReview(); }}><Clock3 size={15}/>{" " + t("Welcome back")}</button></div>
-        <p className="mt-4 text-xs leading-5 text-[var(--wallet-muted,#71717a)]">This message keeps everyone’s stamps and rewards as they are.</p>
         <p className="mt-3 text-xs leading-5 text-[var(--wallet-muted,#71717a)]">{t("Select at least one member and write a message to review it.")}</p>
         <ActionButton
           className={`${primary} mt-5 w-full sm:w-auto`}
@@ -213,19 +212,19 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
           disabled={!!busy || !!result || !selected.length || !message.trim() || !data || !!audienceError}
           onClick={() => request("preview")}
         >
-          {arabic ? `راجع المستلمين${selected.length ? ` (${selected.length})` : ""}` : `Review ${selected.length || "your"} recipient${selected.length === 1 ? "" : "s"}`}
+          {t("Review message")}
         </ActionButton>
       </div>
-      <div className="flex min-w-0 flex-col justify-center rounded-3xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-6 shadow-sm sm:p-8"><p className="mb-5 text-xs font-medium uppercase tracking-[0.15em] text-[var(--wallet-muted,#71717a)]">{t("Notification preview")}</p><div className="rounded-3xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-5 shadow-[0_15px_40px_rgba(0,0,0,0.06)]"><div className="flex items-center gap-2 text-xs text-[var(--wallet-muted,#71717a)]"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--wallet-accent,#18181b)] text-[var(--wallet-accent-text,#ffffff)]"><Wallet size={17}/></span> Wallet<span className="ms-auto">now</span></div><p className="mt-4 text-sm font-semibold">{business}</p><p className="mt-2 whitespace-pre-wrap wrap-anywhere text-sm leading-6">{message.trim() || t("Your message will appear here.")}</p></div><p className="mt-5 flex items-start gap-2 text-xs leading-5 text-[var(--wallet-muted,#71717a)]"><Smartphone size={17} className="mt-0.5 shrink-0"/> Updates can take a few minutes. Members may see a Wallet alert depending on their phone settings.</p></div>
     </section>
     <Dialog open={reviewOpen} onOpenChange={open => { if (!open) closeReview(); }}>
       <DialogContent
         showCloseButton={false}
+        dir={arabic ? "rtl" : "ltr"}
         style={reviewTheme ? dashboardThemeVariables(reviewTheme) : undefined}
-        className="flex max-h-[calc(100dvh-1.5rem)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden border p-0 sm:max-w-lg"
+        className="flex max-h-[min(40rem,calc(100dvh-1.5rem))] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden border p-0 sm:max-w-lg"
       >
         <DialogHeader className="shrink-0 border-b border-border px-5 py-4 sm:px-6 sm:py-5">
-          <DialogTitle className="text-xl font-semibold">{t(result ? "Campaign result" : "Review campaign")}</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">{t(result ? "Campaign result" : "Review message")}</DialogTitle>
           <DialogDescription className="text-secondary-foreground">
             {review?.business ?? business}
             {review && <> · {t(campaignSegments.find(item => item.id === review.segment)?.label ?? chosenSegment.label)}</>}
@@ -235,8 +234,11 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
           {busy === "preview" && <p role="status" className="flex items-center gap-2 text-sm"><Loader2 size={16} className="animate-spin" />{t("Preparing review…")}</p>}
           {review && <>
             <div>
-              <p className="text-sm font-medium">{t("Message")}</p>
-              <p dir="auto" className="mt-2 whitespace-pre-wrap wrap-anywhere rounded-2xl bg-secondary p-4 text-sm leading-6">{review.message}</p>
+              <div className="rounded-2xl border border-border bg-secondary p-4">
+                <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground"><Wallet size={16} />{t("Wallet notification")}</p>
+                <p className="mt-2 text-sm font-semibold">{business}</p>
+                <p dir="auto" className="mt-1 whitespace-pre-wrap wrap-anywhere text-sm leading-6">{review.message}</p>
+              </div>
             </div>
             <details>
               <summary className="cursor-pointer rounded-xl border border-border px-3 py-3 text-sm font-medium">
@@ -259,15 +261,15 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
             className="min-h-11 rounded-xl border border-border px-4 text-sm font-medium disabled:opacity-50">
             {t(result ? "Done" : "Back to editing")}
           </button>
-          {review && !result && <ActionButton
+          {!result && <ActionButton
             className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50"
-            icon={<Send size={16} />} pending={busy === "send"} disabled={!!busy} onClick={() => request("send")}
+            icon={<Send size={16} />} pending={busy === "send"} disabled={!!busy || !review} onClick={() => request("send")}
           >{t("Send notification")}</ActionButton>}
         </div>
       </DialogContent>
     </Dialog>
     </>}
-    <WalletNotificationSettings key={cafeId} cafeId={cafeId} manageLocation={studio} editNearbyMessages={!studio} />
+    <WalletNotificationSettings key={cafeId} cafeId={cafeId} manageLocation={studio} editNearbyMessages={!studio} pointsMode={pointsMode} />
     <section className="mt-7">
       <h2 className="flex items-center gap-2 text-lg font-semibold"><Bell size={18} aria-hidden="true" /> {t("Message history")}</h2>
       <p className="mt-2 text-xs text-[var(--wallet-muted,#71717a)]">{t("See your last 10 sends from the past 30 days.")}</p>
