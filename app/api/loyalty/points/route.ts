@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { put } from "@vercel/blob";
 import sharp from "sharp";
 import { z } from "zod";
-import { pointsMemberSearch, pointsMemberSpending } from "@/lib/business/points-members";
+import { pointsCustomerCount, pointsCustomerPage, pointsCustomerScope, pointsMemberSearch } from "@/lib/business/points-members";
 import { prisma } from "@/lib/prisma";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
 import { applyPublicRateLimit, publicApiRateLimiters } from "@/lib/public-api-security";
@@ -86,6 +86,14 @@ export async function GET(request: NextRequest) {
     const pageValue = Number(request.nextUrl.searchParams.get("page") ?? "1");
     const page = Number.isSafeInteger(pageValue) && pageValue > 0 ? Math.min(pageValue, 10000) : 1;
     const take = 24;
+    if (admin && request.nextUrl.searchParams.get("spending") === "1") {
+      const scope = pointsCustomerScope(cafeId, cafe.timezone, request.nextUrl.searchParams);
+      const [members, total] = await Promise.all([
+        pointsCustomerPage(cafeId, scope, { offset: (page - 1) * take, take }),
+        pointsCustomerCount(scope),
+      ]);
+      return json({ members, total, page, pageSize: take, locations });
+    }
     const [members, total] = await Promise.all([
       prisma.customer.findMany({
         where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], skip: (page - 1) * take, take,
@@ -94,12 +102,7 @@ export async function GET(request: NextRequest) {
       }),
       prisma.customer.count({ where }),
     ]);
-    if (!admin || !members.length || request.nextUrl.searchParams.get("spending") !== "1") {
-      return json({ members, total, page, pageSize: take, locations: admin ? locations : [] });
-    }
-    const spending = await pointsMemberSpending(cafeId, members.map(member => member.id));
-    const profiles = members.map(member => ({ ...member, ...spending.get(member.id) }));
-    return json({ members: profiles, total, page, pageSize: take, locations });
+    return json({ members, total, page, pageSize: take, locations: admin ? locations : [] });
   }
 
   const [rewards, members, history, totals] = await Promise.all([
