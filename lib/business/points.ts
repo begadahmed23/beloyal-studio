@@ -4,6 +4,13 @@ export const purchaseAmountSchema = z.string().regex(/^\d{1,10}(\.\d{1,2})?$/).r
 export const earningRateSchema = z.string().regex(/^\d{1,6}(\.\d{1,4})?$/).refine(value => Number(value) > 0);
 export const rewardCostSchema = z.string().regex(/^\d{1,12}(\.\d{1,6})?$/).refine(value => Number(value) > 0);
 
+export function normalizePointsInput(value: string) {
+  return value.trim()
+    .replace(/[٠-٩]/g, digit => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+    .replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace("٫", ".");
+}
+
 function scaledInteger(value: string, scale: number) {
   const [whole, fraction = ""] = value.split(".");
   return BigInt(whole + fraction.padEnd(scale, "0"));

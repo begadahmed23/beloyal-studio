@@ -7,7 +7,7 @@ import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import StoreJoinQRCodes from "./StoreJoinQRCodes";
 import NewCustomerDialog from "@/components/customers/NewCustomerDialog";
-import { earnedPoints, earningRateSchema, purchaseAmountSchema } from "@/lib/business/points";
+import { earnedPoints, earningRateSchema, normalizePointsInput, purchaseAmountSchema } from "@/lib/business/points";
 
 const CameraScanner = dynamic(() => import("@yudiel/react-qr-scanner").then(module => module.Scanner), { ssr: false });
 type Location = { id: string; name: string };
@@ -73,8 +73,9 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const location = selectedLocation || data.locations[0]?.id || "";
-  const preview = purchaseAmountSchema.safeParse(amount).success && earningRateSchema.safeParse(data.rate).success
-    ? earnedPoints(amount, data.rate) : null;
+  const purchaseAmount = normalizePointsInput(amount);
+  const preview = purchaseAmountSchema.safeParse(purchaseAmount).success && earningRateSchema.safeParse(data.rate).success
+    ? earnedPoints(purchaseAmount, data.rate) : null;
 
   useEffect(() => {
     let current = true;
@@ -157,7 +158,7 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
     await save({
       action: "reward", ...(existing && { id: existing.id }),
       name: form.get("name"), description: form.get("description"), conditions: form.get("conditions"),
-      cost: form.get("cost"), enabled: form.has("enabled"), locationIds: form.getAll("locationId"), photoUrl,
+      cost: normalizePointsInput(String(form.get("cost") ?? "")), enabled: form.has("enabled"), locationIds: form.getAll("locationId"), photoUrl,
       expiresAt: expiry ? new Date(expiry).toISOString() : null,
     }, () => setReward(null));
   }
@@ -211,7 +212,7 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
           </label>
           <form className="grid gap-3 sm:grid-cols-2" onSubmit={event => {
             event.preventDefault();
-            confirmTransaction({ kind: "PURCHASE", amount, ...(receipt.trim() && { receipt }) },
+            confirmTransaction({ kind: "PURCHASE", amount: purchaseAmount, ...(receipt.trim() && { receipt }) },
               copy("Confirm purchase", "أكد عملية الشراء"), `${amount} EGP · +${preview} ${copy("points", "نقطة")}`);
           }}>
             <label>{copy("Purchase amount (EGP)", "قيمة الشراء (ج.م)")}<input className={control} inputMode="decimal" value={amount} onChange={event => setAmount(event.target.value)} required /></label>
@@ -229,7 +230,7 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
       {view === "rewards" && (
         <>
           <section className={panel}>
-            <form className="flex flex-wrap items-end gap-2" onSubmit={event => { event.preventDefault(); void save({ action: "rate", rate: rateDraft ?? data.rate }); }}>
+            <form className="flex flex-wrap items-end gap-2" onSubmit={event => { event.preventDefault(); void save({ action: "rate", rate: normalizePointsInput(rateDraft ?? data.rate) }); }}>
               <label className="flex-1">{copy("Points earned per 100 EGP", "النقاط المكتسبة لكل ١٠٠ ج.م")}<input className={control} inputMode="decimal" value={rateDraft ?? data.rate} onChange={event => setRateDraft(event.target.value)} required /></label>
               <button className={primary} disabled={busy}>{copy("Save rate", "احفظ المعدل")}</button>
             </form>
@@ -256,6 +257,12 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
             )}
             {member && view === "customers" && <div className="space-y-1"><h2 className="text-xl font-semibold">{member.name}</h2>
               <p>{copy("Balance", "الرصيد")} {member.pointsBalance} · {copy("Joined at", "سجّل في")} {member.joinLocation?.name ?? "—"}</p>
+              {data.locations.length > 1 && <label className="block">
+                {copy("Refund branch", "فرع الاسترداد")}
+                <select className={control} value={location} onChange={event => setLocation(event.target.value)}>
+                  {data.locations.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+                </select>
+              </label>}
               <p>{copy("Birthday", "عيد الميلاد")} {member.birthday?.slice(5, 10) ?? "—"} · {copy("Wallet", "المحفظة")} {member.wallet ? [member.wallet.apple && "Apple", member.wallet.google && "Google"].filter(Boolean).join(", ") || "—" : "—"}</p></div>}
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               <p>{copy("Recorded purchases", "عمليات الشراء المسجلة")} <strong>{purchases?._count._all ?? 0}</strong></p>
@@ -285,7 +292,7 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
               {member && row.kind === "PURCHASE" && data.locations.length > 0 && <form className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]" onSubmit={event => {
                 event.preventDefault();
                 const values = new FormData(event.currentTarget);
-                const amount = String(values.get("refundAmount"));
+                const amount = normalizePointsInput(String(values.get("refundAmount") ?? ""));
                 confirmTransaction({ kind: "REFUND", purchaseId: row.id, amount, reason: values.get("reason") },
                   copy("Confirm refund", "أكد الاسترداد"), money(Number(amount)));
               }}>

@@ -20,6 +20,7 @@ test("point earnings retain fractions and handle whole group bills", () => {
   for (const [amount, expected] of [["100", "10"], ["150", "15"], ["350", "35"], ["1099", "109.9"], ["9000000000", "900000000"]]) {
     assert.equal(points.earnedPoints(amount, "10"), expected);
   }
+  assert.equal(points.normalizePointsInput("١٠٩٩٫٩٩"), "1099.99");
   assert.equal(points.earnedPoints("0.01", "0.005"), "0.000001");
   assert.equal(points.earnedPoints("0.01", "0.0049"), "0");
   for (const invalid of ["0", "-1", "1e4", "150.003"]) assert.equal(points.purchaseAmountSchema.safeParse(invalid).success, false);
