@@ -136,8 +136,8 @@ test("points cards use the exact ledger balance and Firey Nash flame artwork", (
  const object = wallet.googleWalletObject({ ...member, cafe, pointsBalance: "109.900001" });
  assert.equal(object.loyaltyPoints.label, "FLAMES");
  assert.equal(object.loyaltyPoints.balance.string, "109.900001");
- assert.match(object.textModulesData[0].body, /collect flames/);
+ assert.equal(object.textModulesData[0].body, "Show your membership QR at checkout.");
  assert.doesNotMatch(JSON.stringify(object), /per EGP|earning-rate|pointsPerHundred/i);
- assert.match(object.heroImage.sourceUri.uri, /firey-nash\/wallet-strip.png$/);
+ assert.match(object.heroImage.sourceUri.uri, /firey-nash\/wallet-strip-v2\.png$/);
  assert.equal(object.barcode.value, `BL:${member.publicToken}`);
 });

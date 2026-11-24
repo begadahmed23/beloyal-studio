@@ -6,10 +6,11 @@ import { Bell, Loader2, LockKeyhole, Save } from "lucide-react";
 import { configuredWalletLocations, walletNotificationPreview, type WalletLocation, type WalletNotificationSettings } from "@/lib/wallet/notification-text";
 
 type Data = { settings: WalletNotificationSettings; rewardName: string; target: number };
-export default function WalletNotificationSettings({ cafeId, manageLocation = false, editNearbyMessages = false }: {
+export default function WalletNotificationSettings({ cafeId, manageLocation = false, editNearbyMessages = false, pointsMode = false }: {
   cafeId: string;
   manageLocation?: boolean;
   editNearbyMessages?: boolean;
+  pointsMode?: boolean;
 }) {
   const { t } = useBeLoyalLanguage();
   const [nearbyDrafts, setNearbyDrafts] = useState<Record<number, string>>({});
@@ -87,9 +88,9 @@ export default function WalletNotificationSettings({ cafeId, manageLocation = fa
   }
   return <section className="mt-5 rounded-3xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-4 text-[var(--wallet-text,#18181b)] sm:p-6" >
     <h2 className="flex items-center gap-2 text-lg font-semibold"><Bell size={19}/> Wallet notifications</h2>
-    <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--wallet-muted,#71717a)]">These Apple Wallet messages go out after a stamp, when a reward is ready, and when the card starts over. Leave a field blank to use BeLoyal’s message.</p>
+    <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--wallet-muted,#71717a)]">{pointsMode ? t("Apple Wallet shows an update when a member’s balance changes.") : "These Apple Wallet messages go out after a stamp, when a reward is ready, and when the card starts over. Leave a field blank to use BeLoyal’s message."}</p>
     {!data && !error && <p className="mt-5 flex items-center gap-2 text-sm"><Loader2 size={16} className="animate-spin"/> Loading messages…</p>}
-    {data && <><div className="mt-6 grid gap-5 xl:grid-cols-3">{([
+    {data && <>{!pointsMode && <div className="mt-6 grid gap-5 xl:grid-cols-3">{([
       { key: "stampSuffix", label: "After a stamp", placeholder: "Thanks for stopping by ☕", ready: false, reset: false },
       { key: "rewardSuffix", label: "When a reward is ready", placeholder: "Your next treat is on us 🎉", ready: true, reset: false },
       { key: "resetSuffix", label: "When the card starts over", placeholder: "A fresh start towards your next reward ✨", ready: false, reset: true },
@@ -101,7 +102,8 @@ export default function WalletNotificationSettings({ cafeId, manageLocation = fa
       <p className="mt-1 text-right text-xs text-[var(--wallet-muted,#71717a)]">{(data.settings[item.key] ?? "").length}/100</p>
       <p className="mt-4 text-[10px] font-semibold uppercase tracking-wider text-[var(--wallet-muted,#71717a)]">Example notification</p>
       <p className="mt-2 break-words rounded-xl bg-[var(--wallet-raised,#fafafa)] p-3 text-sm leading-6">{walletNotificationPreview(`${item.reset ? 0 : item.ready ? data.target : Math.min(3, Math.max(0, data.target - 1))}/${data.target}`, item.ready, data.rewardName, data.settings)}</p>
-    </div>)}</div>
+    </div>)}</div>}
+    {pointsMode && editNearbyMessages && locations.length === 0 && <p className="mt-4 text-sm text-[var(--wallet-muted,#71717a)]">{t("No nearby reminders configured.")}</p>}
     {editNearbyMessages && locations.length > 0 && (
       <div className="mt-5 space-y-4 rounded-2xl border border-[var(--wallet-border,#e4e4e7)] p-4 sm:p-5">
         <div>
@@ -146,7 +148,7 @@ export default function WalletNotificationSettings({ cafeId, manageLocation = fa
       <button type="button" disabled={saving||locations.length>=10} onClick={()=>setLocations([...locations,{name:"",latitude:NaN,longitude:NaN,message:"Your loyalty card is ready for your next visit."}])} className="mt-3 rounded-xl border px-4 py-3 text-sm disabled:opacity-40">+ Add branch</button>
       <p className="mt-3 text-xs text-[var(--wallet-muted,#71717a)]">Paste the Google Maps link for each branch. Device permissions and Wallet determine when reminders appear.</p>
     </div>}
-    <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-xl text-xs leading-5 text-[var(--wallet-muted,#71717a)]">These changes take effect the next time Wallet updates the card.</p><ActionButton onClick={save} pending={saving} icon={<Save size={16} />} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-[var(--wallet-accent,#18181b)] px-5 py-3 text-sm font-medium text-[var(--wallet-accent-text,#ffffff)] disabled:opacity-60">{manageLocation ? "Save messages and locations" : "Save messages"}</ActionButton></div></>}
+    {(!pointsMode || manageLocation) && <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-xl text-xs leading-5 text-[var(--wallet-muted,#71717a)]">These changes take effect the next time Wallet updates the card.</p><ActionButton onClick={save} pending={saving} icon={<Save size={16} />} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-2xl bg-[var(--wallet-accent,#18181b)] px-5 py-3 text-sm font-medium text-[var(--wallet-accent-text,#ffffff)] disabled:opacity-60">{manageLocation ? "Save messages and locations" : "Save messages"}</ActionButton></div>}</>}
     {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}
     <p role="status" className="mt-3 min-h-5 text-sm">{saving ? "Saving messages…" : status}</p>
   </section>;

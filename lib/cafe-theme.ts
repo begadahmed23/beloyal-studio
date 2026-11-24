@@ -536,19 +536,19 @@ const dashboardThemes: Record<Exclude<DashboardThemeName, "RED_ORANGE_LIGHT" | "
 const restaurantThemes = {
   RED_ORANGE_LIGHT: {
     ...themes.MODERN_MINIMAL,
-    pageBackground: "#fff5ed", surface: "#ffffff", surfaceRaised: "#ffe8d9",
-    border: "#ead0c4", textPrimary: "#171717", textSecondary: "#64352c", textMuted: "#76554c",
-    accent: "#c31820", accentHover: "#a5161a", accentSoft: "#ffded3",
+    pageBackground: "#f1eeea", surface: "#ffffff", surfaceRaised: "#eae4dd",
+    border: "#dcd5cd", textPrimary: "#171717", textSecondary: "#473c37", textMuted: "#6b6059",
+    accent: "#8f3e32", accentHover: "#752f27", accentSoft: "#f0dfd8",
     accentText: "#ffffff", buttonText: "#ffffff", warning: "#f4480b",
-    inputBackground: "#ffffff", inputBorder: "#dbb8a7",
+    inputBackground: "#ffffff", inputBorder: "#cfc3ba",
   },
   RED_ORANGE_DARK: {
     ...themes.DARK_LUXURY,
-    pageBackground: "#171717", surface: "#24201f", surfaceRaised: "#302622",
-    border: "#503c36", textPrimary: "#fff8f3", textSecondary: "#ffd7c6", textMuted: "#d3b3a7",
-    accent: "#ff651e", accentHover: "#ff864d", accentSoft: "#482b21",
+    pageBackground: "#181716", surface: "#22201f", surfaceRaised: "#2b2826",
+    border: "#423b36", textPrimary: "#f6f0e9", textSecondary: "#d9ccc1", textMuted: "#b7a79a",
+    accent: "#e1a184", accentHover: "#edb198", accentSoft: "#3b2e29",
     accentText: "#171717", buttonText: "#171717", warning: "#ff7845", danger: "#ff7071",
-    inputBackground: "#211b19", inputBorder: "#634940",
+    inputBackground: "#1b1918", inputBorder: "#554942",
   },
 } satisfies Record<string, CafeThemeConfig>;
 
@@ -578,13 +578,19 @@ export function getDashboardThemeColors(themeName: DashboardThemeName): [string,
   return [theme.accent, theme.accentHover, theme.pageBackground];
 }
 
+const previousRestaurantColors = {
+  RED_ORANGE_LIGHT: ["#c31820", "#a5161a", "#fff5ed"],
+  RED_ORANGE_DARK: ["#ff651e", "#ff864d", "#171717"],
+} as const;
+
 export function getDashboardTheme(themeName: DashboardThemeName, saved?: BrandColors): CafeThemeConfig {
   const base = isRestaurantPalette(themeName) ? restaurantThemes[themeName] : dashboardThemes[themeName];
   const defaults = getDashboardThemeColors(themeName);
   const values = [saved?.primaryColor, saved?.secondaryColor, saved?.backgroundColor].map((color, i) =>
     color && /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : defaults[i],
   ) as [string, string, string];
-  if (values.every((color, i) => color === defaults[i])) return base;
+  if (values.every((color, i) => color === defaults[i]) ||
+      (isRestaurantPalette(themeName) && values.every((color, i) => color === previousRestaurantColors[themeName][i]))) return base;
   return applyBrandColors(base, values);
 }
 
