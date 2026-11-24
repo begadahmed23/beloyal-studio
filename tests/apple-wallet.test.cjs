@@ -513,7 +513,7 @@ test('MB Vape pass uses the brand logo and device stamps without changing the sc
 });
 
 test("Firey Nash signs a points pass with flame artwork and the existing checkout QR", async () => {
-  const sharp = require("sharp");
+  const { default: sharp } = await import("sharp");
   const { createAppleWalletPass } = load("lib/wallet/apple.ts");
   const zip = unzipSync(await createAppleWalletPass({ ...member, pointsBalance: "109.9", cafe: {
     ...member.cafe, name: "Firey Nash", slug: "firey-nash", businessType: "RESTAURANT",
