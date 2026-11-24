@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ArrowUpRight, CreditCard, Download, Flame, Gift, MapPin, ScanLine, Users } from "lucide-react";
+import { CreditCard, Download, Flame, Gift, MapPin, ScanLine, Users } from "lucide-react";
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -182,8 +182,8 @@ export default function PointsDashboard({ view }: { view: "rewards" | "overview"
           <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
         </div>
         {view === "overview" && <div className="flex flex-wrap gap-2">
-          <Link className={`${primary} inline-flex items-center gap-2`} href="/dashboard/scanner/phone"><ScanLine size={16} />{copy("Scan a card", "امسح الكارت")}</Link>
-          <Link className={`${button} inline-flex items-center gap-2`} href="/dashboard/settings#loyalty-program">{copy("Loyalty settings", "إعدادات الولاء")}<ArrowUpRight size={15} /></Link>
+          <Link className={`${primary} inline-flex items-center gap-2`} href="/dashboard/settings#loyalty-program"><Gift size={16} aria-hidden="true" />{copy("Manage reward items", "إدارة عناصر المكافآت")}</Link>
+          <Link className={`${button} inline-flex items-center gap-2`} href="/dashboard/scanner/phone"><ScanLine size={16} aria-hidden="true" />{copy("Scan a card", "امسح الكارت")}</Link>
         </div>}
       </header>}
       {loading && <p role="status" className="px-2 text-sm text-muted-foreground">{copy("Loading…", "جارٍ التحميل…")}</p>}
@@ -196,8 +196,8 @@ export default function PointsDashboard({ view }: { view: "rewards" | "overview"
       {view === "rewards" && (
         <section className={panel}>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="flex items-center gap-3 text-lg font-semibold tracking-tight"><Gift size={19} className="text-primary" />{copy("Loyalty program", "برنامج الولاء")}</h2>
-            <button className={primary} disabled={loading} onClick={() => { setError(""); setReward("new"); }}>{copy("Create reward", "أضف مكافأة")}</button>
+            <h2 className="flex items-center gap-3 text-lg font-semibold tracking-tight"><Gift size={19} className="text-primary" />{copy("Reward items", "عناصر المكافآت")}</h2>
+            <button className={primary} disabled={loading} onClick={() => { setError(""); setReward("new"); }}>{copy("Add reward item", "أضف عنصر مكافأة")}</button>
           </div>
           <form className="flex flex-wrap items-end gap-2 rounded-2xl border border-border bg-secondary/45 p-3 sm:p-4" onSubmit={event => {
             event.preventDefault();
@@ -207,7 +207,7 @@ export default function PointsDashboard({ view }: { view: "rewards" | "overview"
             <button className={button} disabled={busy || loading}>{copy("Save rate", "احفظ المعدل")}</button>
           </form>
           <div className="divide-y divide-border">
-            {!loading && !data.rewards.length && <p className="py-3 text-sm text-muted-foreground">{copy("No rewards yet.", "مفيش مكافآت لسه.")}</p>}
+            {!loading && !data.rewards.length && <p className="py-3 text-sm text-muted-foreground">{copy("Add your first item with a photo and a redemption cost.", "أضف أول عنصر مع صورته وتكلفة استبداله.")}</p>}
             {data.rewards.map(item => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
               <div><p className="font-semibold">{item.name}</p><p className="mt-1 text-xs text-muted-foreground">{item.cost} {units} · {item.enabled ? copy("Enabled", "مفعّلة") : copy("Disabled", "غير مفعّلة")}</p></div>
               <button className={button} onClick={() => { setError(""); setReward(item); }}>{copy("Edit", "عدّل")}</button>
@@ -321,21 +321,21 @@ export default function PointsDashboard({ view }: { view: "rewards" | "overview"
       </Dialog>
       <Dialog open={!!reward} onOpenChange={open => { if (!open && !busy) setReward(null); }}>
         {reward && <DialogContent dir={dir} className="max-h-[85dvh] overflow-y-auto bg-card text-foreground">
-          <DialogTitle>{editing ? copy("Edit reward", "عدّل المكافأة") : copy("Create reward", "أضف مكافأة")}</DialogTitle>
-          <DialogDescription>{copy("Set the reward cost and participating branches.", "حدد تكلفة المكافأة والفروع المشاركة.")}</DialogDescription>
+          <DialogTitle>{editing ? copy("Edit reward", "عدّل المكافأة") : copy("Add reward item", "أضف عنصر مكافأة")}</DialogTitle>
+          <DialogDescription>{copy("Set the item’s redemption cost and choose where customers can claim it.", "حدد تكلفة استبدال العنصر والفروع التي يمكن للعملاء استبداله فيها.")}</DialogDescription>
           {error && <p role="alert">{error}</p>}
           <form className="grid gap-3" onSubmit={saveReward}>
-            <label>{copy("Name", "الاسم")}<input className={control} name="name" defaultValue={editing?.name} maxLength={100} required /></label>
-            <label>{copy("Description", "الوصف")}<textarea className={control} name="description" defaultValue={editing?.description ?? ""} maxLength={600} /></label>
-            <label>{copy("Conditions", "الشروط")}<textarea className={control} name="conditions" defaultValue={editing?.conditions ?? ""} maxLength={1000} /></label>
+            <label>{copy("Item name", "اسم العنصر")}<input className={control} name="name" defaultValue={editing?.name} maxLength={100} required /></label>
             <label>{copy(firey ? "Flames needed to redeem" : "Points needed to redeem", firey ? "اللهب المطلوب للاستبدال" : "النقاط المطلوبة للاستبدال")}<input className={control} name="cost" defaultValue={editing?.cost} inputMode="decimal" required /></label>
             <label className="block rounded-xl border border-dashed border-border p-3 text-sm">{copy("Upload reward photo", "ارفع صورة المكافأة")}<input className={control} name="photo" type="file" accept="image/png,image/jpeg,image/webp" /></label>
             {editing?.photoUrl && <label><input type="checkbox" name="removePhoto" /> {copy("Remove photo", "احذف الصورة")}</label>}
+            <label>{copy("Description", "الوصف")}<textarea className={control} name="description" defaultValue={editing?.description ?? ""} maxLength={600} /></label>
+            <label>{copy("Conditions", "الشروط")}<textarea className={control} name="conditions" defaultValue={editing?.conditions ?? ""} maxLength={1000} /></label>
             <label>{copy("Expiration", "تاريخ الانتهاء")}<input className={control} name="expiresAt" type="datetime-local" defaultValue={editing?.expiresAt ? new Date(Date.parse(editing.expiresAt) - new Date(editing.expiresAt).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : undefined} /></label>
             <fieldset className="grid gap-2"><legend>{copy("Participating branches", "الفروع المشاركة")}</legend>
               {data.locations.map(item => <label key={item.id}><input type="checkbox" name="locationId" value={item.id} defaultChecked={editing ? editing.locations.some(selected => selected.locationId === item.id) : true} /> {item.name}</label>)}
             </fieldset>
-            <label><input type="checkbox" name="enabled" defaultChecked={editing?.enabled} /> {copy("Enabled", "مفعّلة")}</label>
+            <label><input type="checkbox" name="enabled" defaultChecked={editing?.enabled ?? true} /> {copy("Enabled", "مفعّلة")}</label>
             <button className={primary} disabled={busy}>{copy("Save reward", "احفظ المكافأة")}</button>
             {editing && <button type="button" className={button} disabled={busy} onClick={() => void save({ action: "archive", id: editing.id }, () => setReward(null))}>{copy("Archive reward", "أرشف المكافأة")}</button>}
           </form>
