@@ -91,6 +91,7 @@ export type LoyaltyCardProps = {
   onRefresh: () => void;
   onLogoError: (logoUrl: string) => void;
   onShowQrCode: () => void;
+  onRedeemReward: (reward: { id: string; name: string }) => void;
   onShowFeedback: () => void;
 };
 
@@ -179,6 +180,9 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
                   <div className="h-full rounded-full" style={{ width: `${Math.min(100, Number(customer.pointsBalance) / Number(reward.cost) * 100)}%`, backgroundColor: props.primaryColor }} />
                 </div>
                 {reward.description && <p className="text-xs">{reward.description}</p>}
+                {reward.remaining === "0" && <button type="button" onClick={() => props.onRedeemReward(reward)}
+                  className="mt-1 min-h-10 w-full rounded-lg px-3 text-xs font-semibold transition-opacity active:opacity-75"
+                  style={{ backgroundColor: textPrimary, color: cardBackground }}>{copy("Redeem reward", "استبدال المكافأة")}</button>}
                 {reward.conditions && <p className="text-xs">{reward.conditions}</p>}
                 <p className="text-xs">{reward.locations.map(item => item.location.name).join(" · ")}</p>
               </div>

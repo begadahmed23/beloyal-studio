@@ -12,6 +12,7 @@ import {
 
 import { isMbVape, MB_VAPE_LOGO_URL } from "@/lib/business/mb-vape";
 import { isGourmeal } from "@/lib/business/gourmeal";
+import { fireyNashBrand } from "@/lib/business/points";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
@@ -23,14 +24,16 @@ export default function JoinQRCode({ location }: { location?: { id: string; name
   const { theme, cafe } = useCafeTheme();
   const mbVape = isMbVape(cafe);
   const gourmeal = isGourmeal(cafe);
-  const brand = gourmeal ? "gourmeal" : mbVape ? "mb-vape" : undefined;
+  const firey = cafe.slug === fireyNashBrand.slug;
+  const brand = firey ? "firey-nash" : gourmeal ? "gourmeal" : mbVape ? "mb-vape" : undefined;
   const logoUrl = cafe.logoUrl;
   const isBarbershop = cafe.businessType === "BARBERSHOP";
 
-  const tagline = location?.name ?? (gourmeal ? "Loyalty card" : isBarbershop ? "Sharp style. Loyal clients." : cafe.businessType === "CAFE" ? "Let coffee connect us" : "Member rewards");
-  const progress = gourmeal ? `Collect ${getLoyaltyProgressTarget(cafe)} stamps.` : `Collect ${isBarbershop ? "visits" : "stamps"}.`;
+  const tagline = location?.name ?? (firey ? "كارت العضوية" : gourmeal ? "Loyalty card" : isBarbershop ? "Sharp style. Loyal clients." : cafe.businessType === "CAFE" ? "Let coffee connect us" : "Member rewards");
+  const points = cafe.loyaltyMode === "POINTS";
+  const progress = firey ? "" : points ? "Join the rewards program." : gourmeal ? `Collect ${getLoyaltyProgressTarget(cafe)} stamps.` : `Collect ${isBarbershop ? "visits" : "stamps"}.`;
   const rewardName = cafe.rewardName?.trim() || "a reward";
-  const reward = gourmeal && rewardName.toLowerCase() === "free drink"
+  const reward = points ? "" : gourmeal && rewardName.toLowerCase() === "free drink"
     ? "Get a free drink."
     : mbVape ? `Earn ${/[.!?]$/.test(rewardName) ? rewardName : rewardName + "."}` : `Earn ${rewardName.toLowerCase()}.`;
   const filename = gourmeal
@@ -316,9 +319,9 @@ export default function JoinQRCode({ location }: { location?: { id: string; name
             {brand ? (
               <>
                 <div ref={posterRef} className="sr-only" aria-hidden="true">
-                  {mbVape && (
+                  {(mbVape || firey) && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={MB_VAPE_LOGO_URL} alt="" />
+                    <img src={firey ? fireyNashBrand.wordmark : MB_VAPE_LOGO_URL} alt="" />
                   )}
                   <QRCode value={joinUrl} size={210} level="H" />
                 </div>

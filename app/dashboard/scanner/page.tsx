@@ -14,7 +14,9 @@ import {
   useState,
 } from "react";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
-import PointsDashboard from "@/components/dashboard/PointsDashboard";
+import PointsScanCheckout, { type PointsScanResult } from "@/components/dashboard/PointsScanCheckout";
+import { parseLoyaltyScan } from "@/lib/business/loyalty-scan";
+import { fireyNashBrand } from "@/lib/business/points";
 import PurchaseConfirmation from "@/components/dashboard/PurchaseConfirmation";
 import { isSpendingTrackingEnabled } from "@/lib/business/spending-tracking";
 
@@ -93,13 +95,10 @@ function playSuccessSound() {
   }
 }
 export default function ScannerPage() {
+  const { t, arabic } = useBeLoyalLanguage();
   const { cafe } = useCafeTheme();
-  return cafe.loyaltyMode === "POINTS" ? <PointsDashboard /> : <StampScanner />;
-}
-
-function StampScanner() {
-  const { t } = useBeLoyalLanguage();
-  const { cafe } = useCafeTheme();
+  const pointsMode = cafe.loyaltyMode === "POINTS";
+  const units = cafe.slug === fireyNashBrand.slug ? (arabic ? "لهب" : "flames") : (arabic ? "نقطة" : "points");
   const isBarbershop = cafe.businessType === "BARBERSHOP";
   const spendingEnabled = isSpendingTrackingEnabled(cafe);
   const personLabel = isBarbershop ? "client" : "customer";
@@ -118,6 +117,7 @@ function StampScanner() {
     );
 
   const [scanValue, setScanValue] = useState("");
+  const [pointsResult, setPointsResult] = useState<PointsScanResult | null>(null);
   const [pendingToken, setPendingToken] = useState<string | null>(null);
   const [status, setStatus] =
     useState<ScannerStatus>("waiting");
@@ -136,6 +136,7 @@ function StampScanner() {
   function resetScanner() {
     setScanValue("");
     setPendingToken(null);
+    setPointsResult(null);
     setResult(null);
     setError("");
     setStatus("waiting");
@@ -218,7 +219,7 @@ if (autoScanTimeoutRef.current) {
       return;
     }
 
-    if (!cleanedValue.startsWith("BL:")) {
+    if (pointsMode ? !parseLoyaltyScan(cleanedValue) : !cleanedValue.startsWith("BL:")) {
       setStatus("error");
       setError(
         "This is not a valid BeLoyal member code."
@@ -233,7 +234,7 @@ if (autoScanTimeoutRef.current) {
       return;
     }
 
-    if (spendingEnabled && !confirmed) {
+    if ((pointsMode || spendingEnabled) && !confirmed) {
       setPendingToken(cleanedValue);
       setScanValue("");
       setStatus("confirm");
@@ -328,19 +329,25 @@ playSuccessSound();
           Counter scanner
         </p>
 
-        <h2 className="mt-2 text-3xl font-semibold tracking-tight">{t("Scan")}{personLabel}
+        <h2 className="mt-2 text-3xl font-semibold tracking-tight">{t("Scan")} {t(personLabel)}
         </h2>
 
         <p className="mt-2 max-w-2xl text-sm leading-6 opacity-60">
           Scan the {personLabel}&apos;s Apple Wallet pass or
-          BeLoyal QR code. One confirmed scan {isBarbershop
-            ? "records one visit"
-            : "adds one stamp"}.
+          BeLoyal QR code. {pointsMode ? "Confirm the purchase or reward in the checkout popup." : isBarbershop ? "One confirmed scan records one visit." : "One confirmed scan adds one stamp."}
         </p>
       </div>
 
-      {status === "confirm" && pendingToken && (
-        <PurchaseConfirmation onConfirm={(amount) => { void submitScan(pendingToken, true, amount); }} onCancel={resetScanner} />
+      {status === "confirm" && pendingToken && (pointsMode
+        ? <PointsScanCheckout value={pendingToken} onCancel={resetScanner} onComplete={next => {
+            lastScanRef.current = { token: pendingToken, time: Date.now() };
+            setPendingToken(null);
+            setPointsResult(next);
+            setStatus("success");
+            playSuccessSound();
+            resetTimeoutRef.current = setTimeout(resetScanner, RESET_DELAY);
+          }} />
+        : <PurchaseConfirmation onConfirm={(amount) => { void submitScan(pendingToken, true, amount); }} onCancel={resetScanner} />
       )}
 
       <form
@@ -391,7 +398,7 @@ playSuccessSound();
               </>
             )}
 
-            {status === "confirm" && <p className="text-sm opacity-60">Confirm the purchase above to award the stamp.</p>}
+            {status === "confirm" && <p className="text-sm opacity-60">{pointsMode ? "Complete checkout in the popup." : "Confirm the purchase above to award the stamp."}</p>}
             {status === "processing" && (
               <>
                 <div className="flex h-24 w-24 items-center justify-center rounded-[28px] border bg-current/[0.04]">
@@ -411,6 +418,14 @@ playSuccessSound();
               </>
             )}
 
+            {status === "success" && pointsResult && (
+              <div role="status">
+                <CheckCircle2 size={54} className="mx-auto text-emerald-500" aria-hidden="true" />
+                <p className="mt-5 text-sm font-medium text-emerald-500">{pointsResult.redeemed ? t("Reward redeemed") : t("Purchase recorded")}</p>
+                <h3 className="mt-2 text-3xl font-semibold">{pointsResult.name}</h3>
+                <p className="mt-3 text-base opacity-65">{pointsResult.balance} {units}</p>
+              </div>
+            )}
             {status === "success" && result && (
               <>
                 <div className="flex h-24 w-24 items-center justify-center rounded-[28px] bg-emerald-500/15 text-emerald-500">

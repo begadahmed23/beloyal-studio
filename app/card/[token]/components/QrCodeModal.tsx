@@ -5,12 +5,15 @@ import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
+import { loyaltyScanValue } from "@/lib/business/loyalty-scan";
 import QRCode from "react-qr-code";
 
 type QrCodeModalProps = {
   businessType: BusinessType;
   cafeName: string;
   cafeSlug?: string;
+  pointsBalance?: string;
+  redeemReward?: { id: string; name: string } | null;
   memberNumber: string;
   publicToken: string;
   logoUrl: string | null;
@@ -33,6 +36,7 @@ type QrCodeModalProps = {
 
 type CardSyncResponse = {
   stamps?: number;
+  pointsBalance?: string;
   updatedAt?: string;
 };
 
@@ -42,6 +46,8 @@ export default function QrCodeModal({
   businessType,
   cafeName,
   cafeSlug = "",
+  pointsBalance,
+  redeemReward,
   memberNumber,
   publicToken,
   logoUrl,
@@ -67,6 +73,7 @@ export default function QrCodeModal({
   const isLoretto = businessType === "CAFE" && (cafeSlug.toLowerCase().includes("loretto") || normalizedCafeName.includes("loretto"));
   const baselineRef = useRef<{
     stamps: number;
+    pointsBalance?: string;
     updatedAt: string;
   } | null>(null);
 
@@ -112,6 +119,13 @@ export default function QrCodeModal({
           typeof data.stamps !== "number" ||
           typeof data.updatedAt !== "string"
         ) {
+          return;
+        }
+
+        if (pointsBalance !== undefined && typeof data.pointsBalance === "string" && data.pointsBalance !== pointsBalance) {
+          stopped = true;
+          onClose();
+          onStampDetected();
           return;
         }
 
@@ -162,7 +176,7 @@ export default function QrCodeModal({
         window.clearTimeout(timeout);
       }
     };
-  }, [onClose, onStampDetected, publicToken]);
+  }, [onClose, onStampDetected, pointsBalance, publicToken]);
 
   return (
     <div
@@ -252,11 +266,12 @@ export default function QrCodeModal({
           )}
 
           <p className="mt-4 text-lg font-semibold" style={{ color: textPrimary }}>
-            {t("Your loyalty code")}
+            {redeemReward?.name ?? t("Your loyalty code")}
           </p>
 
           <p className="mt-2 text-sm leading-6" style={{ color: textSecondary }}>
-            {arabic
+            {redeemReward ? (arabic ? "ورّي الكود للكاشير عشان يأكد استبدال المكافأة." : "Show this code to the cashier to confirm your reward.")
+              : arabic
               ? isBarbershop ? "ورّي الكود للحلاق بعد الخدمة المؤهلة." : "ورّي الكود للكاشير بعد عملية شراء مؤهلة."
               : `Show this code to the ${isBarbershop ? "barber" : "cashier"} after an eligible ${isBarbershop ? "service" : "purchase"}.`}
           </p>
@@ -276,7 +291,7 @@ export default function QrCodeModal({
             }}
           >
             <QRCode
-              value={`BL:${publicToken}`}
+              value={loyaltyScanValue(publicToken, redeemReward?.id)}
               size={200}
               bgColor="#FFFFFF"
               fgColor="#000000"

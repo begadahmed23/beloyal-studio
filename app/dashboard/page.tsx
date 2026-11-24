@@ -30,7 +30,7 @@ import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 export default function DashboardPage() {
   const { cafe, userRole } = useCafeTheme();
 
-  if (cafe.loyaltyMode === "POINTS") return userRole === "CASHIER" ? <PointsDashboard /> : (
+  if (cafe.loyaltyMode === "POINTS" && userRole !== "CASHIER") return (
     <div className="space-y-7">
       <PointsDashboard view="overview" />
       <BirthdaySummary />

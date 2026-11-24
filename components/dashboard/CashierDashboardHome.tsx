@@ -84,7 +84,9 @@ export default function CashierDashboardHome() {
   const actions = [
     {
       label: isBarbershop ? t("View clients") : t("View members"),
-      helper: isBarbershop
+      helper: cafe.loyaltyMode === "POINTS"
+        ? t("Record purchases and redeem rewards")
+        : isBarbershop
         ? t("Search clients, record visits, and redeem rewards")
         : t("Search members, add stamps, and redeem rewards"),
       href: "/dashboard/members",

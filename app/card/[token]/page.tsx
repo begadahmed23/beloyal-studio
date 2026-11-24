@@ -229,6 +229,7 @@ export default function DigitalCardPage() {
 
   const [error, setError] = useState("");
 
+  const [rewardForScan, setRewardForScan] = useState<{ id: string; name: string } | null>(null);
   const [showQrCode, setShowQrCode] =
     useState(false);
 
@@ -1587,9 +1588,14 @@ const visibleStamps = rewardReady
         onLogoError={
           setFailedLogoUrl
         }
-        onShowQrCode={() =>
-          setShowQrCode(true)
-        }
+        onShowQrCode={() => {
+          setRewardForScan(null);
+          setShowQrCode(true);
+        }}
+        onRedeemReward={reward => {
+          setRewardForScan({ id: reward.id, name: reward.name });
+          setShowQrCode(true);
+        }}
         onShowFeedback={
           openFeedbackModal
         }
@@ -1694,6 +1700,8 @@ const visibleStamps = rewardReady
             customer.cafe.name
           }
           cafeSlug={customer.cafe.slug}
+          pointsBalance={customer.pointsBalance}
+          redeemReward={rewardForScan}
           memberNumber={
             customer.memberNumber
           }

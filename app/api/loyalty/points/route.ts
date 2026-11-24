@@ -36,6 +36,10 @@ const adminInput = z.discriminatedUnion("action", [
   z.object({ action: z.literal("archive"), id: z.string().max(100) }),
 ]);
 
+function rewardPhotoStoreId() {
+  return process.env.BLOB_PUBLIC_STORE_ID?.trim() || process.env.BOLB_PUBLIC_STORE_ID?.trim();
+}
+
 async function accessPoints(request: NextRequest) {
   const access = await requireActiveCafe(request.headers);
   if (!access.allowed) return json({ message: access.message }, access.status);
@@ -51,6 +55,7 @@ export async function GET(request: NextRequest) {
   if (access instanceof NextResponse) return access;
   const { cafe, cafeId, user, admin } = access;
   const search = request.nextUrl.searchParams.get("search")?.trim().slice(0, 100) ?? "";
+  const checkout = request.nextUrl.searchParams.get("checkout") === "1";
   const customerId = request.nextUrl.searchParams.get("customer")?.slice(0, 100);
   const token = search.match(/^(?:BL:|https?:\/\/[^/]+\/card\/)?([a-f0-9]{48})\/?$/i)?.[1];
   const digits = search.replace(/[^0-9]/g, "");
@@ -58,6 +63,31 @@ export async function GET(request: NextRequest) {
     where: { cafeId, archivedAt: null, ...(!admin && { id: user.cashierLocationId ?? "" }) },
     select: { id: true, name: true }, orderBy: { name: "asc" },
   });
+  const matchedCustomers = {
+    cafeId,
+    ...(customerId ? { id: customerId } : token ? { publicToken: token } : search ? {
+      OR: [{ memberNumber: { equals: search, mode: "insensitive" as const } },
+        { name: { contains: search, mode: "insensitive" as const } },
+        ...(/^[+\d -]+$/.test(search) && digits.length >= 5 ? [{ phone: { endsWith: digits } }] : [])],
+    } : {}),
+  };
+  if (request.nextUrl.searchParams.get("directory") === "1") {
+    const branch = request.nextUrl.searchParams.get("branch");
+    const where = { ...matchedCustomers, ...(branch && branch.length <= 100 && { joinLocationId: branch }) };
+    const pageValue = Number(request.nextUrl.searchParams.get("page") ?? "1");
+    const page = Number.isSafeInteger(pageValue) && pageValue > 0 ? Math.min(pageValue, 10000) : 1;
+    const take = 24;
+    const [members, total] = await Promise.all([
+      prisma.customer.findMany({
+        where, orderBy: [{ createdAt: "desc" }, { id: "desc" }], skip: (page - 1) * take, take,
+        select: { id: true, name: true, memberNumber: true, pointsBalance: true, createdAt: true,
+          ...(admin && { phone: true, birthday: true, joinLocation: { select: { name: true } } }) },
+      }),
+      prisma.customer.count({ where }),
+    ]);
+    return json({ members, total, page, pageSize: take, locations: admin ? locations : [] });
+  }
+
   const [rewards, members, history, totals] = await Promise.all([
     prisma.pointsReward.findMany({
       where: { cafeId, ...(admin ? { archivedAt: null } : {
@@ -66,30 +96,23 @@ export async function GET(request: NextRequest) {
       orderBy: { cost: "asc" }, include: { locations: { select: { locationId: true } } },
     }),
     search || customerId ? prisma.customer.findMany({
-      where: {
-        cafeId,
-        ...(customerId ? { id: customerId } : token ? { publicToken: token } : {
-          OR: [{ memberNumber: { equals: search, mode: "insensitive" } },
-            { name: { contains: search, mode: "insensitive" } },
-            ...(/^[+\d -]+$/.test(search) && digits.length >= 5 ? [{ phone: { endsWith: digits } }] : [])],
-        }),
-      },
+      where: matchedCustomers,
       select: { id: true, memberNumber: true, name: true, pointsBalance: true,
         ...(admin && { birthday: true, joinLocation: { select: { name: true } } }) },
       orderBy: { name: "asc" }, take: 25,
     }) : [],
-    admin ? prisma.pointsTransaction.findMany({
+    admin && !checkout ? prisma.pointsTransaction.findMany({
       where: { cafeId, ...(customerId && { customerId }) }, orderBy: { createdAt: "desc" }, take: 80,
       select: { id: true, kind: true, amount: true, delta: true, rewardName: true, receipt: true,
         actorName: true, createdAt: true, balanceAfter: true, customerId: true,
         location: { select: { name: true } }, customer: { select: { name: true } } },
     }) : [],
-    admin ? prisma.pointsTransaction.groupBy({
+    admin && !checkout ? prisma.pointsTransaction.groupBy({
       by: ["kind"], where: { cafeId, ...(customerId && { customerId }) },
       _count: { _all: true }, _sum: { amount: true, delta: true },
     }) : [],
   ]);
-  const analytics = admin && !search && !customerId ? await prisma.$queryRaw<{
+  const analytics = admin && !checkout && !search && !customerId ? await prisma.$queryRaw<{
     members: number; newMembers: number; returning: number; outstanding: string;
   }[]>`
     SELECT count(*)::int AS members,
@@ -157,7 +180,7 @@ export async function POST(request: NextRequest) {
         return json({ message: "The photo could not be read." }, 400);
       }
       const blob = await put(`cafes/${cafeId}/rewards/photo.webp`, bytes, {
-        access: "public", addRandomSuffix: true, contentType: "image/webp",
+        access: "public", addRandomSuffix: true, contentType: "image/webp", storeId: rewardPhotoStoreId(),
       });
       return json({ photoUrl: blob.url });
     }
@@ -189,7 +212,7 @@ export async function POST(request: NextRequest) {
       if (count !== locationIds.length) throw new StoreCapacityError("Choose active branches for the reward.", 400);
       if (action.photoUrl) {
         const url = new URL(action.photoUrl);
-        const store = (process.env.BLOB_PUBLIC_STORE_ID ?? process.env.BOLB_PUBLIC_STORE_ID)?.toLowerCase().replace(/^store_/, "");
+        const store = rewardPhotoStoreId()?.toLowerCase().replace(/^store_/, "");
         if (!store || url.protocol !== "https:" || url.host !== `${store}.public.blob.vercel-storage.com` ||
             !url.pathname.startsWith(`/cafes/${cafeId}/rewards/`)) throw new StoreCapacityError("Choose an uploaded reward photo.", 400);
       }
