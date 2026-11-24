@@ -30,6 +30,7 @@ import {
 import ThemeGallery from "@/components/theme/ThemeGallery";
 import { getDashboardThemeColors, type DashboardThemeName as CafeTheme } from "@/lib/cafe-theme";
 import StaffManagementPanel from "@/components/staff/StaffManagementPanel";
+import PasswordSection from "./PasswordSection";
 import SubscriptionControlPanel, {
   type SubscriptionDraft,
   type SubscriptionStatus,
@@ -795,7 +796,9 @@ export default function ManageCafeEditor() {
       </FormSection>
 
       {cafe.loyaltyMode === "POINTS" && <a className="block text-sm font-semibold underline" href={`/studio/loyalty-preview/${cafe.slug}`}>Preview loyalty card and branch QR codes</a>}
-      {!cafe.user && <section className="space-y-3 rounded-2xl border border-black/10 bg-white p-5 text-sm">
+      {cafe.user ? (
+        <PasswordSection key={cafe.user.id} cafeId={cafeId} ownerEmail={cafe.user.email} />
+      ) : <section className="space-y-3 rounded-2xl border border-black/10 bg-white p-5 text-sm">
         <h2 className="font-semibold">Create owner login</h2>
         <p>Enter the owner name and email above and set an initial password.</p>
         <label className="grid gap-1">Initial password
