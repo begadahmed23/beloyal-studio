@@ -17,7 +17,9 @@ import {
   useState,
 } from "react";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
-import PointsDashboard from "@/components/dashboard/PointsDashboard";
+import PointsScanCheckout, { type PointsScanResult } from "@/components/dashboard/PointsScanCheckout";
+import { parseLoyaltyScan } from "@/lib/business/loyalty-scan";
+import { fireyNashBrand } from "@/lib/business/points";
 import PurchaseConfirmation from "@/components/dashboard/PurchaseConfirmation";
 import { isSpendingTrackingEnabled } from "@/lib/business/spending-tracking";
 
@@ -99,13 +101,10 @@ function playSuccessSound() {
 }
 
 export default function PhoneScannerPage() {
-  const { cafe } = useCafeTheme();
-  return cafe.loyaltyMode === "POINTS" ? <PointsDashboard camera /> : <StampScanner />;
-}
-
-function StampScanner() {
-  const { t } = useBeLoyalLanguage();
+  const { t, arabic } = useBeLoyalLanguage();
   const { cafe, theme } = useCafeTheme();
+  const pointsMode = cafe.loyaltyMode === "POINTS";
+  const units = cafe.slug === fireyNashBrand.slug ? (arabic ? "لهب" : "flames") : (arabic ? "نقطة" : "points");
   const isBarbershop = cafe.businessType === "BARBERSHOP";
   const spendingEnabled = isSpendingTrackingEnabled(cafe);
   const personLabel = isBarbershop ? "client" : "customer";
@@ -114,6 +113,7 @@ function StampScanner() {
   >(null);
 
   const processingRef = useRef(false);
+  const [pointsResult, setPointsResult] = useState<PointsScanResult | null>(null);
   const [pendingToken, setPendingToken] = useState<string | null>(null);
 
   const lastScanRef = useRef<{
@@ -141,7 +141,7 @@ function StampScanner() {
         return;
       }
 
-      if (!cleanedValue.startsWith("BL:")) {
+      if (pointsMode ? !parseLoyaltyScan(cleanedValue) : !cleanedValue.startsWith("BL:")) {
         setError(
           "This QR code is not a valid BeLoyal member code."
         );
@@ -157,7 +157,7 @@ function StampScanner() {
         return;
       }
 
-      if (spendingEnabled && !confirmed) {
+      if ((pointsMode || spendingEnabled) && !confirmed) {
         processingRef.current = true;
         setPendingToken(cleanedValue);
         setStatus("confirm");
@@ -264,7 +264,7 @@ function StampScanner() {
         );
       }
     },
-    [isBarbershop, spendingEnabled]
+    [isBarbershop, pointsMode, spendingEnabled]
   );
 
   useEffect(() => {
@@ -419,9 +419,26 @@ function StampScanner() {
     };
   }, [processScan]);
 
+  function resumeCheckout() {
+    setPendingToken(null);
+    setPointsResult(null);
+    setStatus("scanning");
+    processingRef.current = false;
+    try { scannerRef.current?.resume(); } catch (error) { console.error("Resume scanner", error); }
+  }
+
   return (
     <div className="mx-auto w-full max-w-xl">
-      {status === "confirm" && pendingToken && <PurchaseConfirmation onConfirm={amount => { processingRef.current = false; void processScan(pendingToken, true, amount); }} onCancel={() => { setPendingToken(null); setStatus("scanning"); processingRef.current = false; try { scannerRef.current?.resume(); } catch (error) { console.error("Resume scanner", error); } }} />}
+      {status === "confirm" && pendingToken && (pointsMode
+        ? <PointsScanCheckout value={pendingToken} onCancel={resumeCheckout} onComplete={next => {
+            lastScanRef.current = { token: pendingToken, time: Date.now() };
+            setPendingToken(null);
+            setPointsResult(next);
+            setStatus("success");
+            playSuccessSound();
+            resetTimeoutRef.current = setTimeout(resumeCheckout, RESULT_DISPLAY_TIME);
+          }} />
+        : <PurchaseConfirmation onConfirm={amount => { processingRef.current = false; void processScan(pendingToken, true, amount); }} onCancel={resumeCheckout} />)}
       <Link
         href="/dashboard/scanner"
         prefetch={false}
@@ -476,6 +493,14 @@ function StampScanner() {
                 </div>
               )}
 
+              {status === "success" && pointsResult && (
+                <div role="status">
+                  <CheckCircle2 size={54} className="mx-auto text-emerald-400" aria-hidden="true" />
+                  <p className="mt-5 text-sm font-medium text-emerald-400">{pointsResult.redeemed ? t("Reward redeemed") : t("Purchase recorded")}</p>
+                  <h3 className="mt-2 text-3xl font-semibold">{pointsResult.name}</h3>
+                  <p className="mt-3 text-lg text-white/70">{pointsResult.balance} {units}</p>
+                </div>
+              )}
               {status === "success" && result && (
                 <div>
                   <CheckCircle2

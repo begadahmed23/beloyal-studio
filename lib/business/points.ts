@@ -47,8 +47,8 @@ export const fireyNashBrand = {
   walletBackground: "#181716",
   instagramUrl: "https://www.instagram.com/firey_nash/",
   branches: [
-    { id: "fireynashsidigaber", name: "Sidi Gaber" },
-    { id: "fireynashelna2al", name: "El Na2al w El Hanadasa — النقل والهندسة" },
+    { id: "fireynashsidigaber", name: "سيدي جابر" },
+    { id: "fireynashelna2al", name: "النقل والهندسة" },
   ],
 } as const;
 

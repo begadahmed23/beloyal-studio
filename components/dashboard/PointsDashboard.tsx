@@ -1,17 +1,15 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowUpRight, CreditCard, Download, Flame, Gift, MapPin, ScanLine, Users } from "lucide-react";
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import StoreJoinQRCodes from "./StoreJoinQRCodes";
-import NewCustomerDialog from "@/components/customers/NewCustomerDialog";
-import { earnedPoints, earningRateSchema, fireyNashBrand, normalizePointsInput, purchaseAmountSchema } from "@/lib/business/points";
+import PointsMemberDirectory from "@/components/customers/PointsMemberDirectory";
+import { fireyNashBrand, normalizePointsInput } from "@/lib/business/points";
 
-const CameraScanner = dynamic(() => import("@yudiel/react-qr-scanner").then(module => module.Scanner), { ssr: false });
 type Location = { id: string; name: string };
 type Member = { id: string; memberNumber: string; name: string; pointsBalance: string; birthday?: string; joinLocation?: { name: string } | null; wallet?: { apple: boolean | null; google: boolean | null } };
 type Reward = {
@@ -56,53 +54,28 @@ async function sendPoints(data: FormData | object) {
   return body;
 }
 
-export default function PointsDashboard({ view = "counter", camera = false }: { view?: "counter" | "rewards" | "overview" | "customers"; camera?: boolean }) {
+export default function PointsDashboard({ view }: { view: "rewards" | "overview" | "customers" }) {
   const { cafe, userRole } = useCafeTheme();
   const { lang, dir } = useBeLoyalLanguage();
   const copy = (en: string, ar: string) => lang === "ar" ? ar : en;
   const admin = userRole === "CAFE_ADMIN";
   const [data, setData] = useState(empty);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
   const [member, setMember] = useState<Member | null>(null);
   const [selectedLocation, setLocation] = useState("");
-  const [amount, setAmount] = useState("");
-  const [receipt, setReceipt] = useState("");
   const [rateDraft, setRateDraft] = useState<string | null>(null);
   const [reward, setReward] = useState<Reward | "new" | null>(null);
-  const [scanning, setScanning] = useState(camera);
   const [pending, setPending] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const location = selectedLocation || data.locations[0]?.id || "";
-  const purchaseAmount = normalizePointsInput(amount);
-  const preview = purchaseAmountSchema.safeParse(purchaseAmount).success && earningRateSchema.safeParse(data.rate).success
-    ? earnedPoints(purchaseAmount, data.rate) : null;
 
   useEffect(() => {
     let current = true;
     readPoints().then(value => { if (current) setData(value); }).catch(error => { if (current) setError(error.message); }).finally(() => { if (current) setLoading(false); });
     return () => { current = false; };
   }, []);
-
-  async function search(value: string) {
-    if (!value.trim() || busy) return;
-    setBusy(true);
-    setError("");
-    setMessage("");
-    try {
-      const results = await readPoints(`?search=${encodeURIComponent(value)}`);
-      setData(current => ({ ...current, members: results.members }));
-      setMember(results.members.length === 1 ? results.members[0] : null);
-      if (view === "customers" && results.members.length === 1) await showCustomer(results.members[0]);
-      if (!results.members.length) setMessage(copy("No matching members.", "مفيش أعضاء مطابقين للبحث."));
-    } catch (error) {
-      setError((error as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function showCustomer(customer: Member) {
     setMember(customer);
@@ -171,7 +144,6 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
   const refunds = data.totals.find(total => total.kind === "REFUND");
   const recordedSpending = Number(purchases?._sum.amount ?? 0) - Number(refunds?._sum.amount ?? 0);
   const money = (value: number) => new Intl.NumberFormat(lang === "ar" ? "ar-EG" : "en-EG", { style: "currency", currency: "EGP" }).format(value);
-  const available = data.rewards.filter(item => item.enabled && (!item.expiresAt || Date.parse(item.expiresAt) > Date.now()) && item.locations.some(item => item.locationId === location));
   const editing = reward && reward !== "new" ? reward : null;
   const firey = cafe.slug === fireyNashBrand.slug;
   const units = firey ? copy("flames", "لهب") : copy("points", "نقطة");
@@ -181,7 +153,7 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
     maximumFractionDigits: 6,
   }).format(Number(value));
 
-  if (cafe.loyaltyMode !== "POINTS" || (!admin && view !== "counter")) return null;
+  if (cafe.loyaltyMode !== "POINTS" || !admin) return null;
 
   const metrics = [
     { label: copy("Members", "الأعضاء"), value: number(data.analytics?.members ?? 0), icon: Users,
@@ -204,7 +176,7 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
 
   return (
     <div id={view === "rewards" ? "loyalty-program" : undefined} lang={lang} dir={dir} className="scroll-mt-24 space-y-5">
-      {view !== "rewards" && <header className={`${panel} flex flex-wrap items-center justify-between gap-4 space-y-0`}>
+      {view !== "rewards" && view !== "customers" && <header className={`${panel} flex flex-wrap items-center justify-between gap-4 space-y-0`}>
         <div>
           <p className="text-xs font-semibold text-muted-foreground">{cafe.name}</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">{title}</h1>
@@ -217,52 +189,10 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
       {loading && <p role="status" className="px-2 text-sm text-muted-foreground">{copy("Loading…", "جارٍ التحميل…")}</p>}
       {error && !pending && !reward && <p role="alert" className="rounded-xl border border-destructive p-3">{error}</p>}
       {message && <p role="status">{message}</p>}
-      {(view === "counter" || view === "customers") && (
-        <section className={panel}>
-          <form className="flex flex-wrap items-end gap-2" onSubmit={event => { event.preventDefault(); void search(query); }}>
-            <label className="min-w-0 basis-full text-sm sm:flex-1">{copy("Scan or find a member", "امسح الكود أو ابحث عن عضو")}
-              <input className={control} autoFocus={view === "counter" && !camera} value={query} onChange={event => setQuery(event.target.value)} placeholder={copy("Name, phone, member number or QR", "الاسم أو الهاتف أو رقم العضو أو الكود")} />
-            </label>
-            <button className={primary} disabled={busy}>{copy("Find", "بحث")}</button>
-            <button className={button} type="button" onClick={() => setScanning(!scanning)}>{copy("Camera", "الكاميرا")}</button>
-          </form>
-          {scanning && <div className="max-w-sm overflow-hidden rounded-xl"><CameraScanner onScan={codes => {
-            const code = codes[0]?.rawValue;
-            if (code) { setScanning(false); setQuery(code); void search(code); }
-          }} onError={() => setError(copy("Camera unavailable. Enter the member details instead.", "الكاميرا غير متاحة. أدخل بيانات العضو."))} /></div>}
-          {data.members.length > 1 && <ul className="space-y-2">{data.members.map(item => <li key={item.id}>
-            <button className={button} onClick={() => void showCustomer(item)}>{item.name} · {item.memberNumber}</button>
-          </li>)}</ul>}
-          {view === "counter" && <NewCustomerDialog />}
-          {view === "customers" && <a className={button + " inline-flex items-center"} href={endpoint + "/export?view=customers"}>{copy("Download member CSV", "حمّل CSV للأعضاء")}</a>}
-        </section>
-      )}
-      {member && view === "counter" && (
-        <section className={panel}>
-          <div><h2 className="text-xl font-semibold">{member.name}</h2><p className="mt-1 text-lg font-semibold text-primary">{member.pointsBalance} {units}</p></div>
-          <label className="block">{copy("Branch", "الفرع")}
-            <select className={control} value={location} onChange={event => setLocation(event.target.value)}>
-              {!data.locations.length && <option value="">{copy("No assigned branch", "مفيش فرع مخصص")}</option>}
-              {data.locations.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-            </select>
-          </label>
-          <form className="grid gap-3 sm:grid-cols-2" onSubmit={event => {
-            event.preventDefault();
-            confirmTransaction({ kind: "PURCHASE", amount: purchaseAmount, ...(receipt.trim() && { receipt }) },
-              copy("Confirm purchase", "أكد عملية الشراء"), `${amount} EGP · +${preview} ${units}`);
-          }}>
-            <label>{copy("Purchase amount (EGP)", "قيمة الشراء (ج.م)")}<input className={control} inputMode="decimal" value={amount} onChange={event => setAmount(event.target.value)} required /></label>
-            <label>{copy("Receipt reference", "رقم الإيصال")}<input className={control} value={receipt} onChange={event => setReceipt(event.target.value)} maxLength={80} /></label>
-            <button className={primary} disabled={!location || preview === null || busy}>{copy("Record purchase", "سجّل عملية شراء")}{preview !== null ? ` · +${preview}` : ""}</button>
-          </form>
-          <div className="space-y-2">
-            <h3 className="font-semibold">{copy("Redeem reward", "استبدل مكافأة")}</h3>
-            {available.length === 0 && <p>{copy("No rewards at this branch.", "مفيش مكافآت في الفرع ده.")}</p>}
-            {available.map(item => <button key={item.id} className={button + " me-2 text-start"} disabled={Number(item.cost) > Number(member.pointsBalance)} onClick={() => confirmTransaction(
-              { kind: "REDEMPTION", rewardId: item.id }, copy("Confirm redemption", "أكد استبدال المكافأة"), `${item.name} · −${item.cost} ${units}`)}>{item.name} · {item.cost}</button>)}
-          </div>
-        </section>
-      )}
+      {view === "customers" && <PointsMemberDirectory database onSelect={item => {
+        void showCustomer(item);
+        requestAnimationFrame(() => document.getElementById("points-customer-detail")?.scrollIntoView({ block: "start", behavior: "smooth" }));
+      }} />}
       {view === "rewards" && (
         <section className={panel}>
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -338,7 +268,7 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
       </>}
       {(view === "overview" || (view === "customers" && member)) && (
         <>
-          {view === "customers" && <section className={panel}>
+          {view === "customers" && <section id="points-customer-detail" className={`${panel} scroll-mt-24`}>
             {member && view === "customers" && <div className="space-y-1"><h2 className="text-xl font-semibold">{member.name}</h2>
               <p>{copy("Balance", "الرصيد")} {member.pointsBalance} · {copy("Joined at", "سجّل في")} {member.joinLocation?.name ?? "—"}</p>
               {data.locations.length > 1 && <label className="block">
@@ -385,7 +315,7 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
           <DialogTitle>{pending.title}</DialogTitle><DialogDescription>{pending.summary}</DialogDescription>
           {error && <p role="alert">{error}</p>}
           <button className={primary} disabled={busy} onClick={() => void save(pending.payload, () => {
-            setPending(null); setAmount(""); setReceipt("");
+            setPending(null);
           })}>{copy("Confirm", "تأكيد")}</button>
         </DialogContent>}
       </Dialog>
@@ -398,8 +328,8 @@ export default function PointsDashboard({ view = "counter", camera = false }: { 
             <label>{copy("Name", "الاسم")}<input className={control} name="name" defaultValue={editing?.name} maxLength={100} required /></label>
             <label>{copy("Description", "الوصف")}<textarea className={control} name="description" defaultValue={editing?.description ?? ""} maxLength={600} /></label>
             <label>{copy("Conditions", "الشروط")}<textarea className={control} name="conditions" defaultValue={editing?.conditions ?? ""} maxLength={1000} /></label>
-            <label>{copy("Required points", "النقاط المطلوبة")}<input className={control} name="cost" defaultValue={editing?.cost} inputMode="decimal" required /></label>
-            <label>{copy("Reward photo", "صورة المكافأة")}<input className={control} name="photo" type="file" accept="image/png,image/jpeg,image/webp" /></label>
+            <label>{copy(firey ? "Flames needed to redeem" : "Points needed to redeem", firey ? "اللهب المطلوب للاستبدال" : "النقاط المطلوبة للاستبدال")}<input className={control} name="cost" defaultValue={editing?.cost} inputMode="decimal" required /></label>
+            <label className="block rounded-xl border border-dashed border-border p-3 text-sm">{copy("Upload reward photo", "ارفع صورة المكافأة")}<input className={control} name="photo" type="file" accept="image/png,image/jpeg,image/webp" /></label>
             {editing?.photoUrl && <label><input type="checkbox" name="removePhoto" /> {copy("Remove photo", "احذف الصورة")}</label>}
             <label>{copy("Expiration", "تاريخ الانتهاء")}<input className={control} name="expiresAt" type="datetime-local" defaultValue={editing?.expiresAt ? new Date(Date.parse(editing.expiresAt) - new Date(editing.expiresAt).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : undefined} /></label>
             <fieldset className="grid gap-2"><legend>{copy("Participating branches", "الفروع المشاركة")}</legend>

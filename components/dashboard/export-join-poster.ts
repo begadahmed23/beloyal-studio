@@ -1,3 +1,4 @@
+import { drawFireyJoinPoster } from "./firey-join-poster";
 import { drawMbJoinPoster } from "./mb-join-poster";
 import { drawGourmealJoinPoster } from "./gourmeal-join-poster";
 import { GOURMEAL } from "@/lib/business/gourmeal";
@@ -12,7 +13,7 @@ export async function exportJoinPoster(
   tagline: string,
   progress: string,
   reward: string,
-  brand?: "mb-vape" | "gourmeal",
+  brand?: "mb-vape" | "gourmeal" | "firey-nash",
 ): Promise<Blob> {
   const qr = poster.querySelector("svg");
   const modules = qr?.viewBox.baseVal.width;
@@ -40,7 +41,10 @@ export async function exportJoinPoster(
 
   const logo = poster.querySelector("img");
   if (logo) await logo.decode().catch(() => {});
-  if (brand === "gourmeal") {
+  if (brand === "firey-nash") {
+    if (!logo?.naturalWidth || !logo.naturalHeight) throw new Error("Firey Nash wordmark is unavailable.");
+    drawFireyJoinPoster(context, logo, tagline);
+  } else if (brand === "gourmeal") {
     drawGourmealJoinPoster(context, tagline, progress, reward);
   } else if (brand === "mb-vape") {
     if (!logo?.naturalWidth || !logo.naturalHeight) throw new Error("MB logo is unavailable.");
@@ -65,13 +69,13 @@ export async function exportJoinPoster(
     drawJoinPosterCredit(context, POSTER_WIDTH / 2, 641, "#111111", "#737373");
   }
 
-  // Use whole output pixels per module and leave at least four white modules on all sides.
-  const pixelsPerModule = Math.floor(210 * scale / modules);
+  // Use whole output pixels per module. The Firey Nash panel reserves four white modules per side.
+  const pixelsPerModule = Math.floor(scale * (brand === "firey-nash" ? Math.min(210 / modules, 244 / (modules + 8)) : 210 / modules));
   const qrSize = modules * pixelsPerModule;
   context.save();
   context.setTransform(pixelsPerModule, 0, 0, pixelsPerModule,
     Math.floor((canvas.width - qrSize) / 2),
-    brand ? Math.floor((brand === "gourmeal" ? 378 : 363) * scale - qrSize / 2) : 251 * scale);
+    brand ? Math.floor((({ gourmeal: 378, "mb-vape": 363, "firey-nash": 351 })[brand]) * scale - qrSize / 2) : 251 * scale);
   context.fillStyle = brand === "gourmeal" ? GOURMEAL.green : "#111";
   context.fill(new Path2D(path));
   context.restore();

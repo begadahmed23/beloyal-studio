@@ -15,6 +15,7 @@ function load(filename) {
 
 const points = load("lib/business/points.ts");
 const themes = load("lib/cafe-theme.ts");
+const { loyaltyScanValue, parseLoyaltyScan } = load("lib/business/loyalty-scan.ts");
 
 test("point earnings retain fractions and handle whole group bills", () => {
   for (const [amount, expected] of [["100", "10"], ["150", "15"], ["350", "35"], ["1099", "109.9"], ["9000000000", "900000000"]]) {
@@ -44,4 +45,15 @@ test("Firey Nash Studio names resolve to the existing branding and branch links"
   assert.equal(points.fireyNashBrand.slug, "firey-nash");
   assert.deepEqual(points.fireyNashBrand.branches.map(branch => branch.id),
     ["fireynashsidigaber", "fireynashelna2al"]);
+  assert.deepEqual(points.fireyNashBrand.branches.map(branch => branch.name), ["سيدي جابر", "النقل والهندسة"]);
+});
+
+test("member and reward QR payloads use compatible scanner formats", () => {
+  const token = "ab1234".repeat(8);
+  assert.deepEqual(parseLoyaltyScan(loyaltyScanValue(token)), { token, rewardId: null });
+  assert.deepEqual(parseLoyaltyScan("  " + loyaltyScanValue(token, "reward-123") + "\r\n"),
+    { token, rewardId: "reward-123" });
+  for (const invalid of [`BLR:${token}`, `BLR:${token}:reward:extra`, `BLR:${token}:../reward`, "BL:123"]) {
+    assert.equal(parseLoyaltyScan(invalid), null);
+  }
 });

@@ -265,6 +265,7 @@ export default function CreateCafeDialog({
 
         <form
           onSubmit={createCafe}
+          autoComplete="off"
           className="space-y-5 p-5 sm:p-7"
         >
           <section className="rounded-2xl border border-black/[0.07] bg-white p-5 shadow-[0_8px_24px_rgba(15,23,42,0.035)] sm:p-6">
@@ -351,7 +352,7 @@ export default function CreateCafeDialog({
                 <input id="studio-store-limit" type="number" min={firey ? fireyNashBrand.branches.length : 1} max={2147483647} step={1}
                   value={storeLimit} onChange={event => setStoreLimit(event.target.value)} required
                   disabled={loading} className={inputClassName} />
-                <p className="mt-2 text-xs text-[#686871]">{firey ? "Sidi Gaber and El Na2al w El Hanadasa are added with the Firey Nash logo and flame card." : "Each store includes one cashier account and one signup QR."}</p>
+                <p className="mt-2 text-xs text-[#686871]">{firey ? "سيدي جابر and النقل والهندسة are added with the Firey Nash logo and flame card." : "Each store includes one cashier account and one signup QR."}</p>
               </div>
             </div>
           </section>
@@ -383,7 +384,7 @@ export default function CreateCafeDialog({
                   onChange={(event) =>
                     setAccountName(event.target.value)
                   }
-                  placeholder="Coffee Lab Team"
+                  autoComplete="off"
                   required
                   disabled={loading}
                   className={inputClassName}
@@ -401,7 +402,7 @@ export default function CreateCafeDialog({
                   onChange={(event) =>
                     setEmail(event.target.value)
                   }
-                  placeholder="team@coffeelab.com"
+                  autoComplete="off"
                   required
                   disabled={loading}
                   className={inputClassName}
@@ -423,7 +424,7 @@ export default function CreateCafeDialog({
                   onChange={(event) =>
                     setPassword(event.target.value)
                   }
-                  placeholder="At least 8 characters"
+                  autoComplete="new-password"
                   minLength={8}
                   required
                   disabled={loading}
