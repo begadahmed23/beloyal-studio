@@ -1,6 +1,8 @@
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import { loyaltyTokenPattern } from "./loyalty-scan";
+import { rewardClaimLifetimeMs, rewardClaimStatus } from "./reward-claim";
 import { earnedPoints, purchaseAmountSchema } from "./points";
 import { businessCashiers, StoreCapacityError, withStoreCapacity } from "./store-capacity";
 
@@ -13,7 +15,7 @@ const requestFields = {
 export const pointsEntrySchema = z.discriminatedUnion("kind", [
   z.object({ ...requestFields, kind: z.literal("PURCHASE"), amount: purchaseAmountSchema,
     receipt: z.string().trim().min(1).max(80).transform(value => value.toUpperCase()).optional() }),
-  z.object({ ...requestFields, kind: z.literal("REDEMPTION"), rewardId: id }),
+  z.object({ ...requestFields, kind: z.literal("REDEMPTION"), rewardId: id, claimCode: z.string().regex(loyaltyTokenPattern).optional() }),
   z.object({ ...requestFields, kind: z.literal("REFUND"), purchaseId: id, amount: purchaseAmountSchema,
     reason: z.string().trim().min(1).max(240) }),
 ]);
@@ -27,7 +29,7 @@ export function activeRewardWhere(now = new Date()): Prisma.PointsRewardWhereInp
 export function recordPointsEntry(cafeId: string, actor: Actor, entry: Entry) {
   return withStoreCapacity(cafeId, async tx => {
     const [cafe, user, location, customer] = await Promise.all([
-      tx.cafe.findUniqueOrThrow({ where: { id: cafeId }, select: { loyaltyMode: true, pointsPerHundred: true } }),
+      tx.cafe.findUniqueOrThrow({ where: { id: cafeId }, select: { isActive: true, loyaltyMode: true, pointsPerHundred: true } }),
       tx.user.findFirst({ where: {
         id: actor.id, isEnabled: true,
         ...(actor.role === "CASHIER" ? businessCashiers(cafeId) : { role: "CAFE_ADMIN", OR: [{ staffCafeId: cafeId }, { staffCafeId: null, cafeId }] }),
@@ -35,7 +37,7 @@ export function recordPointsEntry(cafeId: string, actor: Actor, entry: Entry) {
       tx.cafeLocation.findFirst({ where: { id: entry.locationId, cafeId, archivedAt: null }, select: { id: true } }),
       tx.customer.findUnique({ where: { cafeId_id: { cafeId, id: entry.customerId } }, select: { pointsBalance: true } }),
     ]);
-    if (cafe.loyaltyMode !== "POINTS") throw new StoreCapacityError("Points loyalty is unavailable.");
+    if (!cafe.isActive || cafe.loyaltyMode !== "POINTS") throw new StoreCapacityError("Points loyalty is unavailable.");
     if (!user || (actor.role === "CASHIER" && (entry.kind === "REFUND" || user.cashierLocationId !== entry.locationId))) {
       throw new StoreCapacityError("You cannot process this transaction.", 403);
     }
@@ -62,12 +64,42 @@ export function recordPointsEntry(cafeId: string, actor: Actor, entry: Entry) {
       details.pointsPerHundred = cafe.pointsPerHundred;
       delta = new Prisma.Decimal(earnedPoints(entry.amount, cafe.pointsPerHundred.toFixed()));
     } else if (entry.kind === "REDEMPTION") {
+      const now = new Date();
+      const key = { cafeId, customerId: entry.customerId, rewardId: entry.rewardId };
+      const claim = await tx.pointsRewardClaim.findUnique({ where: { cafeId_customerId_rewardId: key } });
+      if (entry.claimCode && (!claim || claim.code !== entry.claimCode || rewardClaimStatus(claim, now) === "expired")) {
+        throw new StoreCapacityError("This reward code has expired. Ask the customer to open a fresh code.", 410);
+      }
+      if (claim?.consumedAt && (entry.claimCode || claim.expiresAt > now)) {
+        throw new StoreCapacityError("This reward code has already been redeemed.");
+      }
+
       const reward = await tx.pointsReward.findFirst({
-        where: { cafeId, id: entry.rewardId, ...activeRewardWhere(),
+        where: { cafeId, id: entry.rewardId, ...activeRewardWhere(now),
           locations: { some: { locationId: entry.locationId, location: { archivedAt: null } } } },
         select: { name: true, cost: true, description: true, conditions: true, photoUrl: true, expiresAt: true },
       });
       if (!reward) throw new StoreCapacityError("This reward is unavailable at this branch.");
+      if (claim && claim.expiresAt > now) {
+        if (!claim.cost.eq(reward.cost)) throw new StoreCapacityError("The reward changed. Ask the customer to open a fresh code.");
+        await tx.pointsRewardClaim.update({
+          where: { cafeId_customerId_rewardId: key },
+          data: { consumedAt: now },
+        });
+      } else {
+        // A cashier-selected reward also gets a short duplicate-redemption guard.
+        const consumed = {
+          code: randomBytes(24).toString("hex"),
+          cost: reward.cost,
+          expiresAt: new Date(now.getTime() + rewardClaimLifetimeMs),
+          consumedAt: now,
+        };
+        await tx.pointsRewardClaim.upsert({
+          where: { cafeId_customerId_rewardId: key },
+          create: { ...key, ...consumed },
+          update: consumed,
+        });
+      }
       details.rewardId = entry.rewardId;
       details.rewardName = reward.name;
       details.rewardSnapshot = { ...reward, cost: reward.cost.toFixed(), expiresAt: reward.expiresAt?.toISOString() ?? null };

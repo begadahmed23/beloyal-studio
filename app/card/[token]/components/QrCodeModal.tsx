@@ -3,9 +3,9 @@ import type { BusinessType } from "@prisma/client";
 
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
-import { useEffect, useRef } from "react";
-import { X } from "lucide-react";
-import { loyaltyScanValue } from "@/lib/business/loyalty-scan";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { CheckCircle2, Clock3, X } from "lucide-react";
+import { loyaltyScanValue, rewardScanValue } from "@/lib/business/loyalty-scan";
 import QRCode from "react-qr-code";
 
 type QrCodeModalProps = {
@@ -42,6 +42,110 @@ type CardSyncResponse = {
 
 const QR_SYNC_INTERVAL_MS = 2000;
 
+type RewardCodeResponse = {
+  code: string;
+  status: "active" | "expired" | "redeemed";
+  expiresAt: string;
+  now: string;
+};
+
+function useRewardCode(publicToken: string, rewardId: string | undefined, onRedeemed: () => void) {
+  const [attempt, setAttempt] = useState(0);
+  const [code, setCode] = useState<string>();
+  const [status, setStatus] = useState<RewardCodeResponse["status"] | "loading" | "error">("loading");
+  const [seconds, setSeconds] = useState(0);
+  const notifyRedeemed = useEffectEvent(onRedeemed);
+
+  useEffect(() => {
+    if (!rewardId) return;
+    const controller = new AbortController();
+    const url = `/api/customers/card/${encodeURIComponent(publicToken)}/reward-code`;
+    let interval: number | undefined;
+    let poll: number | undefined;
+    let deadline = 0;
+
+    function tick() {
+      const remaining = Math.max(0, Math.ceil((deadline - performance.now()) / 1000));
+      setSeconds(remaining);
+      if (remaining === 0) {
+        setStatus(current => current === "active" ? "expired" : current);
+        window.clearInterval(interval);
+      }
+    }
+
+    async function check(codeValue: string) {
+      try {
+        const response = await fetch(url, { cache: "no-store", signal: controller.signal, headers: { "X-Reward-Code": codeValue } });
+        if (controller.signal.aborted) return;
+        if (response.status === 404) {
+          setStatus("expired");
+          window.clearInterval(interval);
+          return;
+        }
+        if (response.ok) {
+          const latest: RewardCodeResponse = await response.json();
+          if (controller.signal.aborted) return;
+          if (latest.status === "redeemed") {
+            setStatus("redeemed");
+            window.clearInterval(interval);
+            notifyRedeemed();
+            return;
+          }
+          if (latest.status === "expired") {
+            setStatus("expired");
+            window.clearInterval(interval);
+            return;
+          }
+        }
+      } catch {
+        // A momentary network interruption should not produce a success message.
+      }
+      if (!controller.signal.aborted && performance.now() < deadline + 5000) {
+        poll = window.setTimeout(() => void check(codeValue), 4000);
+      }
+    }
+
+    async function issue() {
+      try {
+        const response = await fetch(url, {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rewardId }), signal: controller.signal, cache: "no-store",
+        });
+        if (!response.ok) throw new Error();
+        const data: RewardCodeResponse = await response.json();
+        if (controller.signal.aborted) return;
+        setCode(data.code);
+        setStatus(data.status);
+        if (data.status === "redeemed") {
+          notifyRedeemed();
+        } else if (data.status === "active") {
+          deadline = performance.now() + Date.parse(data.expiresAt) - Date.parse(data.now);
+          tick();
+          interval = window.setInterval(tick, 250);
+          poll = window.setTimeout(() => void check(data.code), 2500);
+        }
+      } catch {
+        if (!controller.signal.aborted) setStatus("error");
+      }
+    }
+
+    void issue();
+    return () => {
+      controller.abort();
+      window.clearInterval(interval);
+      window.clearTimeout(poll);
+    };
+  }, [attempt, publicToken, rewardId]);
+
+  function retry() {
+    setCode(undefined);
+    setStatus("loading");
+    setAttempt(value => value + 1);
+  }
+
+  return { code, status, seconds, retry };
+}
+
 export default function QrCodeModal({
   businessType,
   cafeName,
@@ -77,7 +181,12 @@ export default function QrCodeModal({
     updatedAt: string;
   } | null>(null);
 
+  const reward = useRewardCode(publicToken, redeemReward?.id, onStampDetected);
+  const qrValue = redeemReward ? reward.status === "active" && reward.code ? rewardScanValue(reward.code) : null
+    : loyaltyScanValue(publicToken);
+
   useEffect(() => {
+    if (redeemReward) return;
     let stopped = false;
     let timeout: number | null = null;
     let requestInFlight = false;
@@ -176,7 +285,7 @@ export default function QrCodeModal({
         window.clearTimeout(timeout);
       }
     };
-  }, [onClose, onStampDetected, pointsBalance, publicToken]);
+  }, [onClose, onStampDetected, pointsBalance, publicToken, redeemReward]);
 
   return (
     <div
@@ -276,7 +385,12 @@ export default function QrCodeModal({
               : `Show this code to the ${isBarbershop ? "barber" : "cashier"} after an eligible ${isBarbershop ? "service" : "purchase"}.`}
           </p>
 
-          <div
+          {redeemReward && reward.status === "active" && <div className="mt-4 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold" style={{ borderColor: cardBorder, backgroundColor: surfaceColor }}>
+            <Clock3 size={16} aria-hidden="true" />
+            <span>{arabic ? "الكود صالح لمدة" : "Code expires in"}</span>
+            <span dir="ltr" role="timer" className="tabular-nums">{Math.floor(reward.seconds / 60)}:{String(reward.seconds % 60).padStart(2, "0")}</span>
+          </div>}
+          {qrValue && <div
             className="mx-auto mt-5 max-w-full rounded-[20px] bg-white p-3 shadow-[0_20px_50px_rgba(0,0,0,0.18)] min-[380px]:mt-6 min-[380px]:rounded-[24px] min-[380px]:p-4"
             style={{
               width: "min(232px, calc(100vw - 56px))",
@@ -291,7 +405,7 @@ export default function QrCodeModal({
             }}
           >
             <QRCode
-              value={loyaltyScanValue(publicToken, redeemReward?.id)}
+              value={qrValue}
               size={200}
               bgColor="#FFFFFF"
               fgColor="#000000"
@@ -310,11 +424,25 @@ export default function QrCodeModal({
                 opacity: 1,
               }}
             />
-          </div>
+          </div>}
+          {redeemReward && reward.status === "redeemed" && <div role="status" className="mt-5 flex items-center justify-center gap-2 rounded-2xl border p-4 text-sm font-semibold" style={{ borderColor: cardBorder, backgroundColor: surfaceColor }}>
+            <CheckCircle2 size={20} aria-hidden="true" /> {arabic ? "تم استبدال المكافأة" : "Reward redeemed"}
+          </div>}
+          {redeemReward && reward.status === "loading" && <p role="status" className="mt-5 text-sm">{arabic ? "جارٍ تجهيز الكود…" : "Preparing your reward code…"}</p>}
+          {redeemReward && (reward.status === "expired" || reward.status === "error") && <div className="mt-5 space-y-3">
+            <p role="status" className="text-sm">{reward.status === "expired"
+              ? (arabic ? "انتهت صلاحية الكود." : "This code expired.")
+              : (arabic ? "تعذّر تجهيز الكود. حاول مرة تانية." : "Could not prepare the code. Try again.")}</p>
+            <button type="button" onClick={reward.retry} className="min-h-11 rounded-xl border px-4 text-sm font-semibold" style={{ borderColor: cardBorder, backgroundColor: surfaceColor }}>
+              {arabic ? "اعرض كود جديد" : "Get a fresh code"}
+            </button>
+          </div>}
 
-          <p className="mt-3 text-xs" style={{ color: textMuted }}>
-            Your card updates automatically after the scan.
-          </p>
+          {(!redeemReward || reward.status === "active") && <p className="mt-3 text-xs" style={{ color: textMuted }}>
+            {redeemReward
+              ? (arabic ? "يتأكد الاستبدال بعد ما الكاشير يسجّله." : "Your reward is confirmed when the cashier completes checkout.")
+              : t("Your card updates automatically after the scan.")}
+          </p>}
 
           <div
             className="mt-5 rounded-2xl border px-4 py-3"

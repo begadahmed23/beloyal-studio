@@ -15,7 +15,7 @@ function load(filename) {
 
 const points = load("lib/business/points.ts");
 const themes = load("lib/cafe-theme.ts");
-const { loyaltyScanValue, parseLoyaltyScan } = load("lib/business/loyalty-scan.ts");
+const { loyaltyScanValue, parseLoyaltyScan, rewardScanValue } = load("lib/business/loyalty-scan.ts");
 
 test("point earnings retain fractions and handle whole group bills", () => {
   for (const [amount, expected] of [["100", "10"], ["150", "15"], ["350", "35"], ["1099", "109.9"], ["9000000000", "900000000"]]) {
@@ -48,12 +48,22 @@ test("Firey Nash Studio names resolve to the existing branding and branch links"
   assert.deepEqual(points.fireyNashBrand.branches.map(branch => branch.name), ["سيدي جابر", "النقل والهندسة"]);
 });
 
-test("member and reward QR payloads use compatible scanner formats", () => {
+test("member codes remain compatible and one-time reward codes reveal only an opaque token", () => {
   const token = "ab1234".repeat(8);
-  assert.deepEqual(parseLoyaltyScan(loyaltyScanValue(token)), { token, rewardId: null });
-  assert.deepEqual(parseLoyaltyScan("  " + loyaltyScanValue(token, "reward-123") + "\r\n"),
-    { token, rewardId: "reward-123" });
-  for (const invalid of [`BLR:${token}`, `BLR:${token}:reward:extra`, `BLR:${token}:../reward`, "BL:123"]) {
+  assert.deepEqual(parseLoyaltyScan(loyaltyScanValue(token)), { kind: "member", token });
+  assert.deepEqual(parseLoyaltyScan("  " + rewardScanValue(token) + "\r\n"), { kind: "reward", code: token });
+  assert.deepEqual(parseLoyaltyScan(`BLR:${token}:reward-123`), { kind: "legacy-reward" });
+  for (const invalid of [`BLR:${token}`, `BLR:${token}:reward:extra`, `BLR:${token}:../reward`, `BLR2:${token}:extra`, "BL:123"]) {
     assert.equal(parseLoyaltyScan(invalid), null);
   }
+});
+
+test("the reward code expires exactly at its deadline and used codes remain redeemed", () => {
+  const { rewardClaimLifetimeMs, rewardClaimStatus } = load("lib/business/reward-claim.ts");
+  const now = new Date("2026-11-24T20:00:00Z");
+  const expiresAt = new Date(now.getTime() + rewardClaimLifetimeMs);
+  assert.equal(rewardClaimLifetimeMs, 300000);
+  assert.equal(rewardClaimStatus({ expiresAt, consumedAt: null }, now), "active");
+  assert.equal(rewardClaimStatus({ expiresAt, consumedAt: null }, expiresAt), "expired");
+  assert.equal(rewardClaimStatus({ expiresAt, consumedAt: now }, expiresAt), "redeemed");
 });
