@@ -1,6 +1,6 @@
 "use client";
 
-import { Coffee, Layers, Scissors, Store } from "lucide-react";
+import { Coffee, Layers, Scissors, Store, Utensils } from "lucide-react";
 
 import type { BusinessType } from "./studio-types";
 
@@ -29,6 +29,7 @@ const options = [
     description: "Ivory and walnut branding",
     icon: Layers,
   },
+  { value: "RESTAURANT" as const, label: "Restaurant", description: "Food categories and restaurant branding", icon: Utensils },
   {
     value: "OTHER" as const,
     label: "Other business",

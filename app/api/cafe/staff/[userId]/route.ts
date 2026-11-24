@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { prisma } from "@/lib/prisma";
+import { businessCashiers, getCashierLocation, StoreCapacityError, withStoreCapacity } from "@/lib/business/store-capacity";
 import { requireAuth } from "@/lib/require-auth";
 
 type Context = {
@@ -18,6 +19,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: Context,
 ) {
+  if (request.headers.get("origin") !== request.nextUrl.origin) return json({ message: "Invalid request origin." }, 403);
   const authData = await requireAuth(request.headers);
 
   if (
@@ -40,25 +42,27 @@ export async function PATCH(
       return json({ message: "isEnabled must be true or false." }, 400);
     }
 
-    const target = await prisma.user.findFirst({
+    const toggleEnabled = body.isEnabled;
+    const cafeId = authData.cafeId;
+    const user = await withStoreCapacity(cafeId, async (tx, limit) => {
+      const target = await tx.user.findFirst({
       where: {
         id: userId,
-        role: "CASHIER",
-        OR: [
-          { cashierCafeId: authData.cafeId },
-          { staffCafeId: authData.cafeId },
-        ],
+        ...businessCashiers(cafeId),
       },
-      select: { id: true },
+      select: { id: true, isEnabled: true, cashierLocationId: true },
     });
 
     if (!target) {
-      return json({ message: "Cashier account not found." }, 404);
+      throw new StoreCapacityError("Cashier account not found.", 404);
     }
 
-    const user = await prisma.user.update({
+    const cashierLocationId = toggleEnabled && !target.isEnabled
+      ? await getCashierLocation(tx, cafeId, limit, target.cashierLocationId ?? "", false)
+      : undefined;
+    return tx.user.update({
       where: { id: target.id },
-      data: { isEnabled: body.isEnabled },
+      data: { isEnabled: toggleEnabled, cashierLocationId },
       select: {
         id: true,
         name: true,
@@ -68,14 +72,16 @@ export async function PATCH(
       },
     });
 
-    if (!body.isEnabled) {
+    });
+    if (!toggleEnabled) {
       await prisma.session.deleteMany({
-        where: { userId: target.id },
+        where: { userId: user.id },
       });
     }
 
     return json({ user });
   } catch (error) {
+    if (error instanceof StoreCapacityError) return json({ message: error.message }, error.status);
     console.error("Update cashier error:", error);
     return json({ message: "Failed to update cashier account." }, 500);
   }

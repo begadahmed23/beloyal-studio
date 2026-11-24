@@ -121,10 +121,10 @@ export function scheduleWalletUpdate(serial: string) {
   after(async () => {
     await Promise.all([
       notifyWalletMember(serial, true).catch(() => {
-        console.error("Wallet update scheduling failed; stamp transaction was already committed.");
+        console.error("Wallet update scheduling failed; loyalty transaction was already committed.");
       }),
       syncGoogleWalletMember(serial).catch(() => {
-        console.error("Google Wallet sync failed; stamp transaction was already committed.");
+        console.error("Google Wallet sync failed; loyalty transaction was already committed.");
       }),
     ]);
   });

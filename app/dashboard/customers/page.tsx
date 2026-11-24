@@ -3,12 +3,13 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+import PointsDashboard from "@/components/dashboard/PointsDashboard";
 import AdminCustomerDatabase from "@/components/customers/AdminCustomerDatabase";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 export default function CustomersPage() {
   const router = useRouter();
-  const { userRole } = useCafeTheme();
+  const { cafe, userRole } = useCafeTheme();
 
   useEffect(() => {
     if (userRole === "CASHIER") {
@@ -20,5 +21,5 @@ export default function CustomersPage() {
     return null;
   }
 
-  return <AdminCustomerDatabase />;
+  return cafe.loyaltyMode === "POINTS" ? <PointsDashboard view="customers" /> : <AdminCustomerDatabase />;
 }

@@ -5,7 +5,9 @@ export type CafeThemeName =
   | "MODERN_MINIMAL"
   | "DARK_LUXURY"
   | "MEDITERRANEAN_BLUE"
-  | "ORGANIC";
+  | "ORGANIC"
+  | "RED_ORANGE_LIGHT"
+  | "RED_ORANGE_DARK";
 
 export type ThemeBusinessType = BusinessType;
 
@@ -47,7 +49,7 @@ export type CafeThemeConfig = {
   radiusMedium: string;
 };
 
-const themes: Record<CafeThemeName, CafeThemeConfig> = {
+const themes: Record<Exclude<CafeThemeName, "RED_ORANGE_LIGHT" | "RED_ORANGE_DARK">, CafeThemeConfig> = {
   COFFEE_CLASSIC: {
     pageBackground: "#f3ede5",
     surface: "#fffaf4",
@@ -295,6 +297,7 @@ export function getDefaultBusinessTheme(businessType: ThemeBusinessType): CafeTh
     case "BARBERSHOP": return "DARK_LUXURY";
     case "VAPE": return "MODERN_MINIMAL";
     case "OTHER": return "ORGANIC";
+    case "RESTAURANT": return "RED_ORANGE_LIGHT";
     default: return "COFFEE_CLASSIC";
   }
 }
@@ -323,6 +326,7 @@ export function getBusinessTheme(
   businessType: ThemeBusinessType,
   saved?: BrandColors,
 ): CafeThemeConfig {
+  if (businessType === "RESTAURANT" && isRestaurantPalette(themeName)) return getDashboardTheme(themeName, saved);
   const base = businessType === "BARBERSHOP"
     ? barberThemes[themeName as CafeThemeName] ?? barberThemes.DARK_LUXURY!
     : getCafeTheme(themeName);
@@ -363,6 +367,7 @@ export function getBusinessThemeColors(
   themeName: CafeThemeName | string,
   businessType: ThemeBusinessType,
 ): [string, string, string] {
+  if (businessType === "RESTAURANT" && isRestaurantPalette(themeName)) return getDashboardThemeColors(themeName);
   if (businessType === "VAPE" && themeName === "MODERN_MINIMAL") {
     return ["#71523d", "#b49072", "#f8f5ef"];
   }
@@ -404,7 +409,7 @@ export function getCafeTheme(
   themeName: CafeThemeName | string
 ): CafeThemeConfig {
   if (themeName in themes) {
-    return themes[themeName as CafeThemeName];
+    return themes[themeName as keyof typeof themes];
   }
 
   return themes.COFFEE_CLASSIC;
@@ -419,7 +424,7 @@ const sharedTheme = {
   radiusMedium: "8px",
 };
 
-const dashboardThemes: Record<DashboardThemeName, CafeThemeConfig> = {
+const dashboardThemes: Record<Exclude<DashboardThemeName, "RED_ORANGE_LIGHT" | "RED_ORANGE_DARK">, CafeThemeConfig> = {
   MODERN_MINIMAL: {
     ...sharedTheme,
     pageBackground: "#e9e4d8",
@@ -528,9 +533,34 @@ const dashboardThemes: Record<DashboardThemeName, CafeThemeConfig> = {
   },
 };
 
+const restaurantThemes = {
+  RED_ORANGE_LIGHT: {
+    ...themes.MODERN_MINIMAL,
+    pageBackground: "#fff5ed", surface: "#ffffff", surfaceRaised: "#ffe8d9",
+    border: "#ead0c4", textPrimary: "#171717", textSecondary: "#64352c", textMuted: "#76554c",
+    accent: "#c31820", accentHover: "#a5161a", accentSoft: "#ffded3",
+    accentText: "#ffffff", buttonText: "#ffffff", warning: "#f4480b",
+    inputBackground: "#ffffff", inputBorder: "#dbb8a7",
+  },
+  RED_ORANGE_DARK: {
+    ...themes.DARK_LUXURY,
+    pageBackground: "#171717", surface: "#24201f", surfaceRaised: "#302622",
+    border: "#503c36", textPrimary: "#fff8f3", textSecondary: "#ffd7c6", textMuted: "#d3b3a7",
+    accent: "#ff651e", accentHover: "#ff864d", accentSoft: "#482b21",
+    accentText: "#171717", buttonText: "#171717", warning: "#ff7845", danger: "#ff7071",
+    inputBackground: "#211b19", inputBorder: "#634940",
+  },
+} satisfies Record<string, CafeThemeConfig>;
+
+export function isRestaurantPalette(value: unknown): value is keyof typeof restaurantThemes {
+  return value === "RED_ORANGE_LIGHT" || value === "RED_ORANGE_DARK";
+}
+
 export const DEFAULT_DASHBOARD_THEME = "COFFEE_CLASSIC";
 
 export const dashboardThemeOptions: BusinessThemeOption[] = [
+  { value: "RED_ORANGE_LIGHT", label: "Red & Orange · Light", description: "Red accents, orange details, and warm white." },
+  { value: "RED_ORANGE_DARK", label: "Red & Orange · Dark", description: "Orange accents and charcoal surfaces." },
   { value: "COFFEE_CLASSIC", label: "Black and White", description: "Black accents on white." },
   { value: "MEDITERRANEAN_BLUE", label: "Blue and White", description: "Blue accents on white." },
   { value: "DARK_LUXURY", label: "Black", description: "White accents on black." },
@@ -544,12 +574,12 @@ export function isDashboardTheme(value: unknown): value is DashboardThemeName {
 }
 
 export function getDashboardThemeColors(themeName: DashboardThemeName): [string, string, string] {
-  const theme = dashboardThemes[themeName];
+  const theme = isRestaurantPalette(themeName) ? restaurantThemes[themeName] : dashboardThemes[themeName];
   return [theme.accent, theme.accentHover, theme.pageBackground];
 }
 
 export function getDashboardTheme(themeName: DashboardThemeName, saved?: BrandColors): CafeThemeConfig {
-  const base = dashboardThemes[themeName];
+  const base = isRestaurantPalette(themeName) ? restaurantThemes[themeName] : dashboardThemes[themeName];
   const defaults = getDashboardThemeColors(themeName);
   const values = [saved?.primaryColor, saved?.secondaryColor, saved?.backgroundColor].map((color, i) =>
     color && /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : defaults[i],

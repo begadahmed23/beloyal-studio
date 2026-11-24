@@ -36,6 +36,9 @@ export async function requireAuth(
           name: true,
           slug: true,
           businessType: true,
+          loyaltyMode: true,
+          restaurantCategory: true,
+          pointsPerHundred: true,
           logoUrl: true,
 
           theme: true,
@@ -88,6 +91,9 @@ export async function requireAuth(
           name: true,
           slug: true,
           businessType: true,
+          loyaltyMode: true,
+          restaurantCategory: true,
+          pointsPerHundred: true,
           logoUrl: true,
 
           theme: true,
@@ -140,6 +146,9 @@ export async function requireAuth(
           name: true,
           slug: true,
           businessType: true,
+          loyaltyMode: true,
+          restaurantCategory: true,
+          pointsPerHundred: true,
           logoUrl: true,
 
           theme: true,

@@ -102,6 +102,8 @@ export function getDirectLogoUrl(value: string | null | undefined) {
     return null;
   }
 
+  if (/^\/brand\/[a-z0-9/-]+\.png$/i.test(url)) return url;
+
   if (url.startsWith("//")) {
     url = `https:${url}`;
   } else if (!/^https?:\/\//i.test(url)) {

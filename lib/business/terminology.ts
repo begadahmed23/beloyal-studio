@@ -42,6 +42,10 @@ const terminologyByBusinessType = {
     qualifyingAction: "eligible purchase",
     defaultRewardName: "Member Reward",
   },
+  RESTAURANT: {
+    businessSingular: "restaurant", businessPlural: "restaurants", staffSingular: "cashier", staffPlural: "cashiers",
+    loyaltyUnitSingular: "stamp", loyaltyUnitPlural: "stamps", qualifyingAction: "eligible order", defaultRewardName: "Restaurant Reward",
+  },
   OTHER: {
     businessSingular: "business",
     businessPlural: "businesses",
@@ -78,4 +82,5 @@ export const businessTypeLabels: Record<BusinessType, string> = {
   BARBERSHOP: "Barbershop",
   VAPE: "Vape shop",
   OTHER: "Other business",
+  RESTAURANT: "Restaurant",
 };

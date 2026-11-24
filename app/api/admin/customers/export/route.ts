@@ -29,6 +29,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    if (authData.cafe.loyaltyMode === "POINTS") {
+      const url = new URL("/api/loyalty/points/export?view=customers", request.url);
+      return NextResponse.redirect(url);
+    }
+
     const ids = request.nextUrl.searchParams
       .get("ids")
       ?.split(",")

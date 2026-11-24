@@ -1,5 +1,5 @@
 "use client";
-import type { BusinessType } from "@prisma/client";
+import type { BusinessType, LoyaltyMode, RestaurantCategory } from "@prisma/client";
 
 import {
   createContext,
@@ -25,6 +25,8 @@ export type CafeSettings = {
   name: string;
   slug: string;
   businessType: BusinessType;
+  loyaltyMode?: LoyaltyMode;
+  restaurantCategory?: RestaurantCategory | null;
   logoUrl: string | null;
   hasDashboardPalette: boolean;
   primaryColor: string | null;

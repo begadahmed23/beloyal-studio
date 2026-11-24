@@ -138,11 +138,12 @@ export async function PATCH(
       Object.keys(data).length > 0
         ? await withStoreCapacity(cafeId, async (tx, limit) => {
             const current = await tx.user.findUniqueOrThrow({
-              where: { id: target.id }, select: { role: true },
+              where: { id: target.id }, select: { role: true, isEnabled: true, cashierLocationId: true },
             });
-            const changingToCashier = data.role === "CASHIER" && current.role !== "CASHIER";
-            const cashierLocationId = changingToCashier
-              ? await getCashierLocation(tx, cafeId, limit, "", false)
+            const enablingCashier = (data.role ?? current.role) === "CASHIER" &&
+              (data.isEnabled ?? current.isEnabled) && (current.role !== "CASHIER" || !current.isEnabled);
+            const cashierLocationId = enablingCashier
+              ? await getCashierLocation(tx, cafeId, limit, current.cashierLocationId ?? "", false)
               : undefined;
             return tx.user.update({
               where: { id: target.id }, data: { ...data, cashierLocationId }, select: staffFields,

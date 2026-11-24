@@ -5,6 +5,7 @@ import Image from "next/image";
 import GourmealWordmark from "@/components/brand/GourmealWordmark";
 import KatoMark from "@/components/brand/KatoMark";
 import MbVapeLogo from "@/components/brand/MbVapeLogo";
+import { fireyNashBrand } from "@/lib/business/points";
 import { businessCardBackground } from "@/lib/business/card-artwork";
 import { isMbVape, MB_VAPE_ARTWORK_PATH, MB_VAPE_WALNUT } from "@/lib/business/mb-vape";
 import { GOURMEAL, gourmealStripPath, isGourmeal } from "@/lib/business/gourmeal";
@@ -12,10 +13,11 @@ import { GOURMEAL, gourmealStripPath, isGourmeal } from "@/lib/business/gourmeal
 export const cardFrame = "w-full overflow-hidden rounded-[26px] border shadow-[0_22px_56px_rgba(40,27,21,.16)]";
 
 type Brand = { name: string; slug: string; businessType: BusinessType };
-const stampIcons = { CAFE: Coffee, BARBERSHOP: Scissors, VAPE: Layers, OTHER: Store };
+const stampIcons = { CAFE: Coffee, BARBERSHOP: Scissors, VAPE: Layers, OTHER: Store, RESTAURANT: Store };
 
-export function CardBrandHeader({ business, progress, logoUrl, onLogoError, inheritColors = false }: {
+export function CardBrandHeader({ business, progress, balance, logoUrl, onLogoError, inheritColors = false }: {
   business: Brand;
+  balance?: { value: string; label: string };
   progress?: { target: number; stamps: number; label: string };
   logoUrl?: string | null;
   onLogoError?: () => void;
@@ -27,12 +29,13 @@ export function CardBrandHeader({ business, progress, logoUrl, onLogoError, inhe
   const identity = (business.slug + business.name).normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
   const namedCafe = (name: string) => business.businessType === "CAFE" && identity.includes(name);
 
+  const hasBalance = Boolean(progress || balance);
   return (
-    <header className={progress
+    <header className={hasBalance
       ? "flex min-h-24 items-center justify-between gap-3 px-4 py-3.5 min-[380px]:px-5"
       : "grid min-h-20 place-items-center px-4 py-3 text-center"}
       style={gourmealCard ? { backgroundColor: GOURMEAL.green, color: GOURMEAL.stone } : loretto ? { backgroundColor: "#E9E4D8", color: "#2E2E2E", borderBottom: "1px solid rgba(82,79,71,.25)" } : !inheritColors && business.businessType === "VAPE" ? { backgroundColor: "#fff", color: "#432B1D" } : undefined}>
-      <div className={progress ? "min-w-0 flex-1" : "grid min-w-0 max-w-full place-items-center"}>
+      <div className={hasBalance ? "min-w-0 flex-1" : "grid min-w-0 max-w-full place-items-center"}>
         {gourmealCard ? (
           <GourmealWordmark name={business.name} className="block h-auto w-44 max-w-full sm:w-48" />
         ) : mbVape ? (
@@ -57,6 +60,10 @@ export function CardBrandHeader({ business, progress, logoUrl, onLogoError, inhe
           </span>
         )}
       </div>
+      {balance && <div className="shrink-0 text-end">
+        <p className="text-xs font-semibold">{balance.label}</p>
+        <p className="mt-1 text-2xl font-semibold tabular-nums" aria-live="polite" dir="ltr">{balance.value}</p>
+      </div>}
       {progress && (
         <div className="shrink-0 text-end" style={gourmealCard && progress.stamps >= progress.target ? { color: GOURMEAL.butter } : undefined}>
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.10em]">
@@ -80,6 +87,14 @@ export function CardStampStrip({ business, target, stamps, accent, ink, backgrou
   background: string;
   newStampIndex?: number | null;
 }) {
+  if (business.slug === fireyNashBrand.slug) {
+    const count = Math.min(target, 12);
+    const filled = Math.floor(stamps / Math.max(1, target) * count);
+    return <div aria-hidden="true" className="flex min-h-20 flex-wrap items-center justify-center gap-3 px-4 py-4" style={{ backgroundColor: background }}>
+      {Array.from({ length: count }, (_, index) => <Image key={index} src={fireyNashBrand.flame} alt="" width={16} height={28}
+        className={index === newStampIndex ? "motion-safe:animate-pulse" : undefined} style={{ opacity: index < filled ? 1 : .22 }} />)}
+    </div>;
+  }
   if (isGourmeal(business)) {
     const count = Math.min(target, 99);
     return <Image src={gourmealStripPath(Math.min(stamps, count), count)} alt=""

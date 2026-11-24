@@ -102,7 +102,7 @@ export default function CafeSettingsForm() {
   const isKato = isCafe && (cafe.slug.toLowerCase().includes("kato") || normalizedCafeName.includes("kato"));
   const isKeka = isCafe && (cafe.slug.toLowerCase().includes("keka") || normalizedCafeName.includes("keka"));
 
-  const PreviewIcon = { CAFE: Coffee, BARBERSHOP: Scissors, VAPE: MbVapeStamp, OTHER: Store }[cafe.businessType];
+  const PreviewIcon = { CAFE: Coffee, BARBERSHOP: Scissors, VAPE: MbVapeStamp, OTHER: Store, RESTAURANT: Store }[cafe.businessType];
 
   const createInitialState = (): FormState => ({
     name: cafe.name,
@@ -591,7 +591,7 @@ export default function CafeSettingsForm() {
           <SectionHeader theme={theme} icon={Palette} title={t("Dashboard appearance")}
             description={t("Choose a palette for the owner and cashier dashboards.")} />
           <div className="mt-5">
-            <ThemeGallery value={form.theme} onChange={selectTheme} disabled={saving !== null} />
+            <ThemeGallery businessType={cafe.businessType} value={form.theme} onChange={selectTheme} disabled={saving !== null} />
           </div>
           {"theme" in draft && (
             <p className="mt-4 text-sm" style={{ color: theme.accent }}>{t("Previewing an unsaved theme.")}</p>
@@ -603,6 +603,7 @@ export default function CafeSettingsForm() {
           className="border p-5 sm:p-7"
           style={cardStyle}
         >
+          {cafe.loyaltyMode !== "POINTS" && <>
           <SectionHeader
               theme={theme}
             icon={Gift}
@@ -831,6 +832,7 @@ export default function CafeSettingsForm() {
             </div>
           </div>
           {saveControls("loyalty", "Save Loyalty Program")}
+          </>}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 sm:p-4"
             style={{ borderColor: theme.border, backgroundColor: theme.surfaceRaised }}>
             <div>

@@ -1,11 +1,13 @@
 import { dashboardPaletteSelect, dashboardPaletteUpdate, getDashboardPalette } from "@/lib/business/dashboard-palette";
-import { isDashboardTheme } from "@/lib/cafe-theme";
+import { isDashboardTheme, isRestaurantPalette } from "@/lib/cafe-theme";
 import { NextRequest, NextResponse } from "next/server";
 import {
   Prisma,
   SubscriptionStatus,
 } from "@prisma/client";
 
+import { branchQuote } from "@/lib/business/points";
+import { businessCashiers, StoreCapacityError, withStoreCapacity } from "@/lib/business/store-capacity";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdmin } from "@/lib/require-super-admin";
 import { scheduleGoogleWalletBrandUpdate } from "@/lib/wallet/google";
@@ -22,6 +24,9 @@ const selectCafe = {
   logoUrl: true,
   theme: true,
   businessType: true,
+  storeLimit: true,
+  loyaltyMode: true,
+  proposedBillingPeriod: true,
   primaryColor: true,
   secondaryColor: true,
   backgroundColor: true,
@@ -104,6 +109,7 @@ async function normalizeCafe(cafe: CafeResult) {
 
   return {
     ...cafe,
+    proposedSubscriptionTotal: cafe.proposedBillingPeriod ? branchQuote(cafe.storeLimit, cafe.proposedBillingPeriod) : null,
     ...getDashboardPalette(cafe),
     monthlyPrice: cafe.monthlyPrice?.toNumber() ?? null,
     minimumPurchaseAmount:
@@ -215,6 +221,7 @@ export async function PATCH(
 
   try {
     const { cafeId } = await params;
+    if (request.headers.get("origin") !== request.nextUrl.origin) return NextResponse.json({ message: "Invalid request origin." }, { status: 403 });
     const body = await request.json();
 
     const existing = await prisma.cafe.findUnique({
@@ -222,6 +229,7 @@ export async function PATCH(
       select: {
         id: true,
         slug: true,
+        businessType: true,
         dashboardPaletteOverride: true,
         user: {
           select: {
@@ -240,6 +248,18 @@ export async function PATCH(
     }
 
     const data: Prisma.CafeUpdateInput = {};
+    if ("storeLimit" in body) {
+      if (!Number.isSafeInteger(body.storeLimit) || body.storeLimit < 1 || body.storeLimit > 2147483647) {
+        return NextResponse.json({ message: "Enter a valid subscribed branch count." }, { status: 400 });
+      }
+      data.storeLimit = body.storeLimit;
+    }
+    if ("proposedBillingPeriod" in body) {
+      if (body.proposedBillingPeriod !== null && body.proposedBillingPeriod !== "MONTHLY" && body.proposedBillingPeriod !== "YEARLY") {
+        return NextResponse.json({ message: "Choose a valid quote period." }, { status: 400 });
+      }
+      data.proposedBillingPeriod = body.proposedBillingPeriod;
+    }
 
     let paymentAmount: Prisma.Decimal | null = null;
     const shouldRecordPayment = body.recordPayment === true;
@@ -336,6 +356,9 @@ export async function PATCH(
       );
     }
 
+    if (isRestaurantPalette(theme) && existing.businessType !== "RESTAURANT") {
+      return NextResponse.json({ message: "Choose a palette for this business type." }, { status: 400 });
+    }
     const palette: Parameters<typeof dashboardPaletteUpdate>[0] = { theme };
     for (const field of ["primaryColor", "secondaryColor", "backgroundColor"] as const) {
       if (field in body) {
@@ -536,7 +559,16 @@ export async function PATCH(
       }
     }
 
-    await prisma.$transaction(async (tx) => {
+    await withStoreCapacity(cafeId, async (tx, previousLimit) => {
+      if (typeof data.storeLimit === "number" && data.storeLimit < previousLimit) {
+        const [activeBranches, activeCashiers] = await Promise.all([
+          tx.cafeLocation.count({ where: { cafeId, archivedAt: null } }),
+          tx.user.count({ where: { ...businessCashiers(cafeId), isEnabled: true } }),
+        ]);
+        if (data.storeLimit < Math.max(activeBranches, activeCashiers)) {
+          throw new StoreCapacityError("The limit cannot be below the number of active stores or cashiers.");
+        }
+      }
       await tx.cafe.update({
         where: { id: cafeId },
         data,

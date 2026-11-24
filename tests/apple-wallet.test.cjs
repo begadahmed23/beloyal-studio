@@ -131,7 +131,7 @@ test('signed artwork, stamp progress, auth and existing scanner payload', async 
   assert.equal(pass.serialNumber, member.id);
   assert.equal(pass.storeCard.backFields.find(f => f.key === 'member-message').changeMessage, '%@');
   assert.equal(pass.barcodes[0].message, `BL:${member.publicToken}`);
-  assert.equal(pass.backgroundColor, 'rgb(243, 235, 221)');
+  assert.equal(pass.backgroundColor, 'rgb(233, 228, 216)');
   assert.equal(pass.storeCard.headerFields[0].value, '3/6');
   assert.equal(pass.storeCard.secondaryFields[0].value, member.name);
   assert.equal(pass.webServiceURL, process.env.APPLE_WALLET_WEB_SERVICE_URL);
@@ -510,4 +510,21 @@ test('MB Vape pass uses the brand logo and device stamps without changing the sc
   assert.deepEqual(webStrip, pass['strip@3x.png']);
   assert.notDeepEqual(artwork, Buffer.from(await (await googleArt('stamps=3&target=6')).arrayBuffer()));
   assert.equal((await googleArt('stamps=7&target=6')).status, 400);
+});
+
+test("Firey Nash signs a points pass with flame artwork and the existing checkout QR", async () => {
+  const { default: sharp } = await import("sharp");
+  const { createAppleWalletPass } = load("lib/wallet/apple.ts");
+  const zip = unzipSync(await createAppleWalletPass({ ...member, pointsBalance: "109.9", cafe: {
+    ...member.cafe, name: "Firey Nash", slug: "firey-nash", businessType: "RESTAURANT",
+    loyaltyMode: "POINTS", pointsPerHundred: "10", backgroundColor: "#171717",
+  } }));
+  const pass = JSON.parse(strFromU8(zip["pass.json"]));
+  assert.equal(pass.storeCard.headerFields[0].label, "FLAMES");
+  assert.equal(pass.storeCard.headerFields[0].value, "109.9");
+  assert.equal(pass.storeCard.auxiliaryFields[0].value, "Collect flames with your orders");
+  assert.doesNotMatch(JSON.stringify(pass), /per EGP|earning-rate|pointsPerHundred/i);
+  assert.equal(pass.barcodes[0].message, `BL:${member.publicToken}`);
+  const strip = await sharp(zip["strip@3x.png"]).stats();
+  assert.ok(strip.channels[0].max > strip.channels[0].min);
 });

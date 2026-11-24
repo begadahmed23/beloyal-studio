@@ -5,20 +5,23 @@ import type { ReactNode } from "react";
 import MbVapeLogo from "@/components/brand/MbVapeLogo";
 import KatoMark from "@/components/brand/KatoMark";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
+import { restaurantCategories } from "@/lib/business/points";
+import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 import { isMbVape } from "@/lib/business/mb-vape";
 
 import DashboardFrame from "./DashboardFrame";
 import { cafeNavigation } from "./cafe-navigation";
 
 export default function DashboardShell({ children }: { children: ReactNode }) {
+  const { lang } = useBeLoyalLanguage();
   const { theme, cafe, userRole } = useCafeTheme();
   const normalizedName = cafe.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   const slug = cafe.slug.toLowerCase();
   const isKato = cafe.businessType === "CAFE" && (slug.includes("kato") || normalizedName.includes("kato"));
   const isKeka = cafe.businessType === "CAFE" && (slug.includes("keka") || normalizedName.includes("keka"));
   const name = isKato ? "KATŌ" : isKeka ? "Keka" : cafe.name;
-  const subtitle = isKato ? "Specialty Coffee" : isKeka ? "Little Rituals, Big Comfort" : "Loyalty Dashboard";
-  const items = cafeNavigation.filter((item) => userRole !== "CASHIER" || !("adminOnly" in item));
+  const subtitle = isKato ? "Specialty Coffee" : isKeka ? "Little Rituals, Big Comfort" : cafe.restaurantCategory ? restaurantCategories[cafe.restaurantCategory][lang === "ar" ? "ar" : "en"] : "Loyalty Dashboard";
+  const items = cafeNavigation.filter(item => (userRole !== "CASHIER" || !("adminOnly" in item)) && (cafe.loyaltyMode === "POINTS" || !("pointsOnly" in item)));
 
   let mark: ReactNode;
   if (isMbVape(cafe)) {

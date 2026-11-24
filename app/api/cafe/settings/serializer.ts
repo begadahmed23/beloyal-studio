@@ -3,6 +3,8 @@ import { getDashboardPalette } from "@/lib/business/dashboard-palette";
 import {
   BusinessType,
   CafeTheme,
+  LoyaltyMode,
+  RestaurantCategory,
   Prisma,
   SubscriptionStatus,
 } from "@prisma/client";
@@ -12,6 +14,8 @@ export type CafeSettingsRecord = Parameters<typeof getDashboardPalette>[0] & {
   name: string;
   slug: string;
   businessType: BusinessType;
+  loyaltyMode?: LoyaltyMode;
+  restaurantCategory?: RestaurantCategory | null;
   logoUrl: string | null;
   theme: CafeTheme;
 
@@ -59,6 +63,8 @@ export function serializeCafeSettings(cafe: CafeSettingsRecord) {
     name: cafe.name,
     slug: cafe.slug,
     businessType: cafe.businessType,
+    loyaltyMode: cafe.loyaltyMode,
+    restaurantCategory: cafe.restaurantCategory,
     logoUrl: cafe.logoUrl,
     ...getDashboardPalette(cafe),
 
@@ -75,7 +81,7 @@ export function serializeCafeSettings(cafe: CafeSettingsRecord) {
     feedbackEnabled:
       cafe.feedbackEnabled ??
       cafe.businessType === BusinessType.CAFE,
-    feedbackRewardEnabled: cafe.feedbackRewardEnabled,
+    feedbackRewardEnabled: cafe.loyaltyMode !== "POINTS" && cafe.feedbackRewardEnabled,
     googleReviewUrl: cafe.googleReviewUrl,
 
     timezone: cafe.timezone,

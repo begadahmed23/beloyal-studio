@@ -23,7 +23,8 @@ import {
 } from "@/components/ui/dialog";
 import { businessTypeLabels, getBusinessTerminology } from "@/lib/business/terminology";
 import ThemeGallery from "@/components/theme/ThemeGallery";
-import { DEFAULT_DASHBOARD_THEME } from "@/lib/cafe-theme";
+import { branchQuote, fireyNashBrand, isFireyNashName, restaurantCategories } from "@/lib/business/points";
+import { DEFAULT_DASHBOARD_THEME, isRestaurantPalette } from "@/lib/cafe-theme";
 
 import BusinessTypeSelector from "./BusinessTypeSelector";
 import type { BusinessType } from "./studio-types";
@@ -65,14 +66,26 @@ export default function CreateCafeDialog({
     useState("Free Drink");
   const [rewardTarget, setRewardTarget] =
     useState("7");
-  const [monthlyPrice, setMonthlyPrice] =
-    useState("1000");
+  const [loyaltyMode, setLoyaltyMode] = useState<"STAMPS" | "POINTS">("STAMPS");
+  const [restaurantCategory, setRestaurantCategory] = useState<keyof typeof restaurantCategories>("OTHER");
+  const [pointsPerHundred, setRate] = useState("10");
+  const [billingPeriod, setBillingPeriod] = useState<"MONTHLY" | "YEARLY">("MONTHLY");
+  const [monthlyPrice, setMonthlyPrice] = useState<string | null>(null);
   const [theme, setTheme] =
     useState<string>(DEFAULT_DASHBOARD_THEME);
 
   const terminology =
     getBusinessTerminology(businessType);
   const businessLabel = businessTypeLabels[businessType];
+  const firey = businessType === "RESTAURANT" && isFireyNashName(cafeName);
+
+  function applyFireyDefaults() {
+    setSlug(fireyNashBrand.slug);
+    setStoreLimit(current => String(Math.max(Number(current) || 1, fireyNashBrand.branches.length)));
+    setLoyaltyMode("POINTS");
+    setRestaurantCategory("FRIED_CHICKEN");
+    setTheme("RED_ORANGE_DARK");
+  }
 
   function resetForm() {
     setBusinessType("CAFE");
@@ -84,7 +97,11 @@ export default function CreateCafeDialog({
     setPassword("");
     setRewardName("Free Drink");
     setRewardTarget("7");
-    setMonthlyPrice("1000");
+    setMonthlyPrice(null);
+    setLoyaltyMode("STAMPS");
+    setRestaurantCategory("OTHER");
+    setRate("10");
+    setBillingPeriod("MONTHLY");
     setTheme(DEFAULT_DASHBOARD_THEME);
     setError("");
     setSuccess(false);
@@ -98,6 +115,9 @@ export default function CreateCafeDialog({
       getBusinessTerminology(nextBusinessType);
 
     setBusinessType(nextBusinessType);
+    if (nextBusinessType === "RESTAURANT" && isFireyNashName(cafeName)) applyFireyDefaults();
+    else if (nextBusinessType === "RESTAURANT") setTheme("RED_ORANGE_LIGHT");
+    else if (isRestaurantPalette(theme)) setTheme(DEFAULT_DASHBOARD_THEME);
     setRewardName(nextTerminology.defaultRewardName);
     setRewardTarget(
       nextBusinessType === "BARBERSHOP" ? "3" : "7",
@@ -115,7 +135,11 @@ export default function CreateCafeDialog({
   function handleCafeNameChange(value: string) {
     setCafeName(value);
 
-    if (!slug || slug === generateSlug(cafeName)) {
+    if (businessType === "RESTAURANT" && isFireyNashName(value)) {
+      if (!firey) applyFireyDefaults();
+      return;
+    }
+    if (!slug || slug === generateSlug(cafeName) || firey) {
       setSlug(generateSlug(value));
     }
   }
@@ -145,7 +169,7 @@ export default function CreateCafeDialog({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          businessType,
+          businessType, loyaltyMode, restaurantCategory, pointsPerHundred, billingPeriod,
           cafeName,
           slug,
           storeLimit: Number(storeLimit),
@@ -154,7 +178,7 @@ export default function CreateCafeDialog({
           password,
           rewardName,
           rewardTarget: Number(rewardTarget),
-          monthlyPrice: Number(monthlyPrice),
+          ...(monthlyPrice !== null && monthlyPrice !== "" && { monthlyPrice: Number(monthlyPrice) }),
           theme,
         }),
       });
@@ -304,6 +328,7 @@ export default function CreateCafeDialog({
 
                 <input
                   value={slug}
+                  readOnly={firey}
                   onChange={(event) =>
                     setSlug(
                       generateSlug(event.target.value)
@@ -323,10 +348,10 @@ export default function CreateCafeDialog({
                 <label htmlFor="studio-store-limit" className="mb-2 block text-sm font-medium text-[#48484D]">
                   Number of stores
                 </label>
-                <input id="studio-store-limit" type="number" min={1} max={2147483647} step={1}
+                <input id="studio-store-limit" type="number" min={firey ? fireyNashBrand.branches.length : 1} max={2147483647} step={1}
                   value={storeLimit} onChange={event => setStoreLimit(event.target.value)} required
                   disabled={loading} className={inputClassName} />
-                <p className="mt-2 text-xs text-[#686871]">Each store includes one cashier account and one signup QR.</p>
+                <p className="mt-2 text-xs text-[#686871]">{firey ? "Sidi Gaber and El Na2al w El Hanadasa are added with the Firey Nash logo and flame card." : "Each store includes one cashier account and one signup QR."}</p>
               </div>
             </div>
           </section>
@@ -450,7 +475,24 @@ export default function CreateCafeDialog({
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div>
+              <label className="text-sm">Loyalty mode
+                <select className={inputClassName} value={loyaltyMode} disabled={firey} onChange={event => setLoyaltyMode(event.target.value === "POINTS" ? "POINTS" : "STAMPS")}>
+                  <option value="STAMPS">Stamps</option><option value="POINTS">Points</option>
+                </select>
+              </label>
+              {businessType === "RESTAURANT" && <label className="text-sm">Food category
+                <select className={inputClassName} value={restaurantCategory} disabled={firey} onChange={event => {
+                  const category = event.target.value as keyof typeof restaurantCategories;
+                  setRestaurantCategory(category);
+                  setRewardName(restaurantCategories[category].reward);
+                }}>
+                  {Object.entries(restaurantCategories).map(([value, item]) => <option key={value} value={value}>{item.en} · {item.ar}</option>)}
+                </select>
+              </label>}
+              {loyaltyMode === "POINTS" && <label className="text-sm">Points per 100 EGP
+                <input className={inputClassName} inputMode="decimal" required value={pointsPerHundred} onChange={event => setRate(event.target.value)} />
+              </label>}
+              {loyaltyMode === "STAMPS" && <div>
                 <label className="mb-2 block text-sm font-medium text-[#48484D]">
                   Reward name
                 </label>
@@ -465,9 +507,9 @@ export default function CreateCafeDialog({
                   disabled={loading}
                   className={inputClassName}
                 />
-              </div>
+              </div>}
 
-              <div>
+              {loyaltyMode === "STAMPS" && <div>
                 <label className="mb-2 block text-sm font-medium text-[#48484D]">
                   Reward visit
                 </label>
@@ -487,22 +529,27 @@ export default function CreateCafeDialog({
                 <p className="mt-1.5 text-sm text-[#626267]">
                   A target of 7 means 6 paid visits, then the reward on visit 7.
                 </p>
-              </div>
-
+              </div>}
+              <label className="text-sm">Quote period
+                <select className={inputClassName} value={billingPeriod} onChange={event => setBillingPeriod(event.target.value === "YEARLY" ? "YEARLY" : "MONTHLY")}>
+                  <option value="MONTHLY">Monthly</option><option value="YEARLY">Yearly</option>
+                </select>
+                <span className="mt-2 block font-medium">{branchQuote(Number(storeLimit) || 0, billingPeriod).toLocaleString()} EGP / {billingPeriod === "YEARLY" ? "year" : "month"}</span>
+              </label>
               <div>
                 <label className="mb-2 block text-sm font-medium text-[#48484D]">
-                  Monthly price
+                  Monthly price override
                 </label>
 
                 <div className="relative">
                   <input
                     type="number"
                     min={0}
-                    value={monthlyPrice}
+                    value={monthlyPrice ?? ""}
+                    placeholder={String(branchQuote(Number(storeLimit) || 0, "MONTHLY"))}
                     onChange={(event) =>
                       setMonthlyPrice(event.target.value)
                     }
-                    required
                     disabled={loading}
                     className={`${inputClassName} pr-16`}
                   />
@@ -516,7 +563,7 @@ export default function CreateCafeDialog({
             </div>
             <div className="mt-5">
               <p className="mb-2 text-sm font-medium text-[#48484D]">Dashboard theme</p>
-              <ThemeGallery value={theme} onChange={setTheme} disabled={loading} />
+              <ThemeGallery businessType={businessType} value={theme} onChange={setTheme} disabled={loading} />
             </div>
 
             <div className="mt-5 flex items-start gap-3 rounded-xl border border-black/[0.06] bg-gradient-to-r from-[#F4F5F6] to-[#FAFAFB] px-4 py-3.5">
