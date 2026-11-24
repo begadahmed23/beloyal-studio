@@ -91,7 +91,7 @@ export default function PasswordSection({
   }
 
   return (
-    <section className="rounded-[28px] border border-black/[0.07] bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.055)]">
+    <section id="owner-password" className="scroll-mt-24 rounded-[28px] border border-black/[0.07] bg-white p-6 shadow-[0_18px_55px_rgba(15,23,42,0.055)]">
       <div className="flex items-start gap-4">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-black/[0.07] bg-gradient-to-br from-white to-[#E4E6EA] text-[#4E5055] shadow-sm">
           <KeyRound size={20} />
@@ -102,8 +102,8 @@ export default function PasswordSection({
             Change owner password
           </h2>
           <p className="mt-1 text-sm text-[#77777E]">
-            Set a temporary password for {ownerEmail ?? "this café owner"}.
-            Existing sessions will be signed out.
+            Set a new password for {ownerEmail ?? "this café owner"}.
+            Changing it signs the owner out on all devices.
           </p>
 
           {ownerEmail ? (
