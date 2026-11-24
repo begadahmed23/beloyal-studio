@@ -17,6 +17,7 @@ import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 import { exportJoinPoster, POSTER_HEIGHT, POSTER_WIDTH } from "./export-join-poster";
+import { fireyJoinPosterCopy } from "./firey-join-poster";
 import { JOIN_POSTER_CREDIT } from "./join-poster-credit";
 
 export default function JoinQRCode({ location }: { location?: { id: string; name: string } }) {
@@ -29,7 +30,7 @@ export default function JoinQRCode({ location }: { location?: { id: string; name
   const logoUrl = cafe.logoUrl;
   const isBarbershop = cafe.businessType === "BARBERSHOP";
 
-  const tagline = location?.name ?? (firey ? "كارت العضوية" : gourmeal ? "Loyalty card" : isBarbershop ? "Sharp style. Loyal clients." : cafe.businessType === "CAFE" ? "Let coffee connect us" : "Member rewards");
+  const tagline = location?.name ?? (firey || gourmeal ? "Loyalty card" : isBarbershop ? "Sharp style. Loyal clients." : cafe.businessType === "CAFE" ? "Let coffee connect us" : "Member rewards");
   const points = cafe.loyaltyMode === "POINTS";
   const progress = firey ? "" : points ? "Join the rewards program." : gourmeal ? `Collect ${getLoyaltyProgressTarget(cafe)} stamps.` : `Collect ${isBarbershop ? "visits" : "stamps"}.`;
   const rewardName = cafe.rewardName?.trim() || "a reward";
@@ -83,6 +84,9 @@ export default function JoinQRCode({ location }: { location?: { id: string; name
   const currentPreview = brandedPreview?.key === posterKey ? brandedPreview : null;
   const brandedPosterUrl = currentPreview?.url;
   const saveUrl = brand ? brandedPosterUrl : downloadUrl;
+  const posterAlt = firey
+    ? `${cafe.name} loyalty signup poster. ${tagline}. ${fireyJoinPosterCopy.title}. ${fireyJoinPosterCopy.instruction}`
+    : `${cafe.name} loyalty signup poster. ${progress} ${reward} ${JOIN_POSTER_CREDIT.title} ${JOIN_POSTER_CREDIT.domain}.`;
 
   useEffect(() => {
     const source = posterRef.current;
@@ -327,7 +331,7 @@ export default function JoinQRCode({ location }: { location?: { id: string; name
                 </div>
                 {brandedPosterUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={brandedPosterUrl} alt={`${cafe.name} loyalty signup poster. ${progress} ${reward} ${JOIN_POSTER_CREDIT.title} ${JOIN_POSTER_CREDIT.domain}.`} className="block h-full w-full" />
+                  <img src={brandedPosterUrl} alt={posterAlt} className="block h-full w-full" />
                 ) : (
                   <p role="status" className="grid h-full place-items-center px-5 text-center text-sm text-[#432B1D]">
                     {currentPreview ? "The QR poster could not load. Refresh to try again." : "Preparing QR poster…"}
