@@ -108,6 +108,7 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
   const points = cafe.loyaltyMode === "POINTS";
   const copy = (en: string, ar: string) => lang === "ar" ? ar : en;
   const firey = cafe.slug === fireyNashBrand.slug;
+  const flameCard = firey && points;
   const unit = firey ? copy("flames", "لهب") : copy("points", "نقطة");
   const defaultRule = cafe.businessType === "BARBERSHOP" ? "One visit per eligible service." : "One stamp per eligible purchase.";
 
@@ -119,7 +120,7 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
         className={cardFrame}
         style={{ backgroundColor: cardBackground, borderColor: cardBorder, color: textPrimary, colorScheme: cardIsLight ? "light" : "dark" }}
       >
-        {firey && points ? <FireyCardFace balance={customer.pointsBalance ?? "0"} label={copy("Flame balance", "رصيد اللهب")} /> :
+        {flameCard ? <FireyCardFace balance={customer.pointsBalance ?? "0"} label={copy("Flame balance", "رصيد اللهب")} /> :
           <CardBrandHeader business={cafe} balance={points ? { value: customer.pointsBalance ?? "0", label: firey ? copy("Flames", "اللهب") : copy("Points balance", "رصيد النقاط") } : undefined} progress={points ? undefined : { target: rewardTarget, stamps: visibleStamps, label: t(rewardReady ? "Reward ready" : cafe.businessType === "BARBERSHOP" ? "Visits" : "Stamps") }}
           logoUrl={props.showLogo ? props.logoUrl : null}
           onLogoError={props.logoUrl ? () => props.onLogoError(props.logoUrl!) : undefined} />}
@@ -142,7 +143,7 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
             type="button"
             onClick={onShowQrCode}
             className="flex min-h-11 w-full touch-manipulation items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-opacity hover:opacity-85"
-            style={{ backgroundColor: firey && points ? "#e1a184" : mbVape ? MB_VAPE_WALNUT : textPrimary, color: firey && points ? "#181716" : mbVape ? MB_VAPE_IVORY : cardBackground }}
+            style={{ backgroundColor: flameCard ? props.primaryColor : mbVape ? MB_VAPE_WALNUT : textPrimary, color: flameCard ? "#0b0b0c" : mbVape ? MB_VAPE_IVORY : cardBackground }}
           >
             <QrCode size={18} aria-hidden="true" /> {points ? copy("Show membership QR", "عرض كود العضوية") : t("Show QR Code")}
           </button>
@@ -167,27 +168,52 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
           )}
 
           {props.birthdayText && <BirthdayCustomerDisplay {...props} />}
-          {points && !!customer.rewards?.length && <section className="space-y-3 border-t pt-3" style={{ borderColor: cardBorder }}>
-            <h2 className="font-semibold">{copy("Rewards", "المكافآت")}</h2>
-            {customer.rewards?.map(reward => <article key={reward.id} className="overflow-hidden rounded-xl border" style={{ borderColor: cardBorder, backgroundColor: props.surfaceColor }}>
-              {reward.photoUrl && <Image src={reward.photoUrl} alt="" width={460} height={200} unoptimized className="aspect-[2.3] w-full object-cover" />}
-              <div className="space-y-2 p-3">
-                <h3 className="text-sm font-semibold">{reward.name}</h3>
-                <p className="text-xs">{reward.cost} {unit} · {reward.remaining === "0" ? copy("Available", "متاحة") : copy(`${reward.remaining} more ${unit} needed`, `فاضل ${reward.remaining} ${unit}`)}</p>
-                <div role="progressbar" aria-label={reward.name} aria-valuemin={0} aria-valuemax={Number(reward.cost)}
-                  aria-valuenow={Math.min(Number(reward.cost), Number(customer.pointsBalance))}
-                  className="h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: props.primarySoft }}>
-                  <div className="h-full rounded-full" style={{ width: `${Math.min(100, Number(customer.pointsBalance) / Number(reward.cost) * 100)}%`, backgroundColor: props.primaryColor }} />
-                </div>
-                {reward.description && <p className="text-xs">{reward.description}</p>}
-                {reward.remaining === "0" && <button type="button" onClick={() => props.onRedeemReward(reward)}
-                  className="mt-1 min-h-10 w-full rounded-lg px-3 text-xs font-semibold transition-opacity active:opacity-75"
-                  style={{ backgroundColor: textPrimary, color: cardBackground }}>{copy("Redeem reward", "استبدال المكافأة")}</button>}
-                {reward.conditions && <p className="text-xs">{reward.conditions}</p>}
-                <p className="text-xs">{reward.locations.map(item => item.location.name).join(" · ")}</p>
-              </div>
-            </article>)}
-          </section>}
+          {points && !!customer.rewards?.length && (
+            <section aria-labelledby="card-rewards" className="space-y-3 border-t pt-4" style={{ borderColor: cardBorder }}>
+              <h2 id="card-rewards" className="text-lg font-semibold tracking-tight">{copy("Rewards", "المكافآت")}</h2>
+              {customer.rewards.map(reward => {
+                const cost = Number(reward.cost);
+                const balance = Math.min(cost, Number(customer.pointsBalance ?? "0"));
+                const available = reward.remaining === "0";
+                return (
+                  <article key={reward.id} className="overflow-hidden rounded-[20px] border" style={{ borderColor: cardBorder, backgroundColor: props.surfaceColor }}>
+                    {reward.photoUrl && (
+                      <div className="grid place-items-center border-b p-2" style={{ backgroundColor: cardBackground, borderColor: cardBorder }}>
+                        <Image src={reward.photoUrl} alt={reward.name} width={460} height={300} unoptimized
+                          className="h-auto max-h-52 w-full rounded-xl object-contain" />
+                      </div>
+                    )}
+                    <div className="space-y-3 p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+                        <h3 className="min-w-0 wrap-anywhere text-base font-semibold tracking-tight">{reward.name}</h3>
+                        <p className="rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums" style={{ color: flameCard ? props.primaryColor : textPrimary, backgroundColor: props.primarySoft }}>
+                          {reward.cost} {unit}
+                        </p>
+                      </div>
+                      {reward.description && <p className="text-sm leading-relaxed" style={{ color: textSecondary }}>{reward.description}</p>}
+                      {reward.conditions && <p className="text-xs leading-relaxed" style={{ color: textSecondary }}>{reward.conditions}</p>}
+                      {!!reward.locations.length && <p className="text-xs" style={{ color: textMuted }}>{reward.locations.map(item => item.location.name).join(" · ")}</p>}
+                      {available ? (
+                        <button type="button" onClick={() => props.onRedeemReward(reward)}
+                          className="min-h-11 w-full rounded-xl px-4 text-sm font-semibold transition-opacity active:opacity-75"
+                          style={{ backgroundColor: flameCard ? props.primaryColor : textPrimary, color: flameCard ? "#0b0b0c" : cardBackground }}>
+                          {copy("Redeem reward", "استبدال المكافأة")}
+                        </button>
+                      ) : (
+                        <div className="space-y-2">
+                          <p className="text-xs font-medium" style={{ color: textSecondary }}>{copy(`${reward.remaining} more ${unit} needed`, `فاضل ${reward.remaining} ${unit}`)}</p>
+                          <div role="progressbar" aria-label={reward.name} aria-valuemin={0} aria-valuemax={cost} aria-valuenow={balance}
+                            className="h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: props.primarySoft }}>
+                            <div className="h-full rounded-full" style={{ width: `${balance / cost * 100}%`, backgroundColor: props.primaryColor }} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </section>
+          )}
           <div className="flex items-start justify-between gap-2 border-t pt-1" style={{ borderColor: cardBorder }}>
             <details className="group min-w-0 flex-1 text-xs leading-5" style={{ color: textSecondary }}>
               <summary className="flex min-h-10 cursor-pointer list-none items-center gap-1.5 font-semibold [&::-webkit-details-marker]:hidden">

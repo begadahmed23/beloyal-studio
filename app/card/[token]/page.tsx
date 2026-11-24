@@ -47,7 +47,7 @@ import {
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 import { getMbVapeBrandColors, isMbVape, MB_VAPE_IVORY, MB_VAPE_LOGO_URL, MB_VAPE_WALNUT } from "@/lib/business/mb-vape";
 import { GOURMEAL, isGourmeal } from "@/lib/business/gourmeal";
-import { getBusinessBrandColors, getDashboardTheme, isRestaurantPalette } from "@/lib/cafe-theme";
+import { FIREY_NASH_COLORS, getBusinessBrandColors, getDashboardTheme, isRestaurantPalette } from "@/lib/cafe-theme";
 
 type FeedbackResponse = {
   success?: boolean;
@@ -1396,6 +1396,7 @@ const visibleStamps = rewardReady
 
   const cardIsLight =
     isLightColor(cardBackground);
+  const fireyCard = customer.cafe.slug === "firey-nash" && backgroundColor === FIREY_NASH_COLORS[2];
 
   const textPrimary =
     gourmeal ? GOURMEAL.green : getReadableText(cardBackground);
@@ -1525,6 +1526,8 @@ const visibleStamps = rewardReady
         color: textPrimary,
         background: gourmeal ? `linear-gradient(180deg,${GOURMEAL.stone},${GOURMEAL.sand})` : isLoretto
           ? getLorettoPageTheme(customer.cafe.theme).background
+          : fireyCard
+            ? `radial-gradient(ellipse at 50% 0%, #3b1b10 0, transparent 460px), ${backgroundColor}`
           : isKeka
             ? "linear-gradient(180deg,#F5E7D2 0%,#E8D2B8 100%)"
           : isKato
