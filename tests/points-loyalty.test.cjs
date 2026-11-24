@@ -36,3 +36,11 @@ test("both Red & Orange variants are available to restaurants", () => {
   assert.deepEqual(themes.getBusinessThemeColors("RED_ORANGE_DARK", "RESTAURANT"), ["#ff651e", "#ff864d", "#171717"]);
   assert.notEqual(themes.getBusinessTheme("RED_ORANGE_DARK", "CAFE").pageBackground, "#171717");
 });
+
+test("Firey Nash Studio names resolve to the existing branding and branch links", () => {
+  for (const name of ["Firey Nash", "FieryNash", "firynash"]) assert.equal(points.isFireyNashName(name), true);
+  assert.equal(points.isFireyNashName("Firey Nash Cafe"), false);
+  assert.equal(points.fireyNashBrand.slug, "firey-nash");
+  assert.deepEqual(points.fireyNashBrand.branches.map(branch => branch.id),
+    ["fireynashsidigaber", "fireynashelna2al"]);
+});

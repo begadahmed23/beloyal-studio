@@ -520,9 +520,10 @@ test("Firey Nash signs a points pass with flame artwork and the existing checkou
     loyaltyMode: "POINTS", pointsPerHundred: "10", backgroundColor: "#171717",
   } }));
   const pass = JSON.parse(strFromU8(zip["pass.json"]));
-  assert.equal(pass.storeCard.headerFields[0].label, "POINTS");
+  assert.equal(pass.storeCard.headerFields[0].label, "FLAMES");
   assert.equal(pass.storeCard.headerFields[0].value, "109.9");
-  assert.equal(pass.storeCard.auxiliaryFields[0].value, "10 points per EGP 100");
+  assert.equal(pass.storeCard.auxiliaryFields[0].value, "Collect flames with your orders");
+  assert.doesNotMatch(JSON.stringify(pass), /per EGP|earning-rate|pointsPerHundred/i);
   assert.equal(pass.barcodes[0].message, `BL:${member.publicToken}`);
   const strip = await sharp(zip["strip@3x.png"]).stats();
   assert.ok(strip.channels[0].max > strip.channels[0].min);

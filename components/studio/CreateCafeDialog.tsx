@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { businessTypeLabels, getBusinessTerminology } from "@/lib/business/terminology";
 import ThemeGallery from "@/components/theme/ThemeGallery";
-import { branchQuote, restaurantCategories } from "@/lib/business/points";
+import { branchQuote, fireyNashBrand, isFireyNashName, restaurantCategories } from "@/lib/business/points";
 import { DEFAULT_DASHBOARD_THEME, isRestaurantPalette } from "@/lib/cafe-theme";
 
 import BusinessTypeSelector from "./BusinessTypeSelector";
@@ -77,6 +77,15 @@ export default function CreateCafeDialog({
   const terminology =
     getBusinessTerminology(businessType);
   const businessLabel = businessTypeLabels[businessType];
+  const firey = businessType === "RESTAURANT" && isFireyNashName(cafeName);
+
+  function applyFireyDefaults() {
+    setSlug(fireyNashBrand.slug);
+    setStoreLimit(current => String(Math.max(Number(current) || 1, fireyNashBrand.branches.length)));
+    setLoyaltyMode("POINTS");
+    setRestaurantCategory("FRIED_CHICKEN");
+    setTheme("RED_ORANGE_DARK");
+  }
 
   function resetForm() {
     setBusinessType("CAFE");
@@ -106,7 +115,8 @@ export default function CreateCafeDialog({
       getBusinessTerminology(nextBusinessType);
 
     setBusinessType(nextBusinessType);
-    if (nextBusinessType === "RESTAURANT") setTheme("RED_ORANGE_LIGHT");
+    if (nextBusinessType === "RESTAURANT" && isFireyNashName(cafeName)) applyFireyDefaults();
+    else if (nextBusinessType === "RESTAURANT") setTheme("RED_ORANGE_LIGHT");
     else if (isRestaurantPalette(theme)) setTheme(DEFAULT_DASHBOARD_THEME);
     setRewardName(nextTerminology.defaultRewardName);
     setRewardTarget(
@@ -125,7 +135,11 @@ export default function CreateCafeDialog({
   function handleCafeNameChange(value: string) {
     setCafeName(value);
 
-    if (!slug || slug === generateSlug(cafeName)) {
+    if (businessType === "RESTAURANT" && isFireyNashName(value)) {
+      if (!firey) applyFireyDefaults();
+      return;
+    }
+    if (!slug || slug === generateSlug(cafeName) || firey) {
       setSlug(generateSlug(value));
     }
   }
@@ -314,6 +328,7 @@ export default function CreateCafeDialog({
 
                 <input
                   value={slug}
+                  readOnly={firey}
                   onChange={(event) =>
                     setSlug(
                       generateSlug(event.target.value)
@@ -333,10 +348,10 @@ export default function CreateCafeDialog({
                 <label htmlFor="studio-store-limit" className="mb-2 block text-sm font-medium text-[#48484D]">
                   Number of stores
                 </label>
-                <input id="studio-store-limit" type="number" min={1} max={2147483647} step={1}
+                <input id="studio-store-limit" type="number" min={firey ? fireyNashBrand.branches.length : 1} max={2147483647} step={1}
                   value={storeLimit} onChange={event => setStoreLimit(event.target.value)} required
                   disabled={loading} className={inputClassName} />
-                <p className="mt-2 text-xs text-[#686871]">Each store includes one cashier account and one signup QR.</p>
+                <p className="mt-2 text-xs text-[#686871]">{firey ? "Sidi Gaber and El Na2al w El Hanadasa are added with the Firey Nash logo and flame card." : "Each store includes one cashier account and one signup QR."}</p>
               </div>
             </div>
           </section>
@@ -461,12 +476,12 @@ export default function CreateCafeDialog({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="text-sm">Loyalty mode
-                <select className={inputClassName} value={loyaltyMode} onChange={event => setLoyaltyMode(event.target.value === "POINTS" ? "POINTS" : "STAMPS")}>
+                <select className={inputClassName} value={loyaltyMode} disabled={firey} onChange={event => setLoyaltyMode(event.target.value === "POINTS" ? "POINTS" : "STAMPS")}>
                   <option value="STAMPS">Stamps</option><option value="POINTS">Points</option>
                 </select>
               </label>
               {businessType === "RESTAURANT" && <label className="text-sm">Food category
-                <select className={inputClassName} value={restaurantCategory} onChange={event => {
+                <select className={inputClassName} value={restaurantCategory} disabled={firey} onChange={event => {
                   const category = event.target.value as keyof typeof restaurantCategories;
                   setRestaurantCategory(category);
                   setRewardName(restaurantCategories[category].reward);

@@ -88,12 +88,11 @@ export function googleWalletObject(member: WalletMember) {
   return { id: objectId(member.id), classId: classId(member.cafe.slug), state: "ACTIVE",
     accountId: member.memberNumber, accountName: member.name,
     barcode: { type: "QR_CODE", value: `BL:${member.publicToken}`, alternateText: member.memberNumber },
-    loyaltyPoints: { label: points ? "POINTS" : ready ? "REWARD READY" : member.cafe.businessType === "BARBERSHOP" ? "VISITS" : "STAMPS",
+    loyaltyPoints: { label: points ? (firey ? "FLAMES" : "POINTS") : ready ? "REWARD READY" : member.cafe.businessType === "BARBERSHOP" ? "VISITS" : "STAMPS",
       balance: { string: points ? walletPointsValue(member.pointsBalance, "0") : `${gourmeal && ready ? target : stamps}/${target}` } },
     ...(heroImage ? { heroImage } : {}),
     textModulesData: points ? [
-      { id: "earning-rate", header: "EARNING RATE", body: `${walletPointsValue(member.cafe.pointsPerHundred, "10")} points per EGP 100` },
-      { id: "checkout", header: "AT CHECKOUT", body: "Show your code to earn points or redeem a reward." },
+      { id: "checkout", header: "AT CHECKOUT", body: firey ? "Show your code to collect flames or redeem a reward." : "Show your code to collect points or redeem a reward." },
     ] : [
       { id: "reward", header: "YOUR REWARD", body: loretto ? displayWalletReward(getRewardName(member.cafe)) : getRewardName(member.cafe) },
       ...(mbVape ? [{ id: "progress", header: "STAMPS", body: progress }] : []),

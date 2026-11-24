@@ -41,7 +41,17 @@ export const fireyNashBrand = {
   slug: "firey-nash",
   logo: "/brand/firey-nash/logo.png",
   flame: "/brand/firey-nash/flame.png",
+  instagramUrl: "https://www.instagram.com/firey_nash/",
+  branches: [
+    { id: "fireynashsidigaber", name: "Sidi Gaber" },
+    { id: "fireynashelna2al", name: "El Na2al w El Hanadasa — النقل والهندسة" },
+  ],
 } as const;
+
+export function isFireyNashName(value: string) {
+  const name = value.toLowerCase().replace(/[^a-z]/g, "");
+  return name === "fireynash" || name === "fierynash" || name === "firynash";
+}
 
 export function walletPointsValue(value: { toFixed(): string } | string | undefined, fallback: string) {
   return typeof value === "string" ? value : value?.toFixed() ?? fallback;

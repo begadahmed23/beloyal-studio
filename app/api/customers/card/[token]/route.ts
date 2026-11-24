@@ -86,7 +86,6 @@ export async function GET(
             businessType: true,
           loyaltyMode: true,
           restaurantCategory: true,
-          pointsPerHundred: true,
             logoUrl: true,
             theme: true,
             primaryColor: true,

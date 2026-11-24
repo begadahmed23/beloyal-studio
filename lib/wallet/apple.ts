@@ -26,7 +26,7 @@ export type WalletMember = {
   pointsBalance?: { toFixed(): string } | string;
   rewardEarnedAt: Date | null;
   updatedAt: Date;
-  cafe: { name: string; slug: string; logoUrl?: string | null; theme: string; businessType: BusinessType; loyaltyMode?: LoyaltyMode; pointsPerHundred?: { toFixed(): string } | string; rewardTarget: number; rewardName: string; primaryColor: string; secondaryColor?: string; backgroundColor: string; updatedAt: Date };
+  cafe: { name: string; slug: string; logoUrl?: string | null; theme: string; businessType: BusinessType; loyaltyMode?: LoyaltyMode; rewardTarget: number; rewardName: string; primaryColor: string; secondaryColor?: string; backgroundColor: string; updatedAt: Date };
 };
 
 function color(value: string, fallback: string) {
@@ -84,7 +84,6 @@ export async function createAppleWalletPass(
   const points = cafe.loyaltyMode === "POINTS";
   const firey = cafe.slug === fireyNashBrand.slug;
   const pointsValue = walletPointsValue(member.pointsBalance, "0");
-  const pointsRate = walletPointsValue(cafe.pointsPerHundred, "10");
   const rewardName = /loretto/i.test(member.cafe.slug + member.cafe.name) ? displayWalletReward(getRewardName(cafe)) : getRewardName(cafe);
   const mbVape = isMbVape(cafe);
   const gourmeal = isGourmeal(cafe);
@@ -179,19 +178,19 @@ export async function createAppleWalletPass(
     pass.backFields.push({ key: "shop-location", label: "FIND WALEED SAAD",
       value: "467 Abou Quer, Fleming, Alexandria\nhttps://maps.app.goo.gl/DLqwQhwqEPJCnfpd8" });
   }
-  const balanceChangeMessage = points ? "Your points balance is now %@." : notificationSettings
+  const balanceChangeMessage = points ? (firey ? "Your flame balance is now %@." : "Your points balance is now %@.") : notificationSettings
     ? walletProgressChangeMessage(ready, rewardName, notificationSettings, !ready && stamps === 0)
     : "Your loyalty progress is now %@.";
-  pass.headerFields.push({ key: "balance", label: points ? "POINTS" : ready ? "REWARD READY" : barber ? "VISITS" : "STAMPS", value: points ? pointsValue : `${gourmeal && ready ? target : stamps}/${target}`, ...(walid ? {} : { changeMessage: balanceChangeMessage }) });
+  pass.headerFields.push({ key: "balance", label: points ? (firey ? "FLAMES" : "POINTS") : ready ? "REWARD READY" : barber ? "VISITS" : "STAMPS", value: points ? pointsValue : `${gourmeal && ready ? target : stamps}/${target}`, ...(walid ? {} : { changeMessage: balanceChangeMessage }) });
   pass.secondaryFields.push({ key: "member", label: "MEMBER", value: member.name });
   pass.auxiliaryFields.push(points
-    ? { key: "earning-rate", label: "EARNING RATE", value: `${pointsRate} points per EGP 100` }
+    ? { key: "collect", label: "AT CHECKOUT", value: firey ? "Collect flames with your orders" : "Collect points with your purchases" }
     : { key: "reward", label: "YOUR REWARD", value: rewardName });
   pass.backFields.push({ key: "member-message", label: "CARD UPDATE",
     value: message || "Your loyalty card is connected.", changeMessage: "%@" });
   pass.backFields.push(
-    { key: "progress", label: points ? "Points & rewards" : "Live stamps & rewards", value: cardUrl },
-    { key: "instructions", label: "How to use", value: points ? "Show this QR code at checkout to earn points or redeem rewards." : "Show this QR code at checkout. Open your online card for your current stamps and rewards." },
+    { key: "progress", label: points ? (firey ? "Flames & rewards" : "Points & rewards") : "Live stamps & rewards", value: cardUrl },
+    { key: "instructions", label: "How to use", value: points ? (firey ? "Show this QR code at checkout to collect flames or redeem rewards." : "Show this QR code at checkout to collect points or redeem rewards.") : "Show this QR code at checkout. Open your online card for your current stamps and rewards." },
     { key: "provider", label: "Powered by", value: "BeLoyal" },
   );
   pass.setBarcodes({ format: "PKBarcodeFormatQR", message: `BL:${member.publicToken}`, messageEncoding: "iso-8859-1", altText: member.memberNumber });

@@ -40,7 +40,6 @@ export default async function JoinPage({
       businessType: true,
       loyaltyMode: true,
       restaurantCategory: true,
-      pointsPerHundred: true,
       theme: true,
       logoUrl: true,
       primaryColor: true,
@@ -122,7 +121,7 @@ export default async function JoinPage({
               locationId={locationId}
               cafeName={cafe.name}
               businessType={cafe.businessType}
-              pointsPerHundred={cafe.loyaltyMode === "POINTS" ? cafe.pointsPerHundred.toFixed() : undefined}
+              pointsMode={cafe.loyaltyMode === "POINTS"}
               restaurantCategory={cafe.restaurantCategory ?? undefined}
               theme={businessTheme}
               rewardTarget={cafe.rewardTarget}

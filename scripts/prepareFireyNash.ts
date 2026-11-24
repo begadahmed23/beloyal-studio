@@ -21,7 +21,7 @@ async function prepareFireyNash() {
       subscriptionStatus: "TRIAL",
       isActive: false,
       logoUrl: fireyNashBrand.logo,
-      instagramUrl: "https://www.instagram.com/firey_nash/",
+      instagramUrl: fireyNashBrand.instagramUrl,
       theme, primaryColor, secondaryColor, backgroundColor,
       dashboardTheme: theme,
       dashboardPrimaryColor: primaryColor,
@@ -30,7 +30,7 @@ async function prepareFireyNash() {
       rewardName: "Restaurant Rewards",
       feedbackEnabled: true,
       feedbackRewardEnabled: false,
-      locations: { create: [{ name: "Sidi Gaber" }, { name: "El Na2al w El Hanadasa — النقل والهندسة" }] },
+      locations: { create: [...fireyNashBrand.branches] },
     },
     select: { id: true, slug: true, locations: { select: { id: true, name: true } } },
   });

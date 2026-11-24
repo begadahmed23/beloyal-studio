@@ -1,7 +1,7 @@
 "use client";
 import { phoneDigits } from "@/lib/business/phone-digits";
 import LanguageToggle, { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
-import { restaurantCategories } from "@/lib/business/points";
+import { fireyNashBrand, restaurantCategories } from "@/lib/business/points";
 import type { BusinessType, RestaurantCategory } from "@prisma/client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
@@ -15,7 +15,7 @@ type JoinFormProps = {
   locationId?: string;
   cafeName: string;
   businessType: BusinessType;
-  pointsPerHundred?: string;
+  pointsMode?: boolean;
   restaurantCategory?: RestaurantCategory;
   theme: JoinTheme;
   rewardTarget: number;
@@ -36,7 +36,7 @@ export default function JoinForm({
   locationId,
   cafeName,
   businessType,
-  pointsPerHundred,
+  pointsMode,
   restaurantCategory,
   theme,
   rewardTarget,
@@ -45,6 +45,9 @@ export default function JoinForm({
   const { t, dir, lang, arabic } = useBeLoyalLanguage();
   const router = useRouter();
   const category = restaurantCategory && restaurantCategory !== "OTHER" ? restaurantCategories[restaurantCategory] : null;
+  const firey = cafeSlug === fireyNashBrand.slug;
+  const units = firey ? "flames" : "points";
+  const unitsArabic = firey ? "اللهب" : "النقاط";
   const isBarbershop = businessType === "BARBERSHOP";
   const loyaltyTarget = getLoyaltyProgressTarget({
     businessType,
@@ -278,8 +281,8 @@ export default function JoinForm({
         >
           {mode === "join"
             ? arabic
-              ? <>انضم لـ <bdi>{cafeName}</bdi> وابدأ {pointsPerHundred ? "تجميع النقاط" : isBarbershop ? "تسجيل زياراتك" : "تجميع الأختام"}.</>
-              : pointsPerHundred ? `Join ${cafeName} and earn points on your orders.` : `Join ${cafeName} and start collecting ${isBarbershop ? "visits" : "stamps"}.`
+              ? <>انضم لـ <bdi>{cafeName}</bdi> وابدأ {pointsMode ? `تجميع ${unitsArabic}` : isBarbershop ? "تسجيل زياراتك" : "تجميع الأختام"}.</>
+              : pointsMode ? `Join ${cafeName} and start collecting ${units}.` : `Join ${cafeName} and start collecting ${isBarbershop ? "visits" : "stamps"}.`
             : t("Enter the phone number you used to create your card.")}
         </p>
       </div>
@@ -481,9 +484,9 @@ export default function JoinForm({
                 className="text-center text-sm leading-6"
                 style={{ color: theme.textSecondary }}
               >
-                {pointsPerHundred
-                  ? arabic ? `اكسب ${pointsPerHundred} نقطة لكل ١٠٠ ج.م من طلباتك.`
-                    : `Earn ${pointsPerHundred} points per 100 EGP on your orders.`
+                {pointsMode
+                  ? arabic ? `جمّع ${unitsArabic} مع طلباتك واستبدلها بمكافآت.`
+                    : `Collect ${units} with your orders and redeem rewards.`
                   : <>{arabic
                   ? `${isBarbershop ? "سجّل" : "اجمع"} ${loyaltyTarget} ${isBarbershop ? "زيارات مدفوعة" : "أختام"} واستلم المكافأة في زيارتك الجاية `
                   : isBarbershop

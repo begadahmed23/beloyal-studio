@@ -17,7 +17,6 @@ export type Cafe = {
   slug: string;
   businessType: BusinessType;
   loyaltyMode?: LoyaltyMode;
-  pointsPerHundred?: string;
   logoUrl: string | null;
   theme: string;
   primaryColor: string | null;
@@ -106,7 +105,10 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
   const minimumPurchase = Number(cafe.minimumPurchaseAmount);
   const points = cafe.loyaltyMode === "POINTS";
   const copy = (en: string, ar: string) => lang === "ar" ? ar : en;
-  const rate = copy(`Earn ${cafe.pointsPerHundred} points per 100 EGP`, `اكسب ${cafe.pointsPerHundred} نقطة لكل ١٠٠ ج.م`);
+  const firey = cafe.slug === fireyNashBrand.slug;
+  const earnCopy = firey ? copy("Collect flames with your orders", "جمّع لهب مع طلباتك")
+    : copy("Collect points with your purchases", "جمّع نقاط مع مشترياتك");
+  const unit = firey ? copy("flames", "لهب") : copy("points", "نقطة");
   const defaultRule = cafe.businessType === "BARBERSHOP" ? "One visit per eligible service." : "One stamp per eligible purchase.";
 
   return (
@@ -117,12 +119,12 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
         className={cardFrame}
         style={{ backgroundColor: cardBackground, borderColor: cardBorder, color: textPrimary, colorScheme: cardIsLight ? "light" : "dark" }}
       >
-        <CardBrandHeader business={cafe} balance={points ? { value: customer.pointsBalance ?? "0", label: copy("Points balance", "رصيد النقاط") } : undefined} progress={points ? undefined : { target: rewardTarget, stamps: visibleStamps, label: t(rewardReady ? "Reward ready" : cafe.businessType === "BARBERSHOP" ? "Visits" : "Stamps") }}
+        <CardBrandHeader business={cafe} balance={points ? { value: customer.pointsBalance ?? "0", label: firey ? copy("Flames", "اللهب") : copy("Points balance", "رصيد النقاط") } : undefined} progress={points ? undefined : { target: rewardTarget, stamps: visibleStamps, label: t(rewardReady ? "Reward ready" : cafe.businessType === "BARBERSHOP" ? "Visits" : "Stamps") }}
           logoUrl={props.showLogo ? props.logoUrl : null}
           onLogoError={props.logoUrl ? () => props.onLogoError(props.logoUrl!) : undefined} />
         {points ? <div className="flex items-center justify-center gap-3 border-y px-4 py-4 text-sm font-semibold" style={{ borderColor: cardBorder }}>
-          {cafe.slug === fireyNashBrand.slug && <Image src={fireyNashBrand.flame} alt="" width={16} height={28} />}
-          <p>{rate}</p>
+          {firey && <Image src={fireyNashBrand.flame} alt="" width={16} height={28} />}
+          <p>{earnCopy}</p>
         </div> : <CardStampStrip business={cafe} target={rewardTarget} stamps={visibleStamps} accent={props.primaryColor}
           ink={textPrimary} background={cardBackground} newStampIndex={props.newStampIndex} />}
 
@@ -174,7 +176,7 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
               {reward.photoUrl && <Image src={reward.photoUrl} alt="" width={460} height={200} unoptimized className="aspect-[2.3] w-full object-cover" />}
               <div className="space-y-2 p-3">
                 <h3 className="text-sm font-semibold">{reward.name}</h3>
-                <p className="text-xs">{reward.cost} {copy("points", "نقطة")} · {reward.remaining === "0" ? copy("Available", "متاحة") : copy(`${reward.remaining} more points needed`, `فاضل ${reward.remaining} نقطة`)}</p>
+                <p className="text-xs">{reward.cost} {unit} · {reward.remaining === "0" ? copy("Available", "متاحة") : copy(`${reward.remaining} more ${unit} needed`, `فاضل ${reward.remaining} ${unit}`)}</p>
                 <div role="progressbar" aria-label={reward.name} aria-valuemin={0} aria-valuemax={Number(reward.cost)}
                   aria-valuenow={Math.min(Number(reward.cost), Number(customer.pointsBalance))}
                   className="h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: props.primarySoft }}>
@@ -192,7 +194,7 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
                 {t("Card details")} <ChevronDown size={14} aria-hidden="true" className="group-open:rotate-180" />
               </summary>
               <div className="space-y-2 pb-2">
-                <p>{points ? rate : cafe.eligiblePurchaseDescription || t(defaultRule)}</p>
+                <p>{points ? earnCopy : cafe.eligiblePurchaseDescription || t(defaultRule)}</p>
                 {!points && minimumPurchase > 0 && <p>{t("Minimum purchase")} EGP {minimumPurchase.toLocaleString("en-EG")}</p>}
                 {!points && cafe.rewardDescription && <p>{cafe.rewardDescription}</p>}
                 <p>{t("Member since")} {props.memberSince}</p>

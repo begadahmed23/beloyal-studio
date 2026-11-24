@@ -9,7 +9,7 @@ export default async function StudioPointsPreview({ params }: { params: Promise<
   const { slug } = await params;
   const cafe = await prisma.cafe.findUnique({
     where: { slug },
-    select: { id: true, slug: true, name: true, businessType: true, loyaltyMode: true, pointsPerHundred: true,
+    select: { id: true, slug: true, name: true, businessType: true, loyaltyMode: true,
       logoUrl: true, instagramUrl: true, primaryColor: true, backgroundColor: true, storeLimit: true, isActive: true,
       user: { select: { id: true } },
       locations: { where: { archivedAt: null }, orderBy: { name: "asc" },
@@ -38,6 +38,6 @@ export default async function StudioPointsPreview({ params }: { params: Promise<
       <Link href={`/studio/cafes/${cafe.id}`} className="underline">Manage business</Link>
     </div>
     <PointsCardPreview brand={{ name: cafe.name, slug: cafe.slug, businessType: cafe.businessType }}
-      logoUrl={cafe.logoUrl} rate={cafe.pointsPerHundred.toFixed()} background={cafe.backgroundColor} />
+      logoUrl={cafe.logoUrl} background={cafe.backgroundColor} />
   </main>;
 }

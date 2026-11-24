@@ -16,7 +16,7 @@ const identifier = (value: string) => /^[a-z0-9_-]{1,200}$/i.test(value);
 const PASS_DESIGN_VERSION = Date.UTC(2026, 10, 23, 19, 48);
 const select = { id: true, publicToken: true, memberNumber: true, name: true, stamps: true, pointsBalance: true,
   rewardEarnedAt: true, updatedAt: true,
-  cafe: { select: { id: true, name: true, slug: true, logoUrl: true, theme: true, businessType: true, loyaltyMode: true, pointsPerHundred: true,
+  cafe: { select: { id: true, name: true, slug: true, logoUrl: true, theme: true, businessType: true, loyaltyMode: true,
     rewardTarget: true, rewardName: true, primaryColor: true, secondaryColor: true, backgroundColor: true, updatedAt: true } } } as const;
 
 async function handler(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
