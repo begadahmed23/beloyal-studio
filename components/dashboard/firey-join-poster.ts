@@ -1,5 +1,10 @@
 import { drawJoinPosterCredit } from "./join-poster-credit";
 
+export const fireyJoinPosterCopy = {
+  title: "Collect your Flames",
+  instruction: "Scan to join and start earning.",
+};
+
 export function drawFireyJoinPoster(ctx: CanvasRenderingContext2D, wordmark: HTMLImageElement, branch: string) {
   const gradient = ctx.createLinearGradient(0, 0, 420, 720);
   gradient.addColorStop(0, "#35231e");
@@ -24,10 +29,15 @@ export function drawFireyJoinPoster(ctx: CanvasRenderingContext2D, wordmark: HTM
   ctx.roundRect(84, 225, 252, 252, 21);
   ctx.fillStyle = "#fff";
   ctx.fill();
-  ctx.fillStyle = "#f6f0e9";
-  ctx.font = "700 23px Arial, sans-serif";
-  ctx.fillText("امسح الكود واشترك", 210, 530, 328);
+
   ctx.direction = "ltr";
+  ctx.fillStyle = "#ff8746";
+  ctx.font = "700 29px Arial, sans-serif";
+  ctx.fillText(fireyJoinPosterCopy.title, 210, 526, 336);
+  ctx.fillStyle = "#e5dcd4";
+  ctx.font = "500 15px Arial, sans-serif";
+  ctx.fillText(fireyJoinPosterCopy.instruction, 210, 561, 320);
+
   ctx.strokeStyle = "#61443a";
   ctx.beginPath();
   ctx.moveTo(72, 603);
