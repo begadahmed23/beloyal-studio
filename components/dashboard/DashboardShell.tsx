@@ -22,7 +22,11 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   const isKeka = cafe.businessType === "CAFE" && (slug.includes("keka") || normalizedName.includes("keka"));
   const name = isKato ? "KATŌ" : isKeka ? "Keka" : cafe.name;
   const subtitle = isKato ? "Specialty Coffee" : isKeka ? "Little Rituals, Big Comfort" : cafe.restaurantCategory ? restaurantCategories[cafe.restaurantCategory][lang === "ar" ? "ar" : "en"] : "Loyalty Dashboard";
-  const items = cafeNavigation.filter(item => (userRole !== "CASHIER" || !("adminOnly" in item)));
+  const items = cafeNavigation
+    .filter(item => userRole !== "CASHIER" || !("adminOnly" in item))
+    .map(item => cafe.loyaltyMode === "POINTS" && item.href === "/dashboard/campaigns"
+      ? { ...item, mobileLabel: "Messages" }
+      : item);
 
   let mark: ReactNode;
   if (isMbVape(cafe)) {

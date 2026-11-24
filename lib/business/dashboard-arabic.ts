@@ -25,6 +25,7 @@ export const dashboardArabic = new Map([
   ["USB scanner", "ماسح USB"],
   ["Scan", "مسح"],
   ["Campaigns", "الحملات"],
+  ["Messages", "الرسائل"],
   ["Offers", "العروض"],
   ["Settings", "الإعدادات"],
   ["Setup", "الإعدادات"],
