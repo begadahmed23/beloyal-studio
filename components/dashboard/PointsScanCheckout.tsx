@@ -10,7 +10,7 @@ import { parseLoyaltyScan } from "@/lib/business/loyalty-scan";
 type CheckoutData = {
   members: { id: string; name: string; pointsBalance: string }[];
   locations: { id: string; name: string }[];
-  rewards: { id: string; name: string; cost: string; enabled: boolean; expiresAt: string | null; locations: { locationId: string }[] }[];
+  rewards: { id: string; name: string; cost: string; locations: { locationId: string }[] }[];
   rate: string;
 };
 
@@ -51,7 +51,6 @@ export default function PointsScanCheckout({ value, memberId, onCancel, onComple
   const member = data?.members[0];
   const locationId = branch || data?.locations[0]?.id || "";
   const rewards = data?.rewards.filter(item =>
-    item.enabled && (!item.expiresAt || Date.parse(item.expiresAt) > Date.now()) &&
     item.locations.some(itemLocation => itemLocation.locationId === locationId)) ?? [];
   const selected = rewards.find(item => item.id === choice);
   const redeem = Boolean(choice);

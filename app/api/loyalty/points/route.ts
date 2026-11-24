@@ -90,9 +90,11 @@ export async function GET(request: NextRequest) {
 
   const [rewards, members, history, totals] = await Promise.all([
     prisma.pointsReward.findMany({
-      where: { cafeId, ...(admin ? { archivedAt: null } : {
-        ...activeRewardWhere(), locations: { some: { locationId: user.cashierLocationId ?? "", location: { archivedAt: null } } },
-      }) },
+      where: {
+        cafeId,
+        ...(admin && !checkout ? { archivedAt: null } : activeRewardWhere()),
+        ...(!admin && { locations: { some: { locationId: user.cashierLocationId ?? "", location: { archivedAt: null } } } }),
+      },
       orderBy: { cost: "asc" }, include: { locations: { select: { locationId: true } } },
     }),
     search || customerId ? prisma.customer.findMany({
