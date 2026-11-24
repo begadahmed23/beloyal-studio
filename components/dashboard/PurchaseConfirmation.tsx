@@ -29,7 +29,7 @@ export default function PurchaseConfirmation({ onConfirm, onCancel, submitting =
     ? earnedPoints(normalized, checkout.rate) : null;
   return (
     <Dialog open onOpenChange={open => { if (!open && !submitting) onCancel(); }}>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain border" showCloseButton={false}>
+      <DialogContent className={`max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain border ${checkout ? "max-sm:top-2 max-sm:translate-y-0 max-sm:gap-4 max-sm:p-4" : ""}`} showCloseButton={false}>
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">{checkout?.title ?? t(isBarber ? "Confirm client visit" : "Confirm customer stamp")}</DialogTitle>
           <DialogDescription>{checkout?.description ?? t("Enter the purchase amount if you have it.")}</DialogDescription>

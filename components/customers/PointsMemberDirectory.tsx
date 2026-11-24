@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, Search, Users } from "lucide-react";
+import { ChevronRight, Download, Search, Users } from "lucide-react";
 import NewCustomerDialog from "./NewCustomerDialog";
+import PointsMemberProfile from "./PointsMemberProfile";
 import PointsScanCheckout from "@/components/dashboard/PointsScanCheckout";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
@@ -14,6 +15,8 @@ export type DirectoryMember = {
   memberNumber: string;
   pointsBalance: string;
   createdAt: string;
+  netSpending?: string;
+  purchases?: number;
   phone?: string | null;
   birthday?: string;
   joinLocation?: { name: string } | null;
@@ -27,13 +30,10 @@ type DirectoryResult = {
   locations: { id: string; name: string }[];
 };
 
-const control = "min-h-11 rounded-xl border border-input bg-background px-3 text-sm";
+const control = "min-h-11 min-w-0 rounded-xl border border-input bg-background px-3 text-base";
 const action = "inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-semibold hover:bg-secondary disabled:opacity-50";
 
-export default function PointsMemberDirectory({ database, onSelect }: {
-  database?: boolean;
-  onSelect?: (member: DirectoryMember) => void;
-}) {
+export default function PointsMemberDirectory({ database = false }: { database?: boolean }) {
   const { cafe, userRole } = useCafeTheme();
   const { arabic, lang, dir } = useBeLoyalLanguage();
   const copy = (en: string, ar: string) => arabic ? ar : en;
@@ -45,6 +45,7 @@ export default function PointsMemberDirectory({ database, onSelect }: {
   const [directory, setDirectory] = useState<DirectoryResult | null>(null);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
+  const [selected, setSelected] = useState<DirectoryMember | null>(null);
   const [checkout, setCheckout] = useState<DirectoryMember | null>(null);
   const [saved, setSaved] = useState("");
   useEffect(() => {
@@ -60,6 +61,7 @@ export default function PointsMemberDirectory({ database, onSelect }: {
     const timeout = setTimeout(async () => {
       try {
         const params = new URLSearchParams({ directory: "1", search: query, branch, page: String(page) });
+        if (database) params.set("spending", "1");
         const response = await fetch(`/api/loyalty/points?${params}`, { signal: abort.signal, cache: "no-store" });
         const body = await response.json();
         if (!response.ok) throw new Error(body.message);
@@ -72,13 +74,14 @@ export default function PointsMemberDirectory({ database, onSelect }: {
       }
     }, 200);
     return () => { abort.abort(); clearTimeout(timeout); };
-  }, [query, branch, page, revision]);
+  }, [query, branch, page, revision, database]);
 
-  const date = (value: string) => new Intl.DateTimeFormat(arabic ? "ar-EG" : "en-EG", {
-    dateStyle: "medium", timeZone: cafe.timezone,
-  }).format(new Date(value));
-  const showRow = (member: DirectoryMember) => database ? onSelect?.(member) : setCheckout(member);
-  const rowLabel = database ? copy("View details", "عرض التفاصيل") : copy("Checkout", "الكاشير");
+  const locale = arabic ? "ar-EG" : "en-EG";
+  const money = new Intl.NumberFormat(locale, { style: "currency", currency: "EGP", maximumFractionDigits: 2 });
+  const number = new Intl.NumberFormat(locale, { maximumFractionDigits: 6 });
+  const spending = (member: DirectoryMember) => money.format(Number(member.netSpending ?? "0"));
+  const exportParams = new URLSearchParams({ view: "customers", ...(query.trim() && { search: query.trim() }), ...(branch && { branch }) });
+  const showRow = (member: DirectoryMember) => admin ? setSelected(member) : setCheckout(member);
 
   return (
     <section lang={lang} dir={dir} className="min-w-0 space-y-5">
@@ -87,7 +90,7 @@ export default function PointsMemberDirectory({ database, onSelect }: {
           <h1 className="text-3xl font-semibold tracking-tight">{database ? copy("Customer database", "قاعدة بيانات العملاء") : copy("Members", "الأعضاء")}</h1>
           {directory && <p className="mt-1 text-sm text-muted-foreground">{directory.total} {copy("members", "عضو")}</p>}
         </div>
-        {database ? <a href="/api/loyalty/points/export?view=customers" className={action}><Download size={16} />{copy("Download CSV", "حمّل CSV")}</a> : <NewCustomerDialog />}
+        {database ? <a href={`/api/loyalty/points/export?${exportParams}`} className={action}><Download size={16} aria-hidden="true" />{copy("Download summary CSV", "تحميل ملخص CSV")}</a> : <NewCustomerDialog />}
       </header>
 
       <div className="overflow-hidden rounded-[24px] border border-border bg-card shadow-sm">
@@ -98,7 +101,7 @@ export default function PointsMemberDirectory({ database, onSelect }: {
               type="search" value={query} onChange={event => { setQuery(event.target.value); setPage(1); }}
               className={`${control} w-full ps-10`} maxLength={100} />
           </label>
-          {!!directory?.locations.length && <select aria-label={copy("Signup branch", "فرع التسجيل")} className={control} value={branch} onChange={event => { setBranch(event.target.value); setPage(1); }}>
+          {!!directory?.locations.length && <select aria-label={copy("Signup branch", "فرع التسجيل")} className={`${control} w-full max-w-full sm:w-auto sm:max-w-[48%]`} value={branch} onChange={event => { setBranch(event.target.value); setPage(1); }}>
             <option value="">{copy("All branches", "كل الفروع")}</option>
             {directory.locations.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
           </select>}
@@ -109,27 +112,40 @@ export default function PointsMemberDirectory({ database, onSelect }: {
           {database && <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-start text-sm">
               <thead className="border-b border-border bg-secondary/60 text-xs text-muted-foreground"><tr>
-                {[copy("Customer", "العميل"), copy("Phone", "الهاتف"), unit, copy("Signup branch", "فرع التسجيل"), copy("Joined", "تاريخ التسجيل")].map(label => <th key={label} scope="col" className="p-4 text-start font-semibold">{label}</th>)}
-                <th scope="col" className="p-4"><span className="sr-only">{rowLabel}</span></th>
+                {[copy("Customer", "العميل"), copy("Recorded spending", "الإنفاق المسجل"), copy("Purchases", "عمليات الشراء"), unit, copy("Signup branch", "فرع التسجيل")].map(label => <th key={label} scope="col" className="p-4 text-start font-semibold">{label}</th>)}
               </tr></thead>
-              <tbody className="divide-y divide-border">{directory.members.map(member => <tr key={member.id}>
-                <td className="p-4"><p className="font-semibold">{member.name}</p><p className="mt-1 text-xs text-muted-foreground">{member.memberNumber}</p></td>
-                <td className="p-4" dir="ltr">{member.phone || "—"}</td>
-                <td className="p-4 tabular-nums">{member.pointsBalance}</td>
+              <tbody className="divide-y divide-border">{directory.members.map(member => <tr key={member.id} className="hover:bg-secondary/30">
+                <td className="p-4"><button type="button" onClick={() => showRow(member)} className="min-h-11 text-start">
+                  <span className="block wrap-anywhere font-semibold text-primary">{member.name}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">{member.memberNumber}</span>
+                </button></td>
+                <td className="p-4 font-semibold tabular-nums"><bdi>{spending(member)}</bdi></td>
+                <td className="p-4 tabular-nums">{number.format(member.purchases ?? 0)}</td>
+                <td className="p-4 tabular-nums">{number.format(Number(member.pointsBalance))}</td>
                 <td className="p-4">{member.joinLocation?.name ?? "—"}</td>
-                <td className="whitespace-nowrap p-4">{date(member.createdAt)}</td>
-                <td className="p-4"><button className={action} onClick={() => showRow(member)}>{rowLabel}</button></td>
               </tr>)}</tbody>
             </table>
           </div>}
-          <ul className={`grid gap-3 p-4 sm:grid-cols-2 sm:p-5 ${database ? "md:hidden" : "xl:grid-cols-3"}`}>
-            {directory.members.map(member => <li key={member.id} className="min-w-0 rounded-2xl border border-border p-4">
-              <div className="flex min-w-0 items-start justify-between gap-2">
-                <div className="min-w-0"><p className="wrap-anywhere font-semibold">{member.name}</p><p className="mt-1 text-xs text-muted-foreground">{member.memberNumber}</p></div>
-                <div className="text-end"><p className="wrap-anywhere font-semibold tabular-nums text-primary">{member.pointsBalance}</p><p className="text-xs text-muted-foreground">{unit}</p></div>
-              </div>
-              {admin && <p className="mt-3 text-xs text-muted-foreground">{member.joinLocation?.name ?? copy("No signup branch", "بدون فرع تسجيل")}</p>}
-              <button className={`${action} mt-4 w-full`} onClick={() => showRow(member)}>{rowLabel}</button>
+          <ul className={`grid gap-3 p-3 sm:grid-cols-2 sm:p-5 ${database ? "md:hidden" : "xl:grid-cols-3"}`}>
+            {directory.members.map(member => <li key={member.id} className="min-w-0 rounded-2xl border border-border">
+              <button type="button" onClick={() => showRow(member)} className="block w-full min-w-0 rounded-2xl p-4 text-start hover:bg-secondary/35">
+                <span className="flex min-w-0 items-start justify-between gap-2">
+                  <span className="min-w-0">
+                    <span className="block wrap-anywhere font-semibold">{member.name}</span>
+                    <span className="mt-1 block text-xs text-muted-foreground">{member.memberNumber}</span>
+                  </span>
+                  <ChevronRight size={17} className="shrink-0 text-primary rtl:rotate-180" aria-hidden="true" />
+                </span>
+                <span className="mt-3 flex flex-wrap justify-between gap-2 text-sm">
+                  <span><strong className="tabular-nums text-primary">{number.format(Number(member.pointsBalance))}</strong> {unit}</span>
+                  {database && <strong className="tabular-nums"><bdi>{spending(member)}</bdi></strong>}
+                </span>
+                {database && <span className="mt-1 block text-xs text-muted-foreground">{number.format(member.purchases ?? 0)} {copy("purchases", "عملية شراء")}</span>}
+                {admin && <span className="mt-2 block wrap-anywhere text-xs text-muted-foreground">{member.joinLocation?.name ?? copy("No signup branch", "بدون فرع تسجيل")}</span>}
+              </button>
+              {!database && <div className="px-4 pb-3">
+                <button type="button" className={`${action} w-full`} onClick={() => setCheckout(member)}>{copy("Checkout", "الكاشير")}</button>
+              </div>}
             </li>)}
           </ul>
         </> : directory && <div className="grid justify-items-center gap-3 p-12 text-sm text-muted-foreground"><Users size={24} />{copy("No members found.", "مفيش أعضاء مطابقين.")}</div>}
@@ -140,6 +156,9 @@ export default function PointsMemberDirectory({ database, onSelect }: {
         </div>}
       </div>
       {saved && <p role="status" className="text-sm font-medium text-primary">{saved}</p>}
+      {selected && admin && <PointsMemberProfile key={selected.id} selected={selected} onClose={() => setSelected(null)}
+        onCheckout={member => { setSelected(null); setCheckout(member); }}
+        onUpdated={() => setRevision(value => value + 1)} />}
       {checkout && <PointsScanCheckout memberId={checkout.id} onCancel={() => setCheckout(null)} onComplete={result => {
         setCheckout(null);
         setRevision(value => value + 1);

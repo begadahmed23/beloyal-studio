@@ -115,6 +115,7 @@ export default function CreateCafeDialog({
       getBusinessTerminology(nextBusinessType);
 
     setBusinessType(nextBusinessType);
+    setLoyaltyMode(nextBusinessType === "RESTAURANT" ? "POINTS" : "STAMPS");
     if (nextBusinessType === "RESTAURANT" && isFireyNashName(cafeName)) applyFireyDefaults();
     else if (nextBusinessType === "RESTAURANT") setTheme("RED_ORANGE_LIGHT");
     else if (isRestaurantPalette(theme)) setTheme(DEFAULT_DASHBOARD_THEME);

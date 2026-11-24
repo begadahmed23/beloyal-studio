@@ -570,7 +570,7 @@ export async function POST(
       return NextResponse.json({ message: `Enter a whole number of stores, at least ${minimumStores}.` }, { status: 400 });
     }
 
-    const loyaltyMode = firey ? "POINTS" : body.loyaltyMode ?? "STAMPS";
+    const loyaltyMode = firey ? "POINTS" : body.loyaltyMode ?? (businessType === "RESTAURANT" ? "POINTS" : "STAMPS");
     const rate = earningRateSchema.safeParse(body.pointsPerHundred ?? "10");
     const period = body.billingPeriod;
     if ((loyaltyMode !== "STAMPS" && loyaltyMode !== "POINTS") || !rate.success ||
