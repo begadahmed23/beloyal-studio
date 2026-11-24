@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { pointsMemberSearch, pointsMemberSpending } from "@/lib/business/points-members";
+import { pointsCustomerPage, pointsCustomerScope } from "@/lib/business/points-members";
 import { prisma } from "@/lib/prisma";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
 
@@ -19,8 +19,7 @@ export async function GET(request: NextRequest) {
   const customerId = request.nextUrl.searchParams.get("customer")?.slice(0, 100);
   const view = request.nextUrl.searchParams.get("view");
   const profiles = view === "customers";
-  const branch = profiles ? request.nextUrl.searchParams.get("branch")?.slice(0, 100) : undefined;
-  const search = profiles ? request.nextUrl.searchParams.get("search")?.trim().slice(0, 100) : undefined;
+  const scope = profiles ? pointsCustomerScope(cafeId, cafe.timezone, request.nextUrl.searchParams) : null;
   const headers = profiles
     ? "name,member_number,recorded_spending_egp,purchases,current_points,registration_branch"
     : "transaction_id,timestamp,member_number,member_name,branch,staff,kind,amount_egp,points_change,balance_after,receipt,reward,refund_of,reason";
@@ -32,21 +31,13 @@ export async function GET(request: NextRequest) {
       try {
         const page = { orderBy: { id: "asc" as const }, take: 500, ...(cursor && { cursor: { id: cursor }, skip: 1 }) };
         let lines: string[];
-        if (profiles) {
-          const customers = await prisma.customer.findMany({
-            ...page, where: { cafeId, ...(customerId && { id: customerId }), ...(branch && { joinLocationId: branch }),
-              ...pointsMemberSearch(search ?? "") },
-            select: { id: true, name: true, memberNumber: true, pointsBalance: true, joinLocation: { select: { name: true } } },
-          });
+        if (scope) {
+          const customers = await pointsCustomerPage(cafeId, scope, { after: cursor, take: 500 });
           cursor = customers.at(-1)?.id;
-          const spending = await pointsMemberSpending(cafeId, customers.map(item => item.id));
-          lines = customers.map(item => {
-            const totals = spending.get(item.id);
-            return [
-              csvText(item.name), csvText(item.memberNumber), totals?.netSpending ?? "0.00",
-              totals?.purchases ?? 0, item.pointsBalance.toFixed(), csvText(item.joinLocation?.name),
-            ].join(",");
-          });
+          lines = customers.map(item => [
+            csvText(item.name), csvText(item.memberNumber), item.netSpending,
+            item.purchases, item.pointsBalance.toFixed(), csvText(item.joinLocation?.name),
+          ].join(","));
         } else {
           const rows = await prisma.pointsTransaction.findMany({
             ...page, where: { cafeId, ...(customerId && { customerId }) }, include: {
