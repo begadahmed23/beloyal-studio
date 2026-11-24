@@ -36,7 +36,7 @@ export default async function DashboardLayout({
   const cafe = authData.cafe;
   const { theme, ...palette } = getDashboardPalette(cafe);
   const Shell =
-    cafe.businessType === "BARBERSHOP"
+    cafe.businessType === "BARBERSHOP" && cafe.loyaltyMode !== "POINTS"
       ? BarberDashboardShell
       : DashboardShell;
 
@@ -54,6 +54,8 @@ export default async function DashboardLayout({
         name: cafe.name,
         slug: cafe.slug,
         businessType: cafe.businessType,
+        loyaltyMode: cafe.loyaltyMode,
+        restaurantCategory: cafe.restaurantCategory,
         logoUrl: cafe.logoUrl,
         ...palette,
 
@@ -72,7 +74,7 @@ export default async function DashboardLayout({
           cafe.feedbackEnabled ??
           cafe.businessType === "CAFE",
         feedbackRewardEnabled:
-          cafe.feedbackRewardEnabled,
+          cafe.loyaltyMode !== "POINTS" && cafe.feedbackRewardEnabled,
         googleReviewUrl: cafe.googleReviewUrl,
 
         timezone: cafe.timezone,

@@ -40,7 +40,7 @@ export async function getCashierLocation(
   requireSelection = true,
 ) {
   const cashiers = await db.user.findMany({
-    where: businessCashiers(cafeId),
+    where: { ...businessCashiers(cafeId), isEnabled: true },
     select: { cashierLocationId: true },
   });
   if (cashiers.length >= limit) {

@@ -1,5 +1,6 @@
 "use client";
 
+import { branchQuote } from "@/lib/business/points";
 import type { BusinessType } from "@prisma/client";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -39,6 +40,9 @@ type Cafe = {
   name: string;
   slug: string;
   businessType: BusinessType;
+  storeLimit: number;
+  loyaltyMode?: "STAMPS" | "POINTS";
+  proposedBillingPeriod?: "MONTHLY" | "YEARLY" | null;
   logoUrl: string | null;
 
   theme: CafeTheme;
@@ -197,6 +201,9 @@ export default function ManageCafeEditor() {
   const [backgroundColor, setBackgroundColor] =
     useState("#0c0c0c");
 
+  const [storeLimit, setStoreLimit] = useState("1");
+  const [quotePeriod, setQuotePeriod] = useState<"MONTHLY" | "YEARLY" | "">("");
+  const [initialOwnerPassword, setInitialOwnerPassword] = useState("");
   const [rewardName, setRewardName] =
     useState("");
 
@@ -318,6 +325,8 @@ export default function ManageCafeEditor() {
     setBackgroundColor(nextCafe.backgroundColor);
 
     setRewardName(nextCafe.rewardName);
+    setStoreLimit(String(nextCafe.storeLimit ?? 1));
+    setQuotePeriod(nextCafe.proposedBillingPeriod ?? "");
     setRewardTarget(String(Math.max(nextCafe.rewardTarget, 2)));
 
     setRewardDescription(
@@ -453,8 +462,9 @@ export default function ManageCafeEditor() {
             slug,
             logoUrl,
 
-            ownerName,
-            ownerEmail,
+            ...(cafe?.user && { ownerName, ownerEmail }),
+            storeLimit: Number(storeLimit),
+            proposedBillingPeriod: quotePeriod || null,
 
             theme,
             primaryColor,
@@ -784,6 +794,32 @@ export default function ManageCafeEditor() {
         </div>
       </FormSection>
 
+      {cafe.loyaltyMode === "POINTS" && <a className="block text-sm font-semibold underline" href={`/studio/loyalty-preview/${cafe.slug}`}>Preview loyalty card and branch QR codes</a>}
+      {!cafe.user && <section className="space-y-3 rounded-2xl border border-black/10 bg-white p-5 text-sm">
+        <h2 className="font-semibold">Create owner login</h2>
+        <p>Enter the owner name and email above and set an initial password.</p>
+        <label className="grid gap-1">Initial password
+          <input type="password" autoComplete="new-password" minLength={12} value={initialOwnerPassword}
+            onChange={event => setInitialOwnerPassword(event.target.value)} className="rounded-lg border border-black/15 p-2" />
+        </label>
+        <button type="button" disabled={saving || !ownerName || !ownerEmail || initialOwnerPassword.length < 12}
+          className="rounded-lg border px-4 py-2 disabled:opacity-50"
+          onClick={async () => {
+            setSaving(true); setError(""); setSuccess("");
+            try {
+              const response = await fetch(`/api/studio/cafes/${cafeId}/owner`, {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: ownerName, email: ownerEmail, password: initialOwnerPassword }),
+              });
+              const body = await response.json();
+              if (!response.ok) throw new Error(body.message);
+              setInitialOwnerPassword("");
+              setCafe({ ...cafe, user: body.user });
+              setSuccess("Owner login created.");
+            } catch (error) { setError((error as Error).message); }
+            finally { setSaving(false); }
+          }}>Create owner login</button>
+      </section>}
       <StaffManagementPanel
         endpoint={`/api/studio/cafes/${cafeId}/staff`}
         canCreateAdmins
@@ -795,7 +831,7 @@ export default function ManageCafeEditor() {
         title="Dashboard appearance"
         description="Choose a preset or set custom colors for the owner and cashier dashboards."
       >
-        <ThemeGallery value={theme} onChange={(nextTheme) => {
+        <ThemeGallery businessType={cafe.businessType} value={theme} onChange={(nextTheme) => {
           const [primary, secondary, background] = getDashboardThemeColors(nextTheme);
           setTheme(nextTheme);
           setPrimaryColor(primary);
@@ -914,6 +950,17 @@ export default function ManageCafeEditor() {
         title="Subscription"
         description="Manage billing with simple actions. Dates are calculated automatically."
       >
+        <div className="mb-5 grid gap-3 sm:grid-cols-2">
+          <label className="grid gap-1 text-sm">Subscribed stores
+            <input type="number" min={1} step={1} value={storeLimit} onChange={event => setStoreLimit(event.target.value)} className="rounded-lg border border-black/15 p-2" />
+          </label>
+          <label className="grid gap-1 text-sm">Proposed billing period
+            <select value={quotePeriod} onChange={event => setQuotePeriod(event.target.value as typeof quotePeriod)} className="rounded-lg border border-black/15 p-2">
+              <option value="">Pending</option><option value="MONTHLY">Monthly</option><option value="YEARLY">Yearly</option>
+            </select>
+          </label>
+          <p className="text-sm">Standard quote · EGP {branchQuote(Number(storeLimit) || 0, "MONTHLY").toLocaleString()} monthly or EGP {branchQuote(Number(storeLimit) || 0, "YEARLY").toLocaleString()} yearly</p>
+        </div>
         <SubscriptionControlPanel
           value={{
             subscriptionStatus,

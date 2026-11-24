@@ -19,6 +19,7 @@ import MbVapeStamp from "@/components/brand/MbVapeStamp";
 import { isMbVape, MB_VAPE_WOOD_BACKGROUND } from "@/lib/business/mb-vape";
 import KatoMark from "@/components/brand/KatoMark";
 import AdminFeedbackPanel from "@/components/dashboard/AdminFeedbackPanel";
+import PointsDashboard from "@/components/dashboard/PointsDashboard";
 import BirthdaySummary from "@/components/dashboard/BirthdaySummary";
 import CashierDashboardHome from "@/components/dashboard/CashierDashboardHome";
 import StoreJoinQRCodes from "@/components/dashboard/StoreJoinQRCodes";
@@ -28,6 +29,8 @@ import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 export default function DashboardPage() {
   const { cafe, userRole } = useCafeTheme();
+
+  if (cafe.loyaltyMode === "POINTS") return <PointsDashboard view={userRole === "CASHIER" ? "counter" : "overview"} />;
 
   if (userRole === "CASHIER") {
     return <CashierDashboardHome />;

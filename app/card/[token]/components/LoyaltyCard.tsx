@@ -1,7 +1,9 @@
 "use client";
 import LanguageToggle, { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
-import type { BusinessType } from "@prisma/client";
+import type { BusinessType, LoyaltyMode } from "@prisma/client";
+import Image from "next/image";
+import { fireyNashBrand } from "@/lib/business/points";
 import { ChevronDown, MessageCircle, QrCode, RefreshCw } from "lucide-react";
 import { CardBrandHeader, CardStampStrip, cardFrame } from "@/components/loyalty/CardBrand";
 import { MB_VAPE_IVORY, MB_VAPE_WALNUT } from "@/lib/business/mb-vape";
@@ -14,6 +16,8 @@ export type Cafe = {
   name: string;
   slug: string;
   businessType: BusinessType;
+  loyaltyMode?: LoyaltyMode;
+  pointsPerHundred?: string;
   logoUrl: string | null;
   theme: string;
   primaryColor: string | null;
@@ -46,6 +50,9 @@ export type Customer = {
   name: string;
   birthday: string;
   stamps: number;
+  pointsBalance?: string;
+  rewards?: { id: string; name: string; description: string | null; conditions: string | null; photoUrl: string | null;
+    cost: string; remaining: string; locations: { location: { name: string } }[] }[];
   feedbackRewardedAt: string | null;
   rewardEarnedAt: string | null;
   birthdayRewardRedeemedAt: string | null;
@@ -97,6 +104,9 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
   const { cafe } = customer;
   const mbVape = cafe.businessType === "VAPE";
   const minimumPurchase = Number(cafe.minimumPurchaseAmount);
+  const points = cafe.loyaltyMode === "POINTS";
+  const copy = (en: string, ar: string) => lang === "ar" ? ar : en;
+  const rate = copy(`Earn ${cafe.pointsPerHundred} points per 100 EGP`, `اكسب ${cafe.pointsPerHundred} نقطة لكل ١٠٠ ج.م`);
   const defaultRule = cafe.businessType === "BARBERSHOP" ? "One visit per eligible service." : "One stamp per eligible purchase.";
 
   return (
@@ -107,22 +117,25 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
         className={cardFrame}
         style={{ backgroundColor: cardBackground, borderColor: cardBorder, color: textPrimary, colorScheme: cardIsLight ? "light" : "dark" }}
       >
-        <CardBrandHeader business={cafe} progress={{ target: rewardTarget, stamps: visibleStamps, label: t(rewardReady ? "Reward ready" : cafe.businessType === "BARBERSHOP" ? "Visits" : "Stamps") }}
+        <CardBrandHeader business={cafe} balance={points ? { value: customer.pointsBalance ?? "0", label: copy("Points balance", "رصيد النقاط") } : undefined} progress={points ? undefined : { target: rewardTarget, stamps: visibleStamps, label: t(rewardReady ? "Reward ready" : cafe.businessType === "BARBERSHOP" ? "Visits" : "Stamps") }}
           logoUrl={props.showLogo ? props.logoUrl : null}
           onLogoError={props.logoUrl ? () => props.onLogoError(props.logoUrl!) : undefined} />
-        <CardStampStrip business={cafe} target={rewardTarget} stamps={visibleStamps} accent={props.primaryColor}
-          ink={textPrimary} background={cardBackground} newStampIndex={props.newStampIndex} />
+        {points ? <div className="flex items-center justify-center gap-3 border-y px-4 py-4 text-sm font-semibold" style={{ borderColor: cardBorder }}>
+          {cafe.slug === fireyNashBrand.slug && <Image src={fireyNashBrand.flame} alt="" width={16} height={28} />}
+          <p>{rate}</p>
+        </div> : <CardStampStrip business={cafe} target={rewardTarget} stamps={visibleStamps} accent={props.primaryColor}
+          ink={textPrimary} background={cardBackground} newStampIndex={props.newStampIndex} />}
 
         <div className="space-y-3 px-4 py-4 min-[380px]:px-5">
-          <div className="grid grid-cols-2 gap-3">
+          <div className={points ? "grid gap-3" : "grid grid-cols-2 gap-3"}>
             <div className="min-w-0">
               <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em]" style={{ color: textMuted }}>{t("Member")}</p>
               <h1 className="mt-1 break-words text-base font-semibold leading-tight"><bdi>{customer.name}</bdi></h1>
             </div>
-            <div className="min-w-0 border-s ps-3" style={{ borderColor: cardBorder }}>
+            {!points && <div className="min-w-0 border-s ps-3" style={{ borderColor: cardBorder }}>
               <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em]" style={{ color: textMuted }}>{t("Your reward")}</p>
               <p className="mt-1 break-words text-base font-semibold leading-tight"><bdi>{cafe.rewardName || "Member reward"}</bdi></p>
-            </div>
+            </div>}
           </div>
 
           <button
@@ -154,15 +167,34 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
           )}
 
           {props.birthdayText && <BirthdayCustomerDisplay {...props} />}
+          {points && <section className="space-y-3 border-t pt-3" style={{ borderColor: cardBorder }}>
+            <h2 className="font-semibold">{copy("Rewards", "المكافآت")}</h2>
+            {!customer.rewards?.length && <p className="text-sm">{copy("No rewards available yet.", "مفيش مكافآت متاحة دلوقتي.")}</p>}
+            {customer.rewards?.map(reward => <article key={reward.id} className="overflow-hidden rounded-xl border" style={{ borderColor: cardBorder, backgroundColor: props.surfaceColor }}>
+              {reward.photoUrl && <Image src={reward.photoUrl} alt="" width={460} height={200} unoptimized className="aspect-[2.3] w-full object-cover" />}
+              <div className="space-y-2 p-3">
+                <h3 className="text-sm font-semibold">{reward.name}</h3>
+                <p className="text-xs">{reward.cost} {copy("points", "نقطة")} · {reward.remaining === "0" ? copy("Available", "متاحة") : copy(`${reward.remaining} more points needed`, `فاضل ${reward.remaining} نقطة`)}</p>
+                <div role="progressbar" aria-label={reward.name} aria-valuemin={0} aria-valuemax={Number(reward.cost)}
+                  aria-valuenow={Math.min(Number(reward.cost), Number(customer.pointsBalance))}
+                  className="h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: props.primarySoft }}>
+                  <div className="h-full rounded-full" style={{ width: `${Math.min(100, Number(customer.pointsBalance) / Number(reward.cost) * 100)}%`, backgroundColor: props.primaryColor }} />
+                </div>
+                {reward.description && <p className="text-xs">{reward.description}</p>}
+                {reward.conditions && <p className="text-xs">{reward.conditions}</p>}
+                <p className="text-xs">{reward.locations.map(item => item.location.name).join(" · ")}</p>
+              </div>
+            </article>)}
+          </section>}
           <div className="flex items-start justify-between gap-2 border-t pt-1" style={{ borderColor: cardBorder }}>
             <details className="group min-w-0 flex-1 text-xs leading-5" style={{ color: textSecondary }}>
               <summary className="flex min-h-10 cursor-pointer list-none items-center gap-1.5 font-semibold [&::-webkit-details-marker]:hidden">
                 {t("Card details")} <ChevronDown size={14} aria-hidden="true" className="group-open:rotate-180" />
               </summary>
               <div className="space-y-2 pb-2">
-                <p>{cafe.eligiblePurchaseDescription || t(defaultRule)}</p>
-                {minimumPurchase > 0 && <p>{t("Minimum purchase")} EGP {minimumPurchase.toLocaleString("en-EG")}</p>}
-                {cafe.rewardDescription && <p>{cafe.rewardDescription}</p>}
+                <p>{points ? rate : cafe.eligiblePurchaseDescription || t(defaultRule)}</p>
+                {!points && minimumPurchase > 0 && <p>{t("Minimum purchase")} EGP {minimumPurchase.toLocaleString("en-EG")}</p>}
+                {!points && cafe.rewardDescription && <p>{cafe.rewardDescription}</p>}
                 <p>{t("Member since")} {props.memberSince}</p>
                 <p>{t("Last updated")} {props.lastUpdated}</p>
               </div>

@@ -1,6 +1,6 @@
 import { dashboardPaletteSelect, dashboardPaletteUpdate, getDashboardPalette } from "@/lib/business/dashboard-palette";
 import { NextRequest, NextResponse } from "next/server";
-import { BusinessType, Prisma } from "@prisma/client";
+import { BusinessType, Prisma, RestaurantCategory } from "@prisma/client";
 
 import { provisioningAuth } from "@/lib/provisioning-auth";
 import { prisma } from "@/lib/prisma";
@@ -12,8 +12,10 @@ import {
   DEFAULT_DASHBOARD_THEME,
   getDashboardThemeColors,
   getDefaultBusinessTheme,
+  isRestaurantPalette,
 } from "@/lib/cafe-theme";
 
+import { branchQuote, earningRateSchema, restaurantCategories } from "@/lib/business/points";
 import { getBusinessTerminology } from "@/lib/business/terminology";
 
 const TRIAL_DAYS = 14;
@@ -518,6 +520,7 @@ export async function POST(
   }
 
   try {
+    if (request.headers.get("origin") !== request.nextUrl.origin) return NextResponse.json({ message: "Invalid request origin." }, { status: 403 });
     const body = await request.json();
     const storeLimit = body.storeLimit ?? 1;
     if (!Number.isSafeInteger(storeLimit) || storeLimit < 1 || storeLimit > 2147483647) {
@@ -562,7 +565,20 @@ export async function POST(
           ? (body.businessType as BusinessType)
           : null;
 
-    const defaultRewardName = businessType ? getBusinessTerminology(businessType).defaultRewardName : "";
+    const loyaltyMode = body.loyaltyMode ?? "STAMPS";
+    const rate = earningRateSchema.safeParse(body.pointsPerHundred ?? "10");
+    const period = body.billingPeriod;
+    if ((loyaltyMode !== "STAMPS" && loyaltyMode !== "POINTS") || !rate.success ||
+        (period !== undefined && period !== "MONTHLY" && period !== "YEARLY") ||
+        (isRestaurantPalette(body.theme) && businessType !== "RESTAURANT")) {
+      return NextResponse.json({ message: "Choose valid loyalty, subscription and theme settings." }, { status: 400 });
+    }
+    const restaurantCategory = businessType === "RESTAURANT" ? (body.restaurantCategory ?? "OTHER") as RestaurantCategory : null;
+    if (restaurantCategory !== null && !Object.values(RestaurantCategory).includes(restaurantCategory)) {
+      return NextResponse.json({ message: "Choose a valid food category." }, { status: 400 });
+    }
+    const defaultRewardName = restaurantCategory ? restaurantCategories[restaurantCategory].reward
+      : businessType ? getBusinessTerminology(businessType).defaultRewardName : "";
 
     const rewardName =
       typeof body.rewardName === "string"
@@ -570,11 +586,11 @@ export async function POST(
         : defaultRewardName;
 
     const rewardTarget = Number(
-      body.rewardTarget,
+      body.rewardTarget ?? 7,
     );
 
     const monthlyPrice = Number(
-      body.monthlyPrice,
+      body.monthlyPrice ?? branchQuote(storeLimit, "MONTHLY"),
     );
 
     if (!businessType) {
@@ -738,7 +754,7 @@ export async function POST(
     const savedTheme = dashboardThemeOptions
       .find(option => option.value === body.theme)?.value ?? DEFAULT_DASHBOARD_THEME;
 
-    const cardTheme = getDefaultBusinessTheme(businessType);
+    const cardTheme = isRestaurantPalette(savedTheme) ? savedTheme : getDefaultBusinessTheme(businessType);
     const [primaryColor, secondaryColor, backgroundColor] = getBusinessThemeColors(cardTheme, businessType);
 
     const baseDashboardTheme = savedTheme === APPLE_GREEN_DASHBOARD_THEME ? DEFAULT_DASHBOARD_THEME : savedTheme;
@@ -750,6 +766,10 @@ export async function POST(
           name: cafeName,
           slug,
           businessType,
+          loyaltyMode,
+          restaurantCategory,
+          pointsPerHundred: rate.data,
+          proposedBillingPeriod: period,
           storeLimit,
 
           feedbackEnabled:

@@ -1,16 +1,17 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { dashboardThemeOptions, getDashboardTheme, type DashboardThemeName } from "@/lib/cafe-theme";
+import { dashboardThemeOptions, getDashboardTheme, isRestaurantPalette, type DashboardThemeName } from "@/lib/cafe-theme";
 
-export default function ThemeGallery({ value, onChange, disabled }: {
+export default function ThemeGallery({ value, onChange, disabled, businessType }: {
   value: string;
   onChange: (theme: DashboardThemeName) => void;
   disabled?: boolean;
+  businessType?: string;
 }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-      {dashboardThemeOptions.map((option) => {
+      {dashboardThemeOptions.filter(option => businessType === "RESTAURANT" || !isRestaurantPalette(option.value)).map((option) => {
         const palette = getDashboardTheme(option.value);
         const selected = value === option.value;
         return (

@@ -1,6 +1,7 @@
 "use client";
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
+import PointsDashboard from "@/components/dashboard/PointsDashboard";
 import CashierMemberList from "@/components/customers/CashierMemberList";
 import MemberList from "@/components/customers/MemberList";
 import NewCustomerDialog from "@/components/customers/NewCustomerDialog";
@@ -9,6 +10,7 @@ import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 export default function MembersPage() {
   const { t } = useBeLoyalLanguage();
   const { cafe, userRole } = useCafeTheme();
+  if (cafe.loyaltyMode === "POINTS") return <PointsDashboard />;
   const isBarbershop = cafe.businessType === "BARBERSHOP";
 
   if (userRole === "CASHIER") {

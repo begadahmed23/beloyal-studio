@@ -140,6 +140,9 @@ export async function POST(request: NextRequest) {
   }
 
   const { authData } = access;
+  if (authData.cafe?.loyaltyMode === "POINTS") {
+    return NextResponse.json({ message: "Use points loyalty for this business." }, { status: 409 });
+  }
 
   if (!authData.cafe || !authData.cafeId) {
     return jsonResponse(

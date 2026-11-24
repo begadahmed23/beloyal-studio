@@ -1,7 +1,8 @@
 "use client";
 import { phoneDigits } from "@/lib/business/phone-digits";
 import LanguageToggle, { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
-import type { BusinessType } from "@prisma/client";
+import { restaurantCategories } from "@/lib/business/points";
+import type { BusinessType, RestaurantCategory } from "@prisma/client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -14,6 +15,8 @@ type JoinFormProps = {
   locationId?: string;
   cafeName: string;
   businessType: BusinessType;
+  pointsPerHundred?: string;
+  restaurantCategory?: RestaurantCategory;
   theme: JoinTheme;
   rewardTarget: number;
   rewardName: string;
@@ -33,12 +36,15 @@ export default function JoinForm({
   locationId,
   cafeName,
   businessType,
+  pointsPerHundred,
+  restaurantCategory,
   theme,
   rewardTarget,
   rewardName,
 }: JoinFormProps) {
   const { t, dir, lang, arabic } = useBeLoyalLanguage();
   const router = useRouter();
+  const category = restaurantCategory && restaurantCategory !== "OTHER" ? restaurantCategories[restaurantCategory] : null;
   const isBarbershop = businessType === "BARBERSHOP";
   const loyaltyTarget = getLoyaltyProgressTarget({
     businessType,
@@ -272,12 +278,13 @@ export default function JoinForm({
         >
           {mode === "join"
             ? arabic
-              ? <>انضم لـ <bdi>{cafeName}</bdi> وابدأ {isBarbershop ? "تسجيل زياراتك" : "تجميع الأختام"}.</>
-              : `Join ${cafeName} and start collecting ${isBarbershop ? "visits" : "stamps"}.`
+              ? <>انضم لـ <bdi>{cafeName}</bdi> وابدأ {pointsPerHundred ? "تجميع النقاط" : isBarbershop ? "تسجيل زياراتك" : "تجميع الأختام"}.</>
+              : pointsPerHundred ? `Join ${cafeName} and earn points on your orders.` : `Join ${cafeName} and start collecting ${isBarbershop ? "visits" : "stamps"}.`
             : t("Enter the phone number you used to create your card.")}
         </p>
       </div>
 
+      {category && <p className="mb-3 text-center text-xs font-semibold" style={{ color: theme.textMuted }}>{arabic ? category.ar : category.en}</p>}
       <form onSubmit={handleSubmit} className="space-y-5">
         {mode === "join" && (
           <div>
@@ -474,7 +481,10 @@ export default function JoinForm({
                 className="text-center text-sm leading-6"
                 style={{ color: theme.textSecondary }}
               >
-                {arabic
+                {pointsPerHundred
+                  ? arabic ? `اكسب ${pointsPerHundred} نقطة لكل ١٠٠ ج.م من طلباتك.`
+                    : `Earn ${pointsPerHundred} points per 100 EGP on your orders.`
+                  : <>{arabic
                   ? `${isBarbershop ? "سجّل" : "اجمع"} ${loyaltyTarget} ${isBarbershop ? "زيارات مدفوعة" : "أختام"} واستلم المكافأة في زيارتك الجاية `
                   : isBarbershop
                   ? `Complete ${loyaltyTarget} paid visits, then redeem on your next visit: `
@@ -485,7 +495,7 @@ export default function JoinForm({
                 >
                   <bdi>{rewardName}</bdi>
                 </span>
-                .
+                .</>}
               </p>
             </div>
 

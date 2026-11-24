@@ -3,6 +3,7 @@ export const dashboardArabic = new Map([
   ["Loyalty rewards redeemed", "مكافآت الولاء اللي اتصرفت"],
   ["Reward program", "برنامج المكافآت"],
   ["Total members", "إجمالي الأعضاء"],
+  ["Rewards", "المكافآت"],
   ["All loyalty members", "كل أعضاء برنامج الولاء"],
   ["Members who joined today", "الأعضاء اللي انضموا النهارده"],
   ["Active this month", "النشطون هذا الشهر"],

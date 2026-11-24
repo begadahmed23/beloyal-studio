@@ -73,6 +73,7 @@ export async function GET(
         name: true,
         birthday: true,
         stamps: true,
+        pointsBalance: true,
         feedbackRewardedAt: true,
         rewardEarnedAt: true,
         createdAt: true,
@@ -83,6 +84,9 @@ export async function GET(
             name: true,
             slug: true,
             businessType: true,
+          loyaltyMode: true,
+          restaurantCategory: true,
+          pointsPerHundred: true,
             logoUrl: true,
             theme: true,
             primaryColor: true,
@@ -118,6 +122,7 @@ export async function GET(
     const cafe = {
       ...customer.cafe,
       rewardName: getRewardName(customer.cafe),
+      feedbackRewardEnabled: customer.cafe.loyaltyMode === "STAMPS" && customer.cafe.feedbackRewardEnabled,
       minimumPurchaseAmount: customer.cafe.minimumPurchaseAmount?.toString() ?? null,
       feedbackEnabled:
         customer.cafe.feedbackEnabled ??
@@ -143,7 +148,20 @@ export async function GET(
         })
       : null;
 
+    const rewards = cafe.loyaltyMode === "POINTS" ? await prisma.pointsReward.findMany({
+      where: { cafeId: cafe.id, enabled: true, archivedAt: null,
+        OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+        locations: { some: { location: { archivedAt: null } } } },
+      orderBy: [{ cost: "asc" }, { id: "asc" }],
+      select: { id: true, name: true, description: true, conditions: true, photoUrl: true, cost: true,
+        locations: { where: { location: { archivedAt: null } }, select: { location: { select: { name: true } } } } },
+    }) : [];
+
     return jsonResponse({
+      ...(cafe.loyaltyMode === "POINTS" && { pointsBalance: customer.pointsBalance, rewards: rewards.map(reward => {
+        const remaining = reward.cost.minus(customer.pointsBalance);
+        return { ...reward, remaining: remaining.gt(0) ? remaining.toFixed() : "0" };
+      }) }),
       appleWalletEnabled: appleWalletEnabled(),
       googleWalletEnabled: googleWalletEnabled(),
       id: customer.id,

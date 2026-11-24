@@ -80,7 +80,7 @@ export default function MemberCard({
   const isBarbershop = cafe.businessType === "BARBERSHOP";
   const spendingEnabled = isSpendingTrackingEnabled(cafe);
   const [purchaseOpen, setPurchaseOpen] = useState(false);
-  const LoyaltyIcon = { CAFE: Coffee, BARBERSHOP: Scissors, VAPE: MbVapeStamp, OTHER: Store }[cafe.businessType];
+  const LoyaltyIcon = { CAFE: Coffee, BARBERSHOP: Scissors, VAPE: MbVapeStamp, OTHER: Store, RESTAURANT: Store }[cafe.businessType];
   const personLabel = isBarbershop ? "client" : "member";
   const loyaltyUnit = isBarbershop ? "visit" : "stamp";
 

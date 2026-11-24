@@ -128,6 +128,7 @@ export async function POST(
                     businessType: true,
                     feedbackEnabled: true,
                     feedbackRewardEnabled: true,
+                    loyaltyMode: true,
                     googleReviewUrl: true,
                     rewardTarget: true,
                   },
@@ -188,7 +189,7 @@ export async function POST(
            * is still null can receive this reward.
            */
           const rewardClaim =
-            customer.cafe.feedbackRewardEnabled
+            customer.cafe.loyaltyMode !== "POINTS" && customer.cafe.feedbackRewardEnabled
               ? await tx.customer.updateMany({
                   where: {
                     id: customer.id,

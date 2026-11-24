@@ -38,6 +38,8 @@ export async function GET(request: NextRequest) {
         name: true,
         slug: true,
         businessType: true,
+          loyaltyMode: true,
+          restaurantCategory: true,
         logoUrl: true,
         theme: true,
 

@@ -17,6 +17,7 @@ import {
   useState,
 } from "react";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
+import PointsDashboard from "@/components/dashboard/PointsDashboard";
 import PurchaseConfirmation from "@/components/dashboard/PurchaseConfirmation";
 import { isSpendingTrackingEnabled } from "@/lib/business/spending-tracking";
 
@@ -98,6 +99,11 @@ function playSuccessSound() {
 }
 
 export default function PhoneScannerPage() {
+  const { cafe } = useCafeTheme();
+  return cafe.loyaltyMode === "POINTS" ? <PointsDashboard camera /> : <StampScanner />;
+}
+
+function StampScanner() {
   const { t } = useBeLoyalLanguage();
   const { cafe, theme } = useCafeTheme();
   const isBarbershop = cafe.businessType === "BARBERSHOP";

@@ -1374,7 +1374,7 @@ const visibleStamps = rewardReady
     isLightColor(backgroundColor);
 
   const isKekaCream = isKeka && customer.cafe.theme === "MODERN_MINIMAL";
-  const cardBackground = gourmeal ? GOURMEAL.stone : isLoretto
+  const cardBackground = customer.cafe.businessType === "RESTAURANT" ? backgroundColor : gourmeal ? GOURMEAL.stone : isLoretto
     ? backgroundColor
     : isKeka
       ? (isKekaCream ? "#FFF6E6" : "#741A1D")
