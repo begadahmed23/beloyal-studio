@@ -578,6 +578,27 @@ export function getDashboardThemeColors(themeName: DashboardThemeName): [string,
   return [theme.accent, theme.accentHover, theme.pageBackground];
 }
 
+export const FIREY_NASH_COLORS = ["#ff681f", "#ff8746", "#0b0b0c"] as const;
+
+const fireyNashTheme: CafeThemeConfig = {
+  ...restaurantThemes.RED_ORANGE_DARK,
+  pageBackground: FIREY_NASH_COLORS[2],
+  surface: "#141416",
+  surfaceRaised: "#1d1c1f",
+  border: "#373034",
+  textPrimary: "#fbf8f4",
+  textSecondary: "#e5dcd4",
+  textMuted: "#b7aca6",
+  accent: FIREY_NASH_COLORS[0],
+  accentHover: FIREY_NASH_COLORS[1],
+  accentSoft: "#382016",
+  accentText: "#0b0b0c",
+  buttonText: "#0b0b0c",
+  inputBackground: "#101012",
+  inputBorder: "#5d514e",
+  cardShadow: "0 14px 36px rgb(0 0 0 / 0.3)",
+};
+
 const previousRestaurantColors = {
   RED_ORANGE_LIGHT: ["#c31820", "#a5161a", "#fff5ed"],
   RED_ORANGE_DARK: ["#ff651e", "#ff864d", "#171717"],
@@ -589,6 +610,7 @@ export function getDashboardTheme(themeName: DashboardThemeName, saved?: BrandCo
   const values = [saved?.primaryColor, saved?.secondaryColor, saved?.backgroundColor].map((color, i) =>
     color && /^#[0-9a-f]{6}$/i.test(color) ? color.toLowerCase() : defaults[i],
   ) as [string, string, string];
+  if (themeName === "RED_ORANGE_DARK" && values.every((color, i) => color === FIREY_NASH_COLORS[i])) return fireyNashTheme;
   if (values.every((color, i) => color === defaults[i]) ||
       (isRestaurantPalette(themeName) && values.every((color, i) => color === previousRestaurantColors[themeName][i]))) return base;
   return applyBrandColors(base, values);

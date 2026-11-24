@@ -6,6 +6,7 @@ import { provisioningAuth } from "@/lib/provisioning-auth";
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdmin } from "@/lib/require-super-admin";
 import {
+  FIREY_NASH_COLORS,
   getBusinessThemeColors,
   APPLE_GREEN_DASHBOARD_THEME,
   dashboardThemeOptions,
@@ -760,10 +761,13 @@ export async function POST(
     const theme = firey && !isRestaurantPalette(savedTheme) ? "RED_ORANGE_DARK" : savedTheme;
 
     const cardTheme = isRestaurantPalette(theme) ? theme : getDefaultBusinessTheme(businessType);
-    const [primaryColor, secondaryColor, backgroundColor] = getBusinessThemeColors(cardTheme, businessType);
+    const useFireyPalette = firey && cardTheme === "RED_ORANGE_DARK";
+    const [primaryColor, secondaryColor, backgroundColor] = useFireyPalette
+      ? FIREY_NASH_COLORS : getBusinessThemeColors(cardTheme, businessType);
 
     const baseDashboardTheme = theme === APPLE_GREEN_DASHBOARD_THEME ? DEFAULT_DASHBOARD_THEME : theme;
-    const [dashboardPrimaryColor, dashboardSecondaryColor, dashboardBackgroundColor] = getDashboardThemeColors(baseDashboardTheme);
+    const [dashboardPrimaryColor, dashboardSecondaryColor, dashboardBackgroundColor] = useFireyPalette
+      ? FIREY_NASH_COLORS : getDashboardThemeColors(baseDashboardTheme);
 
     const cafe =
       await prisma.cafe.create({
