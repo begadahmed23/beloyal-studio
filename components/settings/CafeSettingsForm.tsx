@@ -311,7 +311,9 @@ export default function CafeSettingsForm() {
       const response = await fetch("/api/cafe/wallet/refresh", { method: "POST" });
       const result: { message?: string; rewardName?: string } = await response.json();
       if (!response.ok) throw new Error(result.message || "Unable to refresh Wallet cards.");
-      setWalletRefreshMessage(`Sending saved cards the current reward: ${result.rewardName || "your saved reward"}. Wallet updates can take a few minutes.`);
+      setWalletRefreshMessage(cafe.loyaltyMode === "POINTS"
+        ? t("Wallet refresh requested.")
+        : `Sending saved cards the current reward: ${result.rewardName || "your saved reward"}. Wallet updates can take a few minutes.`);
     } catch (error) {
       setWalletRefreshMessage(error instanceof Error ? error.message : "Unable to refresh Wallet cards.");
     } finally {
@@ -838,7 +840,7 @@ export default function CafeSettingsForm() {
             <div>
               <p className="text-sm font-semibold" style={{ color: theme.textPrimary }}>Saved Wallet cards</p>
               <p className="mt-1 text-xs" style={{ color: theme.textSecondary }}>
-                Use this if Apple or Google Wallet still shows an old reward.
+                {cafe.loyaltyMode === "POINTS" ? t("Refresh the design and balance on saved cards.") : "Use this if Apple or Google Wallet still shows an old reward."}
               </p>
             </div>
             <button type="button" onClick={() => void refreshSavedWalletCards()}
