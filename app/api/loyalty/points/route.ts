@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { requireActiveCafe } from "@/lib/require-active-cafe";
 import { applyPublicRateLimit, publicApiRateLimiters } from "@/lib/public-api-security";
 import { activeRewardWhere, pointsEntrySchema, recordPointsEntry } from "@/lib/business/points-ledger";
+import { loyaltyTokenPattern } from "@/lib/business/loyalty-scan";
+import { rewardClaimStatus } from "@/lib/business/reward-claim";
 import { earningRateSchema, rewardCostSchema } from "@/lib/business/points";
 import { StoreCapacityError, withStoreCapacity } from "@/lib/business/store-capacity";
 import { walletPassTypesForBusiness, walletUpdatesEnabled } from "@/lib/wallet/config";
@@ -56,7 +58,17 @@ export async function GET(request: NextRequest) {
   const { cafe, cafeId, user, admin } = access;
   const search = request.nextUrl.searchParams.get("search")?.trim().slice(0, 100) ?? "";
   const checkout = request.nextUrl.searchParams.get("checkout") === "1";
-  const customerId = request.nextUrl.searchParams.get("customer")?.slice(0, 100);
+  const claimCode = checkout ? request.headers.get("x-reward-code") : null;
+  const claim = claimCode && loyaltyTokenPattern.test(claimCode)
+    ? await prisma.pointsRewardClaim.findFirst({
+        where: { code: claimCode, cafeId },
+        select: { customerId: true, rewardId: true, code: true, expiresAt: true, consumedAt: true },
+      }) : null;
+  if (claimCode && (!claim || rewardClaimStatus(claim) === "expired")) {
+    return json({ message: "This reward code has expired. Ask the customer to open a fresh code." }, 410);
+  }
+  if (claim?.consumedAt) return json({ message: "This reward code has already been redeemed." }, 409);
+  const customerId = claim?.customerId ?? request.nextUrl.searchParams.get("customer")?.slice(0, 100);
   const token = search.match(/^(?:BL:|https?:\/\/[^/]+\/card\/)?([a-f0-9]{48})\/?$/i)?.[1];
   const digits = search.replace(/[^0-9]/g, "");
   const locations = await prisma.cafeLocation.findMany({
@@ -145,6 +157,7 @@ export async function GET(request: NextRequest) {
     admin && customerId && members.length ? getWalletStatus(customerId, cafe.slug) : undefined,
   ]);
   return json({ rate: cafe.pointsPerHundred, locations, rewards,
+    claim: claim ? { rewardId: claim.rewardId, expiresAt: claim.expiresAt, now: new Date() } : undefined,
     members: wallet ? members.map(member => ({ ...member, wallet })) : members,
     history, totals, analytics: analytics?.[0], ...(analytics && { breakdown: { daily, branches, popular } }) });
 }
@@ -190,7 +203,7 @@ export async function POST(request: NextRequest) {
     const transaction = pointsEntrySchema.safeParse(body);
     if (transaction.success) {
       const result = await recordPointsEntry(cafeId, { id: user.id, role: admin ? "CAFE_ADMIN" : "CASHIER" }, transaction.data);
-      scheduleWalletUpdate(transaction.data.customerId);
+      if (!result.replay) scheduleWalletUpdate(transaction.data.customerId);
       return json({ balance: result.balance, id: result.entry.id, replay: result.replay });
     }
     if (!admin) return json({ message: "Enter valid transaction details." }, 400);
