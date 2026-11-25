@@ -4,7 +4,7 @@ import type { BusinessType } from "@prisma/client";
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import { useEffect, useEffectEvent, useRef, useState } from "react";
-import { CheckCircle2, Clock3, X } from "lucide-react";
+import { CheckCircle2, Clock3, LoaderCircle, X } from "lucide-react";
 import { loyaltyScanValue, rewardScanValue } from "@/lib/business/loyalty-scan";
 import QRCode from "react-qr-code";
 
@@ -430,7 +430,20 @@ export default function QrCodeModal({
           {redeemReward && reward.status === "redeemed" && <div role="status" className="mt-5 flex items-center justify-center gap-2 rounded-2xl border p-4 text-sm font-semibold" style={{ borderColor: cardBorder, backgroundColor: surfaceColor }}>
             <CheckCircle2 size={20} aria-hidden="true" /> {arabic ? "تم استبدال المكافأة" : "Reward redeemed"}
           </div>}
-          {redeemReward && reward.status === "loading" && <p role="status" className="mt-5 text-sm">{arabic ? "جارٍ تجهيز الكود…" : "Preparing your reward code…"}</p>}
+          {redeemReward && reward.status === "loading" && (
+            <div role="status" className="pt-4">
+              <p className="min-h-8 content-center text-sm font-medium" style={{ color: textSecondary }}>
+                {arabic ? "جارٍ تجهيز الكود…" : "Preparing your reward code…"}
+              </p>
+              <div aria-hidden="true"
+                className="mx-auto mt-5 grid aspect-square max-w-full place-items-center rounded-[20px] border min-[380px]:mt-6 min-[380px]:rounded-[24px]"
+                style={{ width: "min(232px, calc(100vw - 56px))", borderColor: cardBorder, backgroundColor: surfaceColor }}>
+                <div className="grid size-16 place-items-center rounded-full" style={{ backgroundColor: primarySoft, color: primaryColor }}>
+                  <LoaderCircle size={30} className="motion-safe:animate-spin" />
+                </div>
+              </div>
+            </div>
+          )}
           {redeemReward && (reward.status === "expired" || reward.status === "error") && <div className="mt-5 space-y-3">
             <p role="status" className="text-sm">{reward.status === "expired"
               ? (arabic ? "انتهت صلاحية الكود." : "This code expired.")
