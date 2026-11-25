@@ -1,5 +1,7 @@
 "use client";
 
+import { AnalyticsSkeleton } from "@/components/dashboard/DashboardSkeletons";
+import { SkeletonGroup, SkeletonRows } from "@/components/ui/skeleton";
 import { useEffect, useRef, useState, type ComponentProps, type FormEvent } from "react";
 import Link from "next/link";
 import { Download, Gift, ScanLine } from "lucide-react";
@@ -152,7 +154,6 @@ export default function PointsDashboard({ view }: { view: "rewards" | "overview"
 
   return (
     <div id={view === "rewards" ? "loyalty-program" : undefined} lang={lang} dir={dir} className="min-w-0 scroll-mt-24 space-y-4">
-      {loading && <p role="status" className="text-sm text-muted-foreground">{copy("Loading…", "جارٍ التحميل…")}</p>}
       {error && !reward && <p role="alert" className="rounded-xl border border-destructive/50 p-3">{error}</p>}
       {message && <p role="status" className="text-sm text-primary">{message}</p>}
       {view === "overview" ? <>
@@ -164,6 +165,7 @@ export default function PointsDashboard({ view }: { view: "rewards" | "overview"
             <Link className={button} href="/dashboard/scanner/phone"><ScanLine size={16} aria-hidden="true" />{copy("Scan a card", "امسح الكارت")}</Link>
           </div>
         </header>
+        {loading && <AnalyticsSkeleton points label={copy("Loading analytics…", "جارٍ تحميل التحليلات…")} />}
         {data.analytics && data.breakdown && <PointsAnalytics analytics={data.analytics} breakdown={data.breakdown}
           purchaseCount={buy?._count._all ?? 0} netSpending={Number(buy?._sum.amount ?? 0) - Number(refund?._sum.amount ?? 0)}
           issued={Number(buy?._sum.delta ?? 0)} redeemed={Math.abs(Number(redeem?._sum.delta ?? 0))}
@@ -173,6 +175,7 @@ export default function PointsDashboard({ view }: { view: "rewards" | "overview"
             <h2 className="text-lg font-semibold">{copy("Recent activity", "آخر النشاط")}</h2>
             <a className={button} href={endpoint + "/export?view=ledger"}><Download size={15} aria-hidden="true" />{copy("Activity CSV", "تحميل سجل النشاط")}</a>
           </div>
+          {loading && <SkeletonGroup label={copy("Loading activity…", "جارٍ تحميل النشاط…")}><SkeletonRows /></SkeletonGroup>}
           {!loading && !data.history.length && <p className="text-sm text-muted-foreground">{copy("No transactions recorded yet.", "مفيش معاملات مسجلة لسه.")}</p>}
           <ul className="divide-y divide-border">{data.history.map(row => <li key={row.id} className="min-w-0 py-3 text-sm">
             <div className="flex flex-wrap justify-between gap-1"><p className="min-w-0 wrap-anywhere font-semibold">{row.customer.name}</p>
@@ -225,6 +228,7 @@ export default function PointsDashboard({ view }: { view: "rewards" | "overview"
           <button className={button} disabled={busy || loading || !!reward}>{copy("Save rate", "احفظ المعدل")}</button>
         </form>
         <div className="divide-y divide-border">
+          {loading && <SkeletonGroup label={copy("Loading rewards…", "جارٍ تحميل المكافآت…")}><SkeletonRows /></SkeletonGroup>}
           {!loading && !data.rewards.length && !reward && <p className="py-3 text-sm text-muted-foreground">{copy("Add your first item with a photo and a redemption cost.", "أضف أول عنصر مع صورته وتكلفة استبداله.")}</p>}
           {data.rewards.map(item => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
             <div className="min-w-0"><p className="wrap-anywhere font-semibold">{item.name}</p><p className="mt-1 text-xs text-muted-foreground">{item.cost} {unit} · {item.enabled ? copy("Enabled", "مفعّلة") : copy("Disabled", "غير مفعّلة")}</p></div>

@@ -113,7 +113,7 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
   const defaultRule = cafe.businessType === "BARBERSHOP" ? "One visit per eligible service." : "One stamp per eligible purchase.";
 
   return (
-    <div className="mx-auto w-full max-w-md" lang={lang} dir={dir}>
+    <div data-card-reveal className="mx-auto w-full max-w-md" lang={lang} dir={dir}>
       <div className="mb-3 flex justify-end"><LanguageToggle /></div>
       <article
         aria-label={`${cafe.name} loyalty card`}
@@ -127,7 +127,7 @@ export default function LoyaltyCard(props: LoyaltyCardProps) {
         {!points && <CardStampStrip business={cafe} target={rewardTarget} stamps={visibleStamps} accent={props.primaryColor}
           ink={textPrimary} background={cardBackground} newStampIndex={props.newStampIndex} />}
 
-        <div className={points ? "space-y-4 px-5 py-5 sm:px-7 sm:py-6" : "space-y-3 px-4 py-4 min-[380px]:px-5"}>
+        <div data-card-body className={points ? "space-y-4 px-5 py-5 sm:px-7 sm:py-6" : "space-y-3 px-4 py-4 min-[380px]:px-5"}>
           <div className={points ? "grid gap-3" : "grid grid-cols-2 gap-3"}>
             <div className="min-w-0">
               <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em]" style={{ color: textMuted }}>{t("Member")}</p>

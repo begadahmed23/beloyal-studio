@@ -1,5 +1,7 @@
 "use client";
 
+import { MemberCardsSkeleton } from "@/components/dashboard/DashboardSkeletons";
+import { SkeletonGroup, SkeletonRows } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import { ChevronRight, Download, Filter, Search, Users } from "lucide-react";
 import NewCustomerDialog from "./NewCustomerDialog";
@@ -182,7 +184,17 @@ export default function PointsMemberDirectory({ database = false }: { database?:
           </div>}
         </div>
         {error && <p role="alert" className="p-4 text-sm text-destructive">{error}</p>}
-        {!directory && !error && <p role="status" className="p-5 text-sm text-muted-foreground">{copy("Loading members…", "جارٍ تحميل الأعضاء…")}</p>}
+        {!directory && !error && (
+          <div>
+            {database && <div className="hidden md:block">
+              <SkeletonGroup label={copy("Loading members…", "جارٍ تحميل الأعضاء…")}><SkeletonRows /></SkeletonGroup>
+            </div>}
+            <div className={database ? "md:hidden" : undefined}>
+              <MemberCardsSkeleton label={copy("Loading members…", "جارٍ تحميل الأعضاء…")}
+                className={`grid gap-3 p-3 sm:grid-cols-2 sm:p-5 ${database ? "" : "xl:grid-cols-3"}`} />
+            </div>
+          </div>
+        )}
         {directory?.members.length ? <>
           {database && <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-start text-sm">

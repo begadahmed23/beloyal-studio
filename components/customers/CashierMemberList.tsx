@@ -1,11 +1,12 @@
 "use client";
+import { MemberCardsSkeleton } from "@/components/dashboard/DashboardSkeletons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import {
   Cake,
   CheckCircle2,
   Gift,
-  LoaderCircle,
    Search,
   Stamp,
   TriangleAlert,
@@ -197,17 +198,12 @@ export default function CashierMemberList() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex min-h-52 items-center justify-center">
-        <LoaderCircle
-          size={28}
-          className="animate-spin"
-          style={{ color: theme.accent }}
-        />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="space-y-5">
+      <Skeleton className="h-12 w-full rounded-xl" />
+      <MemberCardsSkeleton label={t("Loading members…")} className="grid gap-3 md:grid-cols-2" />
+    </div>
+  );
 
   if (!data) {
     return (

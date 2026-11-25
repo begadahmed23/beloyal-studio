@@ -1,4 +1,5 @@
 "use client";
+import { AnalyticsSkeleton } from "@/components/dashboard/DashboardSkeletons";
 import { getBusinessTerminology } from "@/lib/business/terminology";
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
@@ -14,7 +15,6 @@ import {
   ChevronUp,
   CircleGauge,
   Gift,
-  LoaderCircle,
   MessageCircle,
   RefreshCw,
   Star,
@@ -206,39 +206,7 @@ export default function SimpleAnalytics() {
     };
   }, [loadAnalytics]);
 
-  if (loading) {
-    return (
-      <div
-        className="flex min-h-40 items-center justify-center border p-8"
-        style={{
-          borderColor: theme.border,
-          backgroundColor: theme.surface,
-          borderRadius:
-            theme.radiusLarge,
-          boxShadow: theme.cardShadow,
-        }}
-      >
-        <div className="text-center">
-          <LoaderCircle
-            size={27}
-            className="mx-auto animate-spin"
-            style={{
-              color: theme.accent,
-            }}
-          />
-
-          <p
-            className="mt-4 text-sm"
-            style={{
-              color: theme.textMuted,
-            }}
-          >
-            Loading analytics...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <AnalyticsSkeleton label={t("Loading analytics...")} />;
 
   if (error || !data) {
     return (

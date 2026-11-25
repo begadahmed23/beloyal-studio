@@ -1,5 +1,6 @@
 "use client";
 
+import { CustomerDatabaseSkeleton } from "@/components/dashboard/DashboardSkeletons";
 import { getLoyaltyProgressTarget } from "@/lib/business/loyalty-target";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -7,7 +8,6 @@ import {
   Cake,
   Download,
   Filter,
-  LoaderCircle,
   Search,
   TriangleAlert,
   Users,
@@ -170,6 +170,7 @@ function BranchDetails({ customer }: { customer: Customer }) {
 }
 
 export default function AdminCustomerDatabase() {
+  const { arabic } = useBeLoyalLanguage();
   const { theme } = useCafeTheme();
 
   const [data, setData] =
@@ -407,25 +408,7 @@ export default function AdminCustomerDatabase() {
     setHighFrequencyOnly(false);
   }
 
-  if (loading) {
-    return (
-      <div className="flex min-h-72 items-center justify-center">
-        <div className="text-center">
-          <LoaderCircle
-            className="mx-auto animate-spin"
-            size={28}
-            style={{ color: theme.accent }}
-          />
-          <p
-            className="mt-3 text-sm"
-            style={{ color: theme.textMuted }}
-          >
-            Loading customer database...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <CustomerDatabaseSkeleton label={arabic ? "جارٍ تحميل قاعدة العملاء…" : "Loading customer database…"} />;
 
   if (error || !data) {
     return (

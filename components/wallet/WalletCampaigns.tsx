@@ -1,4 +1,5 @@
 "use client";
+import { Skeleton, SkeletonGroup, SkeletonRows } from "@/components/ui/skeleton";
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -144,7 +145,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
       { label: "Total members", value: data?.totalMembers, icon: Users },
       { label: t("Wallet members"), value: data?.walletMembers, icon: Wallet },
       { label: t("Agreed to offers"), value: data?.counts?.all, icon: Check },
-    ].map(stat => <div key={stat.label} className="rounded-2xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-3 sm:p-5"><stat.icon size={17} className="mb-3 text-[var(--wallet-muted,#71717a)]"/><p className="text-2xl font-semibold tracking-tight sm:text-3xl">{stat.value ?? "—"}</p><p className="mt-1 text-[11px] text-[var(--wallet-muted,#71717a)] sm:text-xs">{stat.label}</p></div>)}</div>
+    ].map(stat => <div key={stat.label} className="rounded-2xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-3 sm:p-5"><stat.icon size={17} className="mb-3 text-[var(--wallet-muted,#71717a)]"/><p className="text-2xl font-semibold tracking-tight sm:text-3xl">{!data && !audienceError ? <Skeleton className="h-8 w-10" /> : stat.value ?? "—"}</p><p className="mt-1 text-[11px] text-[var(--wallet-muted,#71717a)] sm:text-xs">{stat.label}</p></div>)}</div>
     <section className="mt-7 rounded-3xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-4 shadow-sm sm:p-6">
       <h2 className="font-semibold">{t("Who should get the message?")}</h2>
       <p className="mt-1 text-xs leading-5 text-[var(--wallet-muted,#71717a)]">{t("You can message members who saved a Wallet card and agreed to receive offers.")}</p>
@@ -190,7 +191,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
       <p className="mt-3 text-xs text-[var(--wallet-muted,#71717a)]">{eligible.length} eligible · {selected.length}/{MAX_CAMPAIGN_RECIPIENTS} selected per campaign. The 30+ day group is also included in 14+ days.</p>
       {audienceError && <p role="alert" className="mt-3 text-sm text-red-700">Could not refresh the member list. {t(audienceError)}</p>}
       <div className="mt-3 max-h-80 overflow-y-auto rounded-2xl border border-[var(--wallet-border,#e4e4e7)]">
-        {!data && !audienceError && <p className="flex items-center gap-2 p-5 text-sm text-[var(--wallet-muted,#71717a)]"><Loader2 size={16} className="animate-spin"/>{" " + t("Loading Wallet members…")}</p>}
+        {!data && !audienceError && <SkeletonGroup label={t("Loading Wallet members…")}><SkeletonRows /></SkeletonGroup>}
         {data && !visible.length && <div className="p-7 text-center"><Wallet size={24} className="mx-auto text-[var(--wallet-muted,#71717a)]"/><p className="mt-3 text-sm font-medium">{search.trim() ? t("No Wallet members match your search") : t("No Wallet members in this group yet")}</p><p className="mt-1 text-xs leading-5 text-[var(--wallet-muted,#71717a)]">{t("Try another group or refresh the audience after a member saves their pass.")}</p></div>}
         {shown.map(member => {
           const canSelect = member.offersStatus === "enabled";
@@ -316,7 +317,9 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
               </button>
             ))}
           </article>;
-        }) : <p className="rounded-2xl border border-dashed border-[var(--wallet-border,#e4e4e7)] p-6 text-sm text-[var(--wallet-muted,#71717a)]">{t(data ? "Sent messages will appear here." : audienceError ? "Message history is unavailable." : "Loading message history…")}</p>}
+        }) : !data && !audienceError ? (
+          <SkeletonGroup label={t("Loading message history…")} className="rounded-2xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)]"><SkeletonRows count={2} /></SkeletonGroup>
+        ) : <p className="rounded-2xl border border-dashed border-[var(--wallet-border,#e4e4e7)] p-6 text-sm text-[var(--wallet-muted,#71717a)]">{t(data ? "Sent messages will appear here." : "Message history is unavailable.")}</p>}
       </div>
     </section>
   </div>;

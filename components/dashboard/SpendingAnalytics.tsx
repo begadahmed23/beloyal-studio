@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, CreditCard, ReceiptText, Search, TrendingUp } from "lucide-react";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
+import { Skeleton, SkeletonGroup, SkeletonRows } from "@/components/ui/skeleton";
 
 type Entry = { id: string; date: string; amount: number; customer: string; location: string };
 type Day = { date: string; amount: number };
@@ -155,7 +156,25 @@ export default function SpendingAnalytics() {
           </div>
         </div>
       </>}
-      {loading && !data && !error && <p className="mt-6 text-sm" style={{ color: muted }}>Loading spending analytics...</p>}
+      {loading && !data && !error && (
+        <SkeletonGroup label="Loading spending analytics" className="mt-5">
+          <div className="space-y-4" data-skeleton-stack>
+            <div className="grid grid-cols-2 gap-3">
+              {[0, 1].map(index => (
+                <div key={index} className="space-y-3 rounded-2xl border border-border p-3 sm:p-5">
+                  <Skeleton className="h-3 w-24 max-w-full" />
+                  <Skeleton className="h-8 w-20 max-w-full" />
+                </div>
+              ))}
+            </div>
+            <div className="rounded-2xl border border-border p-3 sm:p-5">
+              <Skeleton className="h-5 w-36" />
+              <Skeleton className="mt-5 h-52 w-full rounded-xl" />
+            </div>
+            <SkeletonRows count={2} />
+          </div>
+        </SkeletonGroup>
+      )}
     </section>
   );
 }

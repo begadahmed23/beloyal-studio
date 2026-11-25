@@ -13,6 +13,7 @@ import {
   normalizeHex,
 } from "./card-theme-utils";
 
+import LoyaltyCardSkeleton, { loyaltyCardPageClass } from "./components/LoyaltyCardSkeleton";
 import QrCodeModal from "./components/QrCodeModal";
 import RewardCelebrationModal from "./components/RewardCelebrationModal";
 import GoogleReviewModal from "./components/GoogleReviewModal";
@@ -62,6 +63,7 @@ type FeedbackResponse = {
 type LoaderTheme = {
   background: string;
   foreground: string;
+  points?: boolean;
 };
 
 const DEFAULT_LOADER_THEME: LoaderTheme = {
@@ -356,10 +358,10 @@ export default function DigitalCardPage() {
         const incomingCustomer =
           data as Customer;
 
-        const incomingLoaderTheme =
-          getLoaderTheme(
-            incomingCustomer,
-          );
+        const incomingLoaderTheme = {
+          ...getLoaderTheme(incomingCustomer),
+          points: incomingCustomer.cafe.loyaltyMode === "POINTS",
+        };
 
         setLoaderTheme(
           incomingLoaderTheme,
@@ -543,6 +545,7 @@ export default function DigitalCardPage() {
           background:
             background as string,
           foreground,
+          points: parsedTheme.points === true,
         });
       }
     } catch {
@@ -1103,146 +1106,7 @@ export default function DigitalCardPage() {
       );
     };
 
-  if (loading) {
-    return (
-      <main
-        className="flex min-h-screen items-center justify-center px-6 transition-colors duration-500"
-        style={{
-          background:
-            loaderTheme.background,
-          color:
-            loaderTheme.foreground,
-        }}
-      >
-        <div className="w-full max-w-[250px] text-center">
-          <div className="relative mx-auto h-20 w-20">
-            <div
-              className="beloyal-loader-ring absolute inset-0 rounded-full border"
-              style={{
-                borderColor: withAlpha(
-                  loaderTheme.foreground,
-                  0.15,
-                ),
-              }}
-            />
-            <div
-              className="beloyal-loader-ring beloyal-loader-ring-delayed absolute inset-[7px] rounded-full border"
-              style={{
-                borderColor: withAlpha(
-                  loaderTheme.foreground,
-                  0.2,
-                ),
-              }}
-            />
-            <div
-              className="absolute inset-[14px] flex items-center justify-center rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.12)]"
-              style={{
-                backgroundColor:
-                  loaderTheme.foreground,
-                color: getReadableText(
-                  loaderTheme.foreground,
-                ),
-              }}
-            >
-              <span className="text-[20px] font-semibold tracking-[-0.07em]">
-                B
-              </span>
-            </div>
-          </div>
-
-          <p
-            className="mt-6 text-[11px] font-semibold uppercase tracking-[0.32em]"
-            style={{
-              color: withAlpha(
-                loaderTheme.foreground,
-                0.5,
-              ),
-            }}
-          >
-            BeLoyal
-          </p>
-
-          <p
-            className="mt-2 text-sm font-medium"
-            style={{
-              color: withAlpha(
-                loaderTheme.foreground,
-                0.82,
-              ),
-            }}
-          >
-            Your loyalty card
-          </p>
-
-          <div className="mt-5 flex items-center justify-center gap-1.5">
-            {[0, 140, 280].map(
-              (delay) => (
-                <span
-                  key={delay}
-                  className="beloyal-loader-dot h-1.5 w-1.5 rounded-full"
-                  style={{
-                    animationDelay:
-                      `${delay}ms`,
-                    backgroundColor:
-                      withAlpha(
-                        loaderTheme.foreground,
-                        0.68,
-                      ),
-                  }}
-                />
-              ),
-            )}
-          </div>
-        </div>
-
-        <style jsx global>{`
-          @keyframes beloyal-loader-ring {
-            0% {
-              opacity: 0.15;
-              transform: scale(0.82);
-            }
-            55% {
-              opacity: 0.7;
-            }
-            100% {
-              opacity: 0;
-              transform: scale(1.2);
-            }
-          }
-
-          @keyframes beloyal-loader-dot {
-            0%, 100% {
-              opacity: 0.3;
-              transform: translateY(0);
-            }
-            50% {
-              opacity: 1;
-              transform: translateY(-3px);
-            }
-          }
-
-          .beloyal-loader-ring {
-            animation: beloyal-loader-ring 1.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
-          }
-
-          .beloyal-loader-ring-delayed {
-            animation-delay: 300ms;
-          }
-
-          .beloyal-loader-dot {
-            animation: beloyal-loader-dot 900ms ease-in-out infinite;
-          }
-
-          @media (prefers-reduced-motion: reduce) {
-            .beloyal-loader-ring,
-            .beloyal-loader-dot {
-              animation: none;
-            }
-          }
-        `}</style>
-      </main>
-    );
-  }
+  if (loading) return <LoyaltyCardSkeleton {...loaderTheme} />;
 
   if (error || !customer) {
     return (
@@ -1519,7 +1383,7 @@ const visibleStamps = rewardReady
 
   return (
     <main
-      className="min-h-screen w-full overflow-x-hidden px-3 py-3 transition-colors duration-700 min-[380px]:px-4 min-[380px]:py-5 sm:px-6 sm:py-10"
+      className={`${loyaltyCardPageClass} transition-colors duration-700`}
       style={{
         WebkitTextSizeAdjust: "100%",
         textSizeAdjust: "100%",

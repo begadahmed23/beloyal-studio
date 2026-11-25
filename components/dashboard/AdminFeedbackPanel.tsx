@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  LoaderCircle,
   MessageCircle,
   Star,
 } from "lucide-react";
@@ -12,6 +11,7 @@ import {
 } from "react";
 
 import FeedbackTabs from "./FeedbackTabs";
+import { Skeleton, SkeletonGroup, SkeletonRows } from "@/components/ui/skeleton";
 import { useCafeTheme } from "@/components/theme/CafeThemeProvider";
 
 type RatingRow = {
@@ -191,13 +191,10 @@ export default function AdminFeedbackPanel() {
       </div>
 
       {loading ? (
-        <div className="flex min-h-32 items-center justify-center">
-          <LoaderCircle
-            size={22}
-            className="animate-spin"
-            style={{ color: theme.accent }}
-          />
-        </div>
+        <SkeletonGroup label="Loading feedback" className="mt-5">
+          <Skeleton className="h-11 w-52 max-w-full rounded-xl" />
+          <div className="mt-4 overflow-hidden rounded-[20px] border border-border"><SkeletonRows count={2} /></div>
+        </SkeletonGroup>
       ) : error ? (
         <p
           className="mt-5 text-sm"

@@ -1,5 +1,6 @@
 "use client";
 
+import { AnalyticsSkeleton } from "@/components/dashboard/DashboardSkeletons";
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 import {
   useCallback,
@@ -9,7 +10,6 @@ import {
 } from "react";
 import {
   CheckCircle2,
-  LoaderCircle,
   RefreshCw,
   Gift,
   Star,
@@ -146,23 +146,7 @@ export default function BarberAnalytics() {
     };
   }, [loadAnalytics]);
 
-  if (loading) {
-    return (
-      <div
-        className="flex min-h-36 items-center justify-center rounded-[24px] border"
-        style={{
-          borderColor: theme.border,
-          backgroundColor: theme.surface,
-        }}
-      >
-        <LoaderCircle
-          size={24}
-          className="animate-spin"
-          style={{ color: theme.accent }}
-        />
-      </div>
-    );
-  }
+  if (loading) return <AnalyticsSkeleton label={t("Loading analytics...")} />;
 
   if (error || !data) {
     return (

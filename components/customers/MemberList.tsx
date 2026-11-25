@@ -1,4 +1,5 @@
 "use client";
+import { MemberCardsSkeleton } from "@/components/dashboard/DashboardSkeletons";
 import { useBeLoyalLanguage } from "@/components/language/LanguageToggle";
 
 import {
@@ -323,24 +324,7 @@ export default function MemberList() {
         </div>
       </div>
 
-      {loading && (
-        <div
-          className="mt-5 flex min-h-44 items-center justify-center border p-10 text-center"
-          style={{
-            borderColor: theme.border,
-            backgroundColor: theme.surface,
-            borderRadius: theme.radiusLarge,
-            boxShadow: theme.cardShadow,
-          }}
-        >
-          <div>
-            <LoaderCircle size={27} className="mx-auto animate-spin" style={{ color: theme.accent }} />
-            <p className="mt-4 text-sm" style={{ color: theme.textMuted }}>
-              Loading {personPlural}...
-            </p>
-          </div>
-        </div>
-      )}
+      {loading && <MemberCardsSkeleton label={t("Loading members…")} className="mt-5 grid gap-4 md:grid-cols-2" />}
 
       {!loading && error && customers.length > 0 && (
         <p role="status" className="mt-4 text-sm" style={{ color: theme.danger }}>
