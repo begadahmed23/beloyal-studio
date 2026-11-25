@@ -415,21 +415,22 @@ export default function MemberList() {
 
             return (
               <div key={customer.id} className="relative min-w-0">
+                <MemberCard customer={customer} />
                 {birthdayInDays !== undefined && (
-                  <div
-                    className="pointer-events-none absolute left-1/2 top-4 z-10 flex h-7 -translate-x-1/2 items-center gap-1.5 border px-2.5 text-[11px] font-semibold shadow-sm"
-                    style={{
-                      borderColor: `${theme.accent}45`,
-                      backgroundColor: theme.accentSoft,
-                      color: theme.accent,
-                      borderRadius: "999px",
-                    }}
-                  >
-                    <Cake size={12} />
-                    {t(birthdayLabels[birthdayInDays])}
+                  <div className="mt-2 flex min-w-0 px-1">
+                    <span
+                      className="inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold"
+                      style={{
+                        borderColor: `${theme.accent}45`,
+                        backgroundColor: theme.accentSoft,
+                        color: theme.accent,
+                      }}
+                    >
+                      <Cake size={12} className="shrink-0" />
+                      <span className="min-w-0 break-words">{t(birthdayLabels[birthdayInDays])}</span>
+                    </span>
                   </div>
                 )}
-                <MemberCard customer={customer} />
                 {customer.joinLocation && (
                   <p className="px-1 pt-2 text-sm" style={{ color: theme.textSecondary }}>
                     {t("Joined at")} <span className="font-medium">{customer.joinLocation.name}</span>
