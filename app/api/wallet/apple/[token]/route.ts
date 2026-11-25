@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ tok
     });
     if (!member) return NextResponse.json({ message: "Card not found." }, { status: 404, headers });
     const [message, notificationSettings] = walletUpdatesEnabled() ? await Promise.all([getWalletMessage(member.id), getWalletNotificationSettings(member.cafe.id)]) : [null, undefined];
-    const pass = await createAppleWalletPass(member, message?.text, notificationSettings);
+    const pass = await createAppleWalletPass(member, message, notificationSettings);
     return new NextResponse(new Uint8Array(pass), { headers: { ...headers,
       "Content-Type": "application/vnd.apple.pkpass",
       "Content-Disposition": 'attachment; filename="BeLoyal.pkpass"' } });

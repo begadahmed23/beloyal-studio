@@ -115,33 +115,145 @@ test('preview rejects stale/unregistered selections; preview never sends a push'
   assert.equal(previews, 1);
   assert.equal((await route.POST(post({ action: 'preview', cafeId: 'cafe1', segment: 'all', message: ' ', customerIds: ['yes'] }))).status, 400);
 });
-test('sending rechecks eligibility, skips unchanged/removed cards and claims once', async () => {
-  const records = new Map(); let pushes = 0;
-  const redis = { set: async (key, value, opts) => { if (opts?.nx && records.has(key)) return null; records.set(key, structuredClone(value)); return 'OK'; }, get: async key => records.get(key),
-    zadd: async () => 1, zremrangebyrank: async () => 0, hlen: async key => key.includes('removed') ? 0 : 1 };
-  const lib = loader({ '@/lib/prisma': { prisma: { customer: { findFirst: async ({ where }) => where.cafeId === 'cafe1' ? { cafe: { timezone: 'Africa/Cairo' } } : null } } },
+test('manual and birthday template campaigns dispatch repeated text, while send retries stay idempotent', async (t) => {
+  t.mock.method(Date, 'now', () => 1795642415965);
+  const records = new Map(), pushes = [], google = [];
+  let rejectApple = false, rejectGoogle = false;
+  const redis = {
+    set: async (key, value, opts) => {
+      if (opts?.nx && records.has(key)) return null;
+      records.set(key, structuredClone(value));
+      return 'OK';
+    },
+    get: async key => records.get(key),
+    zadd: async () => 1,
+    zremrangebyrank: async () => 0,
+    hlen: async key => key.includes('removed') ? 0 : 1,
+    eval: async (script, [key], [input]) => {
+      if (script.includes('cjson.decode')) {
+        const value = JSON.parse(input);
+        value.updatedAt = Math.max(value.updatedAt, (records.get(key)?.updatedAt ?? 0) + 1);
+        records.set(key, value);
+        return 'OK';
+      }
+      assert.match(script, /redis.call\('GET', KEYS\[1\]\) == ARGV\[1\]/);
+      if (records.get(key) === input) return Number(records.delete(key));
+      return 0;
+    },
+  };
+  const originalGoogle = process.env.GOOGLE_WALLET_CAMPAIGNS_ENABLED;
+  process.env.GOOGLE_WALLET_CAMPAIGNS_ENABLED = 'true';
+  t.after(() => {
+    if (originalGoogle === undefined) delete process.env.GOOGLE_WALLET_CAMPAIGNS_ENABLED;
+    else process.env.GOOGLE_WALLET_CAMPAIGNS_ENABLED = originalGoogle;
+  });
+  const load = loader({
+    '@/lib/prisma': { prisma: { customer: { findFirst: async ({ where }) => {
+      assert.equal(where.cafeId, 'cafe1');
+      assert.equal(where.marketingWithdrawnAt, null);
+      assert.deepEqual(where.marketingConsentAt, { not: null });
+      return { cafe: { slug: 'goumeal', timezone: 'Africa/Cairo' } };
+    } } } },
     './config': { walletUpdatesEnabled: () => true, walletPassTypesForBusiness: () => [undefined] },
-    './updates': { passKey: id => id, walletRedis: () => redis, notifyWalletMember: async () => { pushes++; return { accepted: 1, failed: 0 }; } },
-    './messages': { getWalletMessage: async id => id === 'same' ? { text: 'Hello' } : null, setWalletMessage: async () => {} },
-  })('lib/wallet/campaigns.ts');
-  const draft = { id: 'test', cafeId: 'cafe1', business: 'Loretto', createdBy: 'admin1', segment: 'all', message: 'Hello', createdAt: Date.now(), status: 'draft',
-    recipients: ['ok', 'removed', 'same', 'visited-again'].map(id => ({ id, name: id, memberNumber: id, status: 'pending' })) };
-  const eligible = new Set(['ok', 'removed', 'same']);
+    './google': { googleWalletEnabled: () => true, sendGoogleWalletMessage: async (member, id, name, message) => {
+      if (member === 'removed') return false;
+      google.push({ member, id, name, message });
+      if (rejectGoogle) throw new Error('provider rejected');
+      return true;
+    } },
+    './updates': { passKey: id => id, walletRedis: () => redis, notifyWalletMember: async (id, catchUp, slug) => {
+      assert.equal(catchUp, false);
+      assert.equal(slug, 'goumeal');
+      pushes.push(records.get(id + ':message'));
+      return rejectApple ? { accepted: 0, failed: 1 } : { accepted: 1, failed: 0 };
+    } },
+  });
+  const lib = load('lib/wallet/campaigns.ts');
+  const { birthdayWishMessage, walletCampaignFieldValue } = load('lib/wallet/notification-text.ts');
+  const draft = { id: 'manual', cafeId: 'cafe1', business: 'Gourmeal', createdBy: 'admin1', segment: 'all',
+    message: 'A manually typed message', createdAt: Date.now(), status: 'draft',
+    recipients: ['ok', 'removed', 'no-longer-eligible'].map(id => ({ id, name: id, memberNumber: id, status: 'pending' })) };
+  const eligible = new Set(['ok', 'removed']);
   const result = await lib.sendCampaign(structuredClone(draft), eligible);
-  assert.equal(pushes, 1);
-  assert.deepEqual(result.recipients.map(r => r.status), ['accepted', 'skipped', 'skipped', 'skipped']);
+  assert.deepEqual(result.recipients.map(r => r.status), ['accepted', 'skipped', 'skipped']);
+  assert.equal(result.recipients[0].acceptedDevices, 2);
   const retry = await lib.sendCampaign(structuredClone(draft), eligible);
-  assert.equal(pushes, 1);
   assert.equal(retry.status, 'complete');
+  assert.equal(pushes.length, 1);
 
-  const next = await lib.sendCampaign({ ...structuredClone(draft), id: 'second', message: 'A new offer' }, eligible);
-  assert.equal(next.recipients[0].status, 'accepted');
-  assert.equal(pushes, 3);
+  for (const arabic of [false, true]) {
+    const message = birthdayWishMessage('Gourmeal', arabic);
+    assert.match(message, /Gourmeal/);
+    const birthday = { ...structuredClone(draft), id: 'template-' + arabic, message };
+    assert.equal((await lib.sendCampaign(birthday, eligible)).recipients[0].status, 'accepted');
+    const repeated = { ...structuredClone(draft), id: birthday.id + '-repeat', message };
+    assert.equal((await lib.sendCampaign(repeated, eligible)).recipients[0].status, 'accepted');
+    const [first, next] = pushes.slice(-2);
+    assert.equal(next.updatedAt, first.updatedAt + 1);
+    assert.notEqual(walletCampaignFieldValue(next), walletCampaignFieldValue(first));
+    assert.equal(next.text, first.text);
+    assert.deepEqual(google.slice(-2).map(({ id, message }) => [id, message]), [
+      [birthday.id, message], [repeated.id, message],
+    ]);
+  }
 
-  const birthday = { ...structuredClone(draft), id: 'birthday', segment: 'birthday_today', recipients: [structuredClone(draft.recipients[0])] };
-  assert.equal((await lib.sendCampaign(structuredClone(birthday), eligible)).recipients[0].status, 'accepted');
-  assert.equal((await lib.sendCampaign({ ...structuredClone(birthday), id: 'second-birthday' }, eligible)).recipients[0].status, 'skipped');
-  assert.equal(pushes, 4);
+  const message = birthdayWishMessage('Gourmeal', false);
+  const birthday = { ...structuredClone(draft), id: 'birthday-failed', message, segment: 'birthday_today',
+    recipients: [structuredClone(draft.recipients[0])] };
+  rejectApple = rejectGoogle = true;
+  const failure = await lib.sendCampaign(structuredClone(birthday), eligible);
+  assert.deepEqual([failure.recipients[0].status, failure.recipients[0].failedDevices], ['failed', 2]);
+  assert.equal((await lib.getCampaign(birthday.id)).recipients[0].status, 'failed');
+
+  // Simulate a cooldown left behind by the deployed pre-fix code.
+  const year = new Intl.DateTimeFormat('en', { year: 'numeric', timeZone: 'Africa/Cairo' }).format(new Date());
+  const cooldown = 'campaigns:cooldown:cafe1:ok:birthday:' + year;
+  assert.equal(records.has(cooldown), false);
+  records.set(cooldown, birthday.id);
+  rejectGoogle = false;
+  const recovered = await lib.sendCampaign({ ...structuredClone(birthday), id: 'birthday-recovered' }, eligible);
+  assert.deepEqual([recovered.recipients[0].status, recovered.recipients[0].acceptedDevices, recovered.recipients[0].failedDevices], ['accepted', 1, 1]);
+  const skipped = await lib.sendCampaign({ ...structuredClone(birthday), id: 'birthday-after-acceptance' }, eligible);
+  assert.equal(skipped.recipients[0].status, 'skipped');
+});
+
+test('external birthday reminder and day callbacks record only tenant-scoped automation results', async (t) => {
+  const originalSecret = process.env.N8N_AUTOMATION_SECRET;
+  process.env.N8N_AUTOMATION_SECRET = 'offline-automation-secret';
+  t.after(() => {
+    if (originalSecret === undefined) delete process.env.N8N_AUTOMATION_SECRET;
+    else process.env.N8N_AUTOMATION_SECRET = originalSecret;
+  });
+  const records = new Map(), key = ({ customerId, year, messageType }) => [customerId, year, messageType].join(':');
+  const route = loader({
+    '@/lib/prisma': { prisma: {
+      cafe: { findUnique: async () => ({ id: 'cafe1', isActive: true }) },
+      customer: { findFirst: async ({ where }) => where.cafeId === 'cafe1' && where.id === 'member1' ? { id: where.id } : null },
+      birthdayMessageSend: {
+        findUnique: async ({ where }) => records.get(key(where.customerId_year_messageType)),
+        create: async ({ data }) => {
+          assert.equal(data.cafeId, 'cafe1');
+          const record = { sentAt: new Date() };
+          records.set(key(data), record);
+          return record;
+        },
+      },
+    } },
+    '@/lib/wallet/campaigns': { sendCampaign: () => assert.fail('The callback only records externally sent messages') },
+  })('app/api/integrations/n8n/customers/route.ts');
+  const request = (messageType, customerId = 'member1', secret = 'offline-automation-secret') =>
+    route.POST(new NextRequest('https://example.com/api/integrations/n8n/customers', {
+      method: 'POST',
+      headers: { 'x-beloyal-automation-secret': secret },
+      body: JSON.stringify({ slug: 'goumeal', customerId, year: 2026, messageType }),
+    }));
+  assert.equal((await request('PRE_BIRTHDAY', 'member1', 'invalid')).status, 401);
+  assert.equal((await request('PRE_BIRTHDAY', 'another-tenant')).status, 404);
+  for (const messageType of ['PRE_BIRTHDAY', 'PRE_BIRTHDAY_CATCHUP', 'BIRTHDAY_TODAY']) {
+    assert.equal((await request(messageType)).status, 201);
+    assert.equal((await (await request(messageType)).json()).alreadyRecorded, true);
+  }
+  assert.equal(records.size, 3);
 });
 
 test('business admins can read their own history and audience', async () => {

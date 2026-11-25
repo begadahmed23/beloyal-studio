@@ -85,7 +85,7 @@ async function handler(request: NextRequest, context: { params: Promise<{ path: 
     // .pkpass. A stale If-Modified-Since value must never leave an old reward
     // on an installed card after a settings change.
     // The device registration endpoint handles delta discovery separately.
-    const pass = await createAppleWalletPass(member, message?.text, await getWalletNotificationSettings(member.cafe.id), type);
+    const pass = await createAppleWalletPass(member, message, await getWalletNotificationSettings(member.cafe.id), type);
     console.info("Wallet updated pass served", { messageVersion: message?.updatedAt ?? null });
     return new NextResponse(new Uint8Array(pass), { headers: { ...headers,
       "Content-Type": "application/vnd.apple.pkpass", "Last-Modified": new Date(modified).toUTCString() } });

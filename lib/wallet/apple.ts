@@ -1,6 +1,7 @@
 import { getRewardName } from "../business/terminology";
 import type { BusinessType, LoyaltyMode } from "@prisma/client";
-import { walletLocations } from "./notification-text";
+import { walletCampaignFieldValue, walletLocations } from "./notification-text";
+import type { WalletMessage } from "./messages";
 import { walletProgressChangeMessage, type WalletNotificationSettings } from "./notification-text";
 import { businessWalletPassType, walletCredential as credential, walletKeyPassphrase, walletUpdatesEnabled, walletAuthToken } from "./config";
 export { appleWalletEnabled } from "./config";
@@ -70,7 +71,7 @@ async function uploadedLogo(url: string | null | undefined) {
 
 export async function createAppleWalletPass(
   member: WalletMember,
-  message?: string,
+  message?: WalletMessage | null,
   notificationSettings?: WalletNotificationSettings,
   passType = businessWalletPassType(member.cafe.slug) ?? process.env.APPLE_WALLET_PASS_TYPE_ID!,
 ) {
@@ -187,7 +188,7 @@ export async function createAppleWalletPass(
     ? { key: "collect", label: "AT CHECKOUT", value: "Show your membership QR" }
     : { key: "reward", label: "YOUR REWARD", value: rewardName });
   pass.backFields.push({ key: "member-message", label: "CARD UPDATE",
-    value: message || "Your loyalty card is connected.", changeMessage: "%@" });
+    value: walletCampaignFieldValue(message), changeMessage: "%@" });
   pass.backFields.push(
     { key: "progress", label: points ? (firey ? "Flames & rewards" : "Points & rewards") : "Live stamps & rewards", value: cardUrl },
     { key: "instructions", label: "How to use", value: points ? (firey ? "Show your membership QR at checkout." : "Show this QR code at checkout to collect points or redeem rewards.") : "Show this QR code at checkout. Open your online card for your current stamps and rewards." },

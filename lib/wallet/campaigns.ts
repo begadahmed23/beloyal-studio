@@ -4,7 +4,7 @@ import { googleWalletEnabled, googleWalletSavedObjects, googleWalletObjectId, se
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { passKey, walletRedis, notifyWalletMember } from "./updates";
-import { getWalletMessage, setWalletMessage } from "./messages";
+import { setWalletMessage } from "./messages";
 import { memberSegments, type CampaignMember, type CampaignSegment } from "./campaign-segments";
 
 // Environment-isolated alongside existing Wallet registrations.
@@ -102,6 +102,28 @@ export async function deleteCampaignHistoryEntry(cafeId: string, id: string) {
     .exec();
   return "deleted";
 }
+
+async function releaseBirthdayClaim(key: string, campaignId: string) {
+  await walletRedis().eval("if redis.call('GET', KEYS[1]) == ARGV[1] then return redis.call('DEL', KEYS[1]) else return 0 end", [key], [campaignId]);
+}
+
+async function claimBirthdaySend(key: string, campaign: WalletCampaign, recipientId: string) {
+  const redis = walletRedis();
+  const options = { nx: true, ex: 366 * 86400 } as const;
+  if (await redis.set(key, campaign.id, options)) return true;
+
+  const previousId = await redis.get<string>(key);
+  if (previousId) {
+    // Older sends kept the cooldown even when neither Wallet provider accepted.
+    const previous = await getCampaign(previousId);
+    const outcome = previous?.recipients.find(recipient => recipient.id === recipientId);
+    if (previous?.cafeId !== campaign.cafeId || previous.status !== "complete" ||
+        (outcome?.status !== "failed" && outcome?.status !== "skipped")) return false;
+    await releaseBirthdayClaim(key, previousId);
+  }
+  return Boolean(await redis.set(key, campaign.id, options));
+}
+
 export async function sendCampaign(campaign: WalletCampaign, eligibleIds: Set<string>) {
   // Persistent claim: a repeat click or HTTP retry cannot send this campaign twice.
   if (!await walletRedis().set(`${campaignKey(campaign.id)}:claimed`, "1", { nx: true, ex: 30 * 86400 })) return getCampaign(campaign.id);
@@ -111,35 +133,47 @@ export async function sendCampaign(campaign: WalletCampaign, eligibleIds: Set<st
   await walletRedis().zremrangebyrank(historyKey(campaign.cafeId), 0, -21);
   for (let start = 0; start < campaign.recipients.length; start += 5) {
     await Promise.all(campaign.recipients.slice(start, start + 5).map(async recipient => {
+      let accepted = 0, failed = 0;
+      let birthdayClaim: string | undefined;
       try {
-        if (!eligibleIds.has(recipient.id)) { recipient.status = "skipped"; return; }
+        if (!eligibleIds.has(recipient.id)) return;
         // Recheck ownership and registration at send time (e.g. pass removed after preview).
-        const member = await prisma.customer.findFirst({ where: { id: recipient.id, cafeId: campaign.cafeId, marketingConsentAt: { not: null }, marketingWithdrawnAt: null }, select: { cafe: { select: { slug: true, timezone: true } } } });
-        if (!member) { recipient.status = "skipped"; return; }
+        const member = await prisma.customer.findFirst({ where: { id: recipient.id, cafeId: campaign.cafeId, cafe: { isActive: true }, marketingConsentAt: { not: null }, marketingWithdrawnAt: null }, select: { cafe: { select: { slug: true, timezone: true } } } });
+        if (!member) return;
         if (campaign.segment === "birthday_today") {
           const year = new Intl.DateTimeFormat("en", { year: "numeric", timeZone: member.cafe.timezone }).format(new Date());
           const birthdayKey = `${prefix()}cooldown:${campaign.cafeId}:${recipient.id}:birthday:${year}`;
-          if (!await walletRedis().set(birthdayKey, campaign.id, { nx: true, ex: 366 * 86400 })) { recipient.status = "skipped"; return; }
+          if (!await claimBirthdaySend(birthdayKey, campaign, recipient.id)) return;
+          birthdayClaim = birthdayKey;
         }
-        let accepted = 0, failed = 0;
-        const appleRegistrations = walletUpdatesEnabled() ? await Promise.all(
-          walletPassTypesForBusiness(member.cafe.slug).map(type => walletRedis().hlen(passKey(recipient.id, type))),
-        ) : [];
-        if (appleRegistrations.some(count => count > 0) && (await getWalletMessage(recipient.id))?.text !== campaign.message) {
+        if (walletUpdatesEnabled()) {
           try {
-            await setWalletMessage(recipient.id, campaign.message);
-            const result = await notifyWalletMember(recipient.id, false, member.cafe.slug);
-            accepted += result?.accepted ?? 0; failed += result?.failed ?? 0;
+            const registrations = await Promise.all(
+              walletPassTypesForBusiness(member.cafe.slug).map(type => walletRedis().hlen(passKey(recipient.id, type))),
+            );
+            if (registrations.some(count => count > 0)) {
+              await setWalletMessage(recipient.id, campaign.message, campaign.id);
+              const result = await notifyWalletMember(recipient.id, false, member.cafe.slug);
+              accepted += result?.accepted ?? 0;
+              failed += result?.failed ?? 0;
+            }
           } catch { failed++; }
         }
         if (googleWalletEnabled() && process.env.GOOGLE_WALLET_CAMPAIGNS_ENABLED === "true") {
           try { if (await sendGoogleWalletMessage(recipient.id, campaign.id, campaign.business, campaign.message)) accepted++; }
           catch { failed++; }
         }
+      } catch { failed++; }
+      finally {
         recipient.acceptedDevices = accepted;
         recipient.failedDevices = failed;
         recipient.status = accepted ? "accepted" : failed ? "failed" : "skipped";
-      } catch { recipient.status = "failed"; }
+        if (birthdayClaim && !accepted) {
+          await releaseBirthdayClaim(birthdayClaim, campaign.id).catch(() => {
+            console.warn("Could not release unsuccessful Wallet birthday campaign claim.");
+          });
+        }
+      }
     }));
     await saveCampaign(campaign);
   }

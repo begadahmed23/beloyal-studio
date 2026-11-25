@@ -9,6 +9,8 @@ Object.assign(process.env, { GOOGLE_WALLET_ENABLED: 'true', GOOGLE_WALLET_ISSUER
 const member = { id: 'one', publicToken: 'a'.repeat(48), name: 'Test', memberNumber: 'BL-1', stamps: 3, rewardEarnedAt: null, cafe: { slug: 'cafe', name: 'Cafe', businessType: 'CAFE', rewardTarget: 7, rewardName: 'Cookie', backgroundColor: '#123456' } };
 const calls = [];
 let patchStatus = 200;
+let messageStatus = 200;
+let passSaved = true;
 let savedMember = member;
 const compile = filename => ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -27,7 +29,14 @@ vm.runInNewContext(source, { exports: moduleObject.exports, require: id => {
   if (id.startsWith('./')) return loadPureModule(`lib/wallet/${id.slice(2)}.ts`);
   return require(id);
  }, Buffer, URL, URLSearchParams, AbortSignal, process, console,
-  fetch: async (url, options) => { calls.push({ url, ...options }); if (url.includes('oauth2')) return { ok: true, json: async () => ({ access_token: 'test', expires_in: 3600 }) }; const status = options.method === 'PATCH' ? patchStatus : 409; return { ok: status === 200, status }; } });
+  fetch: async (url, options) => {
+    calls.push({ url, ...options });
+    if (url.includes('oauth2')) return { ok: true, json: async () => ({ access_token: 'test', expires_in: 3600 }) };
+    if (options.method === 'GET') return { ok: true, json: async () => ({ hasUsers: passSaved }) };
+    const status = url.endsWith('/addMessage') ? messageStatus : options.method === 'PATCH' ? patchStatus : 409;
+    return { ok: status === 200, status };
+  },
+});
 const wallet = moduleObject.exports;
 test('Gourmeal shows a single brand title with a monogram and the updated stamp panel', () => {
  const cafe = { ...member.cafe, name: 'Gourmeal', slug: 'goumeal', rewardTarget: 8, rewardName: 'Free Drink' };
@@ -140,4 +149,28 @@ test("points cards use the exact ledger balance and Firey Nash flame artwork", (
  assert.doesNotMatch(JSON.stringify(object), /per EGP|earning-rate|pointsPerHundred/i);
  assert.match(object.heroImage.sourceUri.uri, /firey-nash\/wallet-strip-v2\.png$/);
  assert.equal(object.barcode.value, `BL:${member.publicToken}`);
+});
+
+test('Google campaigns request notifications for manual and repeated birthday copy on a saved pass', async () => {
+ calls.length = 0;
+ const birthday = 'Happy birthday! Thanks for being part of Gourmeal.';
+ const messages = [['manual', 'Come for coffee & more'], ['birthday', birthday], ['birthday-repeat', birthday]];
+ for (const [id, message] of messages) {
+   assert.equal(await wallet.sendGoogleWalletMessage(member.id, id, 'Gourmeal', message), true);
+ }
+ const sends = () => calls.filter(call => call.url.endsWith('/addMessage'));
+ assert.equal(sends().length, 3);
+ for (const [index, call] of sends().entries()) {
+   const [id, message] = messages[index];
+   assert.equal(call.url, `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/${wallet.googleWalletObject(member).id}/addMessage`);
+   assert.deepEqual(JSON.parse(call.body), {
+     message: { id, header: 'Gourmeal', body: message.replace('&', '&amp;'), messageType: 'TEXT_AND_NOTIFY' },
+   });
+ }
+ messageStatus = 429;
+ await assert.rejects(wallet.sendGoogleWalletMessage(member.id, 'rate-limited', 'Gourmeal', birthday), { stage: 'message', status: 429 });
+ assert.equal(sends().length, 4);
+ passSaved = false;
+ assert.equal(await wallet.sendGoogleWalletMessage(member.id, 'unsaved', 'Gourmeal', birthday), false);
+ assert.equal(sends().length, 4);
 });

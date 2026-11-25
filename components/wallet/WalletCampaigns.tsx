@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { SlidingSelection } from "@/components/ui/sliding-selection";
 import WalletNotificationSettings from "./WalletNotificationSettings";
 import type { WalletCampaign } from "@/lib/wallet/campaigns";
+import { birthdayWishMessage } from "@/lib/wallet/notification-text";
 import { dashboardThemeVariables, type CafeThemeConfig } from "@/lib/cafe-theme";
 
 type Business = { id: string; name: string; theme?: CafeThemeConfig };
@@ -18,7 +19,13 @@ const secondary = "inline-flex min-h-11 items-center justify-center gap-2 rounde
 const primary = "inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--wallet-accent,#18181b)] px-5 py-3 text-sm font-medium text-[var(--wallet-accent-text,#ffffff)] active:opacity-80 disabled:opacity-60 pointer-fine:hover:opacity-90";
 function totals(campaign: WalletCampaign) {
   return { accepted: campaign.recipients.filter(r => r.status === "accepted").length, failed: campaign.recipients.filter(r => r.status === "failed").length,
-    skipped: campaign.recipients.filter(r => r.status === "skipped").length, pending: campaign.recipients.filter(r => r.status === "pending").length };
+    skipped: campaign.recipients.filter(r => r.status === "skipped").length, pending: campaign.recipients.filter(r => r.status === "pending").length,
+    partial: campaign.recipients.filter(r => r.status === "accepted" && (r.failedDevices ?? 0) > 0).length };
+}
+function dispatchStatus(campaign: WalletCampaign, count: ReturnType<typeof totals>) {
+  if (campaign.status !== "complete") return "Still sending";
+  if (!count.accepted) return count.failed ? "Dispatch failed" : "No notifications dispatched";
+  return count.failed || count.skipped || count.partial ? "Partially accepted" : "Accepted by Wallet";
 }
 export default function WalletCampaigns({ businesses, initialCafeId, studio = false, branded = false, businessCanSend = false, pointsMode = false }: { businesses: Business[]; initialCafeId: string; studio?: boolean; branded?: boolean; businessCanSend?: boolean; pointsMode?: boolean }) {
   const { t, arabic } = useBeLoyalLanguage();
@@ -119,6 +126,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
   const selectedBusiness = businesses.find(value => value.id === cafeId);
   const business = data?.cafe.name ?? selectedBusiness?.name ?? "Your business";
   const reviewTheme = selectedBusiness?.theme;
+  const resultCount = result && totals(result);
   return <div  className={branded ? "min-w-0 rounded-3xl p-1 sm:p-3" : "rounded-[28px] bg-[#f6f6f7] p-4 text-[var(--wallet-text,#18181b)] sm:p-7 lg:p-9"}>
     {studio && <a href="/studio" className="mb-6 inline-flex min-h-11 items-center gap-2 text-sm text-[var(--wallet-secondary,#52525b)] hover:opacity-90"><ArrowLeft size={16} /> BeLoyal Studio</a>}
     <header className="flex flex-col justify-between gap-5 rounded-3xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-4 shadow-sm sm:flex-row sm:items-end sm:p-6">
@@ -203,7 +211,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
       <div className="min-w-0 rounded-3xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-4 sm:p-6"><h2 className="font-semibold">{t("Write your message")}</h2>
         <label htmlFor="wallet-message" className="mb-2 mt-5 block text-xs font-medium">{t("Message")}</label><textarea id="wallet-message" dir="auto" className={`${field} min-h-32 resize-y leading-6`} maxLength={180} disabled={!!busy} value={message} placeholder={t("Example: We miss you! Stop by this week for a treat.")} onChange={event => { setMessage(event.target.value); resetReview(); }}/>
         <div className="mt-2 flex justify-between gap-4 text-xs text-[var(--wallet-muted,#71717a)]"><span>{t("Members can see this on their Wallet card. Their phone may show an alert.")}</span><span className="shrink-0">{message.length}/180</span></div>
-        <div className="mt-4 flex flex-wrap gap-2">{segment === "reward_ready" && data && <button className={secondary} disabled={!!busy} onClick={() => { setMessage((arabic ? `مكافأتك جاهزة: ${data.cafe.rewardName}! عدّي على ${business} عشان تستلمها.` : `Your reward is ready: ${data.cafe.rewardName}! Visit ${business} to redeem it.`).slice(0, 180)); resetReview(); }}><Gift size={15}/>{" " + t("Reward reminder")}</button>}<button className={secondary} disabled={!!busy} onClick={() => { setMessage((arabic ? `كل سنة وإنت طيب! مبسوطين إنك معانا في ${business}.` : `Happy birthday! Thanks for being part of ${business}.`).slice(0, 180)); resetReview(); }}><Cake size={15}/>{" " + t("Birthday wish")}</button><button className={secondary} disabled={!!busy} onClick={() => { setMessage((arabic ? `وحشتنا! كارت الولاء بتاع ${business} جاهز لزيارتك الجاية.` : `We miss you! Your ${business} loyalty card is ready for your next visit.`).slice(0, 180)); resetReview(); }}><Clock3 size={15}/>{" " + t("Welcome back")}</button></div>
+        <div className="mt-4 flex flex-wrap gap-2">{segment === "reward_ready" && data && <button className={secondary} disabled={!!busy} onClick={() => { setMessage((arabic ? `مكافأتك جاهزة: ${data.cafe.rewardName}! عدّي على ${business} عشان تستلمها.` : `Your reward is ready: ${data.cafe.rewardName}! Visit ${business} to redeem it.`).slice(0, 180)); resetReview(); }}><Gift size={15}/>{" " + t("Reward reminder")}</button>}<button className={secondary} disabled={!!busy} onClick={() => { setMessage(birthdayWishMessage(business, arabic)); resetReview(); }}><Cake size={15}/>{" " + t("Birthday wish")}</button><button className={secondary} disabled={!!busy} onClick={() => { setMessage((arabic ? `وحشتنا! كارت الولاء بتاع ${business} جاهز لزيارتك الجاية.` : `We miss you! Your ${business} loyalty card is ready for your next visit.`).slice(0, 180)); resetReview(); }}><Clock3 size={15}/>{" " + t("Welcome back")}</button></div>
         <p className="mt-3 text-xs leading-5 text-[var(--wallet-muted,#71717a)]">{t("Select at least one member and write a message to review it.")}</p>
         <ActionButton
           className={`${primary} mt-5 w-full sm:w-auto`}
@@ -251,9 +259,9 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
           </>}
           {error && <p role="alert" className="rounded-xl border border-destructive/40 p-3 text-sm text-destructive">{t(error)}</p>}
           {busy === "send" && <p role="status" className="text-sm">{t("Sending your message… Keep this page open.")}</p>}
-          {result && <div role="status" className="rounded-2xl bg-secondary p-4 text-sm">
-            <p className="flex items-center gap-2 font-semibold"><Check size={16} aria-hidden="true"/> {t(result.status === "complete" ? "Sending finished" : "Still sending")}</p>
-            <p className="mt-2 text-xs">{totals(result).accepted} {t("Accepted by Wallet")} · {totals(result).failed} {t("Failed")} · {totals(result).skipped} {t("Skipped")}{totals(result).pending ? ` · ${totals(result).pending} ${t("Pending")}` : ""}</p>
+          {result && resultCount && <div role="status" className="rounded-2xl bg-secondary p-4 text-sm">
+            <p className="font-semibold">{t(dispatchStatus(result, resultCount))}</p>
+            <p className="mt-2 text-xs">{resultCount.accepted} {t("Accepted by Wallet")} · {resultCount.failed} {t("Failed")} · {resultCount.skipped} {t("Skipped")}{resultCount.partial ? ` · ${resultCount.partial} ${t("Partial dispatch failures")}` : ""}{resultCount.pending ? ` · ${resultCount.pending} ${t("Pending")}` : ""}</p>
           </div>}
         </div>
         <div className="flex shrink-0 flex-col gap-2 border-t border-border px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:flex-row sm:justify-end sm:px-6">
@@ -281,7 +289,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
           return <article key={campaign.id} className="rounded-2xl border border-[var(--wallet-border,#e4e4e7)] bg-[var(--wallet-surface,#ffffff)] p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-xs font-medium text-[var(--wallet-muted,#71717a)]">{new Intl.DateTimeFormat(arabic ? "ar-EG" : "en-GB", { timeZone: data.cafe.timezone, dateStyle: "medium", timeStyle: "short" }).format(new Date(campaign.sentAt ?? campaign.createdAt))}</p>
-              <span className="rounded-full bg-[var(--wallet-raised,#f4f4f5)] px-2 py-1 text-[10px] uppercase tracking-wide">{t(campaign.status === "sending" ? "Still sending" : "Processed")}</span>
+              <span className="rounded-full bg-[var(--wallet-raised,#f4f4f5)] px-2 py-1 text-[10px] uppercase tracking-wide">{t(dispatchStatus(campaign, count))}</span>
             </div>
             <p dir="auto" className="mt-3 whitespace-pre-wrap break-words text-sm leading-6">{campaign.message}</p>
             <p className="mt-3 flex flex-wrap gap-x-2 text-xs text-[var(--wallet-muted,#71717a)]">
@@ -289,6 +297,7 @@ export default function WalletCampaigns({ businesses, initialCafeId, studio = fa
               <span>· {count.accepted} {t("Accepted by Wallet")}</span>
               <span>· {count.failed} {t("Failed")}</span>
               <span>· {count.skipped} {t("Skipped")}</span>
+              {count.partial > 0 && <span>· {count.partial} {t("Partial dispatch failures")}</span>}
               {count.pending > 0 && <span>· {count.pending} {t("Pending")}</span>}
             </p>
             {campaign.status === "complete" && (deleteId === campaign.id ? (

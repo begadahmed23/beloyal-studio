@@ -1,3 +1,21 @@
+import type { WalletMessage } from "./messages";
+
+export function birthdayWishMessage(business: string, arabic: boolean) {
+  return (arabic
+    ? `كل سنة وإنت طيب! مبسوطين إنك معانا في ${business}.`
+    : `Happy birthday! Thanks for being part of ${business}.`).slice(0, 180);
+}
+
+export function walletCampaignFieldValue(message?: WalletMessage | null) {
+  if (!message?.text) return "Your loyalty card is connected.";
+  if (!message.campaignId) return message.text;
+
+  // Wallet compares the value of the same field key, then substitutes it into %@.
+  // Encode the send version with zero-width characters to retain the visible copy.
+  const version = message.updatedAt.toString(2).replace(/[01]/g, bit => bit === "0" ? "\u200B" : "\u2060");
+  return message.text + version;
+}
+
 export type WalletLocation = { name: string; mapsUrl?: string; latitude: number; longitude: number; message: string };
 export type WalletNotificationSettings = { stampSuffix: string; rewardSuffix: string; resetSuffix?: string; nearbyEnabled?: boolean; nearbyMessage?: string; nearbyLatitude?: number | null; nearbyLongitude?: number | null; nearbyMaxDistance?: number; nearbyLocations?: WalletLocation[] };
 export const DEFAULT_WALLET_NOTIFICATIONS: WalletNotificationSettings = { stampSuffix: "", rewardSuffix: "", resetSuffix: "A fresh start towards your next reward ✨", nearbyEnabled: false, nearbyMessage: "Your loyalty card, ready for your next visit nearby.", nearbyLatitude: null, nearbyLongitude: null, nearbyMaxDistance: 150 };

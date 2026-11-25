@@ -225,6 +225,25 @@ test('Wallet registration, idempotency, update discovery, authorization, and dow
   assert.equal(updatedPass.storeCard.backFields.find(f => f.key === 'provider').value, 'BeLoyal');
   assert.equal(updatedPass.storeCard.backFields.find(f => f.key === 'member-message').value, walletMessage.text);
   assert.equal(updatedPass.storeCard.headerFields[0].value, '3/6');
+  const readMessageField = async () => {
+    const response = await request('GET', ['passes', type, member.id], auth);
+    const signed = JSON.parse(unzipSync(Buffer.from(await response.arrayBuffer()))['pass.json']);
+    assert.equal(signed.serialNumber, member.id);
+    assert.equal(signed.passTypeIdentifier, type);
+    return signed.storeCard.backFields.find(f => f.key === 'member-message');
+  };
+  walletMessage = { text: 'Happy birthday! 50% from Loretto 🎂', updatedAt: walletMessage.updatedAt + 1000, campaignId: 'first' };
+  const firstField = await readMessageField();
+  assert.deepEqual(await readMessageField(), firstField);
+  const firstCursor = (await (await request('GET', listing)).json()).lastUpdated;
+  walletMessage = { ...walletMessage, updatedAt: walletMessage.updatedAt + 1, campaignId: 'second' };
+  assert.equal((await request('GET', listing, {}, null, `?passesUpdatedSince=${firstCursor}`)).status, 200);
+  const secondField = await readMessageField();
+  assert.notEqual(secondField.value, firstField.value);
+  for (const field of [firstField, secondField]) {
+    assert.equal(field.changeMessage, '%@');
+    assert.equal(field.value.replace(/[\u200B\u2060]+$/, ''), walletMessage.text);
+  }
   assert.equal(download.status,200); assert.equal(download.headers.get('content-type'),'application/vnd.apple.pkpass');
   assert.equal((await request('POST',registration,auth,{pushToken:'invalid'})).status,400);
   assert.equal((await request('POST',registration,auth,{pushToken:'f'.repeat(4000)})).status,413);
@@ -397,7 +416,7 @@ test('push runs after response, removes expired device tokens, and contains deli
  test('custom Wallet notification adds only a suffix and keeps the signed reward and progress correct', async () => {
   const { createAppleWalletPass } = load('lib/wallet/apple.ts');
   const readyMember = { ...member, stamps: 6, rewardEarnedAt: new Date(), cafe: {...member.cafe, rewardName: 'Free Cookie'} };
-  const bytes = await createAppleWalletPass(readyMember, 'Existing campaign message', {stampSuffix:'Thank you',rewardSuffix:'Enjoy it!'});
+  const bytes = await createAppleWalletPass(readyMember, { text: 'Existing campaign message', updatedAt: 1 }, {stampSuffix:'Thank you',rewardSuffix:'Enjoy it!'});
   const pass = JSON.parse(unzipSync(bytes)['pass.json']);
   assert.equal(pass.storeCard.headerFields[0].value,'6/6');
   assert.equal(pass.storeCard.headerFields[0].changeMessage,'Your loyalty progress is now %@. Your reward is ready: Free Cookie. Enjoy it!');

@@ -117,7 +117,9 @@ No database migration is required. This original pilot sends one fixed test upda
 - Preview freezes one business, exact recipient IDs, segment and message for ten
   minutes. It never sends pushes. Final Send rechecks eligibility, ownership and
   registration. At most 50 recipients per campaign; choose multiple batches for
-  larger groups. An unchanged message is skipped.
+  larger groups. A new campaign can reuse the same message: its Redis version
+  changes the existing Apple pass field without changing the visible wording.
+  The Birthdays today audience keeps one accepted campaign per member per year.
 - Campaign claims prevent replay, and a business lock prevents overlapping
   sends. Member results are checkpointed in Redis after each group of five.
   History retains up to the last 20 indexed campaigns for 30 days (UI shows 10).
@@ -125,8 +127,10 @@ No database migration is required. This original pilot sends one fixed test upda
 - Delivery is synchronous with a 300-second route allowance, not a durable job
   queue. If execution is interrupted, history can retain `sending`/pending
   recipients. Do not automatically replay those campaigns: review first.
-- Accepted means APNs accepted at least one device update, not customer-visible
-  delivery. No open/read tracking or automatic campaign schedule is provided.
+- Accepted means APNs or Google Wallet accepted at least one dispatch. History
+  includes failures and skips; neither provider confirms a visible banner.
+  The n8n birthday integration records external sends. It does not dispatch or
+  schedule Wallet campaigns.
 - No schema migrations or customer/stamp/reward writes are introduced. Existing
   Wallet updates and the QR scanner payload are preserved.
 
