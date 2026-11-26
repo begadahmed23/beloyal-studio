@@ -1,5 +1,6 @@
 import { getWalletNotificationSettings } from "@/lib/wallet/notification-settings";
 import { getWalletMessage } from "@/lib/wallet/messages";
+import { isGourmeal } from "@/lib/business/gourmeal";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { applyPublicRateLimit, publicApiRateLimiters } from "@/lib/public-api-security";
@@ -14,7 +15,11 @@ const reply = (status: number) => new NextResponse(null, { status, headers });
 const identifier = (value: string) => /^[a-z0-9_-]{1,200}$/i.test(value);
 // Discover the new pass artwork and credit on already installed passes.
 const PASS_DESIGN_VERSION = Date.UTC(2026, 10, 23, 19, 48);
-const designVersion = (slug: string) => slug === "firey-nash" ? Date.UTC(2026, 10, 24, 14) : PASS_DESIGN_VERSION;
+function designVersion(slug: string) {
+  if (isGourmeal({ slug })) return Date.UTC(2026, 10, 26, 10, 44);
+  if (slug === "firey-nash") return Date.UTC(2026, 10, 24, 14);
+  return PASS_DESIGN_VERSION;
+}
 const select = { id: true, publicToken: true, memberNumber: true, name: true, stamps: true, pointsBalance: true,
   rewardEarnedAt: true, updatedAt: true,
   cafe: { select: { id: true, name: true, slug: true, logoUrl: true, theme: true, businessType: true, loyaltyMode: true,

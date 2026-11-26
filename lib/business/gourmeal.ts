@@ -14,5 +14,5 @@ export function isGourmeal({ slug }: { slug: string }) {
 }
 
 export function gourmealStripPath(stamps: number, target: number, asset: "strip" | "google-strip" = "strip") {
-  return `${GOURMEAL.artwork}?asset=${asset}&stamps=${stamps}&target=${target}&v=${asset === "google-strip" ? 2 : 1}`;
+  return `${GOURMEAL.artwork}?asset=${asset}&stamps=${stamps}&target=${target}&v=${asset === "google-strip" ? 3 : 2}`;
 }

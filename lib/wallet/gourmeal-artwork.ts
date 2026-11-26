@@ -2,7 +2,7 @@ import sharp from "sharp";
 import { GOURMEAL } from "../business/gourmeal";
 import { gourmealInitial, gourmealWordmark } from "../business/gourmeal-wordmark";
 
-const { green, lime, stone, sand, butter } = GOURMEAL;
+const { green, lime, stone, sand } = GOURMEAL;
 
 function shaker(color: string, filled: boolean) {
   return `<g stroke="${color}" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">
@@ -28,13 +28,11 @@ export function renderGourmealStrip(stamps: number, target: number, platform: "a
     const x = width / 2 + (index % columns - (rowLength - 1) / 2) * step;
     const y = height / 2 + (row - (rows - 1) / 2) * step;
     const filled = index < stamps;
-    const last = index === target - 1;
-    const tile = last ? butter : filled ? lime : stone;
-    const stroke = filled || last ? green : "#5D7162";
+    const tile = filled ? lime : stone;
+    const stroke = filled ? green : "#5D7162";
     return `<g transform="translate(${x} ${y}) scale(${scale}) translate(-18 -18)" color="${green}">
-      <rect width="36" height="36" rx="11" fill="${tile}" stroke="${stroke}" stroke-width="${last ? 1.45 : 0.8}"/>
+      <rect width="36" height="36" rx="11" fill="${tile}" stroke="${stroke}" stroke-width="0.8"/>
       <g transform="translate(4.75 4.6) scale(.76)">${shaker(stroke, filled)}</g>
-      ${last ? `<path d="M29 3.5v5.5m-2.75-2.75h5.5" stroke="${green}" stroke-width="1.1" stroke-linecap="round"/>` : ""}
     </g>`;
   }).join("");
   const [pixelsWide, pixelsHigh] = google ? [1032, 336] : [1125, 369];

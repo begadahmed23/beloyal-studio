@@ -47,7 +47,7 @@ test('Gourmeal shows a single brand title with a monogram and the updated stamp 
  assert.equal(brand.hexBackgroundColor, '#294B38');
  assert.match(brand.programLogo.sourceUri.uri, /artwork\/gourmeal\?asset=icon&v=3$/);
  assert.match(brand.wideProgramLogo.sourceUri.uri, /artwork\/gourmeal\?asset=wide-icon&v=3$/);
- assert.match(object.heroImage.sourceUri.uri, /artwork\/gourmeal\?asset=google-strip&stamps=3&target=7&v=2$/);
+ assert.match(object.heroImage.sourceUri.uri, /artwork\/gourmeal\?asset=google-strip&stamps=3&target=7&v=3$/);
  assert.equal(object.loyaltyPoints.balance.string, '3/7');
  assert.equal(object.linksModuleData.uris[0].description, 'Open your BeLoyal card');
  assert.equal(object.barcode.value, `BL:${member.publicToken}`);
