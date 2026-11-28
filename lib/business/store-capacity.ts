@@ -1,6 +1,8 @@
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
+export const CASHIERS_PER_STORE = 5;
+
 export class StoreCapacityError extends Error {
   constructor(message: string, readonly status = 409) {
     super(message);
@@ -43,7 +45,7 @@ export async function getCashierLocation(
     where: { ...businessCashiers(cafeId), isEnabled: true },
     select: { cashierLocationId: true },
   });
-  if (cashiers.length >= limit) {
+  if (cashiers.length >= limit * CASHIERS_PER_STORE) {
     throw new StoreCapacityError("This business has reached its cashier account limit.");
   }
   const locations = await db.cafeLocation.findMany({
@@ -53,14 +55,14 @@ export async function getCashierLocation(
   if (requestedLocation && !locations.some(location => location.id === requestedLocation)) {
     throw new StoreCapacityError("Choose a branch from this business.", 400);
   }
-  const available = locations.filter(location => !cashiers.some(cashier => cashier.cashierLocationId === location.id));
+  const available = locations.filter(location => cashiers.filter(cashier => cashier.cashierLocationId === location.id).length < CASHIERS_PER_STORE);
   if (requestedLocation) {
     if (!available.some(location => location.id === requestedLocation)) {
-      throw new StoreCapacityError("This store already has a cashier account.");
+      throw new StoreCapacityError("This store has reached its limit of 5 active cashier accounts.");
     }
     return requestedLocation;
   }
-  if (!locations.length && !cashiers.length) return null;
+  if (!locations.length && cashiers.length < CASHIERS_PER_STORE) return null;
   if (!requireSelection && available.length === 1) return available[0].id;
   if (!available.length) throw new StoreCapacityError("Add a store with an available cashier slot first.");
   throw new StoreCapacityError("Choose a branch for this cashier.", 400);
