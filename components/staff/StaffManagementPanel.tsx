@@ -136,6 +136,7 @@ export default function StaffManagementPanel({
     useState("");
   const [confirmPassword, setConfirmPassword] =
     useState("");
+  const [resetNotice, setResetNotice] = useState<{ id: string; message: string; error: boolean } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -312,7 +313,15 @@ export default function StaffManagementPanel({
   }
 
   async function resetPassword(staff: Staff) {
-    if (!canCreateAdmins) return;
+    if (!canCreateAdmins || busyId) return;
+    const fields = document.getElementById(`reset-${staff.id}`);
+    const newPassword = fields?.querySelector<HTMLInputElement>('[name="staffNewPassword"]')?.value ?? "";
+    const confirmPassword = fields?.querySelector<HTMLInputElement>('[name="staffConfirmPassword"]')?.value ?? "";
+    setResetNotice(null);
+    if (newPassword.length < 12 || newPassword.length > 128 || !/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword) || newPassword !== confirmPassword) {
+      setResetNotice({ id: staff.id, message: "Use matching passwords of 12–128 characters with uppercase, lowercase and a number.", error: true });
+      return;
+    }
 
     try {
       setBusyId(staff.id);
@@ -343,6 +352,7 @@ export default function StaffManagementPanel({
         );
       }
 
+      setResetNotice({ id: staff.id, message: body.message || "Password changed and sessions revoked.", error: false });
       setResetUserId(null);
       setNewPassword("");
       setConfirmPassword("");
@@ -351,11 +361,7 @@ export default function StaffManagementPanel({
           "Password changed and sessions revoked.",
       );
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to reset password.",
-      );
+      setResetNotice({ id: staff.id, message: error instanceof Error ? error.message : "Failed to reset password.", error: true });
     } finally {
       setBusyId(null);
     }
@@ -823,9 +829,10 @@ export default function StaffManagementPanel({
                   </div>
                 )}
 
+              {resetNotice?.id === staff.id && <p role={resetNotice.error ? "alert" : "status"} className={`mt-3 text-sm ${resetNotice.error ? "text-red-700" : "text-emerald-700"}`}>{resetNotice.message}</p>}
               {canCreateAdmins &&
                 resetUserId === staff.id && (
-                  <div className="mt-3 rounded-xl border border-black/[0.08] bg-white p-3">
+                  <div id={`reset-${staff.id}`} className="mt-3 rounded-xl border border-black/[0.08] bg-white p-3" onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); void resetPassword(staff); } }}>
                     <p className="text-xs font-semibold text-[#44444A]">
                       Set a new password for {staff.name}
                     </p>
@@ -839,7 +846,7 @@ export default function StaffManagementPanel({
                             event.target.value,
                           )
                         }
-                        placeholder="New password"
+                        name="staffNewPassword" autoComplete="new-password" placeholder="New password"
                         className="h-10 rounded-lg border border-black/[0.10] bg-white px-3 text-base outline-none sm:text-xs"
                       />
                       <input
@@ -850,7 +857,7 @@ export default function StaffManagementPanel({
                             event.target.value,
                           )
                         }
-                        placeholder="Confirm password"
+                        name="staffConfirmPassword" autoComplete="new-password" placeholder="Confirm password"
                         className="h-10 rounded-lg border border-black/[0.10] bg-white px-3 text-base outline-none sm:text-xs"
                       />
                     </div>
