@@ -264,6 +264,12 @@ export default function StaffManagementPanel({
 
   async function createAccount() {
     if (saving) return;
+    const password = (document.getElementById("staff-create-password") as HTMLInputElement | null)?.value ?? "";
+    const confirmation = (document.getElementById("staff-create-confirm") as HTMLInputElement | null)?.value ?? "";
+    if (password !== confirmation || password.length < 12 || password.length > 128 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+      setError("Enter matching passwords with 12–128 characters, uppercase, lowercase and a number.");
+      return;
+    }
 
     try {
       setSaving(true);
@@ -297,6 +303,8 @@ export default function StaffManagementPanel({
       setName("");
       setEmail("");
       setPassword("");
+      const confirmationField = document.getElementById("staff-create-confirm") as HTMLInputElement | null;
+      if (confirmationField) confirmationField.value = "";
       setRole("CASHIER");
       setLocationId("");
       setSuccess("Account created successfully.");
@@ -568,7 +576,7 @@ export default function StaffManagementPanel({
             onChange={(event) =>
               setPassword(event.target.value)
             }
-            placeholder="Temporary password"
+            id="staff-create-password" autoComplete="new-password" placeholder="Temporary password"
             className={`h-11 border px-3 text-base outline-none sm:text-sm ${
               themed
                 ? ""
@@ -582,6 +590,7 @@ export default function StaffManagementPanel({
             }}
           />
 
+          <input id="staff-create-confirm" type={showPasswords ? "text" : "password"} autoComplete="new-password" placeholder="Confirm temporary password" className="h-11 rounded-xl border border-black/10 px-3 text-base" style={inputStyle} />
           {canCreateAdmins ? (
             <select
               value={role}
