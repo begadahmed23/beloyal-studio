@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { hashPassword } from "better-auth/crypto";
+import { hashPassword, verifyPassword } from "better-auth/crypto";
 
 import { prisma } from "@/lib/prisma";
 import { requireSuperAdmin } from "@/lib/require-super-admin";
@@ -100,7 +100,7 @@ export async function PATCH(
             userId: target.id,
             providerId: "credential",
           },
-          data: { password: passwordHash },
+          data: { password: passwordHash, updatedAt: new Date() },
         });
 
         if (updated.count !== 1) {
@@ -109,6 +109,10 @@ export async function PATCH(
           );
         }
 
+        const credential = await tx.account.findFirst({ where: { userId: target.id, providerId: "credential" }, select: { password: true } });
+        if (!credential?.password || !(await verifyPassword({ hash: credential.password, password: newPassword }))) {
+          throw new Error("Password verification failed.");
+        }
         await tx.session.deleteMany({
           where: { userId: target.id },
         });
