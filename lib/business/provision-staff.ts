@@ -1,3 +1,4 @@
+import { verifyPassword } from "better-auth/crypto";
 import { prisma } from "@/lib/prisma";
 import { provisioningAuth } from "@/lib/provisioning-auth";
 import { getCashierLocation, withStoreCapacity } from "./store-capacity";
@@ -19,6 +20,10 @@ export async function provisionStaff({ cafeId, name, email, password, role, loca
   const { id } = signup.user;
 
   try {
+    const credential = await prisma.account.findFirst({ where: { userId: id, providerId: "credential" }, select: { password: true } });
+    if (!credential?.password || !(await verifyPassword({ hash: credential.password, password }))) {
+      throw new Error("Could not verify the new account password. Please try again.");
+    }
     return await withStoreCapacity(cafeId, async (tx, limit) => {
       // Recheck after signup, because another request may have filled the last slot.
       const cashierLocationId = role === "CASHIER"
